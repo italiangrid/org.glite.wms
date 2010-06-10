@@ -30,7 +30,7 @@ namespace jobstat = glite::ce::cream_client_api::job_statuses;
 //------------------------------------------------------------------------------
 iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
 {
-    switch( theJob.get_status() ) {
+    switch( theJob.status() ) {
     case jobstat::PENDING:
         // nothing to log
         return 0;
@@ -41,14 +41,14 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
         return 0; // nothing to log
     case jobstat::RUNNING:
         // if ( theJob.get_prev_status() == jobstat::IDLE ||
-        if ( theJob.get_prev_status() == jobstat::HELD )
+        if ( theJob.prev_status() == jobstat::HELD )
             return new job_resumed_event( theJob );
         else
             return new job_running_event( theJob ); 
     case jobstat::REALLY_RUNNING:
         return new job_really_running_event( theJob );
     case jobstat::CANCELLED:
-        if ( theJob.is_killed_by_ice() )
+        if ( theJob.killed_byice() )
             return new job_aborted_event( theJob );
         else
             return new job_cancelled_event( theJob );

@@ -43,8 +43,6 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				CreateDelegation.cpp \
 				CreateLease.cpp \
 				DNHasJobs.cpp \
-				UpdateJobByGid.cpp \
-				UpdateJobByCid.cpp \
 				UpdateProxyFieldsByDN.cpp \
 				UpdateDelegationTimesByID.cpp \
 				RemoveJobByGid.cpp \
@@ -58,10 +56,6 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllJobs.cpp \
 				GetJobByGid.cpp \
 				GetJobsToPoll.cpp \
-				GetAllGridJobID.cpp \
-				GetCreamURLUserDN.cpp \
-				GetCidByCreamURLUserDN.cpp \
-				GetFields.cpp \
 				GetJobsByDbID.cpp \
 				GetEventID.cpp \
 				SetEventID.cpp \
@@ -73,7 +67,8 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetStats.cpp \
 				GetJobs.cpp \
 				UpdateProxyCounterByDN.cpp \
-				RemoveJobByUserDN.cpp
+				RemoveJobByUserDN.cpp \
+				UpdateJob.cpp
 
 AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \

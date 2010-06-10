@@ -25,12 +25,10 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-#include "iceDb/UpdateJobByGid.h"
-#include "iceDb/CheckGridJobID.h"
+#include "iceDb/UpdateJob.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/CreateJob.h"
 
-#include "creamJob.h"
+#include "CreamJob.h"
 
 #include <list>
 #include <utility>
@@ -146,12 +144,15 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 	  CreamJob theJob( ev->getJob() );
 	  
 	  theJob.set_sequence_code( new_seq_code );
-	  list< pair<string, string> > params;
-	  params.push_back( make_pair( "sequence_code", new_seq_code ));
-#ifdef ICE_PROFILE_ENABLE
-	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
-#endif
-	  glite::wms::ice::db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceLBLogger::logEvent" );
+
+	  //	  list< pair<string, string> > params;
+	  //	  params.push_back( make_pair( "sequence_code", new_seq_code ));
+	  //#ifdef ICE_PROFILE_ENABLE
+	  //	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
+	  //#endif
+	  //glite::wms::ice::db::UpdateJobByGid updater( theJob.grid_jobid(), params, "iceLBLogger::logEvent" );
+
+	  glite::wms::ice::db::UpdateJob updater( theJob, "iceLBLogger::logEvent" );
 	  glite::wms::ice::db::Transaction tnx(false, false);
 	  tnx.execute( &updater );
 	  return theJob;

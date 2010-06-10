@@ -20,8 +20,6 @@ END LICENSE */
 
 #include "GetFieldsCount.h"
 #include "ice-core.h"
-
-#include <sstream>
 #include <cstdlib>
 
 using namespace glite::wms::ice;
@@ -45,9 +43,9 @@ namespace { // begin local namespace
 
 void db::GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd;
  
-  sqlcmd << "SELECT COUNT(";
+  sqlcmd = "SELECT COUNT(";
 
   fields_count_a = m_fields_to_retrieve.size();
 
@@ -55,42 +53,42 @@ void db::GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
       it!=m_fields_to_retrieve.end();
       ++it)
     {
-      sqlcmd << *it << ",";
+      sqlcmd += *it + ",";
     }
   
-  string tmp = sqlcmd.str();
+  string tmp = sqlcmd;
   if( !tmp.empty() )
     tmp = tmp.substr(0, tmp.length()-1); // remove the trailing ","
   
-  sqlcmd.str( "" );
-  sqlcmd << tmp << ") FROM jobs";
+  sqlcmd = "";
+  sqlcmd += tmp + ") FROM jobs";
 
   if( !m_clause.empty() )
     {
 
-      sqlcmd << " WHERE ";
+      sqlcmd += " WHERE ";
 
       for( list< pair<string, string> >::const_iterator it=m_clause.begin();
 	   it != m_clause.end();
 	   ++it)
 	{
-	  sqlcmd << it->first 
-		 << "=" 
-		 << Ice::get_tmp_name()
-		 << it->second 
-		 << Ice::get_tmp_name() << " AND ";
+	  sqlcmd += it->first 
+		 + "=" 
+		 + Ice::get_tmp_name()
+		 + it->second 
+		 + Ice::get_tmp_name() + " AND ";
 	}
 
-      string tmp = sqlcmd.str();
+      string tmp = sqlcmd;
       if( !tmp.empty() )
 	tmp = tmp.substr(0, tmp.length()-4); // remove the trailing ","
       
-      sqlcmd.str( "" );
-      sqlcmd << tmp << ";";
+      sqlcmd = "";
+      sqlcmd += tmp + ";";
 
     } else {
-    sqlcmd << ";";
+    sqlcmd += ";";
   }
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &m_fields_count );
+  do_query( db, sqlcmd, fetch_fields_callback, &m_fields_count );
 }

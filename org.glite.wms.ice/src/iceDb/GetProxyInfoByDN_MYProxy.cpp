@@ -21,7 +21,6 @@ END LICENSE */
 #include "GetProxyInfoByDN_MYProxy.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <vector>
 
 using namespace glite::wms::ice;
@@ -48,23 +47,23 @@ namespace { // begin local namespace
 
 void db::GetProxyInfoByDN_MYProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd;
 
-  sqlcmd << "SELECT proxyfile,exptime,counter FROM proxy WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn
-	 << Ice::get_tmp_name()
-	 << " AND myproxyurl="
-	 << Ice::get_tmp_name()
-	 << m_myproxy
-	 << Ice::get_tmp_name()
-	 << ";";
+  sqlcmd += "SELECT proxyfile,exptime,counter FROM proxy WHERE userdn="
+	 + Ice::get_tmp_name()
+	 + m_userdn
+	 + Ice::get_tmp_name()
+	 + " AND myproxyurl="
+	 + Ice::get_tmp_name()
+	 + m_myproxy
+	 + Ice::get_tmp_name()
+	 + ";";
 
   //  sqlcmd << dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
 
   vector<string> tmp;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {
     m_found = true;

@@ -25,12 +25,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandCancel.cpp \
 	iceCommandFactory.cpp \
 	iceCommandStatusPoller.cpp \
-	iceCommandSubUpdater.cpp \
-	iceCommandUpdateStatus.cpp \
-	iceCommandLeaseUpdater.cpp \
 	Request_source_purger.cpp \
-	normalStatusNotification.cpp \
-	emptyStatusNotification.cpp \
 	iceCommandDelegationRenewal.cpp \
 	iceCommandEventQuery.cpp \
 	iceCommandLBLogging.cpp

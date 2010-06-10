@@ -20,8 +20,7 @@ END LICENSE */
 
 #include "CreateProxyField.h"
 #include "ice-core.h"
-
-#include <sstream>
+#include "iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -29,35 +28,30 @@ using namespace std;
 void db::CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  ostringstream sqlcmd("");
+  string sqlcmd;
 
-//   string dn( m_userdn );
-//   boost::replace_all( dn, "'", "''" );
-//   string prx( m_proxyfile );
-//   boost::replace_all( prx, "'", "''" );
-
-  sqlcmd << "INSERT OR REPLACE INTO proxy (" 
-         << " userdn,myproxyurl,proxyfile,exptime,counter) VALUES ("
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_myproxy 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_proxyfile 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_exptime 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_counter 
-	 << Ice::get_tmp_name()
-	 << ");";
+  sqlcmd = string("INSERT OR REPLACE INTO proxy (" )
+         + " userdn,myproxyurl,proxyfile,exptime,counter) VALUES ("
+	 + Ice::get_tmp_name()
+	 + m_userdn 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_myproxy 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_proxyfile 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((long int)m_exptime )
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((long int)m_counter )
+	 + Ice::get_tmp_name()
+	 + ");";
    		      
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

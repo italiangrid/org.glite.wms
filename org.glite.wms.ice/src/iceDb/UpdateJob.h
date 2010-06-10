@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 
 namespace glite {
 namespace wms {
@@ -35,7 +35,7 @@ namespace db {
     class UpdateJob : public AbsDbOperation { 
     public:
         UpdateJob( const glite::wms::ice::util::CreamJob& j, 
-		   const std::string& caller  );
+		   const std::string& caller  ) : AbsDbOperation( caller ), m_job( j ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:

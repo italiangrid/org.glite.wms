@@ -27,7 +27,7 @@ END LICENSE */
 #include <exception>
 
 #include "glite/lb/context.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 // Forward declaration
 namespace log4cpp {

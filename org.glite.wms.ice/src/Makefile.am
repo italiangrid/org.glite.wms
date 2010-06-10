@@ -267,7 +267,8 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLOBUS_NOTHR_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
-		$(MYPROXY_NOTHR_LIBS)
+		$(MYPROXY_NOTHR_LIBS) \
+		-lglite_security_proxyrenewal_core_gcc64dbg
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 

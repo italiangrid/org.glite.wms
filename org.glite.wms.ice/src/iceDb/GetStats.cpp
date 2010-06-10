@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 #include "GetStats.h"
 #include "ice-core.h"
+#include "iceUtils.h"
 
-#include <sstream>
 #include <vector>
 #include <cstdlib>
 
@@ -52,18 +52,17 @@ db::GetStats::GetStats( vector< pair< time_t, int > >& target, const time_t date
 
 void db::GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd;
  
-  sqlcmd << "SELECT timestamp,status FROM stats WHERE"
-  	 << " timestamp >= "
-	 << Ice::get_tmp_name() 
-	 << m_datefrom 
-	 << Ice::get_tmp_name()
-	 << " AND timestamp <= "
-	 << Ice::get_tmp_name() 
-	 << m_dateto 
-	 << Ice::get_tmp_name() << ";";
+  sqlcmd += "SELECT timestamp,status FROM stats WHERE timestamp >= "
+	 + Ice::get_tmp_name() 
+	 + util::utilities::to_string( (unsigned long long int)m_datefrom )
+	 + Ice::get_tmp_name()
+	 + " AND timestamp <= "
+	 + Ice::get_tmp_name() 
+	 + util::utilities::to_string( (unsigned long long int)m_dateto  )
+	 + Ice::get_tmp_name() + ";";
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, m_target );
+  do_query( db, sqlcmd, fetch_fields_callback, m_target );
   
 }

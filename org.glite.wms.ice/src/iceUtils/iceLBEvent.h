@@ -21,7 +21,7 @@ END LICENSE */
 #ifndef ICELBEVENT_H
 #define ICELBEVENT_H
 
-#include "creamJob.h"
+#include "CreamJob.h"
 #include "glite/lb/producer.h"
 #include <string>
 

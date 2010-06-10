@@ -20,34 +20,34 @@ END LICENSE */
 
 #include "CreateLease.h"
 #include "ice-core.h"
-#include <sstream>
+#include "iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::CreateLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd("");
+  string sqlcmd;
 
-  sqlcmd << "INSERT OR REPLACE INTO lease (" 
-	 << "userdn,creamurl,exptime,leaseid"
-         << " ) VALUES ("
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_exptime 
-	 << Ice::get_tmp_name()
-	 << ","	
-	 << Ice::get_tmp_name()
-	 << m_leaseid 
-	 << Ice::get_tmp_name()
-	 << ");";
+  sqlcmd = string("INSERT OR REPLACE INTO lease (" )
+	 + "userdn,creamurl,exptime,leaseid"
+         + " ) VALUES ("
+	 + Ice::get_tmp_name()
+	 + m_userdn 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_creamurl 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((long int)m_exptime )
+	 + Ice::get_tmp_name()
+	 + ","	
+	 + Ice::get_tmp_name()
+	 + m_leaseid 
+	 + Ice::get_tmp_name()
+	 + ");";
  
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

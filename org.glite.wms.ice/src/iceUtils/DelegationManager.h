@@ -21,7 +21,7 @@ END LICENSE */
 #ifndef ICE_DELEGATION_MANAGER_H
 #define ICE_DELEGATION_MANAGER_H
 
-#include "creamJob.h"
+#include "CreamJob.h"
 
 #include <iostream>
 #include <utility>

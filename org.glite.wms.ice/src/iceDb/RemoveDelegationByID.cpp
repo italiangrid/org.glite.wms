@@ -21,24 +21,18 @@ END LICENSE */
 #include "RemoveDelegationByID.h"
 #include "ice-core.h"
 
-#include <sstream>
-
 using namespace glite::wms::ice;
 using namespace std;
 
 //______________________________________________________________________________
 void db::RemoveDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
-  sqlcmd << "DELETE FROM delegation WHERE delegationid="
-	 << Ice::get_tmp_name()
-	 << m_id
-	 << Ice::get_tmp_name()
-	 << ";";
+  string sqlcmd;
+  sqlcmd += "DELETE FROM delegation WHERE delegationid="
+	 + Ice::get_tmp_name()
+	 + m_id
+	 + Ice::get_tmp_name()
+	 + ";";
 
-//     string sqlcmd = boost::str( boost::format( 
-//       "DELETE FROM delegation " 
-//       " where delegationid = \'%1%\'; " ) % m_id );
-  
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

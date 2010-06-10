@@ -259,14 +259,14 @@ void iceCommandLeaseUpdater::execute( const std::string& tid ) throw()
         string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( the_job.get_user_dn() ).get<0>() ;
         
         try {
-            soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate() );
+            soap_proxy::VOMSWrapper V( the_job.get_user_proxyfile() );
             if( !V.IsValid( ) ) {
                 throw soap_proxy::auth_ex( V.getErrorMessage() );
             }
             
             vector< soap_proxy::JobIdWrapper > job_vec;
             job_vec.push_back( soap_proxy::JobIdWrapper(the_job.get_cream_jobid(), 
-                                                        the_job.get_creamurl(), 
+                                                        the_job.get_cream_address(), 
                                                         vector<soap_proxy::JobPropertyWrapper>())
                                );
             
@@ -274,7 +274,7 @@ void iceCommandLeaseUpdater::execute( const std::string& tid ) throw()
             soap_proxy::JobFilterWrapper req( job_vec, vector<string>(), -1, -1, "", "");
             soap_proxy::ResultWrapper res;
             
-            CreamProxy_Cancel( the_job.get_creamurl(), proxy, &req, &res ).execute( 3 );
+            CreamProxy_Cancel( the_job.get_cream_address(), proxy, &req, &res ).execute( 3 );
 
         } catch(...) {            
             // We ignore any cancellation error here            
@@ -289,7 +289,7 @@ void iceCommandLeaseUpdater::execute( const std::string& tid ) throw()
 	  tnx.execute( &updater );
 	}
         iceLBLogger::instance()->logEvent( new job_done_failed_event( the_job ) );
-        glite::wms::ice::Ice::instance()->resubmit_job( the_job, "Lease expired" );
+        glite::wms::ice::Ice::instance()->resubmit_job( &the_job, "Lease expired" );
         
 	{
 	  db::RemoveJobByGid remover( the_job.get_grid_jobid(), "iceCommandLeaseUpdater::execute" );

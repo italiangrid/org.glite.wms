@@ -25,7 +25,7 @@ END LICENSE */
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "iceUtils/iceConfManager.h" // iceConfManager
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/convenience.hpp"
@@ -39,6 +39,7 @@ namespace iceUtil = glite::wms::ice::util;
 
 using namespace std;
 using namespace glite::wms::ice::db;
+namespace util = glite::wms::ice::util;
 
 sqlite3* Transaction::s_db = 0;
 
@@ -201,7 +202,7 @@ namespace {
 	    }
             try {
 	      string sqlcmd = 
-		"CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (gridjobid)"; 
+		string("CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (") + util::CreamJob::grid_jobid_field() + ")"; 
 	      do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -215,7 +216,7 @@ namespace {
             }
 	    try { 
 	      string sqlcmd = 
-		"CREATE INDEX IF NOT EXISTS dbid_index ON jobs (dbid)";
+		string("CREATE INDEX IF NOT EXISTS dbid_index ON jobs (") + util::CreamJob::cream_dbid_field() + ")";
 	      do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	    
@@ -229,7 +230,7 @@ namespace {
             }
             try { 
 	      string sqlcmd = 
-		"CREATE INDEX IF NOT EXISTS cid_index ON jobs (creamjobid)";
+		string("CREATE INDEX IF NOT EXISTS cid_index ON jobs (") + util::CreamJob::cream_jobid_field() + ")";
 	      do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	    
@@ -243,7 +244,7 @@ namespace {
             }
             try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS ccid_index ON jobs (complete_cream_jobid)";
+                string("CREATE INDEX IF NOT EXISTS ccid_index ON jobs (") + util::CreamJob::complete_cream_jobid_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -257,7 +258,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS lastseen ON jobs (last_seen)";
+                string("CREATE INDEX IF NOT EXISTS lastseen ON jobs (") + util::CreamJob::last_seen_field() + ")";
               do_query( db, sqlcmd );
             } catch(DbOperationException& ex ) {
 	      
@@ -271,7 +272,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS lastemptynotification ON jobs (last_empty_notification)";
+                string("CREATE INDEX IF NOT EXISTS lastemptynotification ON jobs (") + util::CreamJob::last_empty_notification_time_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -285,7 +286,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS stat ON jobs (status)";
+                string("CREATE INDEX IF NOT EXISTS stat ON jobs (") + util::CreamJob::status_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -299,7 +300,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS udn ON jobs (userdn)";
+                string("CREATE INDEX IF NOT EXISTS udn ON jobs (") + util::CreamJob::user_dn_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -313,7 +314,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS curl ON jobs (creamurl)";
+                string("CREATE INDEX IF NOT EXISTS curl ON jobs (") + util::CreamJob::cream_address_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -328,7 +329,7 @@ namespace {
 	    
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS lastpollervisit ON jobs (last_poller_visited)";
+                string("CREATE INDEX IF NOT EXISTS lastpollervisit ON jobs (") + util::CreamJob::last_poller_visited_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -342,7 +343,7 @@ namespace {
             }
 	    try {
               string sqlcmd =
-                "CREATE INDEX IF NOT EXISTS killedbyice ON jobs (is_killed_byice)";
+                string("CREATE INDEX IF NOT EXISTS killedbyice ON jobs (") + util::CreamJob::killed_byice_field() + ")";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	    

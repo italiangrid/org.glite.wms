@@ -29,13 +29,11 @@
 
 lib_LTLIBRARIES = libglite_wms_iceThreads.la
 
-libglite_wms_iceThreads_la_SOURCES = eventStatusListener.cpp \
+libglite_wms_iceThreads_la_SOURCES = \
 					iceThread.cpp \
 					eventStatusPoller.cpp \
 					iceThreadPool.cpp \
-					subscriptionUpdater.cpp \
-					proxyRenewal.cpp \
-					leaseUpdater.cpp
+					proxyRenewal.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \

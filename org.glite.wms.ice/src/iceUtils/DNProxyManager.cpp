@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 END LICENSE */
-#include "Delegation_manager.h"
+#include "DelegationManager.h"
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
@@ -150,7 +150,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
+  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( dn ) + ".proxy";
   
   
   bool found = false;
@@ -197,7 +197,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << dn << "] not found. Inserting the new proxy ["
 		   << prx << "]. Will be Copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << time_t_to_string(exptime) << "]"
+		   << utilities::time_t_to_string(exptime) << "]"
 		   );
     
     try {
@@ -241,7 +241,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << time_t_to_string(exptime) << "]"
+		   << utilities::time_t_to_string(exptime) << "]"
 		   );
     try {
       db::CreateProxyField creator( dn, "", localProxy, exptime, 0,"DNProxyManager::setUserProxyIfLonger_Legacy" );
@@ -288,7 +288,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << time_t_to_string(newT) << "]"
+		   << utilities::time_t_to_string(newT) << "]"
 		   );
 
     try {
@@ -655,14 +655,14 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::incrementUserProxyCounter() - "
 		   << "Looking for DN ["
-		   << aJob.get_user_dn() << "] MyProxy server ["
-		   << aJob.get_myproxy_address() << "] in the DB..."
+		   << aJob.user_dn() << "] MyProxy server ["
+		   << aJob.myproxy_address() << "] in the DB..."
 		   );
   
   bool found = false;
   boost::tuple<string, time_t, long long int> proxy_info;
   try {
-    db::GetProxyInfoByDN_MYProxy getter( aJob.get_user_dn(), aJob.get_myproxy_address(), 
+    db::GetProxyInfoByDN_MYProxy getter( aJob.user_dn(), aJob.myproxy_address(), 
 					 "DNProxyManager::incrementUserProxyCounter" );
     db::Transaction tnx(false, false);
     tnx.execute( &getter );
@@ -674,9 +674,9 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::incrementUserProxyCounter() - "
 		   << "Error executing GetProxyInfoByDN_MYProxy for userdn ["
-		   << aJob.get_user_dn()
+		   << aJob.user_dn()
 		   << "] myproxy ["
-		   << aJob.get_myproxy_address()
+		   << aJob.myproxy_address()
 		   << "]: "
 		   << ex.what()
 		   );
@@ -689,14 +689,14 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::incrementUserProxyCounter() - "
 		   << "Incrementing proxy counter for DN ["
-		   << aJob.get_user_dn() << "] MyProxy server ["
-		   << aJob.get_myproxy_address() <<"] from [" << proxy_info.get<2>()
+		   << aJob.user_dn() << "] MyProxy server ["
+		   << aJob.myproxy_address() <<"] from [" << proxy_info.get<2>()
 		   << "] to [" << (proxy_info.get<2>() +1 ) << "]"
 		   );
 
     try {
       
-      db::UpdateProxyCounterByDN updater( aJob.get_user_dn(), aJob.get_myproxy_address(), proxy_info.get<2>() + 1, "DNProxyManager::incrementUserProxyCounter" );
+      db::UpdateProxyCounterByDN updater( aJob.user_dn(), aJob.myproxy_address(), proxy_info.get<2>() + 1, "DNProxyManager::incrementUserProxyCounter" );
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
       
@@ -705,9 +705,9 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::incrementUserProxyCounter() - "
 		     << "Error updating proxy counter for userdn ["
-		     << aJob.get_user_dn()
+		     << aJob.user_dn()
 		     << "] myproxy ["
-		     << aJob.get_myproxy_address()
+		     << aJob.myproxy_address()
 		     << "]: "
 		     << ex.what()
 		     );
@@ -717,9 +717,9 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
     return true;
 
   } else {
-    return this->setBetterProxy( aJob.get_user_dn(), 
-				 aJob.get_user_proxy_certificate(),
-				 aJob.get_myproxy_address(),
+    return this->setBetterProxy( aJob.user_dn(), 
+				 aJob.user_proxyfile(),
+				 aJob.myproxy_address(),
 				 proxy_time_end,
 				 (unsigned long long)1);
   }
@@ -846,5 +846,5 @@ iceUtil::DNProxyManager::make_betterproxy_path( const string& dn,
 						const string& myproxy )
   throw()
 {
-  return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
+  return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

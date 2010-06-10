@@ -35,7 +35,6 @@ END LICENSE */
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetCreamURLUserDN.h"
-#include "iceDb/GetCidByCreamURLUserDN.h"
 #include "iceDb/GetFields.h"
 
 // CREAM stuff
@@ -154,7 +153,7 @@ void iceCommandUpdateStatus::execute( const std::string& tid) throw( )
 	string subs_id;
 	{ // Classad-mutex protected region
 
-	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+	  boost::recursive_mutex::scoped_lock M_classad( util::CreamJob::s_classad_mutex );
 
 	  classad::ClassAdParser parser;
 	  classad::ClassAd *ad = parser.ParseClassAd( first_event );
@@ -231,7 +230,7 @@ void iceCommandUpdateStatus::execute( const std::string& tid) throw( )
 		iceSubscription subscription;
 		string cemon_url;
 		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
-		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_creamurl(), cemon_url);
+		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_cream_address(), cemon_url);
 		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.get_user_dn(), cemon_url, subscription );
                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
 		

@@ -23,7 +23,7 @@ END LICENSE */
 #include "iceUtils.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateJobByGid.h"
+#include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -58,10 +58,10 @@ END LICENSE */
 namespace cream_api = glite::ce::cream_client_api;
 
 using namespace std;
-using namespace glite::wms::ice::util;
+using namespace glite::wms::ice;
 
 //______________________________________________________________________________
-iceCommandLBLogging::iceCommandLBLogging( const list<CreamJob>& jobs) :
+util::iceCommandLBLogging::iceCommandLBLogging( const list<CreamJob>& jobs) :
     iceAbsCommand( "iceCommandLBLogging", "" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_jobs_to_remove( jobs ),
@@ -70,22 +70,22 @@ iceCommandLBLogging::iceCommandLBLogging( const list<CreamJob>& jobs) :
 }
 
 //______________________________________________________________________________
-iceCommandLBLogging::~iceCommandLBLogging( )
+util::iceCommandLBLogging::~iceCommandLBLogging( )
 {
 }
 
 //______________________________________________________________________________
-string iceCommandLBLogging::get_grid_job_id( ) const
+string util::iceCommandLBLogging::get_grid_job_id( ) const
 {
-  ostringstream randid( "" );
+  string randid( "" );
   struct timeval T;
   gettimeofday( &T, 0 );
-  randid << T.tv_sec << "." << T.tv_usec;
-  return randid.str();
+  randid += util::utilities::to_string( T.tv_sec ) + "." + util::utilities::to_string( T.tv_usec );
+  return randid;
 }
 
 //______________________________________________________________________________
-void iceCommandLBLogging::execute( const std::string& tid ) throw()
+void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
 {  
 
   // m_job_to_remove
@@ -99,22 +99,22 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
       m_lb_logger->logEvent( ev );
     }
     
-    if( cream_api::job_statuses::DONE_OK == jobit->get_status() ||
-        cream_api::job_statuses::DONE_FAILED == jobit->get_status() ||
-	cream_api::job_statuses::CANCELLED == jobit->get_status() ||
-	cream_api::job_statuses::ABORTED == jobit->get_status() )
+    if( cream_api::job_statuses::DONE_OK == jobit->status() ||
+        cream_api::job_statuses::DONE_FAILED == jobit->status() ||
+	cream_api::job_statuses::CANCELLED == jobit->status() ||
+	cream_api::job_statuses::ABORTED == jobit->status() )
       {	
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
-		       << "Removing job [" << jobit->get_grid_jobid( )
+		       << "Removing job [" << jobit->grid_jobid( )
 		       << "] from ICE's database"
 		       );
 	
 	{
-	  db::RemoveJobByGid remover( jobit->get_grid_jobid(), "iceCommandLBLogging::execute" );
+	  db::RemoveJobByGid remover( jobit->grid_jobid(), "iceCommandLBLogging::execute" );
 	  db::Transaction tnx( false, false );
 	  tnx.execute( &remover );
-	  if( jobit->is_proxy_renewable() )
-	    glite::wms::ice::util::DNProxyManager::getInstance()->decrementUserProxyCounter( jobit->get_user_dn(), jobit->get_myproxy_address());
+	  if( jobit->proxy_renewable() )
+	    glite::wms::ice::util::DNProxyManager::getInstance()->decrementUserProxyCounter( jobit->user_dn(), jobit->myproxy_address());
 	}
 	
       }

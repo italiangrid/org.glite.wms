@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICEDB_CREATE_JOB_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 
 namespace glite {
 namespace wms {
@@ -38,14 +38,14 @@ namespace db {
         CreateJob( const glite::wms::ice::util::CreamJob& j, 
 		   const std::string& caller ) 
 	  : AbsDbOperation( caller ), 
-	  m_theJob ( j ), 
-	  m_JDL( j.get_jdl() ) {}
+	  m_theJob ( j ) {}
+//	  m_JDL( j.jdl() ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
         //std::string                       m_serialized_job;
 	glite::wms::ice::util::CreamJob   m_theJob;
-	std::string                       m_JDL;
+	//std::string                       m_JDL;
     };
 
 } // namespace db

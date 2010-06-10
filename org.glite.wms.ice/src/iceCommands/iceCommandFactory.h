@@ -23,7 +23,7 @@ END LICENSE */
 
 #include "ClassadSyntax_ex.h"
 #include "JobRequest_ex.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 #include <string>
 
 namespace glite {

@@ -21,8 +21,6 @@ END LICENSE */
 #include "RemoveDelegation.h"
 #include "ice-core.h"
 
-#include <sstream>
-
 using namespace glite::wms::ice;
 using namespace std;
 
@@ -30,24 +28,20 @@ using namespace std;
 void db::RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  ostringstream sqlcmd( "" );
-  sqlcmd << "DELETE FROM delegation WHERE digest="
-	 << Ice::get_tmp_name()
-	 << m_digest 
-	 << Ice::get_tmp_name()
-	 << " AND creamurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name()
-	 << " AND myproxyurl="
-	 << Ice::get_tmp_name()
-	 << m_myproxy
-	 << Ice::get_tmp_name()
-	 << ";";
+  string sqlcmd;
+  sqlcmd += "DELETE FROM delegation WHERE digest="
+	 + Ice::get_tmp_name()
+	 + m_digest 
+	 + Ice::get_tmp_name()
+	 + " AND creamurl="
+	 + Ice::get_tmp_name()
+	 + m_creamurl 
+	 + Ice::get_tmp_name()
+	 + " AND myproxyurl="
+	 + Ice::get_tmp_name()
+	 + m_myproxy
+	 + Ice::get_tmp_name()
+	 + ";";
 
-//   string sqlcmd = boost::str( boost::format( 
-// 					    "DELETE FROM delegation "	
-// 					    " WHERE digest = \'%1%\' AND creamurl = \'%2%\' AND myproxyurl=\'%3%\'; " ) % m_digest % m_creamurl %  m_myproxy );
-  
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

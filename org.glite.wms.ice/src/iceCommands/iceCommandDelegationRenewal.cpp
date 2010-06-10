@@ -20,7 +20,7 @@ END LICENSE */
 
 #include "iceCommandLBLogging.h"
 #include "iceCommandDelegationRenewal.h"
-#include "Delegation_manager.h"
+#include "DelegationManager.h"
 #include "CreamProxyMethod.h"
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
@@ -29,7 +29,7 @@ END LICENSE */
 #include "iceDb/GetJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateJobByGid.h"
+//#include "iceDb/UpdateJobByGid.h"
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
@@ -140,7 +140,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			    << "Delegation ID ["
 			    << thisDelegID << "] will expire in ["
 			    << remainingTime << "] seconds (on ["
-			    << time_t_to_string(thisExpTime) << "]). Duration is ["
+			    << utilities::time_t_to_string(thisExpTime) << "]). Duration is ["
 			    << thisDuration << "] seconds. Will NOT renew it now..."
 			    );
 	    mapDelegTime.erase( thisDelegID );
@@ -322,7 +322,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	
 	//	cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
 
-	pair<bool, time_t> result_validity = isgood( thisBetterPrx.get<0>() );
+	pair<bool, time_t> result_validity = utilities::isgood( thisBetterPrx.get<0>() );
 	if(!result_validity.first) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			 << "iceCommandProxyRenewal::renewAllDelegations() - "
@@ -359,8 +359,8 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  list<CreamJob> toRemove;
 	  {
 	    list<pair<string, string> > clause;
-	    clause.push_back( make_pair("userdn", thisUserDN) );
-	    clause.push_back( make_pair("myproxyurl", thisMyPR) );
+	    clause.push_back( make_pair( util::CreamJob::user_dn_field(), thisUserDN) );
+	    clause.push_back( make_pair( util::CreamJob::myproxy_address_field(), thisMyPR) );
 	    db::GetJobs getter( clause, toRemove, "iceCommandDelegationRenewal::renewAllDelegations" );
 	    db::Transaction tnx(false, false);
 	    tnx.execute( &getter );
@@ -408,7 +408,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			<< thisDelegID << "] with BetterProxy ["
 			<< thisBetterPrx.get<0>()
 			<< "] that will expire on ["
-			<< time_t_to_string(thisBetterPrx.get<1>()) << "]"
+			<< utilities::time_t_to_string(thisBetterPrx.get<1>()) << "]"
 			);
 	try {
 	  

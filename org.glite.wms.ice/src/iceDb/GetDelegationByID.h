@@ -23,7 +23,7 @@ END LICENSE */
 
 #include "AbsDbOperation.h"
 #include <string>
-#include "iceUtils/Delegation_manager.h"
+#include "iceUtils/DelegationManager.h"
 
 namespace glite {
   namespace wms {

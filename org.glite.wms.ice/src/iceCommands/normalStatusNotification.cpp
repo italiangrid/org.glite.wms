@@ -24,7 +24,6 @@ END LICENSE */
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
-#include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "ice-core.h"
 #include "DNProxyManager.h"
@@ -145,7 +144,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 {
 
   { // Classad-mutex protected region
-    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
+    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
     
     classad::ClassAdParser parser;
     classad::ClassAd *ad = parser.ParseClassAd( ad_string );	
@@ -209,7 +208,7 @@ void StatusChange::apply_to_job( CreamJob& j ) const
     j.set_status( get_status() );
     j.set_worker_node( m_worker_node );
     if ( m_has_exit_code ) {
-        j.set_exitcode( m_exit_code );
+        j.set_exit_code( m_exit_code );
     }    
     // 
     // Discussion with Gi, 2008/02/11: The failure reason field should
@@ -225,15 +224,16 @@ void StatusChange::apply_to_job( CreamJob& j ) const
     }
 
     {
-      list<pair<string ,string> > params;
-      params.push_back( make_pair("status", int_to_string(get_status())));
-      params.push_back( make_pair("worker_node", m_worker_node));
-      if( m_has_exit_code ) 
-	params.push_back( make_pair("exit_code", int_to_string(m_exit_code)));
+      //      list<pair<string ,string> > params;
+      //      params.push_back( make_pair("status", utilities::to_string((long int)get_status())));
+      //      params.push_back( make_pair("worker_node", m_worker_node));
+      //if( m_has_exit_code ) 
+      //  params.push_back( make_pair("exit_code", utilities::to_string((long int)m_exit_code)));
 
-      params.push_back( make_pair("failure_reason", j.get_failure_reason() ));
+      //      params.push_back( make_pair("failure_reason", j.get_failure_reason() ));
 
-      glite::wms::ice::db::UpdateJobByGid updater( j.get_grid_jobid(), params, "StatusChange::apply_to_job" );
+      //glite::wms::ice::db::UpdateJobByGid updater( j.get_grid_jobid(), params, "StatusChange::apply_to_job" );
+      glite::wms::ice::db::UpdateJob updater( j, "StatusChange::apply_to_job" );
       glite::wms::ice::db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
@@ -341,14 +341,14 @@ void normalStatusNotification::apply( void ) // can throw anything
 
     // No job found in cache. This is fine, we may be receiving "old"
     // notifications, for jobs which have been already purged.
-
+/*
     string _cemon_url;
     string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
-    subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_creamurl()/*m_cream_address*/, _cemon_url);
+    subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_cream_address(), _cemon_url);
     string _cemon_dn;
-    subscriptionManager::getInstance()->getCEMonDN( theJob.get_user_dn()/*m_user_dn*/, _cemon_url, _cemon_dn );
+    subscriptionManager::getInstance()->getCEMonDN( theJob.get_user_dn(), _cemon_url, _cemon_dn );
 
-    if( m_cemondn.compare( _cemon_dn /*jc_it->get_cemon_dn()*/ ) ) {
+    if( m_cemondn.compare( _cemon_dn ) ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
 		       << method_name
 		       << "the CEMon ["
@@ -359,7 +359,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 		       );
 	return;
     }
-
+*/
     //
     // Now, for each status change notification, check if it has to be logged
     // vector<StatusNotification>::const_iterator it;
@@ -378,10 +378,12 @@ void normalStatusNotification::apply( void ) // can throw anything
             theJob.set_last_empty_notification_time( time(0) );
 	    
 	    {
-	      list< pair<string, string> > params;
-	      params.push_back( make_pair("last_seen", int_to_string(time(0))));
-	      params.push_back( make_pair("last_empty_notification", int_to_string(time(0))));
-	      db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply");
+	      //list< pair<string, string> > params;
+	      //params.push_back( make_pair("last_seen", utilities::to_string(time(0))));
+	      //params.push_back( make_pair("last_empty_notification", utilities::to_string(time(0))));
+	      
+	      //db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply");
+	      db::UpdateJob( theJob, "normalStatusNotification::apply");
 	      db::Transaction tnx(false, false);
 	      //tnx.begin_exclusive( );
 	      tnx.execute( &updater );
@@ -446,11 +448,13 @@ void normalStatusNotification::apply( void ) // can throw anything
         
 	notif_ptr->apply_to_job( theJob );// this method internally updates the database
 
-	theJob.set_numlogged_status_changes( count );
+	theJob.set_num_logged_status_changes( count );
 	{
-	  list< pair<string, string> > params;
-	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
-	  db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply" );
+	  //list< pair<string, string> > params;
+	  //params.push_back( make_pair("num_logged_status_changes", utilities::to_string((long int)count)));
+	  
+	  //db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply" );
+	  db::UpdateJob updater( theJob, "normalStatusNotification::apply" );
 	  db::Transaction tnx(false, false);
 	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
@@ -464,7 +468,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	// For NOW we can trust on logEvent that put the entire job into the database
 	// but a more elegant solution must be found later.
 
-	  m_ice_manager->resubmit_or_purge_job( theJob );
+	  m_ice_manager->resubmit_or_purge_job( &theJob );
 	  
     }
 }

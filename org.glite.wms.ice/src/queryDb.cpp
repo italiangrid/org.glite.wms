@@ -1,4 +1,4 @@
-/* LICENSE:
+/* LICENSE: 
 Copyright (c) Members of the EGEE Collaboration. 2010. 
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.  
@@ -28,8 +28,9 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 #include "iceDb/Transaction.h"
-#include "iceDb/GetFields.h"
+#include "iceDb/GetAllJobs.h"
 #include "iceConfManager.h"
+#include "CreamJob.h"
 
 #include "boost/algorithm/string.hpp"
 
@@ -52,13 +53,15 @@ std::string status_to_numstr( const std::string& status ) {
 }
 
 using namespace std;
-namespace iceUtil = glite::wms::ice::util;
-namespace db = glite::wms::ice::db;
+using namespace glite::wms::ice;
+
+//namespace iceUtil = glite::wms::ice::util;
+//namespace db = glite::wms::ice::db;
+
 void printhelp( void ) {
   cout << "USAGE: queryDb --conf|-c <WMS CONFIGURATION FILE> [options]" << endl;
   cout << endl << "options: " << endl;
   cout << "  --verbose|-v\t\tVerbose output (print each db's record" << endl;
-  //  cout << "\t--debug|-d\tPrint the SQL query before executing it" << endl;
   cout << "  --status-filter|-s\tSelect only records in which the status column is one"<<endl
        << "  \t\t\tof those specified as option argument; more states can"<<endl
        << "  \t\t\tbe ',' separated and they must be:"<<endl;
@@ -97,10 +100,24 @@ int main( int argc, char* argv[] )
   bool             debug( false );
   bool             verbose( false );
   int              option_index( 0 );
-  list< string >   fields_to_retrieve;
+  //  list< string >   fields_to_retrieve;
 
-  int status_pos   = -1;
-  int date_status  = -1;
+  //  int status_pos   = -1;
+  //  int date_status  = -1;
+
+  bool wn       = false;
+  bool status   = false;
+  bool lease    = false;
+  bool did      = false;
+  bool curl     = false;
+  bool myurl    = false;
+  bool ccid     = false;
+  bool gid      = false;
+  bool seq_code = false;
+  bool jdl      = false;
+  bool modif_jdl= false;
+  bool userdn   = false;
+  bool pxfile   = false;
 
   while( 1 ) {
     int c;
@@ -120,13 +137,29 @@ int main( int argc, char* argv[] )
       {"delegation-id",0,0,'D'},
       {"worker-node",0,0,'w'},
       {"verbose", 0, 0, 'v'},
+      {"jdl", 0, 0, 'j'},
+      {"modified-jdl", 0, 0, 'J'},
+      {"sequence-code", 0, 0, 'q'},
       {0, 0, 0, 0}
     };
-    c = getopt_long(argc, argv, "hs:c:uCGprmSLDwv", long_options, &option_index);
+    c = getopt_long(argc, argv, "hs:c:uCGprmSLDwvjJq", long_options, &option_index);
     
     if ( c == -1 )
       break;
     switch(c) {
+     case 'q':
+       //fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::sequence_code_field() );
+       seq_code = true;
+       break;
+     case 'j':
+       //fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::jdl_field() );
+       jdl = true;
+       break;
+     case 'J':
+       //fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::modified_jdl_field() );
+       modif_jdl = true;
+       break;
+
     case 'h':
       printhelp();
       exit(0);
@@ -142,35 +175,45 @@ int main( int argc, char* argv[] )
       conf_file = string(optarg);
       break;
     case 'u':
-      fields_to_retrieve.push_back( "userdn" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::user_dn_field() );
+      userdn = true;
       break;
     case 'C':
-      fields_to_retrieve.push_back( "complete_cream_jobid" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::complete_cream_jobid_field() );
+      ccid = true;
       break;
     case 'G':
-      fields_to_retrieve.push_back( "gridjobid" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::grid_jobid_field() );
+      gid = true;
       break;
     case 'p':
-      fields_to_retrieve.push_back( "userproxy" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::user_proxyfile_field() );
+      pxfile = true;
       break;
     case 'r':
-      fields_to_retrieve.push_back( "creamurl" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::cream_address_field() );
+      curl = true;
       break;
     case 'm':
-      fields_to_retrieve.push_back( "myproxyurl" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::myproxy_address_field() );
+      myurl = true;
       break;
     case 'S':
-      status_pos = fields_to_retrieve.size();
-      fields_to_retrieve.push_back( "status" );
+      //      status_pos = fields_to_retrieve.size();
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::status_field() );
+      status = true;
       break;
     case 'L':
-      fields_to_retrieve.push_back( "leaseid" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::lease_id_field() );
+      lease = true;
       break;
     case 'D':
-      fields_to_retrieve.push_back( "delegationid" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::delegation_id_field() );
+      did = true;
       break;
     case 'w':
-      fields_to_retrieve.push_back( "worker_node" );
+      //      fields_to_retrieve.push_back( glite::wms::ice::util::CreamJob::worker_node_field() );
+      wn = true;
       break;
     case 'v':
       verbose = true;
@@ -182,67 +225,89 @@ int main( int argc, char* argv[] )
   }
 
   
-  iceUtil::iceConfManager::init( conf_file );
+  util::iceConfManager::init( conf_file );
   try{
-    iceUtil::iceConfManager::getInstance();
+    util::iceConfManager::getInstance();
   }
-  catch(iceUtil::ConfigurationManager_ex& ex) {
+  catch(util::ConfigurationManager_ex& ex) {
     cerr << ex.what() << endl;
     exit(1);
   }
 
-  vector< string > _fields_array;
+//   vector< string > _fields_array;
 
-  vector< string > _states_array;
-  boost::split(_states_array, states, boost::is_any_of(","));
+//   vector< string > _states_array;
+//   boost::split(_states_array, states, boost::is_any_of(","));
   
-  list< string > states_array;
-  copy( _states_array.begin(), _states_array.end(), back_inserter( states_array ) );
+//   list< string > states_array;
+//   copy( _states_array.begin(), _states_array.end(), back_inserter( states_array ) );
   
-  list< pair< string, string > > params;
+//   list< pair< string, string > > params;
   
-  for( list< string >::const_iterator it = states_array.begin();
-       it != states_array.end();
-       ++it )
-    {
-      if(!it->empty())
-        params.push_back( make_pair( "status", status_to_numstr(*it) ));
-    }
+//   for( list< string >::const_iterator it = states_array.begin();
+//        it != states_array.end();
+//        ++it )
+//     {
+//       if(!it->empty())
+//         params.push_back( make_pair( "status", status_to_numstr(*it) ));
+//     }
 
-  if( fields_to_retrieve.empty() )
-    {
-      fields_to_retrieve.push_back( "*" );
-    }
-  list< vector< string > > result;
-  db::GetFields getter( fields_to_retrieve, params, result, "queryDb::main" );
-  getter.use_or_clause();
+//   if( fields_to_retrieve.empty() )
+//     {
+//       fields_to_retrieve.push_back( "*" );
+//     }
+  //list< vector< string > > result;
+  list<util::CreamJob> result;
+  //db::GetFields getter( fields_to_retrieve, params, result, "queryDb::main" );
+  db::GetAllJobs getter( &result, 0, 0, "queryDb::main", false );
+  //  getter.use_or_clause();
   db::Transaction tnx(true,false);
-  //tnx.begin( );
   tnx.execute( &getter );
-  //tnx.commit( );
-  //  list< vector< string > > result = getter.get_values();
+  
   if(verbose) {
-    for( list< vector< string > >::const_iterator it=result.begin();
+    for( list< util::CreamJob >::const_iterator it=result.begin();
 	 it != result.end();
 	 ++it)
       {
+	if( curl ) 
+	  cout << "[" << it->cream_address( ) << "]";
+	if( myurl )
+	  cout << "[" << it->myproxy_address( ) << "]";
+	if( status )
+	  cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[it->status( )] << "]";
+	if( ccid )
+	  cout << "[" << it->complete_cream_jobid( ) << "]";
+	if( gid ) 
+	  cout << "[" << it->grid_jobid( ) << "]";
+	if(seq_code)
+	  cout << "[" << it->sequence_code( ) << "]";
+	if( lease )
+	  cout << "[" << it->lease_id( ) << "]";
+	if( did )
+	  cout << "[" << it->delegation_id( ) << "]";
+	if( jdl )
+	  cout << "[" << it->jdl( ) << "]";
+	if( modif_jdl )
+	  cout << "[" << it->modified_jdl( ) << "]";
+	if( userdn )
+	  cout << "[" << it->user_dn( ) << "]" ;
+	if( pxfile )
+	  cout << "[" << it->user_proxyfile( ) << "]" ;
+	
 
-	for(unsigned int counter = 0;
-	    counter < it->size();
-	    counter++)
-	  {
-	    if(counter == status_pos)
-	      cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[atoi(it->at(counter).c_str())] << "] ";
-	    else
-	      cout << "[" << it->at(counter) << "] ";
-	  }
-
-// 	for( vector< string >::const_iterator jt=it->begin();
-// 	     jt != it->end();
-// 	     ++jt)
+// 	for(unsigned int counter = 0;
+// 	    counter < 30;
+// 	    counter++)
 // 	  {
-// 	    cout << "[" << *jt << "] ";
+// 	    if(counter == status_pos)
+// 	      cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[ it->status()/*atoi(it->at(counter).c_str())*/ ] << "] ";
+// 	    else {
+	      
+
+// 	      //cout << "[" << it->at(counter) << "] ";
+// 	    }
 // 	  }
+
 	cout << endl;
       }
     cout << endl << "------------------------------------------------" << endl;

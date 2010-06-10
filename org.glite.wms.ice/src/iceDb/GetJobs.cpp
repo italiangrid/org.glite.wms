@@ -37,43 +37,45 @@ namespace { // begin local namespace
     
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=27; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
+      for(int i = 0; i<=util::CreamJob::num_of_members()-1; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else
 	  fields.push_back( "" );
       }
 
-      util::CreamJob tmpJob(fields.at(0),
-		      fields.at(1),
-		      fields.at(2),
-		      fields.at(3),
-		      fields.at(4),
-		      fields.at(5),
-		      fields.at(6),
-		      fields.at(7),
-		      fields.at(8),
-		      fields.at(9),
-		      fields.at(10),
-		      fields.at(11),
-		      fields.at(12),
-		      fields.at(13),
-		      fields.at(14),
-		      fields.at(15),
-		      fields.at(16),
-		      fields.at(17),
-		      fields.at(18),
-		      fields.at(19),
-		      fields.at(20),
-		      fields.at(21),
-		      fields.at(22),
-		      fields.at(23),
-		      fields.at(24),
-		      fields.at(25),
-		      fields.at(26),
-		      fields.at(27)
-		      );
-      
+      CreamJob tmpJob(fields.at(0),
+                      fields.at(1),
+                      fields.at(2),
+                      fields.at(3),
+                      fields.at(4),
+                      fields.at(5),
+                      fields.at(6),
+                      fields.at(7),
+                      fields.at(8),
+                      fields.at(9),
+                      fields.at(10),
+                      fields.at(11),
+                      fields.at(12),
+                      (const api::job_statuses::job_status)atoi(fields.at(13).c_str()),
+                      (const api::job_statuses::job_status)atoi(fields.at(14).c_str()),
+                      strtoul(fields.at(15).c_str(), 0, 10),
+                      (time_t)strtoll(fields.at(16).c_str(), 0, 10),
+                      fields.at(17),
+                      strtoul(fields.at(18).c_str(), 0, 10),
+                      strtoul(fields.at(19).c_str(), 0, 10),
+                      fields.at(20),
+                      fields.at(21),
+                      (fields.at(22)=="1" ? true : false),
+                      (time_t)strtoll(fields.at(23).c_str(), 0, 10),
+                      (fields.at(24) == "1" ? true : false ),
+                      fields.at(25),
+                      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
+                      fields.at(27),
+                      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
+                      strtoull(fields.at(29).c_str(), 0, 10)
+                      );
+      tmpJob.set_retrieved_from_db( );      
       jobs->push_back( tmpJob );
     }
 
@@ -84,42 +86,42 @@ namespace { // begin local namespace
 
 void db::GetJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd;
 
-  sqlcmd << "SELECT * FROM jobs";
+  sqlcmd = "SELECT * FROM jobs";
 
   if( !m_clause.empty() ) {
     
-    sqlcmd << " WHERE ";
+    sqlcmd += " WHERE ";
     
     for( list< pair<string, string> >::const_iterator it=m_clause.begin();
 	 it != m_clause.end();
 	 ++it)
       {
 
-	sqlcmd << it->first 
-	       << "="
-	       << Ice::get_tmp_name() 
-	       << it->second 
-	       << Ice::get_tmp_name() << " " ;
+	sqlcmd += it->first 
+	       + "="
+	       + Ice::get_tmp_name() 
+	       + it->second 
+	       + Ice::get_tmp_name() + " " ;
 	
 	if(m_use_or)
-	  sqlcmd << " OR ";
+	  sqlcmd + " OR ";
 	else
-	  sqlcmd << " AND ";
+	  sqlcmd + " AND ";
       }
     
-    string tmp = sqlcmd.str();
+    string tmp = sqlcmd;
     if( !tmp.empty() )
       tmp = tmp.substr(0, tmp.length()-4); // remove the trailing ","
     
-    sqlcmd.str( "" );
-    sqlcmd << tmp << ";";
+    sqlcmd = "";
+    sqlcmd = tmp + ";";
     
   } else {
-    sqlcmd << ";";
+    sqlcmd += ";";
   }
   
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, fetch_jobs_callback, m_result );
 
 }

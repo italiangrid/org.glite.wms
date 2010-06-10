@@ -18,7 +18,7 @@ limitations under the License.
 
 END LICENSE */
 
-#include "Delegation_manager.h"
+#include "DelegationManager.h"
 #include "DNProxyManager.h"
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -44,17 +44,17 @@ END LICENSE */
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
-using namespace glite::wms::ice::util;
+using namespace glite::wms::ice;
 using namespace std;
 
-Delegation_manager* Delegation_manager::s_instance = 0;
-boost::recursive_mutex Delegation_manager::s_mutex;
+util::Delegation_manager* util::Delegation_manager::s_instance = 0;
+boost::recursive_mutex util::Delegation_manager::s_mutex;
 
 typedef map<string, boost::tuple<string, string, time_t, int, string,bool,string> > DelegInfo;
 
 
 //______________________________________________________________________________
-Delegation_manager::Delegation_manager( ) :
+util::Delegation_manager::Delegation_manager( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
     m_max_size( 1000 ), // FIXME: Hardcoded default
@@ -63,7 +63,7 @@ Delegation_manager::Delegation_manager( ) :
 }
 
 //______________________________________________________________________________
-Delegation_manager* Delegation_manager::instance( ) 
+util::Delegation_manager* util::Delegation_manager::instance( ) 
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
     if ( 0 == s_instance ) 
@@ -73,7 +73,7 @@ Delegation_manager* Delegation_manager::instance( )
 
 //______________________________________________________________________________
 string 
-Delegation_manager::delegate( const CreamJob& job, 
+util::Delegation_manager::delegate( const CreamJob& job, 
 			      const bool USE_NEW,
 			      bool force ) 
   throw( std::exception& )
@@ -87,26 +87,26 @@ Delegation_manager::delegate( const CreamJob& job,
 		      << "WARNING: force_delegation is set to TRUE." 
 		      );  
 
-    string myproxy_address = job.get_myproxy_address();
+    string myproxy_address = job.myproxy_address();
 
     
     string delegation_id; // delegation ID to return as a result
 
     
-    const string cream_url( job.get_creamurl() );
-    const string cream_deleg_url( job.get_cream_delegurl() );
+    const string cream_url( job.cream_address() );
+    const string cream_deleg_url( job.cream_deleg_address() );
     string str_sha1_digest;
 
     if(USE_NEW) {
       CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << method_name
 		      << "Using new delegation method, DNFQAN=[" 
-		      << job.get_user_dn() << "]"
+		      << job.user_dn() << "]"
 		      );  
-      str_sha1_digest = job.get_user_dn();
+      str_sha1_digest = job.user_dn();
     }
     else {
-      str_sha1_digest = computeSHA1Digest( job.get_user_proxy_certificate() );
+      str_sha1_digest = utilities::computeSHA1Digest( job.user_proxyfile() );
     }
 
     
@@ -150,9 +150,9 @@ Delegation_manager::delegate( const CreamJob& job,
         // Delegation id not found (or force). Performs a new delegation   
 
         // The delegation ID is the "canonized" GRID job id
-      delegation_id   = canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
-      expiration_time = job.get_isbproxy_time_end(); 
-      duration        = job.get_isbproxy_time_end() - time(0);
+      delegation_id   = utilities::canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
+      expiration_time = job.isbproxy_time_end(); 
+      duration        = job.isbproxy_time_end() - time(0);
       
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -164,18 +164,18 @@ Delegation_manager::delegate( const CreamJob& job,
                         << "] Delegation URL ["
                         << cream_deleg_url
                         << "] user DN ["
-                        << job.get_user_dn()
+                        << job.user_dn()
                         << "] proxy hash ["
                         << str_sha1_digest
 			<< "] MyProxy Server ["
 			<< myproxy_address << "] Expiring on [" 
-			<< time_t_to_string( expiration_time ) << "]"
+			<< utilities::time_t_to_string( expiration_time ) << "]"
                          );
         
         try {
 	  // Gets the proxy expiration time
 	  //expiration_time = V.getProxyTimeEnd( );
-	  string certfile( job.get_user_proxy_certificate() );
+	  string certfile( job.user_proxyfile() );
 	  CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
         } catch( exception& ex ) {
 	  // Delegation failed
@@ -189,7 +189,7 @@ Delegation_manager::delegate( const CreamJob& job,
 			  << "] Delegation URL ["
 			  << cream_deleg_url
 			  << "] user DN ["
-			  << job.get_user_dn()
+			  << job.user_dn()
 			  << "] proxy hash ["
 			  << str_sha1_digest
 			  << "] MyProxy Server ["
@@ -209,7 +209,7 @@ Delegation_manager::delegate( const CreamJob& job,
                             << "] Delegation URL ["
                             << cream_deleg_url
                             << "] user DN ["
-                            << job.get_user_dn()
+                            << job.user_dn()
                             << "] proxy hash ["
                             << str_sha1_digest << "]"
 			    << " MyProxy Server ["
@@ -227,7 +227,7 @@ Delegation_manager::delegate( const CreamJob& job,
 					expiration_time, 
 					duration, 
 					delegation_id, 
-					job.get_user_dn(), 
+					job.user_dn(), 
 					USE_NEW, 
 					myproxy_address,
 					method_name);
@@ -266,7 +266,7 @@ Delegation_manager::delegate( const CreamJob& job,
                         << "] Delegation URL ["
                         << cream_deleg_url
                         << "] user DN ["
-                        << job.get_user_dn() <<"] MyProxy Server ["
+                        << job.user_dn() <<"] MyProxy Server ["
 			<< myproxy_address << "]"
                          );
     }
@@ -280,7 +280,7 @@ Delegation_manager::delegate( const CreamJob& job,
 
 //______________________________________________________________________________
 void 
-Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg )
+util::Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg )
   throw( std::exception& )
 {
   const char* method_name = "Delegation_manager::updateDelegation() - ";
@@ -308,7 +308,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 		      << "Old Delegation was: ID=[" 
 		      << tb.m_delegation_id << "] user_dn=["
 		      << tb.m_user_dn << "] expiration time=["
-		      << time_t_to_string(tb.m_expiration_time) << "] CEUrl=["
+		      << utilities::time_t_to_string(tb.m_expiration_time) << "] CEUrl=["
 		      << tb.m_cream_url << "]"
 		      );
       
@@ -317,7 +317,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 		      << "New Delegation id: ID=[" 
 		      << tb.m_delegation_id << "] user_dn=["
 		      << tb.m_user_dn << "] expiration time=["
-		      << time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
+		      << utilities::time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
 		      << tb.m_cream_url << "]"
 		      );
       try {
@@ -333,7 +333,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 }
 
 //______________________________________________________________________________
-void Delegation_manager::removeDelegation( const string& delegToRemove )
+void util::Delegation_manager::removeDelegation( const string& delegToRemove )
   throw( std::exception& )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
@@ -356,7 +356,7 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::removeDelegation( const string& userDN, 
+void util::Delegation_manager::removeDelegation( const string& userDN, 
 					   const string& myproxyurl )
   throw( std::exception& )
 {
@@ -381,7 +381,7 @@ void Delegation_manager::removeDelegation( const string& userDN,
 }
 
 //______________________________________________________________________________
-int Delegation_manager::getDelegationEntries( vector< table_entry >& target, 
+int util::Delegation_manager::getDelegationEntries( vector< table_entry >& target, 
 					      const bool only_renewable )
   throw( std::exception& )
 {
@@ -410,7 +410,7 @@ int Delegation_manager::getDelegationEntries( vector< table_entry >& target,
 }
 
 //----------------------------------------------------------------------------
-void Delegation_manager::redelegate( const string& certfile, 
+void util::Delegation_manager::redelegate( const string& certfile, 
                                      const string& delegation_url,
                                      const string& delegation_id )
   throw( std::exception& )
@@ -470,8 +470,8 @@ void Delegation_manager::redelegate( const string& certfile,
 }
 
 //----------------------------------------------------------------------------
-Delegation_manager::table_entry
-Delegation_manager::getDelegation( const string& userdn, 
+util::Delegation_manager::table_entry
+util::Delegation_manager::getDelegation( const string& userdn, 
 				   const string& ceurl, 
 				   const string& myproxy ) 
   throw( std::exception& )
@@ -498,14 +498,14 @@ Delegation_manager::getDelegation( const string& userdn,
 
 
 //----------------------------------------------------------------------------
-string Delegation_manager::generateDelegationID( ) throw()
+string util::Delegation_manager::generateDelegationID( ) throw()
 {
   struct timeval T;
   ::gettimeofday( &T, 0 );
 
-  
-
-  ostringstream id;
-  id << T.tv_sec << "." << T.tv_usec << getHostName();
-  return id.str();
+  //  ostringstream id;
+  string id = util::utilities::to_string( T.tv_sec ) + "." + util::utilities::to_string(T.tv_usec) + utilities::getHostName();
+  //id << T.tv_sec << "." << T.tv_usec << getHostName();
+  //return id.str();
+  return id;
 }

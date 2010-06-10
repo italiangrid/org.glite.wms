@@ -19,30 +19,27 @@ limitations under the License.
 END LICENSE */
 
 #include "InsertStat.h"
+#include "iceUtils.h"
 #include "ice-core.h"
-
-#include <sstream>
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::InsertStat::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd("");
+  string sqlcmd;
 
-  sqlcmd << "INSERT INTO stats (" 
-	 << "timestamp,ce_timestamp,status"
-         << " ) VALUES ("
-	 << Ice::get_tmp_name()
-	 << m_timestamp 
-	 << Ice::get_tmp_name() << ", "
-	 << Ice::get_tmp_name() 
-	 << m_ce_timestamp 
-	 << Ice::get_tmp_name() << ", "
-	 << Ice::get_tmp_name() 
-	 << m_status 
-	 << Ice::get_tmp_name()
-	 << ");";
+  sqlcmd += "INSERT INTO stats (timestamp,ce_timestamp,status) VALUES (" 
+	 + Ice::get_tmp_name()
+	 +  util::utilities::to_string( (unsigned long long int)m_timestamp  )
+	 + Ice::get_tmp_name() + ", "
+	 + Ice::get_tmp_name() 
+	 + util::utilities::to_string( (unsigned long long int)m_ce_timestamp )
+	 + Ice::get_tmp_name() + ", "
+	 + Ice::get_tmp_name() 
+	 + util::utilities::to_string( (unsigned long int)m_status )
+	 + Ice::get_tmp_name()
+	 + ");";
 
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

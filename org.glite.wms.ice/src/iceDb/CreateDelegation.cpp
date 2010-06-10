@@ -20,60 +20,52 @@ END LICENSE */
 
 #include "CreateDelegation.h"
 #include "ice-core.h"
-
-#include <sstream>
+#include "iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd("");
+  string sqlcmd;
 
-//   string dig( m_digest );
-//   boost::replace_all( dig, "'", "''" );
-  
-//   string did( m_delegid );
-//   boost::replace_all( did, "'", "''" );
-  
-//   string dn( m_userdn );
-//   boost::replace_all( dn, "'", "''" );
 
-  sqlcmd << "INSERT INTO delegation (" 
-	 << "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl"
-         << " ) VALUES ("
-	 << Ice::get_tmp_name()
-	 << m_digest 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_creamurl
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_exptime 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_duration 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_delegid 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << ( m_renewable ? "1" : "0" ) 
-	 << Ice::get_tmp_name()
-	 << ","
-	 << Ice::get_tmp_name()
-	 << m_myproxyurl 
-	 << Ice::get_tmp_name()
-	 << ");";
 
-  do_query( db, sqlcmd.str() );
+  sqlcmd = string("INSERT INTO delegation (")
+	 + "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl"
+         + " ) VALUES ("
+	 + Ice::get_tmp_name()
+	 + m_digest 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_creamurl
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((long int)m_exptime) 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((long int)m_duration )
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_delegid 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_userdn 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + ( m_renewable ? "1" : "0" ) 
+	 + Ice::get_tmp_name()
+	 + ","
+	 + Ice::get_tmp_name()
+	 + m_myproxyurl 
+	 + Ice::get_tmp_name()
+	 + ");";
+
+  do_query( db, sqlcmd );
 }

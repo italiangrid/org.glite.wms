@@ -17,25 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 END LICENSE */
-#include "RemoveDelegationByDNMyProxy.h"
-#include "ice-core.h"
 
-using namespace glite::wms::ice;
-using namespace std;
+/**
+ *
+ * ICE Headers
+ *
+ */
+#include "CreamJob.h"
 
-//______________________________________________________________________________
-void db::RemoveDelegationByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
-{
-  string sqlcmd;
-  sqlcmd += "DELETE FROM delegation WHERE userdn="
-	 + Ice::get_tmp_name()
-	 + m_userdn
-	 + Ice::get_tmp_name()
-	 + " AND myproxyurl="
-	 + Ice::get_tmp_name()
-	 + m_myproxy
-	 + Ice::get_tmp_name()
-	 + ";";
-
-  do_query( db, sqlcmd );
-}
+boost::recursive_mutex  glite::wms::ice::util::CreamJob::s_classad_mutex;

@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 // ICE stuff
 #include "eventStatusListener.h"
-#include "subscriptionManager.h"
+//#include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "ice-core.h"
@@ -60,7 +60,7 @@ using namespace std;
 void eventStatusListener::createObject( void )
 {
     try {
-        m_myname = getHostName( );
+        m_myname = utilities::getHostName( );
     } catch( runtime_error& ex ) {
         m_isOK = false;
         return;
@@ -206,7 +206,7 @@ void eventStatusListener::acceptJobStatus(void)
 		       << this->getClientName() << "]"
 		       );
       
-      if( !subscriptionManager::getInstance()->isAuthorized( dn ) ) {
+      /*if( !subscriptionManager::getInstance()->isAuthorized( dn ) ) {
 	if(!getenv("NO_LISTENER_MESS"))
 	  CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			 << "eventStatusListener::acceptJobStatus() - "
@@ -214,7 +214,7 @@ void eventStatusListener::acceptJobStatus(void)
 			 << " subscriptionManager. Cannot authorize this notification. Ignoring it..." 
 			 );
 	return;
-      }
+      }*/
     }
     
     /**

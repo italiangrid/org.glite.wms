@@ -19,6 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetAllProxyByDN.h"
+#include "CreamJob.h"
 #include "ice-core.h"
 
 using namespace glite::wms::ice;
@@ -40,23 +41,25 @@ namespace { // begin local namespace
 
 void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
+  string sqlcmd;
   
   if( m_all )
-    sqlcmd << "SELECT userproxy FROM jobs;";
+    sqlcmd = "SELECT " + util::CreamJob::user_proxyfile_field( ) + " FROM jobs;";
   else {
   
     if( m_proxy_renewable )
-      sqlcmd << "SELECT userproxy FROM jobs WHERE proxy_renewable="
-	     << Ice::get_tmp_name()
-	     << "1"
-	     << Ice::get_tmp_name() << ";" ;
+      sqlcmd = string("SELECT ") + util::CreamJob::user_proxyfile_field( ) 
+             + " FROM jobs WHERE " + util::CreamJob::proxy_renewable_field() + "="
+	     + Ice::get_tmp_name()
+	     + "1"
+	     + Ice::get_tmp_name() + ";" ;
     else
-      sqlcmd << "SELECT userproxy FROM jobs WHERE proxy_renewable="
-	     << Ice::get_tmp_name()
-	     << "0"
-	     << Ice::get_tmp_name() << ";" ;
+      sqlcmd = string("SELECT ") + util::CreamJob::user_proxyfile_field( ) 
+             + " FROM jobs WHERE " + util::CreamJob::proxy_renewable_field( ) + "="
+	     + Ice::get_tmp_name()
+	     + "0"
+	     + Ice::get_tmp_name() + ";" ;
   }
   
-  do_query( db, sqlcmd.str(), fetch_proxy_job_id_callback, &m_result );
+  do_query( db, sqlcmd, fetch_proxy_job_id_callback, &m_result );
 }

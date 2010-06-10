@@ -19,20 +19,20 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveJobsByDbID.h"
+#include "CreamJob.h"
 #include "ice-core.h"
-#include <sstream>
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::RemoveJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-  sqlcmd << "DELETE FROM jobs "
-	 << " WHERE dbid = " 
-	 << Ice::get_tmp_name()
-	 << m_dbid 
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd;
+  sqlcmd = string("DELETE FROM jobs ")
+	 + " WHERE " + util::CreamJob::cream_dbid_field() + "=" 
+	 + Ice::get_tmp_name()
+	 + util::utilities::to_string((unsigned long long int)m_dbid) 
+	 + Ice::get_tmp_name() + ";";
   
-  do_query( db, sqlcmd.str().c_str() );
+  do_query( db, sqlcmd );
 }

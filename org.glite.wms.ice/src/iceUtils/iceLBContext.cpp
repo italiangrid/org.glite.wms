@@ -136,7 +136,7 @@ iceLBContext::iceLBContext( void ) :
 
     try {
       if( s_localHostName.empty() ) {
-        el_s_localhost_name = getHostName();  
+        el_s_localhost_name = utilities::getHostName();  
         s_localHostName = el_s_localhost_name;
       } else {
         el_s_localhost_name = s_localHostName;
@@ -312,7 +312,7 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
 void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
 {
     static const char* method_name = "iceLBContext::setLoggingJob - ";
-    string _gid( theJob.get_grid_jobid() );
+    string _gid( theJob.grid_jobid() );
     edg_wlc_JobId   id;
     int res = 0;
 
@@ -330,17 +330,17 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
     if ( lbserver ) free( lbserver );
 
-    boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.get_user_dn());
+    boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.user_dn());
 
-    if ( !theJob.get_sequence_code().empty() ) {
+    if ( !theJob.sequence_code().empty() ) {
       if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy()) {
 //#ifdef GLITE_WMS_HAVE_LBPROXY
         string const user_dn( get_proxy_subject( result.get<0>()) );
 
-        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.get_sequence_code().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
+        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.sequence_code().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
       } else 
 //#else
-        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.get_sequence_code().c_str(), EDG_WLL_SEQ_NORMAL );
+        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.sequence_code().c_str(), EDG_WLL_SEQ_NORMAL );
 //#endif
     }
 

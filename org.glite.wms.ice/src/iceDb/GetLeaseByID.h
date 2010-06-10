@@ -24,7 +24,7 @@ END LICENSE */
 #include "AbsDbOperation.h"
 #include <string>
 #include <ctime>
-#include "iceUtils/Lease_manager.h"
+#include "iceUtils/LeaseManager.h"
 
 namespace glite {
   namespace wms {

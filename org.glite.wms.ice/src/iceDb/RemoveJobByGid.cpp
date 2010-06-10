@@ -19,25 +19,20 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveJobByGid.h"
+#include "CreamJob.h"
 #include "ice-core.h"
-
-#include <sstream>
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
-  sqlcmd << "DELETE FROM jobs WHERE gridjobid="
-	 << Ice::get_tmp_name()
-	 << m_gridjobid
-	 << Ice::get_tmp_name()
-	 << ";";
+  string sqlcmd;
+  sqlcmd += "DELETE FROM jobs WHERE " + util::CreamJob::grid_jobid_field() + "="
+	 + Ice::get_tmp_name()
+	 + m_gridjobid
+	 + Ice::get_tmp_name()
+	 + ";";
   
-//     string sqlcmd = boost::str( boost::format( 
-//       "DELETE FROM jobs " 
-//       " WHERE gridjobid = \'%1%\'; " ) % m_gridjobid );
-  
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

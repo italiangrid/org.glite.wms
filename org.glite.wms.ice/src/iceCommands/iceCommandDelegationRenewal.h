@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICECOMMANDDELEGRENEWAL_H
 
 #include "iceAbsCommand.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 #include <boost/scoped_ptr.hpp>
 
 #include "glite/security/proxyrenewal/renewal_core.h"

@@ -25,8 +25,7 @@ END LICENSE */
 #ifndef ICELBLOGGER_H
 #define ICELBLOGGER_H
 
-//#include "boost/thread/recursive_mutex.hpp"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 // Forward declaration
 namespace log4cpp {

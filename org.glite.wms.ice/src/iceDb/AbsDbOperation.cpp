@@ -52,12 +52,6 @@ void db::AbsDbOperation::do_query( sqlite3* db, const string& _sqlcmd, sqlite_ca
 			<< get_caller()
 			<< "] is executing query ["
 			<< encoded_sql << "]");
-//       cout << "CALLER=[" 
-// 	   << get_caller() 
-// 	   << "] is executing query ["
-// 	   <<encoded_sql
-// 	   <<"]"
-// 	   <<endl;
 
     while(1) {
       int rc = sqlite3_exec(db, encoded_sql.c_str(), callback, param, &errMsg);

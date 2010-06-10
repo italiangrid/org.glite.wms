@@ -20,14 +20,9 @@ END LICENSE */
 
 
 #include "ice-core.h"
-#include "iceCommandLeaseUpdater.h"
 #include "iceConfManager.h"
-#include "subscriptionManager.h"
-#include "subscriptionManager.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-#include "eventStatusListener.h"
-#include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
@@ -40,7 +35,7 @@ END LICENSE */
 #include "Request.h"
 #include "DNProxyManager.h"
 #include "iceUtils.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 #include "iceDb/GetJobsToPoll.h"
 #include "iceDb/GetFieldsCount.h"
@@ -83,13 +78,13 @@ END LICENSE */
 using namespace std;
 using namespace glite::wms::ice;
 
-namespace ice_util = glite::wms::ice::util;
+//namespace ice_util = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace config_ns = glite::wms::common::configuration;
 
 Ice                     *Ice::s_instance = 0;
-boost::recursive_mutex  Ice::ClassAd_Mutex;
+//boost::recursive_mutex  Ice::ClassAd_Mutex;
 boost::recursive_mutex  Ice::s_mutex;
 boost::recursive_mutex  Ice::s_mutex_tmpname;
 string                  Ice::s_tmpname = "";
@@ -192,17 +187,18 @@ Ice::get_tmp_name( void )
   boost::recursive_mutex::scoped_lock M( Ice::s_mutex_tmpname );
   if( s_tmpname.empty() ) {
       	    char *ptr = ::tmpnam( 0 );
-	    ostringstream tmp;
-	    tmp<< "START_GLITEWMSICE_SQL_STRING_TAG_";
+	    //	    ostringstream tmp;
+	    string tmp = "START_GLITEWMSICE_SQL_STRING_TAG_";
+	    //tmp<< "START_GLITEWMSICE_SQL_STRING_TAG_";
 	    if(ptr)
-	      tmp << ptr;
+	      tmp += util::utilities::to_string( (long long) ptr );
 
 	    struct timeval T;
 	    gettimeofday( &T, 0 );
 	    
-	    tmp << "_" << T.tv_sec << "_" << T.tv_usec;
+	    tmp += "_" + util::utilities::to_string(T.tv_sec) + "_" + util::utilities::to_string( T.tv_usec );
 	    
-	    s_tmpname = tmp.str();
+	    s_tmpname = tmp;
 
 	    boost::replace_all( s_tmpname, "'", "_" );
   }
@@ -220,10 +216,10 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_job_killer_thread( "Job Killer" ),
     m_wms_input_queue( util::Request_source_factory::make_source_input_wm() ),
     m_ice_input_queue( util::Request_source_factory::make_source_input_ice() ),
-    m_reqnum(ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads()),
+    m_reqnum(util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads()),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-    m_lb_logger( ice_util::iceLBLogger::instance() ),
-    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
+    m_lb_logger( util::iceLBLogger::instance() ),
+    m_configuration( util::iceConfManager::getInstance()->getConfiguration() )
 {
   /**
      Must check if ICE is starting from scratch. In that case all Event
@@ -233,7 +229,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
   bool db_empty = false;
   {
     list<string> fields;
-    fields.push_back( "gridjobid" );
+    fields.push_back( util::CreamJob::grid_jobid_field( ) );
     db::GetFieldsCount counter( fields, list<pair<string, string> >(), "Ice::Ice");
     db::Transaction tnx(false, false);
     tnx.execute( &counter );
@@ -248,10 +244,6 @@ Ice::Ice( ) throw(iceInit_ex&) :
   if(m_reqnum < 5) m_reqnum = 5;
    int thread_num = m_configuration->ice()->max_ice_threads();
    if(thread_num<1) thread_num=1;
-//    if(thread_num >= 4)
-//      thread_num_commands = thread_num/2;
-//    else
-//      thread_num_commands = 2;
 
    int poll_tnum = 0;
    if(thread_num >=2)
@@ -278,7 +270,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
     }
 
     try {
-      m_myname = ice_util::getHostName();
+      m_myname = util::utilities::getHostName();
     } catch( runtime_error& ex ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
                         << "Ice::CTOR() - Couldn't determine hostname: ["
@@ -337,13 +329,13 @@ void Ice::init( void )
       it != allJobs.end();
       ++it)
     {
-      resubmit_or_purge_job( /*thisJob*/ *it );
+      resubmit_or_purge_job( /*thisJob*/ &(*it) );
     }
    
-  if(m_configuration->ice()->start_lease_updater() ) {
+  /*if(m_configuration->ice()->start_lease_updater() ) {
     util::iceCommandLeaseUpdater l( true );
     l.execute( "" );
-  }
+  }*/
   //util::iceCommandStatusPoller p( this, true );
   //p.execute( );	
 }
@@ -390,10 +382,10 @@ void Ice::startListener( void )
      */
     { 
       //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-      util::subscriptionManager::getInstance();
+      //util::subscriptionManager::getInstance();
     }
     
-    util::eventStatusListener* listener;
+/*    util::eventStatusListener* listener;
     if( m_configuration->ice()->listener_enable_authn() ) {
 
         if( m_configuration->ice()->ice_host_cert().empty() ||
@@ -474,11 +466,7 @@ void Ice::startListener( void )
     
     m_listener_thread.start( listener );
     
-    // Starts the subscription updater
-    if( m_configuration->ice()->start_subscription_updater() ) {
-        util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( );      
-        m_updater_thread.start( subs_updater );
-    }
+*/
 }
 
 //____________________________________________________________________________
@@ -505,7 +493,7 @@ void Ice::startPoller( void )
 }
 
 //----------------------------------------------------------------------------
-void Ice::startLeaseUpdater( void ) 
+/*void Ice::startLeaseUpdater( void ) 
 {
     if ( !m_configuration->ice()->start_lease_updater() ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
@@ -519,7 +507,7 @@ void Ice::startLeaseUpdater( void )
     util::leaseUpdater* lease_updater = new util::leaseUpdater( );
     m_lease_updater_thread.start( lease_updater );
 }
-
+*/
 //-----------------------------------------------------------------------------
 void Ice::startProxyRenewer( void ) 
 {
@@ -604,7 +592,7 @@ bool Ice::is_job_killer_started( void ) const
 }
 
 //____________________________________________________________________________
-void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) throw()
+void Ice::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
 {
 
   //  string isbproxy( the_job.getUserProxyCertificate() );
@@ -617,29 +605,30 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
      return;
   }
 
-  cream_api::soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
+  cream_api::soap_proxy::VOMSWrapper V( the_job->user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
   if( !V.IsValid( ) ) {
     //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
 		    << "Ice::resubmit_job() - Will NOT resubmit job ["
-		    << the_job.describe() << "] " 
+		    << the_job->describe() << "] " 
 		    << "because it's Input Sandbox proxy file is not valid: "
 		    << V.getErrorMessage()
 		    );
 
-    the_job.set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
-    m_lb_logger->logEvent( new ice_util::job_aborted_event( the_job ) );
+    the_job->set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
+    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ) );
 
     return;
   }
-
+    util::CreamJob _the_job(*the_job);
     try {
-      //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+      //boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
       boost::recursive_mutex::scoped_lock M( /*ice_util::CreamJob::s_GlobalICEMutex*/ s_mutex );
         
-        the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
+	
+        _the_job = m_lb_logger->logEvent( new util::ice_resubmission_event( _the_job, reason ) );
         
-        the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_wms_input_queue->get_name() ) );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_start_event( _the_job, m_wms_input_queue->get_name() ) );
         
 	string resub_request;
 
@@ -647,15 +636,15 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 	{ /**
 	   * ClassAd-mutex protected region
 	   */
-	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+	  boost::recursive_mutex::scoped_lock M_classad( util::CreamJob::s_classad_mutex );
 	  
 	  classad::ClassAd command;
 	  classad::ClassAd arguments;
 	  
 	  command.InsertAttr( "version", string("1.0.0") );
 	  command.InsertAttr( "command", string("jobresubmit") );
-	  arguments.InsertAttr( "id", the_job.get_grid_jobid() );
-	  arguments.InsertAttr( "lb_sequence_code", the_job.get_sequence_code() );
+	  arguments.InsertAttr( "id", _the_job.grid_jobid() );
+	  arguments.InsertAttr( "lb_sequence_code", _the_job.sequence_code() );
 	  command.Insert( "arguments", arguments.Copy() );
 	  
 	  classad::ClassAdUnParser unparser;
@@ -670,29 +659,29 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
                        );
 
         m_wms_input_queue->put_request( resub_request );
-        the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_wms_input_queue->get_name() ) );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_ok_event( _the_job, m_wms_input_queue->get_name() ) );
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() 
 			<< "Ice::resubmit_job() - "
                         << ex.what() 
                          );
 
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( the_job, m_wms_input_queue->get_name(), ex.what() ) );
-	the_job.set_failure_reason( string("resubmission failed: ") + ex.what() );
-	m_lb_logger->logEvent( new ice_util::job_aborted_event( the_job ) );
+        m_lb_logger->logEvent( new util::ns_enqueued_fail_event( _the_job, m_wms_input_queue->get_name(), ex.what() ) );
+	_the_job.set_failure_reason( string("resubmission failed: ") + ex.what() );
+	m_lb_logger->logEvent( new util::job_aborted_event( _the_job ) );
     }
 }
 
 //----------------------------------------------------------------------------
 //ice_util::jobCache::iterator
-void Ice::purge_job( const util::CreamJob& theJob , 
+void Ice::purge_job( const util::CreamJob* theJob , 
 		     const string& reason )
   throw() 
 {
     static const char* method_name = "Ice::purge_job() - ";
 
-    string jobdesc( theJob.describe() );
-    string _gid(  theJob.get_grid_jobid() );
+    string jobdesc( theJob->describe() );
+    string _gid(  theJob->grid_jobid() );
 
     {
       db::CheckGridJobID checker( _gid, "Ice::purge_job" );
@@ -713,28 +702,21 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 		     << "JobPurge is DISABLED, will not Purge job ["
 		     << jobdesc << "]."
 		     );
-//       if(theJob.is_proxy_renewable())
-// 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
-//       {
-// 	db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
-// 	db::Transaction tnx(false, false);
-// 	tnx.execute( &remover );
-//       }
       return;
     }
       
     vector<cream_api::soap_proxy::JobIdWrapper> target;
     cream_api::soap_proxy::ResultWrapper result;
 
-    target.push_back(cream_api::soap_proxy::JobIdWrapper (theJob.get_cream_jobid(), 
-							  theJob.get_creamurl(), 
+    target.push_back(cream_api::soap_proxy::JobIdWrapper (theJob->cream_jobid(), 
+							  theJob->cream_address( ), 
 							  std::vector<cream_api::soap_proxy::JobPropertyWrapper>()
 							  ));
     
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
     // Gets the proxy to use for authentication
-    string better_proxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
+    string better_proxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob->user_dn() ).get<0>();
 
     if( better_proxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
@@ -744,7 +726,7 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 		      << "]. Using the Job's proxy." 
 		      );
 
-      better_proxy = theJob.get_user_proxy_certificate();
+      better_proxy = theJob->user_proxyfile();
     }
     
     cream_api::soap_proxy::VOMSWrapper V( better_proxy,  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
@@ -775,7 +757,7 @@ void Ice::purge_job( const util::CreamJob& theJob ,
       // vector because we must authenticate different
       // jobs with different user certificates.
       
-      glite::wms::ice::util::CreamProxy_Purge( theJob.get_creamurl(), 
+      glite::wms::ice::util::CreamProxy_Purge( theJob->cream_address(), 
 					       better_proxy,
 					       &filter, 
 					       &result ).execute( 3 );
@@ -810,7 +792,7 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 	return;// jit;
       }
       
-    } catch (ice_util::ClassadSyntax_ex& ex) {
+    } catch ( util::ClassadSyntax_ex& ex ) {
       /**
        * this exception should not be raised because
        * the CreamJob is created from another valid one
@@ -870,9 +852,9 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 
 
 //____________________________________________________________________________
-void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
+void Ice::deregister_proxy_renewal( const util::CreamJob* job ) throw()
 {
-  string jobdesc( job.describe() );
+  string jobdesc( job->describe() );
     if ( !::getenv( "ICE_DISABLE_DEREGISTER") ) {
         // must deregister proxy renewal
         int      err = 0;
@@ -884,7 +866,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                        << jobdesc << "]"
                        );
         
-        err = glite_renewal_UnregisterProxy( job.get_grid_jobid().c_str(), NULL );
+        err = glite_renewal_UnregisterProxy( job->grid_jobid().c_str(), NULL );
         
         if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
 	    const char* errmex = edg_wlpr_GetErrorText(err);
@@ -919,10 +901,10 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 
 
 //____________________________________________________________________________
-void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
+void Ice::purge_wms_storage( const util::CreamJob* job ) throw()
 {
 
-  string jobdesc( job.describe() );
+  string jobdesc( job->describe() );
     if ( !::getenv( "ICE_DISABLE_PURGER" ) ) {
         try {
             CREAM_SAFE_LOG(
@@ -933,11 +915,12 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
                            
                            );
 #ifdef HAVE_GLITE_JOBID
-            glite::jobid::JobId j_id( job.get_grid_jobid() );
+            glite::jobid::JobId j_id( job->grid_jobid() );
 #else        
-            glite::wmsutils::jobid::JobId j_id( job.get_grid_jobid() );
+            glite::wmsutils::jobid::JobId j_id( job->get_grid_jobid() );
 #endif
-            wms::purger::Purger the_purger( ice_util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy() );
+	    bool lbp = util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy();
+            wms::purger::Purger the_purger( lbp /*util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy()*/ );
             the_purger(j_id);
 
         } catch( std::exception& ex ) {
@@ -964,10 +947,10 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 
 //____________________________________________________________________________
 //ice_util::jobCache::iterator 
-bool Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
+bool Ice::resubmit_or_purge_job( util::CreamJob* tmp_job )
 throw() 
 {
-  cream_api::job_statuses::job_status st = tmp_job.get_status();
+  cream_api::job_statuses::job_status st = (cream_api::job_statuses::job_status)tmp_job->status();
   
   bool ok = false;
   
@@ -989,14 +972,14 @@ throw()
        cream_api::job_statuses::ABORTED == st ) 
   {
     CREAM_SAFE_LOG(m_log_dev->debugStream() << "Ice::resubmit_or_purge_job() - "
- 	  	   << "Removing purged job [" << tmp_job.describe()
+ 	  	   << "Removing purged job [" << tmp_job->describe()
  		   << "] from ICE's database"
  		   );
 
-    if(tmp_job.is_proxy_renewable())
-      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.get_user_dn(), tmp_job.get_myproxy_address() );
+    if(tmp_job->proxy_renewable())
+      util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job->user_dn(), tmp_job->myproxy_address() );
     {
-      db::RemoveJobByGid remover( tmp_job.get_grid_jobid(), "Ice::resubmit_or_purge_job" );
+      db::RemoveJobByGid remover( tmp_job->grid_jobid(), "Ice::resubmit_or_purge_job" );
       db::Transaction tnx(false, false);
       tnx.execute( &remover );
     }
@@ -1005,7 +988,7 @@ throw()
   
   if ( ( cream_api::job_statuses::DONE_FAILED == st ||
 	 cream_api::job_statuses::ABORTED == st ) &&
-       !tmp_job.is_killed_by_ice() ) {
+       !tmp_job->killed_byice() ) {
     
     resubmit_job( tmp_job, "Job resubmitted by ICE" );
     

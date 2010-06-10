@@ -38,7 +38,7 @@ END LICENSE */
 #include "iceAbsCommand.h"
 #include "iceCommandCancel.h"
 #include "iceCommandSubmit.h"
-#include "iceDb/UpdateJobByGid.h"
+#include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
@@ -295,13 +295,16 @@ int main(int argc, char*argv[])
      * Initializes the database by invoking a fake query, and the ice manager
      ****************************************************************************/
     {
-      list<pair<string, string> > params;
-      params.push_back( make_pair("failure_reason", "" ));
-      glite::wms::ice::db::UpdateJobByGid updater("FAKE QUERY TO INITIALISE DB", params, "glite-wms-ice::main");
+      //      list<pair<string, string> > params;
+      //      params.push_back( make_pair("failure_reason", "" ));
+      
+      //      glite::wms::ice::db::UpdateJobByGid updater("FAKE QUERY TO INITIALISE DB", params, "glite-wms-ice::main");
+      glite::wms::ice::db::GetJobByGid getter( "foo", "glite-wms-ice::main");
       glite::wms::ice::db::Transaction tnx( false, true );
-      tnx.execute( &updater );
+      tnx.execute( &getter );
     }
 
+    //exit(1);
  
     glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
 
@@ -315,10 +318,10 @@ int main(int argc, char*argv[])
     /*****************************************************************************
      * Starts status poller and/or listener if specified in the config file
      ****************************************************************************/
-    iceManager->startListener( );    
+    //iceManager->startListener( );    
     iceManager->startPoller( );  
-    iceManager->startLeaseUpdater( );
-    iceManager->startProxyRenewer( );
+    //iceManager->startLeaseUpdater( );
+    //iceManager->startProxyRenewer( );
     iceManager->startJobKiller( );
 
     /*
@@ -396,8 +399,8 @@ int main(int argc, char*argv[])
 	      try {
 		glite::wms::ice::util::CreamJob theJob;
 		string cmdtype;
-		glite::wms::ice::util::full_request_unparse( *it,
-							     theJob,
+		glite::wms::ice::util::utilities::full_request_unparse( *it,
+							     &theJob,
 							     cmdtype );
 
 		glite::wms::ice::iceAbsCommand* cmd = 0;	
@@ -407,21 +410,21 @@ int main(int argc, char*argv[])
 		  continue;
 		}
 	
-		cream_api::VOMSWrapper V( theJob.get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
+		cream_api::VOMSWrapper V( theJob.user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 		if( !V.IsValid( ) ) {
 		  CREAM_SAFE_LOG( log_dev->errorStream()
 				  << method_name
 				  << "For job ["
-				  << theJob.get_grid_jobid() << "]"
+				  << theJob.grid_jobid() << "]"
 				  << " the proxyfile ["
-				  << theJob.get_user_proxy_certificate() 
+				  << theJob.user_proxyfile() 
 				  << "] is not valid: "
 				  << V.getErrorMessage()
 				  << ". Skipping processing of this job. "
-				  << "Loggin an abort and removing request from filelist/jobdir"
+				  << "Logging an abort and removing request from filelist/jobdir"
 				  );
 			
-		  theJob.set_failure_reason( "Input sandbos's proxyfile is EXPIRED!" );
+		  theJob.set_failure_reason( V.getErrorMessage() );
 		  theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
 		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
   		  if ( ev ) {
@@ -430,7 +433,7 @@ int main(int argc, char*argv[])
 		    CREAM_SAFE_LOG( log_dev->errorStream()
 				  << method_name
 				  << "For job ["
-				  << theJob.get_grid_jobid() 
+				  << theJob.grid_jobid() 
 				  << "Couldn't log abort event."
 				  );
 		  }
@@ -438,7 +441,7 @@ int main(int argc, char*argv[])
 		  continue;
 		}
 
-		theJob.set_userdn( V.getDNFQAN() );
+		theJob.set_user_dn( V.getDNFQAN() );
 		theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
 
 //		glite::wms::ice::iceAbsCommand* cmd 

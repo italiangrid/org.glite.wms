@@ -19,9 +19,9 @@ limitations under the License.
 END LICENSE */
 
 #include "DNHasJobs.h"
+#include "CreamJob.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <cstdlib>
 
 using namespace glite::wms::ice;
@@ -47,17 +47,14 @@ namespace { // begin local namespace
 
 void db::DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
 
-  sqlcmd << "SELECT gridjobid FROM jobs WHERE userdn=" 
-	 << Ice::get_tmp_name()
-	 << m_dn 
-	 << Ice::get_tmp_name()
-	 << " AND creamurl=" 
-	 << Ice::get_tmp_name()
-	 << m_ce  
-	 << Ice::get_tmp_name()
-	 << " LIMIT 1;";
+  string sqlcmd = "SELECT ";
+  sqlcmd += util::CreamJob::grid_jobid_field( ) 
+            + " FROM jobs WHERE " + util::CreamJob::user_dn_field( )
+	    + "=" + Ice::get_tmp_name() + m_dn + Ice::get_tmp_name()
+	    + " AND " + util::CreamJob::cream_address_field( ) 
+	    + "=" +  Ice::get_tmp_name() + m_ce +  Ice::get_tmp_name()
+	    + " LIMIT 1";
 
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_found );
+  do_query( db, sqlcmd, fetch_jobs_callback, &m_found );
 }

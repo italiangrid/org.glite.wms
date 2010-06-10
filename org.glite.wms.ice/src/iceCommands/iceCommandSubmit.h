@@ -24,7 +24,7 @@ END LICENSE */
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
@@ -77,7 +77,7 @@ namespace util {
       */
      virtual void execute( const std::string& ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
-     std::string get_grid_job_id( void ) const { return m_theJob.get_grid_jobid(); };
+     std::string get_grid_job_id( void ) const { return m_theJob.grid_jobid(); };
 
  
 

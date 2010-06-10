@@ -19,6 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "CheckGridJobID.h"
+#include "CreamJob.h"
 #include "ice-core.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -42,18 +43,14 @@ namespace { // begin local namespace
 void db::CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  ostringstream sqlcmd( "" );
-  sqlcmd << "SELECT gridjobid FROM jobs WHERE gridjobid="
-	 << Ice::get_tmp_name()
-	 << m_gridjobid
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd;
+  sqlcmd = string( "SELECT ") + util::CreamJob::grid_jobid_field( ) 
+	   + " FROM jobs WHERE " + util::CreamJob::grid_jobid_field( ) + "="
+	   + Ice::get_tmp_name() + m_gridjobid + Ice::get_tmp_name() + ";";
 
-//   string sqlcmd = boost::str( boost::format( 
-// 					    "SELECT gridjobid FROM jobs" 
-// 					    " WHERE gridjobid = \'%1%\';" ) % m_gridjobid );
   string gid;
 
-  do_query( db, sqlcmd.str(), fetch_jdl_callback, &gid );
+  do_query( db, sqlcmd, fetch_jdl_callback, &gid );
 
   if ( !gid.empty() ) {
     

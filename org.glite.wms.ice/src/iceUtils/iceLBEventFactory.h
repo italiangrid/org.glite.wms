@@ -21,7 +21,7 @@ END LICENSE */
 #ifndef ICELBEVENTFACTORY_H
 #define ICELBEVENTFACTORY_H
 
-#include "creamJob.h"
+#include "CreamJob.h"
 
 namespace glite {
     namespace wms {

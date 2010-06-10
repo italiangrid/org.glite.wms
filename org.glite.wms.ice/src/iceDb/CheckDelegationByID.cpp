@@ -21,7 +21,6 @@ END LICENSE */
 #include "CheckDelegationByID.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <vector>
 
 using namespace glite::wms::ice;
@@ -46,16 +45,14 @@ namespace { // begin local namespace
 
 void db::CheckDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
- 
-  sqlcmd << "SELECT delegationid FROM delegation WHERE delegationid="
-	 << Ice::get_tmp_name() 
-	 << m_delegid
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd;
+
+  sqlcmd = string("SELECT delegationid FROM delegation WHERE delegationid=")
+	+ Ice::get_tmp_name() + m_delegid + Ice::get_tmp_name() + ";";
 
   string tmp;
 
-  do_query( db, sqlcmd.str(), fetch_field_callback, &tmp );
+  do_query( db, sqlcmd, fetch_field_callback, &tmp );
   
   if( !tmp.empty() ) {
     m_found = true;

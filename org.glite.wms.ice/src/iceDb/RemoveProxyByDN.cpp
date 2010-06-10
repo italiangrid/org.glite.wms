@@ -21,24 +21,22 @@ END LICENSE */
 #include "RemoveProxyByDN.h"
 #include "ice-core.h"
 
-#include <sstream>
-
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::RemoveProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
+  string sqlcmd;
   
-  sqlcmd << "DELETE FROM proxy WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << " AND myproxyurl="
-	 << Ice::get_tmp_name()
-	 << m_myproxy
-	 << Ice::get_tmp_name()
-	 << ";";
+  sqlcmd += "DELETE FROM proxy WHERE userdn="
+	 + Ice::get_tmp_name()
+	 + m_userdn 
+	 + Ice::get_tmp_name()
+	 + " AND myproxyurl="
+	 + Ice::get_tmp_name()
+	 + m_myproxy
+	 + Ice::get_tmp_name()
+	 + ";";
 
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

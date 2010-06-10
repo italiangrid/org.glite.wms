@@ -17,29 +17,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 END LICENSE */
-#include "iceCommandSubmit.h"
-#include "subscriptionManager.h"
-#include "subscriptionProxy.h"
+
+#include "Request.h"
+#include "iceUtils.h"
+#include "CreamJob.h"
+#include "ice-core.h"
+#include "iceLBEvent.h"
+#include "iceLBLogger.h"
 #include "DNProxyManager.h"
-#include "Delegation_manager.h"
 #include "iceConfManager.h"
 #include "iceSubscription.h"
-#include "creamJob.h"
-#include "ice-core.h"
-#include "eventStatusListener.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
+#include "iceCommandSubmit.h"
 #include "CreamProxyMethod.h"
-#include "Request.h"
+#include "DelegationManager.h"
+#include "eventStatusListener.h"
 #include "Request_source_purger.h"
-#include "iceUtils.h"
 
 #include "iceDb/RemoveJobByGid.h"
-#include "iceDb/GetFields.h"
-#include "iceDb/UpdateJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/InsertStat.h"
+#include "iceDb/GetJobByGid.h"
 #include "iceDb/CreateJob.h"
+#include "iceDb/UpdateJob.h"
 
 /**
  *
@@ -57,14 +56,13 @@ END LICENSE */
 
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
-#include "Lease_manager.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 // Boost stuff
 #include "boost/algorithm/string.hpp"
-#include "boost/regex.hpp"
 #include "boost/format.hpp"
+#include "boost/regex.hpp"
 
 // C++ stuff
 #include <ctime>
@@ -73,9 +71,9 @@ using namespace std;
 namespace ceurl_util    = glite::ce::cream_client_api::util::CEUrl;
 namespace cream_api     = glite::ce::cream_client_api::soap_proxy;
 namespace api_util      = glite::ce::cream_client_api::util;
+namespace configuration = glite::wms::common::configuration;
 namespace wms_utils     = glite::wms::common::utilities;
 namespace iceUtil       = glite::wms::ice::util;
-namespace configuration = glite::wms::common::configuration;
 
 using namespace glite::wms::ice;
 
@@ -167,22 +165,24 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
     // we find the job already in ICE cache, we simply give up
     // (logging an information message), and the purge_f object will
     // take care of actual removal.
-    string _gid( m_theJob.get_grid_jobid() );
+    string _gid( m_theJob.grid_jobid() );
     bool only_start = false;
     
     {
-      list<string> fields_to_retrieve;
-      fields_to_retrieve.push_back( "status" );
-      list<pair<string, string> > clause;
-      clause.push_back( make_pair("gridjobid",_gid) );
-      list< vector<string> > results;
+      //list<string> fields_to_retrieve;
+      //fields_to_retrieve.push_back( util::CreamJob::status_field() );
+      //list<pair<string, string> > clause;
+      //clause.push_back( make_pair( util::CreamJob::grid_jobid_field(), _gid) );
+      //list< vector<string> > results;
       
-      db::GetFields getter(fields_to_retrieve, clause, results, "iceCommandSubmit::execute", false );
+      //db::GetFields getter(fields_to_retrieve, clause, results, "iceCommandSubmit::execute", false );
+      db::GetJobByGid getter( _gid, "iceCommandSubmit::execute" );
       db::Transaction tnx(false, false);
       tnx.execute( &getter );
       
-      if( results.size() ) {
-        int _status( atoi(results.begin()->at(0).c_str()) );
+      if( getter.found()/*results.size()*/ ) {
+
+        int _status( getter.get_job().status( ) /*atoi(results.begin()->at(0).c_str())*/ );
 	
 	switch( _status ) {
 	case glite::ce::cream_client_api::job_statuses::UNKNOWN:
@@ -243,17 +243,17 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
       }
       // now the job is in cache and has been registered we can save its
       // proxy into the DN-Proxy Manager's cache
-      if( !m_theJob.is_proxy_renewable() ) {
-	iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.get_user_dn(), 
-									     m_theJob.get_user_proxy_certificate(), 
-									     m_theJob.get_isbproxy_time_end()
+      if( !m_theJob.proxy_renewable() ) {
+	iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.user_dn(), 
+									     m_theJob.user_proxyfile(), 
+									     m_theJob.isbproxy_time_end()
 									     /*V.getProxyTimeEnd()*/ );
       } else {
 	
 	/**
 	   MUST increment job counter of the 'super' better proxy table.
 	*/
-	iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob, m_theJob.get_isbproxy_time_end() );
+	iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob, m_theJob.isbproxy_time_end() );
       }
     } // releases eventStatusPoller's proxymutex
  
@@ -267,12 +267,14 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
                        << " Fatal Exception is:" << ex.what()
                        );
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ) );
-	string reason = boost::str( boost::format( "Transfer to CREAM [%1%] failed due to exception: %2%") % m_theJob.get_creamurl() % ex.what() );
+	string reason = boost::str( boost::format( "Transfer to CREAM [%1%] failed due to exception: %2%") % m_theJob.cream_address() % ex.what() );
         m_theJob.set_failure_reason( reason );
 	{
-	  list< pair<string, string> > params;
-	  params.push_back( make_pair("failure_reason", reason) );
-	  db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::execute" );
+	  //	  list< pair<string, string> > params;
+	  //	  params.push_back( make_pair( util::CreamJob::failure_reason_field(), reason) );
+	  
+	  //db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::execute" );
+	  db::UpdateJob updater( m_theJob, "iceCommandSubmit::execute" );
 	  db::Transaction tnx(false, false);
 	  tnx.execute( &updater );
 	}
@@ -280,8 +282,8 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
 	
-	if( m_theJob.is_proxy_renewable( ) )
-	  iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+	if( m_theJob.proxy_renewable( ) )
+	  iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.user_dn(), m_theJob.myproxy_address() );
 	
         throw( iceCommandFatal_ex( /*ex.what()*/ reason ) );
     } catch( const iceCommandTransient_ex& ex ) {
@@ -300,20 +302,22 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
       string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() );
       m_theJob.set_failure_reason( reason );
       {
-	list< pair<string, string> > params;
-	params.push_back( make_pair("failure_reason", reason) );
-	db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::execute" );
+	//list< pair<string, string> > params;
+	//params.push_back( make_pair( util::CreamJob::failure_reason_field(), reason) );
+	
+	//db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::execute" );
+	db::UpdateJob updater( m_theJob, "iceCommandSubmit::execute" );
 	db::Transaction tnx(false, false);
 	tnx.execute( &updater );
       }
       m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
       m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
-      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.get_creamurl() ) ); // Try to resubmit
+      m_theIce->resubmit_job( &m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.cream_address() ) ); // Try to resubmit
       
-      if( m_theJob.is_proxy_renewable( ) )
-        iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+      if( m_theJob.proxy_renewable( ) )
+        iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.user_dn(), m_theJob.myproxy_address() );
       
-      throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.get_creamurl() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
+      throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.cream_address() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
 
     }
     
@@ -326,7 +330,7 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
   
-  string _gid( m_theJob.get_grid_jobid() );
+  string _gid( m_theJob.grid_jobid() );
   
   static const char* method_name = "iceCommandSubmit::try_to_submit() - ";
   /**
@@ -338,19 +342,21 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   string dbid, completeid, jobId, __creamURL, jobdesc;
   
-  if( m_theJob.get_isbproxy_time_end() <= time(0) ) {
+  if( m_theJob.isbproxy_time_end() <= time(0) ) {
     throw( iceCommandTransient_ex( "Authentication error: proxyfile [" 
-				   + m_theJob.get_user_proxy_certificate() 
+				   + m_theJob.user_proxyfile() 
 				   + "] is expired! Skipping submission of the job [" 
-				   + m_theJob.get_grid_jobid() +"]"));
+				   + m_theJob.grid_jobid() +"]"));
   }
 
   if(!only_start) {    
     
     {
-      list< pair<string, string> > params;
-      params.push_back( make_pair("userdn", m_theJob.get_user_dn()) );
-      db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::try_to_submit" );
+      //      list< pair<string, string> > params;
+      //      params.push_back( make_pair( util::CreamJob::user_dn_field(), m_theJob.user_dn()) );
+      
+      //db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::try_to_submit" );
+      db::UpdateJob updater( m_theJob, "iceCommandSubmit::try_to_submit" );
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }
@@ -363,17 +369,17 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     /**
       logEvent modified jdl and "modified_jdl" that need to be saved on the DB
     */
-    {
-      list< pair<string, string> > params;
-      params.push_back( make_pair("jdl", m_theJob.get_jdl( )) );
-      params.push_back( make_pair("modified_jdl", m_theJob.get_modified_jdl( )) );
-      db::UpdateJobByGid updater( m_theJob.get_grid_jobid( ), params, "iceCommandSubmit::execute" );
-      db::Transaction tnx(false, false);
-      tnx.execute( &updater );
-    }
+//     {
+//       list< pair<string, string> > params;
+//       params.push_back( make_pair( util::CreamJob::jdl_field(), m_theJob.jdl( )) );
+//       params.push_back( make_pair( util::CreamJob::modified_jdl_field(), m_theJob.modified_jdl( )) );
+//       db::UpdateJobByGid updater( m_theJob.grid_jobid( ), params, "iceCommandSubmit::execute" );
+//       db::Transaction tnx(false, false);
+//       tnx.execute( &updater );
+//     }
     
     
-    string _ceurl( m_theJob.get_creamurl() );
+    string _ceurl( m_theJob.cream_address() );
     
     // this put the new sequence code, obtained
     // from the logging to LB, into the JDL that will be sent
@@ -383,9 +389,9 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
                    << method_name  << " TID=[" << getThreadID() << "] "<< "Submitting JDL " 
-		   << m_theJob.get_modified_jdl() << " to [" 
+		   << m_theJob.modified_jdl() << " to [" 
                    << _ceurl <<"] ["
-                   << m_theJob.get_cream_delegurl() << "]"
+                   << m_theJob.cream_deleg_address() << "]"
                    );
     
     jobdesc = m_theJob.describe();
@@ -396,7 +402,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
                    << "Sequence code for job ["
                    << jobdesc
                    << "] is "
-                   << m_theJob.get_sequence_code()
+                   << m_theJob.sequence_code()
                    );
     
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
@@ -431,7 +437,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 			 _gid,
 			 delegation,
 			 lease_id,
-			 m_theJob.get_modified_jdl(),
+			 m_theJob.modified_jdl(),
 			 force_delegation,
 			 force_lease,
 			 res) )
@@ -468,17 +474,24 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 		    << dbid << "]"
 		    );
     
-    // TODO: put creamjobid and complete cream jobid and REGISTERED into database
+    
+    m_theJob.set_status( glite::ce::cream_client_api::job_statuses::REGISTERED );
+    m_theJob.set_cream_dbid( strtoull(dbid.c_str(), 0, 10) );
+    m_theJob.set_cream_address( __creamURL );
+    m_theJob.set_complete_cream_jobid( completeid );
+    m_theJob.set_cream_jobid( jobId );
     {
-      list< pair<string, string> > fields_to_update;
-      fields_to_update.push_back( make_pair( "creamjobid", jobId) );
-      fields_to_update.push_back( make_pair( "complete_cream_jobid", completeid) );
-      fields_to_update.push_back( make_pair( "creamurl", __creamURL) );
-      fields_to_update.push_back( make_pair( "dbid", dbid) );
-      fields_to_update.push_back( make_pair( "status", iceUtil::int_to_string(glite::ce::cream_client_api::job_statuses::REGISTERED) ) );
-      fields_to_update.push_back( make_pair( "delegationid", delegation ) );
-      fields_to_update.push_back( make_pair( "leaseid", lease_id) );
-      db::UpdateJobByGid updater(_gid, fields_to_update, "iceCommandSubmit::try_to_submit");
+      //      list< pair<string, string> > fields_to_update;
+      //      fields_to_update.push_back( make_pair( util::CreamJob::cream_jobid_field(), jobId) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::complete_cream_jobid_field(), completeid) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::cream_address_field(), __creamURL) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::cream_dbid_field(), dbid) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::status_field(), iceUtil::utilities::to_string( (short int)glite::ce::cream_client_api::job_statuses::REGISTERED) ) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::delegation_id_field(), delegation ) );
+      //fields_to_update.push_back( make_pair( util::CreamJob::lease_id_field(), lease_id) );
+
+      //      db::UpdateJobByGid updater(_gid, fields_to_update, "iceCommandSubmit::try_to_submit");
+      db::UpdateJob updater( m_theJob, "iceCommandSubmit::try_to_submit");
       db::Transaction tnx( false, false );
       tnx.execute( &updater );
     }
@@ -490,22 +503,27 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     // that in the DB the needed info to start it are
     // there. Let's retrieve them...
     {
-      list<string> fields_to_retrieve;
-      fields_to_retrieve.push_back( "complete_cream_jobid" );
-      fields_to_retrieve.push_back( "creamjobid" );
-      fields_to_retrieve.push_back( "creamurl" );
-      fields_to_retrieve.push_back( "dbid" );
+      //list<string> fields_to_retrieve;
+      //fields_to_retrieve.push_back( util::CreamJob::complete_cream_jobid_field() );
+      //fields_to_retrieve.push_back( util::CreamJob::cream_jobid_field() );
+      //fields_to_retrieve.push_back( util::CreamJob::cream_address_field() );
+      //fields_to_retrieve.push_back( util::CreamJob::cream_dbid_field() );
       
-      list< pair<string, string> > clause;
-      clause.push_back( make_pair( "gridjobid", _gid ) );
-      list<vector<string> > results;
-      db::GetFields getter( fields_to_retrieve, clause, results, "iceCommandSubmit::try_to_submit", false);
+      //list< pair<string, string> > clause;
+      //clause.push_back( make_pair( util::CreamJob::grid_jobid_field(), _gid ) );
+      //list<vector<string> > results;
+      
+      //db::GetFields getter( fields_to_retrieve, clause, results, "iceCommandSubmit::try_to_submit", false);
+      db::GetJobByGid getter( _gid, "iceCommandSubmit::try_to_submit" );
       db::Transaction tnx( false, false );
       tnx.execute( &getter );
-      completeid = results.begin()->at(0);
-      jobId      = results.begin()->at(1);
-      __creamURL = results.begin()->at(2);
-      dbid       = results.begin()->at(3);
+      if(getter.found( ) ) {
+	CreamJob tmp( getter.get_job() );
+	completeid = tmp.complete_cream_jobid( ) ;//.results.begin()->at(0);
+	jobId      = tmp.cream_jobid( ) ;//results.begin()->at(1);
+	__creamURL = tmp.cream_address( );//results.begin()->at(2);
+	dbid       = tmp.cream_dbid( );//results.begin()->at(3);
+      }
     }
     
     // completeid, __creamURL, proxy_time_end, dbid, jobId, jobdesc
@@ -543,7 +561,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     cream_api::JobFilterWrapper jw(toStart, vector<string>(), -1, -1, "", "");
     
     iceUtil::CreamProxy_Start( __creamURL, 
-			       m_theJob.get_user_proxy_certificate(), 
+			       m_theJob.user_proxyfile(), 
 			       (const cream_api::JobFilterWrapper *)&jw, 
 			       &startRes ).execute( 7 );
   } catch( exception& ex ) {
@@ -588,18 +606,20 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 
   m_theJob.set_cream_jobid( jobId );
   m_theJob.set_status(glite::ce::cream_client_api::job_statuses::IDLE);    
-  m_theJob.set_wn_sequencecode( m_theJob.get_sequence_code() );
+  m_theJob.set_wn_sequence_code( m_theJob.sequence_code() );
+  m_theJob.set_cream_dbid( strtoull(dbid.c_str(), 0, 10) );
   
-  list< pair<string, string> > params;
-  params.push_back( make_pair("creamjobid", jobId) );
-  params.push_back( make_pair("complete_cream_jobid", m_theJob.get_complete_cream_jobid() ) );
-  //params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
-  params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::IDLE )));
-  params.push_back( make_pair("delegationid", m_theJob.get_delegation_id() ));
-  params.push_back( make_pair("leaseid", m_theJob.get_lease_id() ));
-  params.push_back( make_pair("wn_sequence_code", m_theJob.get_sequence_code() ));
-  params.push_back( make_pair("dbid", dbid ) );
-  db::UpdateJobByGid updater( _gid , params,"iceCommandSubmit::try_to_submit" );
+  //  list< pair<string, string> > params;
+  //params.push_back( make_pair( util::CreamJob::cream_jobid_field(), jobId) );
+  //  params.push_back( make_pair( util::CreamJob::complete_cream_jobid_field(), m_theJob.complete_cream_jobid() ) );
+  //  params.push_back( make_pair( util::CreamJob::status_field(), iceUtil::utilities::to_string( (short int)glite::ce::cream_client_api::job_statuses::IDLE )));
+  //params.push_back( make_pair( util::CreamJob::delegation_id_field(), m_theJob.delegation_id() ));
+  //params.push_back( make_pair( util::CreamJob::lease_id_field(), m_theJob.lease_id() ));
+  //params.push_back( make_pair( util::CreamJob::wn_sequence_code_field(), m_theJob.sequence_code() ));
+  //  params.push_back( make_pair( util::CreamJob::cream_dbid_field(), dbid ) );
+  
+  //  db::UpdateJobByGid updater( _gid , params,"iceCommandSubmit::try_to_submit" );
+  db::UpdateJob updater( m_theJob, "iceCommandSubmit::try_to_submit" );
   db::Transaction tnx(false, false);
   tnx.execute( &updater );
   
@@ -610,15 +630,18 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
    * in order to receive the status change notifications
    * of job just submitted. But only if listener is ON
    */
-  if( m_theIce->is_listener_started() ) {	
+/*  if( m_theIce->is_listener_started() ) {	
     doSubscription( m_theJob );	
   }
+  */
   
   {
     m_theJob.set_last_seen( time(0) );
-    list< pair<string, string> > params;
-    params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.get_last_seen())));
-    db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::try_to_submit" ); 
+    //list< pair<string, string> > params;
+    //params.push_back( make_pair( util::CreamJob::last_seen_field(), iceUtil::utilities::to_string(m_theJob.last_seen())));
+    
+    //db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::try_to_submit" ); 
+    db::UpdateJob( m_theJob, "iceCommandSubmit::try_to_submit" );
     db::Transaction tnx(false, false);
     tnx.execute( &updater );
   }
@@ -627,6 +650,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 
 
 //______________________________________________________________________________
+/*
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
   static const char* method_name = "iceCommandSubmit::doSubscription() - ";
@@ -635,7 +659,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
 
-  subMgr->getCEMonURL( aJob.get_user_proxy_certificate(), aJob.get_creamurl(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
+  subMgr->getCEMonURL( aJob.get_user_proxyfile(), aJob.get_cream_address(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
   CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
@@ -648,7 +672,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   bool foundSubscription;
 
-  foundSubscription = subMgr->hasSubscription( aJob.get_user_proxy_certificate(), cemon_url );
+  foundSubscription = subMgr->hasSubscription( aJob.get_user_proxyfile(), cemon_url );
   
   if ( foundSubscription )
     {
@@ -675,7 +699,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   try {
     
-    subscribed = iceUtil::subscriptionProxy::getInstance()->subscribedTo( aJob.get_user_proxy_certificate(), cemon_url, sub );
+    subscribed = iceUtil::subscriptionProxy::getInstance()->subscribedTo( aJob.get_user_proxyfile(), cemon_url, sub );
     
   } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
@@ -697,9 +721,9 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // notifications coming from this CEMon.
       string DN;
 
-      if( subMgr->getCEMonDN( aJob.get_user_proxy_certificate(), cemon_url, DN ) ) {
+      if( subMgr->getCEMonDN( aJob.get_user_proxyfile(), cemon_url, DN ) ) {
 	    
-	subMgr->insertSubscription( aJob.get_user_proxy_certificate(), cemon_url, sub );
+	subMgr->insertSubscription( aJob.get_user_proxyfile(), cemon_url, sub );
 	//dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 	
       } else {
@@ -715,7 +739,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } 
     else {
 
-      subMgr->insertSubscription( aJob.get_user_proxy_certificate(), cemon_url, sub );
+      subMgr->insertSubscription( aJob.get_user_proxyfile(), cemon_url, sub );
 
       //dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 
@@ -731,7 +755,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     bool can_subscribe = true;
     string DN;
     if ( m_configuration->ice()->listener_enable_authz() ) {
-      if( !subMgr->getCEMonDN( aJob.get_user_proxy_certificate(), cemon_url, DN ) ) {
+      if( !subMgr->getCEMonDN( aJob.get_user_proxyfile(), cemon_url, DN ) ) {
 	// Cannot subscribe to a CEMon without it's DN
 	can_subscribe = false;
 	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
@@ -743,9 +767,9 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     
     if(can_subscribe) {
       iceUtil::iceSubscription sub;
-      if( iceUtil::subscriptionProxy::getInstance()->subscribe( aJob.get_user_proxy_certificate(), cemon_url, sub ) ) {
+      if( iceUtil::subscriptionProxy::getInstance()->subscribe( aJob.get_user_proxyfile(), cemon_url, sub ) ) {
 	{
-	  subMgr->insertSubscription( aJob.get_user_proxy_certificate(), cemon_url, sub );
+	  subMgr->insertSubscription( aJob.get_user_proxyfile(), cemon_url, sub );
 	}
       } else {
           CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
@@ -759,7 +783,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   } // else -> if(subscribedTo...)
   
 } // end function, also unlocks the iceCommandSubmit's s_localMutexForSubscription mutex
-
+*/
 //______________________________________________________________________________
 void iceCommandSubmit::process_lease( const bool force_lease,
 				      const std::string& jobdesc,
@@ -785,7 +809,7 @@ void iceCommandSubmit::process_lease( const bool force_lease,
   // Get a (possibly existing) lease ID
   //
   try{
-    lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
+    //lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
   } catch( const std::exception& ex ) {
     // something was wrong with the lease creation step. 
     string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1%. Exception is %2%" ) % _gid % ex.what() ) );
@@ -824,8 +848,8 @@ void iceCommandSubmit::handle_delegation( string& delegation,
   const char* method_name = "iceCommandSubmit::handle_delegation() - ";
   boost::tuple<string, time_t, long long int> SBP;
 
-  if( m_theJob.is_proxy_renewable() ) {
-    SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( m_theJob.get_user_dn(), m_theJob.get_myproxy_address());
+  if( m_theJob.proxy_renewable() ) {
+    SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( m_theJob.user_dn(), m_theJob.myproxy_address());
     
     if( SBP.get<0>() == "" ) {
       /**
@@ -834,15 +858,15 @@ void iceCommandSubmit::handle_delegation( string& delegation,
       */
       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Setting new better proxy for userdn ["
-		      << m_theJob.get_user_dn() << "] MyProxy server ["
-		      << m_theJob.get_myproxy_address() << "] Job ["
+		      << m_theJob.user_dn() << "] MyProxy server ["
+		      << m_theJob.myproxy_address() << "] Job ["
 		      << jobdesc 
 		      << "]"
 		      ); 
-      iceUtil::DNProxyManager::getInstance()->setBetterProxy( m_theJob.get_user_dn(), 
-							      m_theJob.get_user_proxy_certificate(),
-							      m_theJob.get_myproxy_address(),
-							      m_theJob.get_isbproxy_time_end(),
+      iceUtil::DNProxyManager::getInstance()->setBetterProxy( m_theJob.user_dn(), 
+							      m_theJob.user_proxyfile(),
+							      m_theJob.myproxy_address(),
+							      m_theJob.isbproxy_time_end(),
 							      (unsigned long long)0);
       force_delegation = true;
       
@@ -851,20 +875,20 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 	 The SBP already exists. Let's check if the ISB one is more
 	 long-living.
       */
-      if( m_theJob.get_isbproxy_time_end() > SBP.get<1>() ) {
-	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), m_theJob.get_isbproxy_time_end(), SBP.get<2>() );
+      if( m_theJob.isbproxy_time_end() > SBP.get<1>() ) {
+	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.user_proxyfile(), m_theJob.isbproxy_time_end(), SBP.get<2>() );
 	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 			<< "Updating better proxy for userdn ["
-			<< m_theJob.get_user_dn() << "] MyProxy server ["
-			<< m_theJob.get_myproxy_address() << "] Job ["
+			<< m_theJob.user_dn() << "] MyProxy server ["
+			<< m_theJob.myproxy_address() << "] Job ["
 			<< jobdesc
 			<< "] Proxy Expiration time ["
 			<< newPrx.get<1>() << "] Counter ["
 			<< newPrx.get<2>()
 			<< "] because this one is more long-living..."
 			); 
-	iceUtil::DNProxyManager::getInstance()->updateBetterProxy( m_theJob.get_user_dn(),
-								   m_theJob.get_myproxy_address(),
+	iceUtil::DNProxyManager::getInstance()->updateBetterProxy( m_theJob.user_dn(),
+								   m_theJob.myproxy_address(),
 								   newPrx );
 	
       }
@@ -872,9 +896,9 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 	  Now check the duration of related delegation
       */
       iceUtil::Delegation_manager::table_entry deleg;
-      deleg = iceUtil::Delegation_manager::instance()->getDelegation(m_theJob.get_user_dn(),
+      deleg = iceUtil::Delegation_manager::instance()->getDelegation(m_theJob.user_dn(),
 								     _ceurl,
-								     m_theJob.get_myproxy_address()
+								     m_theJob.myproxy_address()
 								     );
       if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
 	force_delegation = true;
@@ -883,7 +907,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
   } // if( m_theJob.is_proxy_renewable() ) {
   
   try {
-    delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, m_theJob.is_proxy_renewable(), force_delegation );
+    delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, m_theJob.proxy_renewable(), force_delegation );
   } catch( const exception& ex ) {
     throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % _gid % ex.what() ) ) );
   }
@@ -908,7 +932,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Going to REGISTER Job ["
 		    << jobdesc << "] with delegation ID ["
-		    << delegation << "] to CREAM [" << m_theJob.get_creamurl()
+		    << delegation << "] to CREAM [" << m_theJob.cream_address()
 		    << "]..."
 		    );
     
@@ -931,9 +955,9 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     boost::replace_all( iceid, "/", "_" );
     boost::replace_all( iceid, "=", "_" );
     
-    string proxy = m_theJob.get_user_proxy_certificate();
+    string proxy = m_theJob.user_proxyfile();
     
-    iceUtil::CreamProxy_Register( m_theJob.get_creamurl(),
+    iceUtil::CreamProxy_Register( m_theJob.cream_address(),
 				  proxy,
 				  (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
 				  &res,
@@ -944,7 +968,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     // We do not trust this fault, and try to redelegate the
     // _same_ delegation ID, hoping for the best.
     
-    iceUtil::Delegation_manager::instance()->redelegate( m_theJob.get_user_proxy_certificate(), m_theJob.get_cream_delegurl(), delegation );
+    iceUtil::Delegation_manager::instance()->redelegate( m_theJob.user_proxyfile(), m_theJob.cream_deleg_address(), delegation );
     // no exception is raised, we simply hope for the best
     return false;
 

@@ -33,7 +33,7 @@ END LICENSE */
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateJob.h"
 #include "iceDb/GetJobByGid.h"
-#include "iceDb/UpdateJobByGid.h"
+#include "iceDb/UpdateJob.h"
 /**
  *
  * Cream Client API Headers
@@ -69,7 +69,7 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
   string protocolStr;
 
   {//  ClassAd-mutex protected region
-    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
     
     classad::ClassAdParser parser;
     classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
@@ -188,7 +188,7 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - Sending cancellation request to ["
-                   << theJob.get_creamurl() << "]"
+                   << theJob.cream_address() << "]"
                    
                    );
 
@@ -200,7 +200,7 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
      */
     string betterproxy;
 
-    betterproxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
+    betterproxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.user_dn() ).get<0>();
 
     if( betterproxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream()
@@ -210,7 +210,7 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
 		      << "]. Using the Job's proxy." 
 		      );
 
-      betterproxy = theJob.get_user_proxy_certificate();
+      betterproxy = theJob.user_proxyfile();
     }
 
     try {
@@ -220,23 +220,25 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
       }
       
       theJob.set_failure_reason( "Aborted by user" );
-      list< pair<string, string> > params;
-      params.push_back( make_pair("failure_reason", "Aborted by user" ));
+      //list< pair<string, string> > params;
+      //params.push_back( make_pair( util::CreamJob::failure_reason_field(), "Aborted by user" ));
       {
 	db::Transaction tnx( false, false );
-	db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandCancel::cancel" );
+	
+	//	db::UpdateJobByGid updater( theJob.grid_jobid(), params, "iceCommandCancel::cancel" );
+	db::UpdateJob updater(theJob, "iceCommandCancel::cancel" );
 	tnx.execute( &updater );
       }
       vector<cream_api::JobIdWrapper> toCancel;
-      toCancel.push_back( cream_api::JobIdWrapper(theJob.get_cream_jobid(), 
-						  theJob.get_creamurl(), 
+      toCancel.push_back( cream_api::JobIdWrapper(theJob.cream_jobid(), 
+						  theJob.cream_address(), 
 						  std::vector<cream_api::JobPropertyWrapper>())
 			  );
       
       cream_api::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
       cream_api::ResultWrapper res;
       
-      util::CreamProxy_Cancel( theJob.get_creamurl(), betterproxy, &req, &res ).execute( 3 );
+      util::CreamProxy_Cancel( theJob.cream_address(), betterproxy, &req, &res ).execute( 3 );
       
       list< pair<cream_api::JobIdWrapper, string> > tmp;
       

@@ -24,7 +24,7 @@ END LICENSE */
 #undef soapStub_H
 
 #include "iceAbsCommand.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 #include <boost/scoped_ptr.hpp>
 

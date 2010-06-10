@@ -21,7 +21,7 @@ END LICENSE */
 #include "emptyStatusNotification.h"
 
 // ICE stuff
-#include "subscriptionManager.h"
+//#include "subscriptionManager.h"
 #include "DNProxyManager.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByCid.h"
@@ -49,24 +49,25 @@ emptyStatusNotification::emptyStatusNotification( const std::string& cream_job_i
 
 void emptyStatusNotification::apply( void )
 {
-    log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
-    static const char *method_name = "emptyStatusNotification::apply() - ";
+//     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
+//     static const char *method_name = "emptyStatusNotification::apply() - ";
 
-    //    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+//     //    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
 
-  CREAM_SAFE_LOG( m_log_dev->debugStream()
-  		  << method_name
-		  << "Updating last_empty_notification field for CREAM Job ID [" 
-		  << m_cream_job_id <<"]"
-		  );
+//   CREAM_SAFE_LOG( m_log_dev->debugStream()
+//   		  << method_name
+// 		  << "Updating last_empty_notification field for CREAM Job ID [" 
+// 		  << m_cream_job_id <<"]"
+// 		  );
 
-    {
-      list< pair<string, string> > params;
-      params.push_back( make_pair( "last_empty_notification", int_to_string( time(0)/*theJob.get_last_empty_notification()*/)));
+//     {
+//       list< pair<string, string> > params;
+//       params.push_back( make_pair( "last_empty_notification", utilities::to_string( time(0)/*theJob.get_last_empty_notification()*/)));
       
-      db::UpdateJobByCid updater( m_cream_job_id, params, "emptyStatusNotification::apply" );
-      db::Transaction tnx(false, false);
-      //tnx.begin_exclusive( );
-      tnx.execute( &updater );
-    }
+//       //      db::UpdateJobByCid updater( m_cream_job_id, params, "emptyStatusNotification::apply" );
+//       db::UpdateJob updater( 
+//       db::Transaction tnx(false, false);
+//       //tnx.begin_exclusive( );
+//       tnx.execute( &updater );
+//     }
 }

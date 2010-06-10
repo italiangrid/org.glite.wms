@@ -19,29 +19,28 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateDelegationTimesByID.h"
+#include "iceUtils.h"
 #include "ice-core.h"
-#include <sstream>
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::UpdateDelegationTimesByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    ostringstream sqlcmd("");
+    string sqlcmd;
 
+    sqlcmd += "UPDATE delegation SET exptime="
+	   + Ice::get_tmp_name() 
+           + util::utilities::to_string( m_exptime )
+	   + Ice::get_tmp_name() + ","
+	   + "duration="
+	   + Ice::get_tmp_name() 
+	   + util::utilities::to_string( (unsigned long int)m_duration ) 
+	   + Ice::get_tmp_name() 
+	   + " WHERE delegationid="
+	   + Ice::get_tmp_name()
+	   + m_delegid 
+	   + Ice::get_tmp_name() + ";";
 
-    sqlcmd << "UPDATE delegation SET exptime="
-	   << Ice::get_tmp_name() 
-           << m_exptime 
-	   << Ice::get_tmp_name() <<","
-	   << "duration="
-	   << Ice::get_tmp_name() 
-	   << m_duration 
-	   << Ice::get_tmp_name() 
-	   << " WHERE delegationid="
-	   << Ice::get_tmp_name()
-	   << m_delegid 
-	   << Ice::get_tmp_name() <<";";
-
-    do_query( db, sqlcmd.str() );
+    do_query( db, sqlcmd );
 }

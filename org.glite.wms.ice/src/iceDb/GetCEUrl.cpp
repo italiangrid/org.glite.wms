@@ -18,14 +18,11 @@ limitations under the License.
 
 END LICENSE */
 
-#include <sstream>
-#include <cstdlib>
-#include <iostream>
-
 #include "GetCEUrl.h"
+#include "CreamJob.h"
 
 using namespace std;
-using namespace glite::wms;
+using namespace glite::wms::ice;
 
 namespace {
   
@@ -46,11 +43,11 @@ namespace {
 } // end local namespace
 
 //______________________________________________________________________________
-void ice::db::GetCEUrl::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetCEUrl::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-  sqlcmd << "SELECT creamurl FROM delegation;";
+  string sqlcmd;
+  sqlcmd += "SELECT creamurl FROM delegation;";
 
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, m_celist );
+  do_query( db, sqlcmd, fetch_jobs_callback, m_celist );
 
 }

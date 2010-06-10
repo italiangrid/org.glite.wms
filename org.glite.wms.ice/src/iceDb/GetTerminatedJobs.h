@@ -24,7 +24,7 @@ END LICENSE */
 #include "AbsDbOperation.h"
 #include <list>
 #include <string>
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 
 namespace glite {
 namespace wms {

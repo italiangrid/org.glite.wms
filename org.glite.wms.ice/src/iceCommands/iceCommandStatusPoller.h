@@ -24,7 +24,7 @@ END LICENSE */
 #undef soapStub_H
 
 #include "iceAbsCommand.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 #include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
 #include "iceDb/GetJobsToPoll.h" // needed for definition of type 'JobToPoll'
 

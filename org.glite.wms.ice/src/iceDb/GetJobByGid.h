@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICEDB_GETJOBBYGID_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 #include <string>
 
 namespace glite {
@@ -34,11 +34,12 @@ namespace db {
      *
      */
     class GetJobByGid : public AbsDbOperation { 
+
     protected:
         const std::string m_gridjobid;
         glite::wms::ice::util::CreamJob m_theJob;
-	//std::string m_serialized_job;
         bool m_found;
+
     public:
         GetJobByGid( const std::string& gid, const std::string& caller ) : AbsDbOperation( caller ), m_gridjobid( gid ), m_theJob(), m_found(false) {}
         virtual void execute( sqlite3* db ) throw( DbOperationException& );

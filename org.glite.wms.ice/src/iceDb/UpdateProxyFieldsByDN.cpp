@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateProxyFieldsByDN.h"
+#include "iceUtils.h"
 #include "ice-core.h"
-#include <sstream>
 
 using namespace glite::wms::ice;
 
@@ -28,33 +28,25 @@ using namespace std;
 
 void db::UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    ostringstream sqlcmd("");
+    string sqlcmd;
 
-//     string dn( m_dn );
-
-//     boost::replace_all( dn, "'", "''" );
- 
-//     string prx( m_proxyfile );
-
-//     boost::replace_all( prx, "'", "''" );
-
-    sqlcmd << "UPDATE proxy SET proxyfile=" 
-	   << Ice::get_tmp_name()
-	   << m_proxyfile
-	   << Ice::get_tmp_name()
-	   << ",exptime=" 
-	   << Ice::get_tmp_name()
-	   << m_exptime 
-	   << Ice::get_tmp_name()
-	   << " WHERE userdn="
-	   << Ice::get_tmp_name()
-	   << m_dn
-	   << Ice::get_tmp_name()
-	   << " AND myproxyurl=" 
-	   << Ice::get_tmp_name()
-	   << m_myproxy 
-	   << Ice::get_tmp_name()
-	   << ";";
+    sqlcmd += "UPDATE proxy SET proxyfile=" 
+	   + Ice::get_tmp_name()
+	   + m_proxyfile
+	   + Ice::get_tmp_name()
+	   + ",exptime=" 
+	   + Ice::get_tmp_name()
+	   + util::utilities::to_string( m_exptime )
+	   + Ice::get_tmp_name()
+	   + " WHERE userdn="
+	   + Ice::get_tmp_name()
+	   + m_dn
+	   + Ice::get_tmp_name()
+	   + " AND myproxyurl=" 
+	   + Ice::get_tmp_name()
+	   + m_myproxy 
+	   + Ice::get_tmp_name()
+	   + ";";
     
-    do_query( db, sqlcmd.str() );
+    do_query( db, sqlcmd );
 }

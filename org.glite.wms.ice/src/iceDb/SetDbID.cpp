@@ -18,9 +18,9 @@ limitations under the License.
 
 END LICENSE */
 
-#include <sstream>
 #include <cstdlib>
 #include "ice-core.h"
+#include "iceUtils.h"
 #include "SetDbID.h"
 
 using namespace std;
@@ -29,14 +29,14 @@ using namespace glite::wms::ice;
 //______________________________________________________________________________
 void db::SetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-  sqlcmd << "INSERT OR REPLACE INTO ce_dbid (ceurl,db_id) VALUES (" 
-	 << Ice::get_tmp_name() 
-	 << m_creamurl 
-	 << Ice::get_tmp_name() << ", " 
-	 << Ice::get_tmp_name() 
-	 << m_new_dbid 
-	 << Ice::get_tmp_name() << ");";
+  string sqlcmd;
+  sqlcmd += "INSERT OR REPLACE INTO ce_dbid (ceurl,db_id) VALUES (" 
+	 + Ice::get_tmp_name() 
+	 + m_creamurl 
+	 + Ice::get_tmp_name() + ", " 
+	 + Ice::get_tmp_name() 
+	 + util::utilities::to_string( (unsigned long long int)m_new_dbid )
+	 + Ice::get_tmp_name() + ");";
 
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

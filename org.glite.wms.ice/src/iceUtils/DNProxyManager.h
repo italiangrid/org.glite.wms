@@ -33,7 +33,7 @@ END LICENSE */
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
-#include "creamJob.h"
+#include "CreamJob.h"
 
 namespace log4cpp {
   class Category;

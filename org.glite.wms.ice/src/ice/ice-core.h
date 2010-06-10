@@ -22,10 +22,9 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICE_CORE_H
 
 #include "iceInit_ex.h"
-#include "creamJob.h"
+//#include "creamJob.h"
 #include "iceThread.h"
 #include "iceThreadPool.h"
-//#include "jobCache.h"
 
 #include "ClassadSyntax_ex.h"
 
@@ -57,6 +56,7 @@ namespace ice {
         class iceLBLogger;
         class Request_source;
         class Request;
+	class CreamJob;
     };
     
     class Ice {
@@ -68,7 +68,7 @@ namespace ice {
 
       static std::string get_tmp_name( void );// { return s_tmpname; }
 
-      static boost::recursive_mutex ClassAd_Mutex;
+//      static boost::recursive_mutex ClassAd_Mutex;
       static boost::recursive_mutex s_mutex;
 
         class IceThreadHelper { 
@@ -156,8 +156,8 @@ namespace ice {
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
 
         // Some utility functions
-        void deregister_proxy_renewal( const util::CreamJob& job ) throw();
-        void purge_wms_storage( const util::CreamJob& job ) throw();
+        void deregister_proxy_renewal( const util::CreamJob* job ) throw();
+        void purge_wms_storage( const util::CreamJob* job ) throw();
 
 	//
         // This method is called when ICE starts execution. It should
@@ -176,7 +176,7 @@ namespace ice {
          *
          * @param reason the reason why this job is being resubmitted
          */
-        void resubmit_job( util::CreamJob& the_job, const std::string& reason ) throw();
+        void resubmit_job( util::CreamJob* the_job, const std::string& reason ) throw();
         
         /**
          * Purge a cancelled/terminated job. This method takes care
@@ -193,7 +193,7 @@ namespace ice {
          * not.
          */
         //util::jobCache::iterator 
-	void purge_job( /*util::jobCache::iterator */ const util::CreamJob& j, const std::string& reason ) throw();
+	void purge_job( /*util::jobCache::iterator */ const util::CreamJob* j, const std::string& reason ) throw();
         
     public:
         
@@ -247,7 +247,7 @@ namespace ice {
          * the job cache).
          */
 	//        util::jobCache::iterator 
-	bool resubmit_or_purge_job( util::CreamJob& ) throw();
+	bool resubmit_or_purge_job( util::CreamJob* ) throw();
 	
         
         /**

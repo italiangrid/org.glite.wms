@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_GET_JOBS_TO_POLL_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+#include "iceUtils/CreamJob.h"
 #include <list>
 #include <string>
 //#include <boost/tuple/tuple.hpp>
