@@ -481,6 +481,8 @@ namespace glite {
 		  }
 
 		  void set_status ( const glite::ce::cream_client_api::job_statuses::job_status& st ) {
+		    m_changed_status = true;
+		    m_changed_prev_status  = true;
 		    m_prev_status = m_status; m_status = st;
 		  }
 

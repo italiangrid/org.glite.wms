@@ -426,6 +426,11 @@ int main(int argc, char*argv[])
 			
 		  theJob.set_failure_reason( V.getErrorMessage() );
 		  theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
+		  /**
+		    The job will not be put in the ICE's database
+		    in fact logEvent just does an SQL UPDATE ... WHERE grid_jobid = ''.
+		    So if the gridjobid is not there the UPDATE does not take place.
+		  */
 		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
   		  if ( ev ) {
     		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev );

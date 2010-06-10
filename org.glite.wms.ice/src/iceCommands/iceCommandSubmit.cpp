@@ -241,6 +241,9 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	db::Transaction tnx(false, false);
 	tnx.execute( &creator );
       }
+      
+      m_theJob.set_retrieved_from_db( );
+      
       // now the job is in cache and has been registered we can save its
       // proxy into the DN-Proxy Manager's cache
       if( !m_theJob.proxy_renewable() ) {
