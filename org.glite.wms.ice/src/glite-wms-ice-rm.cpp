@@ -70,7 +70,7 @@ void get_all_jobs( list< util::CreamJob >& jobs );
 
 int main(int argc, char*argv[]) 
 {
-  char*   confile = "/opt/glite/etc/glite_wms.conf";
+  char*   confile = "glite_wms.conf";
   bool    cancel_all = false;
   string  gridjobid;
   int     option_index = 0;
