@@ -300,7 +300,7 @@ if [ "$SAME" = "yes" ]; then
   fi
   tests_list=( SE-lcg-cr  SE-lcg-cp  SE-lcg-del )
 
-  for sehost in $SEs
+  for sehost in ${SEs[*]}
   do
     echo "*Target SE is $sehost"
     for item in ${tests_list[*]}
