@@ -104,37 +104,37 @@ class JobOutput  : public Job {
                 */
 		std::string m_inOpt ; 	// --input <file>
 		std::string m_dirOpt ; 	// --dir <dir_path>
-		std::string logName;  // string to append to directory
-		std::string dirCfg ; 	// OutputStorage configuration value
+		std::string m_logName;  // string to append to directory
+		std::string m_dirCfg ; 	// OutputStorage configuration value
                 /**
                 *	Boolean input arguments
                 */
-        bool listOnlyOpt ;
-        bool json;
-		bool nopgOpt ;
-		bool firstCall ;
-		bool nosubdir ;
+        bool m_listOnlyOpt ;
+        bool m_json;
+		bool m_nopgOpt ;
+		bool m_firstCall ;
+		bool m_nosubdir ;
                 /**
                 * JobId's
                 */
-                std::vector<std::string> jobIds ;
+                std::vector<std::string> m_jobIds ;
 		/**
 		* Info on the  files of the child nodes
 		*/
-		std::string childrenFileList ;
+		std::string m_childrenFileList ;
 		/**
 		* Info on the  files of parent nodes
 		*/
-		std::string parentFileList ;
-		std::string fileList ;
+		std::string m_parentFileList ;
+		std::string m_fileList ;
 		/**
 		* Boolean Flag: TRUE if the job has out-file to be retrieved
 		*/
-		bool hasFiles ;
+		bool m_hasFiles ;
 		/**
 		* Boolean Flag: TRUE if the operation has been successfully performed
 		*/
-		bool successRt;
+		bool m_successRt;
 		/**
 		* List of warning messages
 		*/
