@@ -97,20 +97,21 @@ fi
 echo " "
 echo "using VO                              : $VO"
 
-#Create the endpoint string
-echo $SRM_HOST | grep -q desy
-if [ $? -eq 0 ]; then
-  SRM_ENDPOINT="srm://${SRM_HOST}:8443/srm/managerv2?SFN=/pnfs/desy.de/data/dteam/"
-fi
-echo $SRM_HOST | grep -q cern
-if [ $? -eq 0 ]; then
-  SRM_ENDPOINT="srm://${SRM_HOST}:8446/srm/managerv2?SFN=/dpm/cern.ch/home/dteam/"
-fi
-if [ "x$SRM_ENDPOINT" == "x" ]; then
-  echo "Failed creating the SRM_ENDPOINT string"
+if test -z "{$SRM_HOST}" ; then
+  echo "SRM_HOST is not defined, TEST FAILED"
   exit 1
+fi 
+
+if test -z "${SRM_PORT}" ; then
+  echo "SRM_PORT is not defined, TEST FAILED"
+  exit_failure
 fi
 
+if test -z "${SRM_BASEDIR}" ; then
+  echo "SRM_BASEDIR is not defined"
+  exit_failure
+fi
+export SRM_ENDPOINT="srm://${SRM_HOST}:${SRM_PORT}/srm/managerv2?SFN=/${SRM_BASEDIR}"
 
 echo "The following endpoint will be used   : $SRM_ENDPOINT"
 echo ""

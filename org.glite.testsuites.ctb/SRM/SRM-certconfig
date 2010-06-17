@@ -7,14 +7,19 @@ SAME="yes"
 PATH="$PATH:/opt/s2/bin"
 
 #Location of the s2 tests
-S2_TESTS_LOCATION="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
+export S2_TESTS_LOCATION="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
 
 VO=dteam
-SE_HOST="lxb7608v1.cern.ch"
+
+#export SE_HOST="dublin.desy.de"
+#export SRM_PORT="8443" #dache
+#export SRM_BASEDIR="/pnfs/desy.de/data/dteam/"
+export SRM_BASEDIR="/dpm/cern.ch/home/dteam/"
+export SRM_PORT="8446" #dpm
+export SE_HOST="lxb7608v1.cern.ch"
 
 #Location of the s2 log files
 export LOGS_DIR="/tmp"
-#export S2_LOGS_DIR="/afs/cern.ch/user/p/pucciani/tmp"
 
 #SAME (no need to change this part for certification)
 export SAME_OK=0
