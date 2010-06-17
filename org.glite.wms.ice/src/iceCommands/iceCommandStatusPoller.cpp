@@ -685,6 +685,7 @@ iceCommandStatusPoller::deleteJobsByDN( const string& dn ) throw( )
     if ( ev ) {
       m_lb_logger->logEvent( ev );
     }
+    ++jit;
   }
 
   {
