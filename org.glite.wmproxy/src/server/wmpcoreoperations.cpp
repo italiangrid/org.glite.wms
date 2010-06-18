@@ -221,31 +221,7 @@ copyEnvironment(char** sourceEnv)
     return tmp;
 }
 
-/**
-Append a tail to an existing ExprTree and build a new exprTree
-*/
-classad::ExprTree *
-appendExprTree(classad::ExprTree * src, const string &logic_s , bool positive_b,  classad::ExprTree * tail)
-{
-        classad::PrettyPrint unp;
-        unp.SetClassAdIndentation(0);
-        unp.SetListIndentation(0);
-	string expr_s, tail_s;
-	if (src){
-	        unp.Unparse(expr_s, src);
-		// if a Tail exists then modify the src properly
-		if (tail) { expr_s="("+expr_s+")"+ logic_s; }
-	}
-	if (tail){
-		unp.Unparse(tail_s, tail);
-                if (!positive_b){tail_s="!"+tail_s ;}
-       	}
-	expr_s = expr_s + tail_s;
-        classad::ClassAdParser parser;
-        return parser.ParseExpression(expr_s, true);
-}
-
-// make NOT an expression
+// make a NOT expression
 classad::ExprTree *
 notExprTree(classad::ExprTree * expr)
 {
@@ -259,25 +235,6 @@ notExprTree(classad::ExprTree * expr)
 		classad::ClassAdParser parser;
 		return parser.ParseExpression(buffer, true);
 	}else { return NULL;}
-}
-
-/**
-* Check the Job/Node for SDJ properly inserted
-* jad - the node to be manipulated
-* sdjrequirements the Expression to be appended (if SDJ allowed)
-*/
-void checkSDJRequirements (JobAd *jad, classad::ExprTree * sdjrequirements){
-        // grab REQ expression from job/node
-        classad::ExprTree * jadREQ= jad->delAttribute(JDL::REQUIREMENTS);
-        if ( jad->hasAttribute(JDL::SHORT_DEADLINE_JOB)
-               && jad->getBool(JDL::SHORT_DEADLINE_JOB) ){
-        	// sdj requested by user within JDL
-	        jad->setAttributeExpr(JDL::REQUIREMENTS, appendExprTree (jadREQ," && ",true,sdjrequirements));
-	}else {
-	        jad->setAttributeExpr(JDL::REQUIREMENTS, appendExprTree (jadREQ," && ",false,sdjrequirements));
-	}
-	// release memory from old REQ expression
-	if (jadREQ)  {delete jadREQ;}
 }
 
 /*
@@ -1519,14 +1476,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				throw JobOperationException(__FILE__, __LINE__,
 					"submit()", wmputilities::WMS_JDL_PARSING,msg);
 			}
-			// SDJ CHECKS/adjust Requirements attribute
-			classad::ExprTree * sdjrequirements= conf.getSDJRequirements();
-			if (sdjrequirements){
-				checkSDJRequirements (&jad, sdjrequirements);
-			}else{
-				// SDJ conf not found, nothing to change
-				edglog(warning)<<"Unable to find SDJRequirements in configuration file"<< endl;
-			}
 			// \[ Do not separate
 			// Inserting sequence code
 			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
@@ -1584,14 +1533,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
 			char * seqcode = wmplogger.getSequence();
 			edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
-			// SDJ needed variables for checking nodes
-			classad::ExprTree * sdjrequirements = conf.getSDJRequirements();
-			classad::ExprTree * notsdjrequirements = NULL;
-			if (sdjrequirements) {
-				notsdjrequirements = notExprTree(sdjrequirements);
-			}else{
-                        	edglog(warning)<<"Short Deadline Job attribute not found in configuration file"<<endl;
-			}
 			// force SDJ required inheritance rules #bug 39217
 			dag.inherit( JDL::SHORT_DEADLINE_JOB);
 			dag.inherit( JDL::REQUIREMENTS);
@@ -1661,9 +1602,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                                         }
                                 }
 
-                         	// SDJ CHECKS (for each node)
-				if (sdjrequirements){ checkSDJRequirements (&nodead, sdjrequirements); }
-
 				// Adding OutputSandboxDestURI attribute
 		        	if (nodead.hasAttribute(JDL::OUTPUTSB)) {
 					vector<string> osbdesturi;
@@ -1716,15 +1654,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 								throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
 								 wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of output sandbox files is reached");
 							}
-						}
-					}
-				}
-				if (nodead.hasAttribute(JDL::SHORT_DEADLINE_JOB)) {
-					if (sdjrequirements) {
-						if (nodead.getBool(JDL::SHORT_DEADLINE_JOB)) {
-							nodead.setDefaultReq(sdjrequirements);
-						} else {
-							nodead.setDefaultReq(notsdjrequirements);
 						}
 					}
 				}
@@ -2479,15 +2408,6 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		string str_tmp_dn(temp_user_dn);
                 free(temp_user_dn);
 		ad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
-
-                // SDJ CHECKS/adjust Requirements attribute
-                classad::ExprTree * sdjrequirements= conf.getSDJRequirements();
-                if (sdjrequirements){
-                        checkSDJRequirements (ad, sdjrequirements);
-                }else{
-                        // SDJ conf not found, nothing to change
-                        edglog(warning)<<"Unable to find SDJRequirements in configuration file"<< endl;
-                }
 
 		// \/
 		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
