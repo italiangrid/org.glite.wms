@@ -256,8 +256,6 @@ WMProxyConfiguration::loadConfiguration()
 	
 	this->asyncjobstart = wmp_config->async_job_start();
 	
-	this->sdjrequirements = wmp_config->sdjrequirements();
-	
 	this->operationloadscripts = wmp_config->operation_load_scripts();
 	
 	this->maxservedrequests = wmp_config->max_served_requests();
