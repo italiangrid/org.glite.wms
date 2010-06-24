@@ -40,4 +40,5 @@ void db::UpdateJob::execute( sqlite3* db ) throw ( DbOperationException& )
     if( sqlcmd.empty( ) ) return;
     
     do_query( db, sqlcmd );
+//    m_job.reset_change_flags( );
 }

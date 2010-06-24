@@ -39,9 +39,12 @@ END LICENSE */
 #include <arpa/inet.h>
 #include <iostream>
 
-#include "boost/algorithm/string.hpp"
-#include "boost/thread/recursive_mutex.hpp"
 #include "boost/format.hpp"
+#include "boost/algorithm/string.hpp"
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/convenience.hpp"
+#include "boost/thread/recursive_mutex.hpp"
+
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -57,6 +60,100 @@ int setET(char **errtxt, int rc);
 using namespace std;
 namespace api_util   = glite::ce::cream_client_api::util;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
+
+//______________________________________________________________________
+int
+glite::wms::ice::util::utilities::fetch_jobs_callback(void *param, int argc, char **argv, char **azColName)
+{
+    list<glite::wms::ice::util::CreamJob>* jobs = (list<glite::wms::ice::util::CreamJob>*)param;
+    
+    if( argv && argv[0] ) {
+      vector<string> fields;
+      for(int i = 0; i<=glite::wms::ice::util::CreamJob::num_of_members()-1; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
+	if( argv[i] )
+	  fields.push_back( argv[i] );
+	else
+	  fields.push_back( "" );
+      }
+
+      CreamJob tmpJob(fields.at(0),
+                      fields.at(1),
+                      fields.at(2),
+                      fields.at(3),
+                      fields.at(4),
+                      fields.at(5),
+                      fields.at(6),
+                      fields.at(7),
+                      fields.at(8),
+                      fields.at(9),
+                      fields.at(10),
+                      fields.at(11),
+                      fields.at(12),
+                      (const api::job_statuses::job_status)atoi(fields.at(13).c_str()),
+                      (const api::job_statuses::job_status)atoi(fields.at(14).c_str()),
+                      strtoul(fields.at(15).c_str(), 0, 10),
+                      (time_t)strtoll(fields.at(16).c_str(), 0, 10),
+                      fields.at(17),
+                      strtoul(fields.at(18).c_str(), 0, 10),
+                      strtoul(fields.at(19).c_str(), 0, 10),
+                      fields.at(20),
+                      fields.at(21),
+                      (fields.at(22)=="1" ? true : false),
+                      (time_t)strtoll(fields.at(23).c_str(), 0, 10),
+                      (fields.at(24) == "1" ? true : false ),
+                      fields.at(25),
+                      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
+                      fields.at(27),
+                      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
+                      strtoull(fields.at(29).c_str(), 0, 10),
+		      fields.at(30)
+                      );
+      tmpJob.reset_change_flags( );      
+      jobs->push_back( tmpJob );
+    }
+
+    return 0;
+}
+
+//______________________________________________________________________
+bool 
+glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::util::CreamJob& aJob)
+{
+  
+  if( boost::filesystem::exists( boost::filesystem::path( aJob.token_file( ), boost::filesystem::native) ) )
+    return false;
+  
+  for( int k = 1; k<65535; ++k ) {
+    string resched_token_file = aJob.token_file( ) + "_" + to_string( (long int)k );
+    if( boost::filesystem::exists( boost::filesystem::path( resched_token_file , boost::filesystem::native) ) )
+      return true;
+  }
+  
+  return false; 
+}
+
+//______________________________________________________________________
+// bool 
+// glite::wms::ice::util::utilities::exists_job_reschedule_semaphore(
+//   const std::string& gridjobid
+//   )
+// {
+//   if( !boost::filesystem::exists( boost::filesystem::path( get_semaphore_filename( gridjobid ), boost::filesystem::native) ) )
+//     return false;
+//   else
+//     return true;
+// }
+
+//______________________________________________________________________
+// std::string 
+// glite::wms::ice::util::utilities::get_semaphore_filename(
+//   const std::string& gridjobid
+//   )
+// {
+//   string canonical_string( canonizeString( gridjobid ) );
+//   string persist_dir( util::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() );
+//   return persist_dir + "/" + canonical_string;
+// }
 
 //______________________________________________________________________
 void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
@@ -706,25 +803,25 @@ string glite::wms::ice::util::utilities::time_t_to_string( time_t tval ) {
 namespace {
 	  
   class canonizerObject {
-    string target;
+    string m_target;
 	    
   public:
-    canonizerObject() : target("") {
+    canonizerObject() : m_target("") {
     }
 	    
     ~canonizerObject() throw() {}
 	    
     void operator()( const char c ) throw() {
       if(isalnum((int)c)) {
-	target.append( 1, c );
+	m_target.append( 1, c );
       } else {
 	char tmp[16];
 	sprintf( tmp, "%X", c );
-	target.append( tmp );
+	m_target.append( tmp );
       }
     } // end operator()
 	    
-    string getString( void ) const { return target; }
+    string getString( void ) const { return m_target; }
   };
 	  
 };

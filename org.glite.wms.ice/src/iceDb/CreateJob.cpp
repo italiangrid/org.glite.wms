@@ -154,4 +154,6 @@ void db::CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 // 	 + ")";
   
   do_query( db, sqlcmd );
+
+  //m_theJob.reset_change_flags( );
 }

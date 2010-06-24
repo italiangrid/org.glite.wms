@@ -301,7 +301,7 @@ int main(int argc, char*argv[])
       //      glite::wms::ice::db::UpdateJobByGid updater("FAKE QUERY TO INITIALISE DB", params, "glite-wms-ice::main");
       glite::wms::ice::db::GetJobByGid getter( "foo", "glite-wms-ice::main");
       glite::wms::ice::db::Transaction tnx( false, true );
-      tnx.execute( &getter );
+      tnx.execute(&getter);
     }
 
     //exit(1);
@@ -433,7 +433,7 @@ int main(int argc, char*argv[])
 		  */
 		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
   		  if ( ev ) {
-    		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev );
+    		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev, false );
   		  } else {
 		    CREAM_SAFE_LOG( log_dev->errorStream()
 				  << method_name

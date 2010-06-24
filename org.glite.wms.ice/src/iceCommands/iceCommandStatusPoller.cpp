@@ -21,6 +21,7 @@ END LICENSE */
 
 // ICE Headers
 #include "iceCommandStatusPoller.h"
+#include "iceCommandLBLogging.h"
 #include "subscriptionManager.h"
 #include "iceLBEventFactory.h"
 #include "iceLBEventFactory.h"
@@ -33,16 +34,13 @@ END LICENSE */
 #include "iceLBEvent.h"
 #include "ice-core.h"
 #include "iceUtils.h"
-//#include "iceDb/GetFields.h"
-#include "iceDb/GetJobByCid.h"
+#include "iceDb/GetJobByGid.h"
 #include "iceDb/InsertStat.h"
-#include "iceDb/RemoveJobByCid.h"
 #include "iceDb/RemoveJobByGid.h"
-//#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobByUserDN.h"
-#include "iceDb/GetJobs.h"
+#include "iceDb/GetJobsByDN.h"
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -71,94 +69,6 @@ namespace api_util   = glite::ce::cream_client_api::util;
 
 using namespace glite::wms::ice::util;
 using namespace std;
-
-namespace { // begin anonymous namespace
-    
-  // See iceDb/GetJobsToPoll for definitions of type 'JobToPoll'
-    bool insert_condition( const CreamJob& J) {        
-      if( J.complete_cream_jobid().empty() ) 
-	return false;
-      else 
-	return true;
-    }
-    
-    /**
-     * This class is used to remove a bunch of jobs from the job
-     * cache.  It should be invoked by a scope_guard object, and is
-     * used to remove a bunch of jobs if the polling fails due (i.e.)
-     * to an expired user proxy.
-     *
-     * TODO: Remove this class, as it is not being used right now.
-     */
-    class remove_bunch_of_jobs {
-    protected:
-        vector< string > m_cream_job_ids;
-        string m_reason;
-        iceLBLogger* m_lb_logger;
-      //        jobCache* m_cache;
-        log4cpp::Category* m_log_dev;
-    public:
-        /**
-         * jobs must be a vector of COMPLETE cream job ids.
-         */
-        remove_bunch_of_jobs( const vector< string>& jobs ) :
-            m_cream_job_ids( jobs ),
-            m_reason( "Removed by ICE status poller" ),
-            m_lb_logger( iceLBLogger::instance() ),
-            //m_cache( 0 /* jobCache::getInstance() */ ),
-            m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
-        { };
-        void set_reason( const string& new_reason ) {
-            m_reason = new_reason;
-        };
-        void operator()( void ) {
-            static const char* method_name = "remove_bunch_of_jobs::operator() - ";
-            vector< string >::const_iterator it;
-
-            for ( it=m_cream_job_ids.begin(); it != m_cream_job_ids.end(); ++it ) {
-
-	      glite::wms::ice::db::GetJobByCid getter( *it, "remove_bunch_of_jobs::operator" );
-	      glite::wms::ice::db::Transaction tnx(false, false);
-	      //tnx.Begin( );
-	      tnx.execute( &getter );
-	      //tnx.commit( );
-	      if( !getter.found() ) {
-		continue; // nothing to do
-	      }
-
-	      CreamJob job( getter.get_job() );
-	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-			     << "Removing job " << job.describe()
-			     << " from the database. Reason is: "
-			     << m_reason);
-                job.set_failure_reason( m_reason );
-		string _gid( job.grid_jobid() );
-		{
-		  //list<pair<string, string> > params;
-		  //params.push_back( make_pair( glite::wms::ice::util::CreamJob::failure_reason_field(), job.failure_reason() ) );
-		  
-		  //glite::wms::ice::db::UpdateJobByGid updater( _gid, params, "remove_bunch_of_jobs::operator" );
-		  glite::wms::ice::db::UpdateJob updater( job, "remove_bunch_of_jobs::operator" );
-		  //glite::wms::ice::db::Transaction tnx;
-		  //tnx.begin_exclusive( );
-		  tnx.execute( &updater );
-		}
-                m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
-                //m_cache->erase( j );
-		{
-		  glite::wms::ice::db::RemoveJobByGid remover( _gid, "remove_bunch_of_jobs::operator" );
-		  //glite::wms::ice::db::Transaction tnx;
-		  //tnx.begin_exclusive( );
-		  tnx.execute( &remover );
-		}
-		if(job.proxy_renewable())
-		  DNProxyManager::getInstance()->decrementUserProxyCounter( job.user_dn(), job.myproxy_address() );
-            }
-        }
-    };
-
-
-}; // end anonymous namespace
 
 //____________________________________________________________________________
 iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, 
@@ -314,10 +224,10 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		*/
 		bool found = false;
 		CreamJob theJob;
+		string gid = infoIt->second.get<1>().getGridJobId();
 		{
-		  db::GetJobByCid getter( infoIt->first, "iceCommandStatusPoller::check_multiple_jobs" );
+		  db::GetJobByGid getter( gid/*infoIt->first*/, "iceCommandStatusPoller::check_multiple_jobs" );
 		  db::Transaction tnx(false, false);
-		  //tnx.begin( );
 		  tnx.execute( &getter );
 		  found = getter.found();
 		  if( found ) {
@@ -328,7 +238,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		  {
 		    if( theJob.proxy_renewable() )
 		      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.user_dn(), theJob.myproxy_address() );
-		    db::RemoveJobByCid remover( infoIt->first, "iceCommandStatusPoller::check_multiple_jobs" );
+		    db::RemoveJobByGid remover( gid /*infoIt->first*/, "iceCommandStatusPoller::check_multiple_jobs" );
 		    db::Transaction tnx(false, false);
 		    tnx.execute( &remover );
 		  }
@@ -341,7 +251,6 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
-        // remove_f.set_reason( ex.what() );
         sleep(1);
 
     } catch(soap_proxy::soap_ex& ex) {
@@ -434,7 +343,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 
     CreamJob tmp_job;
     {
-      glite::wms::ice::db::GetJobByCid getter( completeJobID, "iceCommandStatusPoller::update_single_job" );
+      glite::wms::ice::db::GetJobByGid getter( info_obj.getGridJobId() /*completeJobID*/, "iceCommandStatusPoller::update_single_job" );
       glite::wms::ice::db::Transaction tnx(false, false);
       tnx.execute( &getter );
       if( !getter.found() )
@@ -470,7 +379,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  {
 	    if( tmp_job.proxy_renewable() )
 	      DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.user_dn(), tmp_job.myproxy_address() );
-	    glite::wms::ice::db::RemoveJobByCid remover( tmp_job.complete_cream_jobid(), "iceCommandStatusPoller::update_single_job" );
+	    glite::wms::ice::db::RemoveJobByGid remover( tmp_job.grid_jobid( )/*tmp_job.complete_cream_jobid()*/, "iceCommandStatusPoller::update_single_job" );
 	    glite::wms::ice::db::Transaction tnx(false, false);
 	    tnx.execute( &remover );
 	  }
@@ -544,10 +453,18 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	    db::Transaction tnx(false, false);
 	    tnx.execute( &updater );
 	  }
+          tmp_job.reset_change_flags( );
+	  
+	  if( !tmp_job.is_active( ) ) {
+    	    if( util::utilities::is_rescheduled_job( tmp_job ) ) {
+      	      return;
+    	    }
+  	  }
+	  
 	  // Log to L&B
 	  iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
 	  if ( ev ) {
-	    tmp_job = m_lb_logger->logEvent( ev );
+	    tmp_job = m_lb_logger->logEvent( ev, true );
 	  }
 	  
 	  /**
@@ -606,7 +523,27 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
 		   << creamurl << "] is not available. Skipping polling for this user and "
 		   << "deleting all his/her jobs" 
 		   );
-    deleteJobsByDN( userdn );
+    list< CreamJob > toRemove;
+      {
+//    	list<pair<string, string> > clause;
+//    	clause.push_back( make_pair( util::CreamJob::user_dn_field(), userdn ) );
+    
+    	//db::GetJobs getter( clause, toRemove, method_name );
+	db::GetJobsByDN getter( toRemove, userdn, method_name );
+    	db::Transaction tnx( false, false );
+    	tnx.execute( &getter );
+      }
+      list< CreamJob >::iterator jit;
+      for( jit = toRemove.begin(); jit != toRemove.end(); ++jit ) {
+    	jit->set_failure_reason( "Job Aborted because proxy expired" );
+    	jit->set_status( cream_api::job_statuses::ABORTED ); 
+    	jit->set_exit_code( 0 );
+      }
+      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+        sleep(2);
+      
+      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+    //Ice::instance()->delete_jobs_by_dn( userdn );
     return;//continue;
   }  
   if( !(utilities::isvalid( proxy ).first) ) {
@@ -617,8 +554,27 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
 		   << "] is expired! Skipping polling for this user "
 		   << "and deletegin all his/her jobs..."
 		   );
-
-    deleteJobsByDN( userdn );
+    list< CreamJob > toRemove;
+      {
+//    	list<pair<string, string> > clause;
+//    	clause.push_back( make_pair( util::CreamJob::user_dn_field(), userdn ) );
+    
+    	//db::GetJobs getter( clause, toRemove, method_name );
+	db::GetJobsByDN getter( toRemove, userdn, method_name );
+    	db::Transaction tnx( false, false );
+    	tnx.execute( &getter );
+      }
+      list< CreamJob >::iterator jit;
+      for( jit = toRemove.begin(); jit != toRemove.end(); ++jit ) {
+    	jit->set_failure_reason( "Job Aborted because proxy expired" );
+    	jit->set_status( cream_api::job_statuses::ABORTED ); 
+    	jit->set_exit_code( 0 );
+      }
+      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+        sleep(2);
+      
+      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+    //Ice::instance()->delete_jobs_by_dn( userdn );
 
     return;//continue;
   }
@@ -644,53 +600,14 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
       it != jobList.end();
       ++it)
     {
-      //list< pair< string, string > > params;
-      //params.push_back( make_pair( util::CreamJob::last_seen_field(), utilities::to_string( time(0)) ));
-      //      params.push_back( make_pair( util::CreamJob::last_empty_notification_time_field(), utilities::to_string(time(0) )));
-      //      params.push_back( make_pair( util::CreamJob::last_poller_visited_field(), utilities::to_string(time(0) )));
       it->set_last_seen( time(0) );
       it->set_last_empty_notification_time( time(0) );
       it->set_last_poller_visited( time(0) );
 
-      //      db::UpdateJobByGid updater( it->grid_jobid(), params, "iceCommandStatusPoller::execute" );
       db::UpdateJob updater( *it, "iceCommandStatusPoller::execute" );
       db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
   //  }
-}
-
-//____________________________________________________________________________
-void 
-iceCommandStatusPoller::deleteJobsByDN( const string& dn ) throw( )
-{
-
-  list< CreamJob > results;
-  {
-    list<pair<string, string> > clause;
-    clause.push_back( make_pair( util::CreamJob::user_dn_field(), dn ) );
-    
-    db::GetJobs getter( clause, results, "iceCommandStatusPoller::deleteJobsForDN" );
-    db::Transaction tnx( false, false );
-    tnx.execute( &getter );
-  }
-
-  list< CreamJob >::iterator jit = results.begin();
-  while( jit != results.end() ) {
-    jit->set_failure_reason( "Job Aborted because proxy expired." );
-    jit->set_status( cream_api::job_statuses::ABORTED ); 
-    jit->set_exit_code( 0 );
-    iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
-    if ( ev ) {
-      m_lb_logger->logEvent( ev );
-    }
-    ++jit;
-  }
-
-  {
-    db::RemoveJobByUserDN remover( dn, "iceCommandStatusPoller::deleteJobsForDN" );
-    db::Transaction tnx( false, false );
-    tnx.execute( &remover );
-  }
 }

@@ -200,6 +200,24 @@ namespace {
 	      abort();
 	      
 	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE IF NOT EXISTS userdn_busy ( "	\
+		"userdn text primary key not null, "	\
+		"busy integer(1) not null"    \
+		")";
+	      do_query( db, sqlcmd );
+	      
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating database table userdn_busy: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
             try {
 	      string sqlcmd = 
 		string("CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (") + util::CreamJob::grid_jobid_field() + ")"; 

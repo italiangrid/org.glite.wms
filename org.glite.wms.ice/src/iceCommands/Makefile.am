@@ -28,7 +28,8 @@ libglite_wms_iceCommands_la_SOURCES = \
 	Request_source_purger.cpp \
 	iceCommandDelegationRenewal.cpp \
 	iceCommandEventQuery.cpp \
-	iceCommandLBLogging.cpp
+	iceCommandLBLogging.cpp \
+	iceCommandReschedule.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \

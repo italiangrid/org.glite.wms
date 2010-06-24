@@ -53,6 +53,16 @@ namespace glite {
 
 	class utilities {
 	public:
+	
+	  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName);
+	  //static int fetch_single_job_callback(void *param, int argc, char **argv, char **azColName);
+	  
+	  //static bool exists_job_reschedule_semaphore( const std::string& );// { return false; }
+	  
+	  //static std::string get_semaphore_filename( const std::string& );
+	  
+	  static bool is_rescheduled_job( const CreamJob& );
+	  
 	  static std::pair<bool, time_t> isgood( const std::string& proxyfile ) throw();
 
 	  static std::pair<bool, time_t> isvalid( const std::string& proxyfile ) throw();

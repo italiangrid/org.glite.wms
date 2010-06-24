@@ -26,7 +26,7 @@ END LICENSE */
 #include "iceConfManager.h"
 #include "ice-core.h"
 #include "iceUtils.h"
-#include "iceDb/GetJobs.h"
+#include "iceDb/GetJobsByDNMyProxy.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 //#include "iceDb/UpdateJobByGid.h"
@@ -38,7 +38,7 @@ END LICENSE */
  * Cream Client API C++ Headers
  *
  */
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
@@ -358,20 +358,22 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  
 	  list<CreamJob> toRemove;
 	  {
-	    list<pair<string, string> > clause;
-	    clause.push_back( make_pair( util::CreamJob::user_dn_field(), thisUserDN) );
-	    clause.push_back( make_pair( util::CreamJob::myproxy_address_field(), thisMyPR) );
-	    db::GetJobs getter( clause, toRemove, "iceCommandDelegationRenewal::renewAllDelegations" );
+//	    list<pair<string, string> > clause;
+//	    clause.push_back( make_pair( util::CreamJob::user_dn_field(), thisUserDN) );
+//	    clause.push_back( make_pair( util::CreamJob::myproxy_address_field(), thisMyPR) );
+	    //db::GetJobs getter( clause, toRemove, "iceCommandDelegationRenewal::renewAllDelegations" );
+	    db::GetJobsByDNMyProxy getter( toRemove, thisUserDN, thisMyPR, "iceCommandDelegationRenewal::renewAllDelegations" );
 	    db::Transaction tnx(false, false);
 	    tnx.execute( &getter );
 	  }
 	  
-	  list<CreamJob>::iterator jobit = toRemove.begin();
-	  while( jobit != toRemove.end() ) {
+	  list<CreamJob>::iterator jobit;// = toRemove.begin();
+	  for( jobit = toRemove.begin(); jobit != toRemove.end(); ++jobit ) {
+//	  while( jobit != toRemove.end() ) {
   
     	    jobit->set_status( cream_api::job_statuses::ABORTED );
     	    jobit->set_failure_reason( "Proxy expired" );
-	    ++jobit;
+//	    ++jobit;
 	  }
 	  
 	  

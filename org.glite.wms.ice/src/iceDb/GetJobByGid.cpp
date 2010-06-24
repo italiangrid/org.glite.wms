@@ -95,8 +95,9 @@ void db::GetJobByGid::execute( sqlite3* db ) throw ( db::DbOperationException& )
 			      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
 			      fields.at(27),
 			      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
-			      strtoull(fields.at(29).c_str(), 0, 10)
+			      strtoull(fields.at(29).c_str(), 0, 10),
+			      fields.at(30)
 			      );
-   m_theJob.set_retrieved_from_db( );
+   m_theJob.reset_change_flags( );
   }
 }

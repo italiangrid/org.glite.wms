@@ -18,13 +18,14 @@ limitations under the License.
 
 END LICENSE */
 
-#include "iceUtils/iceConfManager.h"
+//#include "iceUtils/iceConfManager.h"
 #include "GetTerminatedJobs.h"
 //#include "creamJob.h"
+#include "iceUtils.h"
 #include "ice-core.h"
 
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/ICEConfiguration.h"
+//#include "glite/wms/common/configuration/Configuration.h"
+//#include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 #include <cstdlib>
@@ -34,60 +35,61 @@ namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice;
 using namespace std;
 
-namespace { // begin local namespace
-
-  // Local helper function: callback for sqlite
-  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
-
-    list<CreamJob>* jobs = (list<CreamJob>*)param;
-
-    if( argv && argv[0] ) {
-      vector<string> fields;
-      for(int i = 0; i<=util::CreamJob::num_of_members()-1; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded complete_cream_jobid from the query
-	if( argv[i] )
-	  fields.push_back( argv[i] );
-	else
-	  fields.push_back( "" );
-      }
-      
-      CreamJob tmpJob(fields.at(0),
-		      fields.at(1),
-		      fields.at(2),
-		      fields.at(3),
-		      fields.at(4),
-		      fields.at(5),
-		      fields.at(6),
-		      fields.at(7),
-		      fields.at(8),
-		      fields.at(9),
-		      fields.at(10),
-		      fields.at(11),
-		      fields.at(12),
-		      (const api::job_statuses::job_status)atoi(fields.at(13).c_str()),
-		      (const api::job_statuses::job_status)atoi(fields.at(14).c_str()),
-		      strtoul(fields.at(15).c_str(), 0, 10),
-		      (time_t)strtoll(fields.at(16).c_str(), 0, 10),
-		      fields.at(17),
-		      strtoul(fields.at(18).c_str(), 0, 10),
-		      strtoul(fields.at(19).c_str(), 0, 10),
-		      fields.at(20),
-		      fields.at(21),
-		      (fields.at(22)=="1" ? true : false),
-		      (time_t)strtoll(fields.at(23).c_str(), 0, 10),
-		      (fields.at(24) == "1" ? true : false ),
-		      fields.at(25),
-		      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
-		      fields.at(27),
-		      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
-		      strtoull(fields.at(29).c_str(), 0, 10)
-		      );
-      
-      jobs->push_back( tmpJob );
-      
-    }
-    return 0;
-  }
-} // end local namespace
+// namespace { // begin local namespace
+// 
+//   // Local helper function: callback for sqlite
+//   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
+// 
+//     list<CreamJob>* jobs = (list<CreamJob>*)param;
+// 
+//     if( argv && argv[0] ) {
+//       vector<string> fields;
+//       for(int i = 0; i<=util::CreamJob::num_of_members()-1; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded complete_cream_jobid from the query
+// 	if( argv[i] )
+// 	  fields.push_back( argv[i] );
+// 	else
+// 	  fields.push_back( "" );
+//       }
+//       
+//       CreamJob tmpJob(fields.at(0),
+// 		      fields.at(1),
+// 		      fields.at(2),
+// 		      fields.at(3),
+// 		      fields.at(4),
+// 		      fields.at(5),
+// 		      fields.at(6),
+// 		      fields.at(7),
+// 		      fields.at(8),
+// 		      fields.at(9),
+// 		      fields.at(10),
+// 		      fields.at(11),
+// 		      fields.at(12),
+// 		      (const api::job_statuses::job_status)atoi(fields.at(13).c_str()),
+// 		      (const api::job_statuses::job_status)atoi(fields.at(14).c_str()),
+// 		      strtoul(fields.at(15).c_str(), 0, 10),
+// 		      (time_t)strtoll(fields.at(16).c_str(), 0, 10),
+// 		      fields.at(17),
+// 		      strtoul(fields.at(18).c_str(), 0, 10),
+// 		      strtoul(fields.at(19).c_str(), 0, 10),
+// 		      fields.at(20),
+// 		      fields.at(21),
+// 		      (fields.at(22)=="1" ? true : false),
+// 		      (time_t)strtoll(fields.at(23).c_str(), 0, 10),
+// 		      (fields.at(24) == "1" ? true : false ),
+// 		      fields.at(25),
+// 		      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
+// 		      fields.at(27),
+// 		      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
+// 		      strtoull(fields.at(29).c_str(), 0, 10),
+// 		      fields.at(30)
+// 		      );
+//       //tmpJob.reset_change_flags( );      
+//       jobs->push_back( tmpJob );
+//       
+//     }
+//     return 0;
+//   }
+// } // end local namespace
 
 void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
@@ -110,5 +112,5 @@ void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException&
 	 + util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED )
 	 + Ice::get_tmp_name() + ";";
 
-  do_query( db, sqlcmd, fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
 }

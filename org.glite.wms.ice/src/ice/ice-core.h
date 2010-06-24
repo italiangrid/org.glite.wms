@@ -248,6 +248,8 @@ namespace ice {
          */
 	//        util::jobCache::iterator 
 	bool resubmit_or_purge_job( util::CreamJob* ) throw();
+
+	//void delete_jobs_by_dn( const std::string& ) throw();
 	
         
         /**

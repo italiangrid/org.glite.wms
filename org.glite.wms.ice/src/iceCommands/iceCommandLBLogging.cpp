@@ -23,7 +23,6 @@ END LICENSE */
 #include "iceUtils.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -36,7 +35,6 @@ END LICENSE */
  * Cream Client API C++ Headers
  *
  */
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
@@ -61,7 +59,7 @@ using namespace std;
 using namespace glite::wms::ice;
 
 //______________________________________________________________________________
-util::iceCommandLBLogging::iceCommandLBLogging( const list<CreamJob>& jobs) :
+util::iceCommandLBLogging::iceCommandLBLogging( const list<CreamJob>& jobs ) :
     iceAbsCommand( "iceCommandLBLogging", "" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_jobs_to_remove( jobs ),
@@ -87,16 +85,19 @@ string util::iceCommandLBLogging::get_grid_job_id( ) const
 //______________________________________________________________________________
 void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
 {  
-
-  // m_job_to_remove
-  list<CreamJob>::iterator jobit = m_jobs_to_remove.begin();
+  list<CreamJob>::iterator jobit;
   
-  while( jobit != m_jobs_to_remove.end() ) {  
+  for( jobit = m_jobs_to_remove.begin(); jobit != m_jobs_to_remove.end(); ++jobit ) {
     
+    /**
+     * The following if is for the feedback
+     */
+    if( util::utilities::is_rescheduled_job( *jobit ) )
+      continue;
+      
     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {
-      api_util::scoped_timer lbtimer( string("iceCommandLBLogging::execute - TID=[") + getThreadID() + "] LOG TO LB" );
-      m_lb_logger->logEvent( ev );
+      m_lb_logger->logEvent( ev, false );
     }
     
     if( cream_api::job_statuses::DONE_OK == jobit->status() ||
@@ -114,10 +115,9 @@ void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
 	  db::Transaction tnx( false, false );
 	  tnx.execute( &remover );
 	  if( jobit->proxy_renewable() )
-	    glite::wms::ice::util::DNProxyManager::getInstance()->decrementUserProxyCounter( jobit->user_dn(), jobit->myproxy_address());
+	    glite::wms::ice::util::DNProxyManager::getInstance()->decrementUserProxyCounter( jobit->user_dn(), jobit->myproxy_address() );
 	}
 	
       }
-    ++jobit; 
   }
 }

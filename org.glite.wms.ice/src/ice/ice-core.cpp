@@ -27,6 +27,7 @@ END LICENSE */
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
 #include "iceLBEvent.h"
+#include "iceLBEventFactory.h"
 #include "iceLBLogger.h"
 #include "CreamProxyMethod.h"
 #include "iceCommandStatusPoller.h"
@@ -37,12 +38,14 @@ END LICENSE */
 #include "iceUtils.h"
 #include "CreamJob.h"
 
+//#include "iceDb/GetJobs.h"
 #include "iceDb/GetJobsToPoll.h"
 #include "iceDb/GetFieldsCount.h"
 #include "iceDb/CheckGridJobID.h"
 #include "iceDb/GetTerminatedJobs.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
+#include "iceDb/RemoveJobByUserDN.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -84,10 +87,17 @@ namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace config_ns = glite::wms::common::configuration;
 
 Ice                     *Ice::s_instance = 0;
-//boost::recursive_mutex  Ice::ClassAd_Mutex;
 boost::recursive_mutex  Ice::s_mutex;
 boost::recursive_mutex  Ice::s_mutex_tmpname;
 string                  Ice::s_tmpname = "";
+
+class Resubmit_Or_Purge {
+  glite::wms::ice::Ice *m_theIce;
+
+public:
+  Resubmit_Or_Purge( glite::wms::ice::Ice *theIce ) : m_theIce( theIce ) {}
+  void operator()( CreamJob& job ) { m_theIce->resubmit_or_purge_job( &job ); }
+};
 
 //____________________________________________________________________________
 Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
@@ -324,14 +334,17 @@ void Ice::init( void )
     tnx.execute( &getter );
     //    allJobs = getter.get_jobs();
   }
-  
+
+  Resubmit_Or_Purge checker( this ); 
+  for_each( allJobs.begin(), allJobs.end(),  checker );
+/* 
   for(list< glite::wms::ice::util::CreamJob >::iterator it = allJobs.begin();
       it != allJobs.end();
       ++it)
     {
-      resubmit_or_purge_job( /*thisJob*/ &(*it) );
+      resubmit_or_purge_job( &(*it) );
     }
-   
+  */ 
   /*if(m_configuration->ice()->start_lease_updater() ) {
     util::iceCommandLeaseUpdater l( true );
     l.execute( "" );
@@ -594,9 +607,6 @@ bool Ice::is_job_killer_started( void ) const
 //____________________________________________________________________________
 void Ice::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
 {
-
-  //  string isbproxy( the_job.getUserProxyCertificate() );
-
   if( ::getenv( "GLITE_WMS_ICE_NORESUBMIT" ) ) {
 
      CREAM_SAFE_LOG( m_log_dev->warnStream() 
@@ -607,7 +617,6 @@ void Ice::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
 
   cream_api::soap_proxy::VOMSWrapper V( the_job->user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
   if( !V.IsValid( ) ) {
-    //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
 		    << "Ice::resubmit_job() - Will NOT resubmit job ["
 		    << the_job->describe() << "] " 
@@ -616,19 +625,19 @@ void Ice::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
 		    );
 
     the_job->set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
-    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ) );
+    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ), true );
 
     return;
   }
+  
     util::CreamJob _the_job(*the_job);
     try {
-      //boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( /*ice_util::CreamJob::s_GlobalICEMutex*/ s_mutex );
+      boost::recursive_mutex::scoped_lock M( s_mutex );
         
 	
-        _the_job = m_lb_logger->logEvent( new util::ice_resubmission_event( _the_job, reason ) );
+        _the_job = m_lb_logger->logEvent( new util::ice_resubmission_event( _the_job, reason ), true );
         
-        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_start_event( _the_job, m_wms_input_queue->get_name() ) );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_start_event( _the_job, m_wms_input_queue->get_name() ), true );
         
 	string resub_request;
 
@@ -659,16 +668,17 @@ void Ice::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
                        );
 
         m_wms_input_queue->put_request( resub_request );
-        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_ok_event( _the_job, m_wms_input_queue->get_name() ) );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_ok_event( _the_job, m_wms_input_queue->get_name() ), true );
+	
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() 
 			<< "Ice::resubmit_job() - "
                         << ex.what() 
                          );
 
-        m_lb_logger->logEvent( new util::ns_enqueued_fail_event( _the_job, m_wms_input_queue->get_name(), ex.what() ) );
+        m_lb_logger->logEvent( new util::ns_enqueued_fail_event( _the_job, m_wms_input_queue->get_name(), ex.what() ), true );
 	_the_job.set_failure_reason( string("resubmission failed: ") + ex.what() );
-	m_lb_logger->logEvent( new util::job_aborted_event( _the_job ) );
+	m_lb_logger->logEvent( new util::job_aborted_event( _the_job ), true );
     }
 }
 
@@ -1014,3 +1024,38 @@ throw()
   return ok;
 }
 
+//______________________________________________________________________________
+// void 
+// Ice::delete_jobs_by_dn( const std::string& dn ) throw( )
+// {
+// 
+//   list< CreamJob > results;
+//   {
+//     list<pair<string, string> > clause;
+//     clause.push_back( make_pair( util::CreamJob::user_dn_field(), dn ) );
+//     
+//     db::GetJobs getter( clause, results, "Ice::delete_jobs_by_dn" );
+//     db::Transaction tnx( false, false );
+//     tnx.execute( &getter );
+//   }
+// 
+//   list< CreamJob >::iterator jit;
+// 
+//   for( jit = results.begin(); jit != results.end(); ++jit ) {
+//     jit->set_failure_reason( "Job Aborted because proxy expired" );
+//     jit->set_status( cream_api::job_statuses::ABORTED ); 
+//     jit->set_exit_code( 0 );
+//     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+//     if ( ev ) {
+//       m_lb_logger->logEvent( ev, false );
+//     }
+//     
+//     if( jit->proxy_renewable() )
+//       DNProxyManager::getInstance()->decrementUserProxyCounter( jit->user_dn(), jit->myproxy_address() );
+//   }
+//   
+//   db::RemoveJobByUserDN remover( dn, "Ice::delete_jobs_by_dn" );
+//   db::Transaction tnx( false, false );
+//   tnx.execute( &remover );
+//   
+// }

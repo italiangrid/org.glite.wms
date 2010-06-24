@@ -20,10 +20,7 @@ END LICENSE */
 
 #include "ice-core.h"
 #include "iceUtils.h"
-#include "CreamJob.h"
-#include "GetJobsByDbID.h"
-
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "GetJobsByDNMyProxy.h"
 
 #include <cstdlib>
 
@@ -35,8 +32,6 @@ namespace cream_api = glite::ce::cream_client_api;
 // 
 //   // Local helper function: callback for sqlite
 //   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
-//     //    string* serialized = (string*)param;
-//     //list< vector<string> > *jobs = (list<vector<string> >*)param;
 //     
 //     list<util::CreamJob>* jobs = (list<util::CreamJob>*)param;
 //     
@@ -90,15 +85,21 @@ namespace cream_api = glite::ce::cream_client_api;
 //   
 // } // end local namespace
 
-void db::GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetJobsByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd;
   sqlcmd += "SELECT " + util::CreamJob::get_query_fields() 
-	 + " FROM jobs WHERE (" + util::CreamJob::cream_dbid_field() 
-         + " not null) AND ( " + util::CreamJob::cream_dbid_field() + "="
+	 + " FROM jobs WHERE " + util::CreamJob::user_dn_field() 
+         + "="
 	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((unsigned long long int)m_dbid )
-	 + Ice::get_tmp_name() + ") ;";
+	 + m_dn
+	 + Ice::get_tmp_name() 
+	 + " AND " + util::CreamJob::myproxy_address_field() 
+	 + "="
+	 + Ice::get_tmp_name()
+	 + m_myproxy
+	 + Ice::get_tmp_name()
+	 + ";";
     
   do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
 

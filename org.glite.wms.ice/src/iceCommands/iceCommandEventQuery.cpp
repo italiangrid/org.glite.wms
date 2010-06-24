@@ -39,8 +39,7 @@ END LICENSE */
 
 #include "iceDb/GetDbID.h"
 #include "iceDb/SetDbID.h"
-#include "iceDb/GetJobs.h"
-//#include "iceDb/GetFields.h"
+#include "iceDb/GetJobsByDN.h"
 #include "iceDb/DNHasJobs.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/GetEventID.h"
@@ -48,7 +47,7 @@ END LICENSE */
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetJobsByDbID.h"
-#include "iceDb/RemoveJobByCid.h"
+#include "iceDb/RemoveJobByGid.h"
 #include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobsByDbID.h"
 #include "iceDb/RemoveJobByUserDN.h"
@@ -76,14 +75,20 @@ namespace {
     cleanup( list<soap_proxy::EventWrapper*>* toClean ) : m_toclean( toClean ) {}
     ~cleanup() {
       if(m_toclean) {
-        list<soap_proxy::EventWrapper*>::iterator it = m_toclean->begin();
-        while( it != m_toclean->end() ) {
-          delete( *it );
-          ++it;
-        }
+        list<soap_proxy::EventWrapper*>::iterator it;// = m_toclean->begin();
+
+	for( it = m_toclean->begin(); it != m_toclean->end(); ++it )
+	  delete( *it );
       }
     }
   };
+}
+
+
+
+//______________________________________________________________________________
+ice::util::iceCommandEventQuery::~iceCommandEventQuery( ) throw()
+{
 }
 
 //______________________________________________________________________________
@@ -163,8 +168,27 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		      << "] ce url ["
 		      << m_ce << "] is not available. Skipping EventQuery. Going to remove all jobs of this user..."
 		      );
+      list< CreamJob > toRemove;
+      {
+//    	list<pair<string, string> > clause;
+ //   	clause.push_back( make_pair( util::CreamJob::user_dn_field(), m_dn ) );
+    
+    	//db::GetJobs getter( clause, toRemove, method_name );
+  	db::GetJobsByDN getter( toRemove, m_dn, method_name );
+    	db::Transaction tnx( false, false );
+    	tnx.execute( &getter );
+      }
+      list< CreamJob >::iterator jit;
+      for( jit = toRemove.begin(); jit != toRemove.end(); ++jit ) {
+    	jit->set_failure_reason( "Job Aborted because proxy expired" );
+    	jit->set_status( cream_api::job_statuses::ABORTED ); 
+    	jit->set_exit_code( 0 );
+      }
+      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+        sleep(2);
       
-      deleteJobsByDN( );
+      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      //Ice::instance()->delete_jobs_by_dn( m_dn );
       
       return;
       
@@ -177,8 +201,27 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		      << "] ce url ["
 		      << m_ce << "] is not valid anymore. Skipping EventQuery. Going to remove all jobs of this user..."
 		      );
+      list< CreamJob > toRemove;
+      {
+    	list<pair<string, string> > clause;
+    	clause.push_back( make_pair( util::CreamJob::user_dn_field(), m_dn ) );
+    
+    	//db::GetJobs getter( clause, toRemove, method_name );
+	db::GetJobsByDN getter( toRemove, m_dn, method_name );
+    	db::Transaction tnx( false, false );
+    	tnx.execute( &getter );
+      }
+      list< CreamJob >::iterator jit;
+      for( jit = toRemove.begin(); jit != toRemove.end(); ++jit ) {
+    	jit->set_failure_reason( "Job Aborted because proxy expired" );
+    	jit->set_status( cream_api::job_statuses::ABORTED ); 
+    	jit->set_exit_code( 0 );
+      }
+      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+        sleep(2);
       
-      deleteJobsByDN( );
+      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      //Ice::instance()->delete_jobs_by_dn( m_dn );
       
       return;
       
@@ -305,12 +348,13 @@ states.push_back( make_pair("STATUS", "IDLE") );
       }
       
       list<CreamJob>::iterator jobit = toRemove.begin();
-      while( jobit != toRemove.end() ) {
+      for(  jobit = toRemove.begin(); jobit != toRemove.end(); ++jobit ) {
+//      while( jobit != toRemove.end() ) {
 	
 	jobit->set_status( cream_api::job_statuses::ABORTED );
 	jobit->set_failure_reason( "CREAM'S database has been scratched and all its jobs have been lost" );
 
-	++jobit;
+//	++jobit;
       }
       
       
@@ -451,8 +495,9 @@ ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>&
 
   long long last_id = 0;
   
-  list<soap_proxy::EventWrapper*>::const_iterator it = events.begin();
-  while( it != events.end() ) {
+  list<soap_proxy::EventWrapper*>::const_iterator it;// = events.begin();
+  for(  it = events.begin();  it != events.end(); ++it ) {
+//  while( it != events.end() ) {
 
     long long tmpid = atoll((*it)->id.c_str() ) ;
     
@@ -460,13 +505,14 @@ ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>&
       last_id = tmpid;
 
     mapped_events[ (*it)->getPropertyValue("gridJobId") ].push_back( *it );
-    ++it;
+//    ++it;
   }
 
-  map< string, list<soap_proxy::EventWrapper*> >::const_iterator eit = mapped_events.begin();
-  while( eit != mapped_events.end() ) {
+  map< string, list<soap_proxy::EventWrapper*> >::const_iterator eit;// = mapped_events.begin();
+  for( eit = mapped_events.begin(); eit != mapped_events.end();  ++eit ) {
+//  while( eit != mapped_events.end() ) {
     this->processEventsForJob( eit->first, eit->second );
-    ++eit;
+//    ++eit;
   }
 
   return last_id;
@@ -500,6 +546,16 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
     
     tmp_job = getter.get_job();
     
+    /**
+     * The following if is needed by the Feedback mechanism
+     */
+    if( tmp_job.cream_jobid( ).empty( ) ) {
+      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
+		       << "GridJobID [" << GID
+		       << "] has an EMPTY CREAM JobID. Skipping..."
+		       );
+      return;
+    }
   }
   
   int num_events = ev.size();
@@ -514,9 +570,9 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
 		 << tmp_job.cream_address() << "]."
 		 );
   
-  list<soap_proxy::EventWrapper*>::const_iterator evt_it = ev.begin();
+  list<soap_proxy::EventWrapper*>::const_iterator evt_it;// = ev.begin();
   int evt_counter = 0;
-  while( evt_it != ev.end() ) {
+  for( evt_it = ev.begin(); evt_it != ev.end(); ++evt_it ) {
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "EventID ["
@@ -535,11 +591,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
       return;
     
     ++evt_counter;
-    ++evt_it;
-    
   }
-
-  //delete( ev );
 }
 
 //______________________________________________________________________________
@@ -566,7 +618,6 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 
 #ifdef GLITE_WMS_ICE_ENABLE_STATS
   {
-    api_util::scoped_timer istat( string( "iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] InsertStat" );
     db::InsertStat inserter( time(0), event->timestamp,(short)status, "iceCommandEventQuery::processSingleEvent" );
     db::Transaction tnx(false, false);
     tnx.execute( &inserter );
@@ -581,7 +632,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
     {
       if( theJob.proxy_renewable() )
 	DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.user_dn(), theJob.myproxy_address() );
-      db::RemoveJobByCid remover( theJob.complete_cream_jobid(), "iceCommandEventQuery::processSingleEvent" );
+      db::RemoveJobByGid remover( theJob.grid_jobid( ), "iceCommandEventQuery::processSingleEvent" );
       db::Transaction tnx(false, false);
       tnx.execute( &remover );
     }
@@ -619,34 +670,29 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 		   << " failure_reason = [" << fail_reason << "]"
 		   << " description = [" << description << "]"
 		   );
-    //    list<pair<string, string> > params;
-    //    params.push_back( make_pair("worker_node", worker_node ) );
-    /**
-       This update of releveat times is done outside, in the check_user_jobs 
-       method in order to prevent to re-poll always the same jobs 
-       if something goes wrong...
-       
-       params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
-       params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
-    */
-    //params.push_back( make_pair( util::CreamJob::get_status_field(), utilities::to_string((short int)status)));
-    //    params.push_back( make_pair( util::CreamJob::get_exit_code_field(), utilities::to_string((long int)theJob.get_exit_code())));
-    //    params.push_back( make_pair( util::CreamJob::get_failure_reason_field(), theJob.get_failure_reason() ));
 
-    api_util::scoped_timer updatetimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] ICE DB Update" );
+    //api_util::scoped_timer updatetimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] ICE DB Update" );
     
-    //    db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandEventQuery::processSingleEvent");
     db::UpdateJob updater( theJob, "iceCommandEventQuery::processSingleEvent");
     db::Transaction tnx(false, false);
     tnx.execute( &updater );
   }
-
-  // Log to L&B
-
+  theJob.reset_change_flags( );
+  
+  /**
+   * The following if is for the feedback
+   */
+  if( !theJob.is_active( ) ) {
+    if( util::utilities::is_rescheduled_job( theJob ) ) {
+      removed = false;
+      return;
+    }
+  }
+  
   iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
   if ( ev ) {
     api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
-    theJob = m_lb_logger->logEvent( ev );
+    theJob = m_lb_logger->logEvent( ev, true );
   }
   
   /**
@@ -654,50 +700,49 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
      only if a new status has been received
   */
   if(is_last_event) {
-    api_util::scoped_timer resubtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] RESUBMIT_OR_PURGE_JOB" );
+    //api_util::scoped_timer resubtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] RESUBMIT_OR_PURGE_JOB" );
     removed = m_iceManager->resubmit_or_purge_job( &theJob );
   }
   else
     removed = false;
 }
 
-
-
 //______________________________________________________________________________
-void 
-ice::util::iceCommandEventQuery::deleteJobsByDN( void ) throw( )
-{
+// void 
+// ice::util::iceCommandEventQuery::deleteJobsByDN( void ) throw( )
+// {
 
-  list< CreamJob > results;
-  {
-    list<pair<string, string> > clause;
-    clause.push_back( make_pair( util::CreamJob::user_dn_field(), m_dn ) );
+//   list< CreamJob > results;
+//   {
+//     list<pair<string, string> > clause;
+//     clause.push_back( make_pair( util::CreamJob::user_dn_field(), m_dn ) );
     
-    db::GetJobs getter( clause, results, "iceCommandEventQuery::deleteJobsForDN" );
-    db::Transaction tnx( false, false );
-    tnx.execute( &getter );
-  }
+//     db::GetJobs getter( clause, results, "iceCommandEventQuery::deleteJobsForDN" );
+//     db::Transaction tnx( false, false );
+//     tnx.execute( &getter );
+//   }
 
-  list< CreamJob >::iterator jit = results.begin();
-  while( jit != results.end() ) {
-    jit->set_failure_reason( "Job Aborted because proxy expired." );
-    jit->set_status( cream_api::job_statuses::ABORTED ); 
-    jit->set_exit_code( 0 );
-    iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
-    if ( ev ) {
-      m_lb_logger->logEvent( ev );
-    }
+//   list< CreamJob >::iterator jit;// = results.begin();
+//   for( jit = results.begin(); jit != results.end(); ++jit ) {
+// //  while( jit != results.end() ) {
+//     jit->set_failure_reason( "Job Aborted because proxy expired." );
+//     jit->set_status( cream_api::job_statuses::ABORTED ); 
+//     jit->set_exit_code( 0 );
+//     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+//     if ( ev ) {
+//       m_lb_logger->logEvent( ev );
+//     }
     
-    if( jit->proxy_renewable() )
-      DNProxyManager::getInstance()->decrementUserProxyCounter( jit->user_dn(), jit->myproxy_address() );
+//     if( jit->proxy_renewable() )
+//       DNProxyManager::getInstance()->decrementUserProxyCounter( jit->user_dn(), jit->myproxy_address() );
     
-    ++jit;
-  }
+// //    ++jit;
+//   }
 
-  {
-    db::RemoveJobByUserDN remover( m_dn, "iceCommandEventQuery::deleteJobsForDN" );
-    db::Transaction tnx( false, false );
-    tnx.execute( &remover );
-  }
+//   {
+//     db::RemoveJobByUserDN remover( m_dn, "iceCommandEventQuery::deleteJobsForDN" );
+//     db::Transaction tnx( false, false );
+//     tnx.execute( &remover );
+//   }
 
-}
+// }

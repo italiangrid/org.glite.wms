@@ -71,7 +71,7 @@ namespace glite {
                      * from the one stored in the logged event ev in
                      * the sequence code only.
                      */
-                    CreamJob logEvent( iceLBEvent* ev );
+                    CreamJob logEvent( iceLBEvent* ev, const bool updatedb );
 
                     ~iceLBLogger( void );
                 protected:

@@ -80,14 +80,14 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
     
     // Parse the "command" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-      throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
-    }
-    boost::trim_if(commandStr, boost::is_any_of("\""));
+    //if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
+    //  throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
+    //}
+    //boost::trim_if(commandStr, boost::is_any_of("\""));
     
-    if ( !boost::algorithm::iequals( commandStr, "cancel" ) ) {
-      throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
-    }
+    //if ( !boost::algorithm::iequals( commandStr, "cancel" ) ) {
+    //  throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
+    //}
     
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "protocol", protocolStr ) ) {
@@ -181,7 +181,7 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     util::CreamJob theJob( get.get_job() );
 
     // Log cancel request event
-    theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
+    theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ), true );    
 
     string jobdesc( theJob.describe()  );
 
@@ -224,11 +224,10 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
       //params.push_back( make_pair( util::CreamJob::failure_reason_field(), "Aborted by user" ));
       {
 	db::Transaction tnx( false, false );
-	
-	//	db::UpdateJobByGid updater( theJob.grid_jobid(), params, "iceCommandCancel::cancel" );
 	db::UpdateJob updater(theJob, "iceCommandCancel::cancel" );
 	tnx.execute( &updater );
       }
+      theJob.reset_change_flags( );
       vector<cream_api::JobIdWrapper> toCancel;
       toCancel.push_back( cream_api::JobIdWrapper(theJob.cream_jobid(), 
 						  theJob.cream_address(), 
@@ -270,20 +269,20 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
 			 
 			 );
 	  
-	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
+	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ), true );
 	  throw iceCommandFatal_ex( errMex );
 	}
     } catch(cream_api::auth_ex& ex) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ) );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ), true );
       throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(cream_api::soap_ex& ex) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ) );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ), true );
       throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
     } catch(cream_ex::BaseException& base) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ) );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ), true );
       throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
     } catch(cream_ex::InternalException& intern) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ), true );
       throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     } catch( ConnectionTimeoutException& ex) {
       throw iceCommandTransient_ex( boost::str( boost::format( "CREAM Cancel raised a ConnectionTimeoutException %1%") % ex.what() ) ) ;

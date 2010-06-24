@@ -46,13 +46,11 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				UpdateProxyFieldsByDN.cpp \
 				UpdateDelegationTimesByID.cpp \
 				RemoveJobByGid.cpp \
-				RemoveJobByCid.cpp \
 				RemoveProxyByDN.cpp \
 				RemoveDelegationByID.cpp \
 				RemoveDelegationByDNMyProxy.cpp \
 				RemoveDelegation.cpp \
 				RemoveLease.cpp \
-				GetJobByCid.cpp \
 				GetAllJobs.cpp \
 				GetJobByGid.cpp \
 				GetJobsToPoll.cpp \
@@ -65,7 +63,8 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				RemoveJobsByDbID.cpp \
 				InsertStat.cpp \
 				GetStats.cpp \
-				GetJobs.cpp \
+				GetJobsByDN.cpp \
+				GetJobsByDNMyProxy.cpp \
 				UpdateProxyCounterByDN.cpp \
 				RemoveJobByUserDN.cpp \
 				UpdateJob.cpp

@@ -114,19 +114,23 @@ void eventStatusPoller::body( void )
     set<string>::const_iterator ceit = ces.begin();
     
     while( ceit != ces.end() ) {
-    
+
+      if(  ceit->empty() ) {
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
+		       << "Empty CE string! Skipping..."
+		       );
+	continue;// next CE
+      }
+
       set<string>::const_iterator dnit = dns.begin();
       
-      
-    
-      while( dnit != dns.end() ) {
-      
-        if( (*dnit).empty() || (*ceit).empty() ) {
+      for( dnit = dns.begin(); dnit != dns.end(); ++dnit ) {
+	
+        if( dnit->empty() ) {
           CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
-		       << "Empty DN or CE string. "
-		       );
-	  ++dnit;
-          continue;
+			 << "Empty DN string! Skipping... "
+			 );
+	  continue; // next DN
         }
 	
         {
@@ -139,12 +143,11 @@ void eventStatusPoller::body( void )
 		           << *dnit << "] has not job one the CE ["
 			   << *ceit << "] in the ICE's database at the moment. Skipping query..."
 		           );
-	    ++dnit;
 	    continue;
           }
         }
       
-        while( m_threadPool->get_command_count( ) >= 10 /*iceCondiguration::getInstance()->ice()->get_max_ice_thread( )*/ ) {
+        while( m_threadPool->get_command_count( ) >= 10 ) {
 	  CREAM_SAFE_LOG( m_log_dev->debugStream()
 	  		  << "eventStatusPoller::body() - "
 			  << "Too many commands in the queue. Waiting 10 seconds..."
@@ -159,10 +162,8 @@ void eventStatusPoller::body( void )
  			    << *ceit << ") to the thread pool..."
  			    );
       
-        m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );//.execute();
+        m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );
       
-
-        ++dnit;
       }
     
       ++ceit;

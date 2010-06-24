@@ -76,7 +76,7 @@ iceLBLogger::~iceLBLogger( void )
 
 }
 
-CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
+CreamJob iceLBLogger::logEvent( iceLBEvent* ev, const bool updatedb )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
 #ifdef ICE_PROFILE_ENABLE
@@ -152,9 +152,12 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 	  //#endif
 	  //glite::wms::ice::db::UpdateJobByGid updater( theJob.grid_jobid(), params, "iceLBLogger::logEvent" );
 
-	  glite::wms::ice::db::UpdateJob updater( theJob, "iceLBLogger::logEvent" );
-	  glite::wms::ice::db::Transaction tnx(false, false);
-	  tnx.execute( &updater );
+	  if(updatedb) {
+	    glite::wms::ice::db::UpdateJob updater( theJob, "iceLBLogger::logEvent" );
+	    glite::wms::ice::db::Transaction tnx(false, false);
+	    tnx.execute( &updater );
+ 	  }
+          theJob.reset_change_flags( );
 	  return theJob;
 	  
         } catch( db::DbOperationException& ex ) {

@@ -66,7 +66,6 @@ namespace glite {
           Ice                                   *m_iceManager;
 	  glite::wms::ice::util::iceConfManager *m_conf;
 	  bool                                   m_stopped;
-	  //	  const std::vector<std::string>         m_dnce_array;
 	  const std::string                      m_dn, m_ce;
 	  
 	  long long getEventID( const std::string&, const std::string& );
@@ -84,11 +83,11 @@ namespace glite {
 
 	  void getJobsByDbID( std::list<glite::wms::ice::util::CreamJob>& jobs, const long long db_id );
 
-	  void deleteJobsByDN( void ) throw();
+	  //	  void deleteJobsByDN( void ) throw();
 
 	public:
 	  iceCommandEventQuery( Ice*, const std::string& dn, const std::string& ce );
-	  ~iceCommandEventQuery( ) throw() {}
+	  ~iceCommandEventQuery( ) throw();// {}
 	  
 	  void execute( const std::string& ) throw();
 	  
