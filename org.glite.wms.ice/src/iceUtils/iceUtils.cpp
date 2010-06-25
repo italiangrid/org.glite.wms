@@ -123,7 +123,7 @@ glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::uti
   if( boost::filesystem::exists( boost::filesystem::path( aJob.token_file( ), boost::filesystem::native) ) )
     return false;
   
-  for( int k = 1; k<65535; ++k ) {
+  for( int k = 1; k<10; ++k ) {
     string resched_token_file = aJob.token_file( ) + "_" + to_string( (long int)k );
     if( boost::filesystem::exists( boost::filesystem::path( resched_token_file , boost::filesystem::native) ) )
       return true;
