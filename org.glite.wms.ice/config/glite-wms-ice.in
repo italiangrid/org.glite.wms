@@ -1,17 +1,5 @@
 #!/bin/sh
 
-# File: glite-wms-ice
-# Author: Moreno Marzolla <moreno.marzolla@pd.infn.it>
-# Based on glite-wms-wm by Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
-# Copyright (c) 2002 EU DataGrid.
-# Copyright (c) 2005 EGEE
-# For license conditions see http://www.eu-datagrid.org/license.html
-#
-# Description: start, stop, status of the GLITE ICE daemon
-#
-# $Id$
-
-# chkconfig: 345 94 06 
 
 GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
 
@@ -29,42 +17,23 @@ GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
  
 GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
 export GLITE_WMS_CONFIG_DIR
-
 this_script_name=$0
 
 program_name=glite-wms-ice-safe
 binpath=${GLITE_LOCATION}/bin/${program_name}
 pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
-#set -x
-
 running()
 {
-    # no pidfile
-    if [ ! -r ${pid_file} ]; then
-        return 3
-    fi
-
-    pid=`cat ${pid_file} 2> /dev/null`
-
-    # no pid
-    if [ -z "${pid}" ]; then
-        return 1
-    fi
+    pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
+    pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
     
-    local cmdline=`ps hwwwp ${pid} o command` # BSD style
-    local cmd=`echo ${cmdline} | awk '{print $1}'` # beware of white spaces in the command
-
-    # no ice?
-    if [ "${cmd}" != "${binpath}" ]; then
-        # maybe the process has been swapped out
-        # the command name (the first 15 chars) appears between []
-        local expected_cmd="[`echo ${program_name} | cut -c1-15`]"
-        if [ "${cmd}" != "${expected_cmd}" ]; then
-            return 1;
-        fi
-    fi
-
+    
+    if [ -z "${pidsafe}" ]; then
+        #echo "NO SAFE"
+        return 1
+    fi    
+    
     return 0
 }
 
@@ -73,12 +42,6 @@ ret_code=0
 start()
 {
     conf_file=glite_wms.conf
-    # The following two lines are not used at the moment; In order to be
-    # useful, glite-wms-parse-configuration.sh should be modified to
-    # include specific actions for ICE. Currently no special action
-    # is required
-    #parse_attribute=ICE
-    #. ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
     GET_CONF=${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration
     if [ -f ${GET_CONF} ]; then
        err_logfile=`${GET_CONF} ICE.logfile`;
@@ -120,39 +83,15 @@ start()
 stop()
 {
    echo -n "stopping ICE... "
-
-#    if running; then
-#        pid=`cat ${pid_file} 2> /dev/null`
-       binpath_child=${GLITE_LOCATION}/bin/glite-wms-ice
-#        killall ${binpath_child}
-	killall -9 ${GLITE_LOCATION}/bin/glite-wms-ice-safe 2> /dev/null
-#	killall ${binpath_child}
-	killall -9 ${GLITE_LOCATION}/bin/glite-wms-ice 2> /dev/null
-	rm -f ${pid_file}
-       ## When the child process dies, the father will exit as well,
-       ## so the following line should not be necessary any more.
-       ##
-       ## kill ${pid}
-       sleep 2
-       echo "ok"
-       return 0
-#        if running; then
-#            kill -9 ${pid}
-#            sleep 2
-#            if running; then
-#                echo "failure (stop it manually)"
-#                ret_code=1
-#            else
-#                echo "ok"
-#                rm -f ${pid_file}
-#            fi
-#        else
-#            echo "ok"
-#            rm -f ${pid_file}
-#        fi
-#   else
-#       echo "ok (was not running)"
-#   fi
+   pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
+   pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+   
+   kill -9 $pidsafe
+   sleep 1
+   kill -9 $pid
+   sleep 1
+   echo "ok"
+   return
 }
 
 status()
