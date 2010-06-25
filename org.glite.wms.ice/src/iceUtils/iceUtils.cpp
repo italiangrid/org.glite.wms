@@ -181,28 +181,16 @@ void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
 	    
-    if ( !boost::algorithm::iequals( commandStr, "submit" ) && !boost::algorithm::iequals( commandStr, "cancel" )) {
+    if ( !boost::algorithm::iequals( commandStr, "submit" ) 
+         && !boost::algorithm::iequals( commandStr, "cancel" )
+	 && !boost::algorithm::iequals( commandStr, "reschedule" )
+	 ) 
+    {
       throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
     }
 	    
-    if( boost::algorithm::iequals( commandStr, "cancel" ) ) {
- 
+    if( boost::algorithm::iequals( commandStr, "cancel" ) )
       return;
-      /*
-	try {
-	theJob->set_jdl( request->to_string(), commandStr ); // this puts another mutex
-	theJob->set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
-	} catch( ClassadSyntax_ex& ex ) {
-
-	CREAM_SAFE_LOG(
-	api_util::creamApiLogger::instance()->getLogger()->errorStream()
-	<< "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
-	<< "] due to classad excaption: " << ex.what()
-	);
-	throw( ClassadSyntax_ex( ex.what() ) );
-	}*/
- 
-    }
  
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
@@ -220,7 +208,7 @@ void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
     }
 
     classad::ClassAd *adAD = 0; // no need to free this
-    if( boost::algorithm::iequals( commandStr, "submit" ) ) {
+    if( boost::algorithm::iequals( commandStr, "submit" ) || boost::algorithm::iequals( commandStr, "reschedule" ) ) {
       // Look for "JobAd" attribute inside "arguments"
       if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
 	throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
