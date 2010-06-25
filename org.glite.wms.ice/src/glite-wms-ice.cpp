@@ -38,6 +38,7 @@ END LICENSE */
 #include "iceAbsCommand.h"
 #include "iceCommandCancel.h"
 #include "iceCommandSubmit.h"
+#include "iceCommandReschedule.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceCommandFatal_ex.h"
@@ -449,16 +450,13 @@ int main(int argc, char*argv[])
 		theJob.set_user_dn( V.getDNFQAN() );
 		theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
 
-//		glite::wms::ice::iceAbsCommand* cmd 
-
-		cmd = new glite::wms::ice::iceCommandSubmit( *it, theJob );
-/*
-		  = glite::wms::ice::iceCommandFactory::mkCommand( *it,
-								   theJob,
-								   cmdtype
-								   );
-
-*/		
+		if( boost::algorithm::iequals( cmdtype, "submit" ) ) {
+		  cmd = new glite::wms::ice::iceCommandSubmit( *it, theJob ); 
+		}
+		
+		if( boost::algorithm::iequals( cmdtype, "reschedule" ) ) {
+		  cmd = new glite::wms::ice::iceCommandReschedule( *it, theJob );
+		}
 		
 		threadPool->add_request( cmd );
 
