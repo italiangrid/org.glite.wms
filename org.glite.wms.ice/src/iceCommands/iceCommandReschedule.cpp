@@ -22,27 +22,6 @@ END LICENSE */
 
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/Transaction.h"
-//#include "iceDb/InsertStat.h"
-//#include "iceDb/GetJobByGid.h"
-//#include "iceDb/CreateJob.h"
-//#include "iceDb/UpdateJob.h"
-
-/**
- *
- * Cream Client API Headers
- *
- */
-
-//#include "glite/wms/common/utilities/scope_guard.h"
-
-// Boost stuff
-//#include "boost/algorithm/string.hpp"
-//#include "boost/format.hpp"
-//#include "boost/regex.hpp"
-
-// C++ stuff
-//#include <ctime>
-//#include <cerrno>
 
 using namespace glite::wms::ice;
 
@@ -52,7 +31,9 @@ using namespace glite::wms::ice;
 void iceCommandReschedule::execute( const std::string& tid ) 
   throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-
+  if( !boost::filesystem::exists( boost::filesystem::path( m_theJob.token_file( ) ) ) )
+    return;
+    
   {
     db::RemoveJobByGid remover( m_theJob.grid_jobid(), "iceCommandReschedule::execute" );
     db::Transaction tnx( false, false );
@@ -61,5 +42,4 @@ void iceCommandReschedule::execute( const std::string& tid )
   
   iceCommandSubmit::execute( tid );
 
-  //unlink( semaphore_file.c_str() );
 }

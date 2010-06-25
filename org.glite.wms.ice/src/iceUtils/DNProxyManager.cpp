@@ -319,69 +319,82 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
   string tmpTargetFilename = target;
   tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
 
-  boost::filesystem::path thisPath( source, boost::filesystem::native );
-  if( !boost::filesystem::exists( thisPath ) ) 
+  boost::filesystem::path sourcePath( source, boost::filesystem::native );
+  if( !boost::filesystem::exists( sourcePath ) ) 
     {
       throw SourceProxyNotFoundException(string("Proxy file [")+source+"] is not there. Skipping.");
     }
-
-  ifstream input( source.c_str() );
-  ofstream output( tmpTargetFilename.c_str() );
-
-  if(!input) {
-    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		   << "DNProxyManager::copyProxy() - Cannot open"
-		   << " proxy file ["
-		   << source << "] for input. ABORTING!!"
-		   );
-    abort();
+    
+  boost::filesystem::path targetPath( tmpTargetFilename, boost::filesystem::native );
+  try { 
+    boost::filesystem::copy_file( sourcePath, targetPath );
+  } catch(exception& ex) {
+    throw SourceProxyNotFoundException(string("Couldn't copy [")+source +"] to ["+tmpTargetFilename + "]: " + ex.what());
   }
-
-  if(!output) {
-    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		   << "DNProxyManager::copyProxy() - Cannot open"
-		   << " proxy file ["
-		   << tmpTargetFilename << "] for output. ABORTING!!"
-		   );
-    abort();
-  }
-
-  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		 << "DNProxyManager::copyProxy() - Copying proxy ["
-		 << source <<"] to ["
-		 << target << "] ..."
-		 );
-
-  char c;
-  while( input.get(c) ) 
-    {
-      if(!input.good()||
-	 input.fail() || 
-	 input.bad())
-	{
-	  CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-			 << "DNProxyManager::copyProxy - Error copying ["
-			 << source << "] to ["
-			 << tmpTargetFilename << "]. ABORTING!!"
-			 );
-	  abort();
-	}
-      output.put(c);
-    }
   
-  int err = ::rename(tmpTargetFilename.c_str(), target.c_str());
-  if(err != 0 )
-    {
-      string errmex = strerror(errno);
-      CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		     << "DNProxyManager::copyProxy() - Error moving ["
-		     << tmpTargetFilename << "] to ["
-		     << target << "]: " << errmex << ". ABORTING!!"
-		     );
-      abort();
-    }
+//   ifstream input( source.c_str() );
+//   ofstream output( tmpTargetFilename.c_str() );
+// 
+//   if(!input) {
+//     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 		   << "DNProxyManager::copyProxy() - Cannot open"
+// 		   << " proxy file ["
+// 		   << source << "] for input. ABORTING!!"
+// 		   );
+//     abort();
+//   }
+// 
+//   if(!output) {
+//     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 		   << "DNProxyManager::copyProxy() - Cannot open"
+// 		   << " proxy file ["
+// 		   << tmpTargetFilename << "] for output. ABORTING!!"
+// 		   );
+//     abort();
+//   }
+// 
+//   CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		 << "DNProxyManager::copyProxy() - Copying proxy ["
+// 		 << source <<"] to ["
+// 		 << target << "] ..."
+// 		 );
+// 
+//   char c;
+//   while( input.get(c) ) 
+//     {
+//       if(!input.good()||
+// 	 input.fail() || 
+// 	 input.bad())
+// 	{
+// 	  CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 			 << "DNProxyManager::copyProxy - Error copying ["
+// 			 << source << "] to ["
+// 			 << tmpTargetFilename << "]. ABORTING!!"
+// 			 );
+// 	  abort();
+// 	}
+//       output.put(c);
+//     }
+  try {
+    boost::filesystem::path finalTargetPath( target, boost::filesystem::native );
+    boost::filesystem::rename( targetPath, finalTargetPath );
+    boost::filesystem::remove( targetPath );
+  } catch( exception& ex) {
+    throw SourceProxyNotFoundException(string("Couldn't rename [")+tmpTargetFilename +"] to ["+target + "]: " + ex.what());
+  }
+  //int err = ::rename(tmpTargetFilename.c_str(), target.c_str());
+//   if(err != 0 )
+//     {
+//       string errmex = strerror(errno);
+//       CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 		     << "DNProxyManager::copyProxy() - Error moving ["
+// 		     << tmpTargetFilename << "] to ["
+// 		     << target << "]: " << errmex << ". ABORTING!!"
+// 		     );
+//       abort();
+//     }
 
-  ::unlink(tmpTargetFilename.c_str());
+//  ::unlink(tmpTargetFilename.c_str());
 
   ::chmod( target.c_str(), 00600 );
 }

@@ -37,6 +37,7 @@ END LICENSE */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <libgen.h>
 #include <iostream>
 
 #include "boost/format.hpp"
@@ -44,11 +45,13 @@ END LICENSE */
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/convenience.hpp"
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/filesystem/path.hpp"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
@@ -119,41 +122,45 @@ glite::wms::ice::util::utilities::fetch_jobs_callback(void *param, int argc, cha
 bool 
 glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::util::CreamJob& aJob)
 {
+  glite::ce::cream_client_api::util::scoped_timer T( "utilities::is_rescheduled_job" );
   
-  if( boost::filesystem::exists( boost::filesystem::path( aJob.token_file( ), boost::filesystem::native) ) )
+  boost::filesystem::path tokPath( aJob.token_file( ), boost::filesystem::native);
+  
+  if( boost::filesystem::exists( tokPath ) )
     return false;
   
+//  string basedir = boost::filesystem::dirname( tokPath );
+  
+  string basedir = ::dirname( (char*)aJob.token_file( ).c_str( ) );
+  
+  const boost::regex my_filter( aJob.token_file( ) +"_" + "*" );
+  boost::filesystem::directory_iterator end_itr;
+  try {
+    for( boost::filesystem::directory_iterator i( basedir ); i != end_itr; ++i )
+    {
+      boost::smatch what;
+      if( boost::regex_match( i->leaf(), what, my_filter ) ) return true;//continue;
+    }
+  } catch( exception& ex ) {
+        CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+		   << "utilities::is_rescheduled_job - " << ex.what()   
+		   );
+    return false;
+  }
+
+/*  
   for( int k = 1; k<10; ++k ) {
-    string resched_token_file = aJob.token_file( ) + "_" + to_string( (long int)k );
+    string resched_token_file = aJob.token_file( ) + "_*";//"_" + to_string( (long int)k );
+    
+    
+    
     if( boost::filesystem::exists( boost::filesystem::path( resched_token_file , boost::filesystem::native) ) )
       return true;
   }
-  
+*/  
   return false; 
 }
-
-//______________________________________________________________________
-// bool 
-// glite::wms::ice::util::utilities::exists_job_reschedule_semaphore(
-//   const std::string& gridjobid
-//   )
-// {
-//   if( !boost::filesystem::exists( boost::filesystem::path( get_semaphore_filename( gridjobid ), boost::filesystem::native) ) )
-//     return false;
-//   else
-//     return true;
-// }
-
-//______________________________________________________________________
-// std::string 
-// glite::wms::ice::util::utilities::get_semaphore_filename(
-//   const std::string& gridjobid
-//   )
-// {
-//   string canonical_string( canonizeString( gridjobid ) );
-//   string persist_dir( util::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() );
-//   return persist_dir + "/" + canonical_string;
-// }
 
 //______________________________________________________________________
 void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
