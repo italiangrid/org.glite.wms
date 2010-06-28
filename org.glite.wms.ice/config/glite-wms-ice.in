@@ -25,12 +25,13 @@ pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
 running()
 {
-    pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
-    pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+    #pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`  
+    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
+#    pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+    pid=`/bin/ps h -o pid -C glite-wms-ice`
     
     
     if [ -z "${pidsafe}" ]; then
-        #echo "NO SAFE"
         return 1
     fi    
     
@@ -83,12 +84,14 @@ start()
 stop()
 {
    echo -n "stopping ICE... "
-   pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
-   pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+#   pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
+#   pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
+    pid=`/bin/ps h -o pid -C glite-wms-ice`
    
-   kill -9 $pidsafe
+   kill $pidsafe
    sleep 1
-   kill -9 $pid
+   kill $pid
    sleep 1
    echo "ok"
    return
@@ -99,7 +102,8 @@ status()
     running
     RETVAL=$?
     if [ ${RETVAL} -eq 0 ]; then
-        pid=`cat ${pid_file} 2> /dev/null`
+	 pid=`/bin/ps h -o pid -C glite-wms-ice-safe`
+        #pid=`cat ${pid_file} 2> /dev/null`
         echo "${binpath} (pid ${pid}) is running..."
     else
         echo "${binpath} is not running"
