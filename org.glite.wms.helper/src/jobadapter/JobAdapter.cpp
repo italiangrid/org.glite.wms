@@ -191,7 +191,11 @@ try {
   std::string token_file(config.wm()->token_file());
 
   std::string ReallyRunningToken;
-  bool shallow_retry_count_attr_exists = false;
+  bool shallow_retry_count_attr_exists = false, replans_count_exists = false;
+  int replans_count(jdl::get_replans_count(*m_ad, replans_count_exists));
+  if (!replans_count_exists) {
+    replans_count = 0;
+  }
   int shallow_retry_count(
     jdl::get_shallow_retry_count(*m_ad, shallow_retry_count_attr_exists)
   );
@@ -205,7 +209,10 @@ try {
       std::string const isb_url_str = isb_url->as_string();
       std::string::size_type const p = isb_url_str.rfind("/input");
       std::string const token_url_str(isb_url_str, 0, p);
-      ReallyRunningToken = token_url_str + '/' + token_file;
+      ReallyRunningToken =
+       token_url_str + '/'
+       + token_file + '_'
+       + boost::lexical_cast<std::string>(replans_count);
     }
   }
 
