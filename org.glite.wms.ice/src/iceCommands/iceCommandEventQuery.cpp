@@ -227,8 +227,10 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       
     }
     
-    ostringstream from, to;
-    from << thisEventID;
+//    ostringstream from, to;
+//    from << thisEventID;
+    
+    string from( util::utilities::to_string( (long long int)thisEventID ) );
     
     string sdbid;
     time_t exec_time;
@@ -251,19 +253,34 @@ states.push_back( make_pair("STATUS", "IDLE") );
       states.push_back( make_pair("STATUS", "ABORTED") );
       states.push_back( make_pair("STATUS", "CANCELLED") );
       states.push_back( make_pair("STATUS", "HELD") ); */
-      CreamProxy_QueryEvent( m_ce, 
-			     proxyinfo.get<0>(), 
-			     from.str(),
-			     "-1",
-			     m_iceManager->getStartTime(),
-			     "JOB_STATUS",
-			     500,
-			     states,
-			     sdbid,
-			     exec_time,
-			     events,
-			     iceid,
-			     false /* ignore blacklisted CE */).execute( 3 );
+      if( !thisEventID ) // EventID ZERO means ICE has been scratched
+        CreamProxy_QueryEvent( m_ce, 
+			       proxyinfo.get<0>(), 
+			       from,
+			       "-1",
+			       m_iceManager->getStartTime(),
+			       "JOB_STATUS",
+			       500,
+			       states,
+			       sdbid,
+			       exec_time,
+			       events,
+			       iceid,
+			       false /* ignore blacklisted CE */).execute( 3 );
+       else
+         CreamProxy_QueryEvent( m_ce, 
+			       proxyinfo.get<0>(), 
+			       from,
+			       "-1",
+			       0,
+			       "JOB_STATUS",
+			       500,
+			       states,
+			       sdbid,
+			       exec_time,
+			       events,
+			       iceid,
+			       false /* ignore blacklisted CE */).execute( 3 );
       
     } catch(soap_proxy::auth_ex& ex) {
       

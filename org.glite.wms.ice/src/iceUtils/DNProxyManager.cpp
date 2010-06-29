@@ -315,9 +315,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
   throw(SourceProxyNotFoundException&)
 {
-
-  string tmpTargetFilename = target;
-  tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
+  string tmpTargetFilename = target + string(".tmp") ;
 
   boost::filesystem::path sourcePath( source, boost::filesystem::native );
   if( !boost::filesystem::exists( sourcePath ) ) 
@@ -378,7 +376,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
   try {
     boost::filesystem::path finalTargetPath( target, boost::filesystem::native );
     boost::filesystem::rename( targetPath, finalTargetPath );
-    boost::filesystem::remove( targetPath );
+    //boost::filesystem::remove( targetPath );
   } catch( exception& ex) {
     throw SourceProxyNotFoundException(string("Couldn't rename [")+tmpTargetFilename +"] to ["+target + "]: " + ex.what());
   }

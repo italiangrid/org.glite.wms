@@ -158,7 +158,7 @@ int main( int argc, char *argv[]) {
     
     }
     else {
-      tmp += "/opt/glite/bin/glite-wms-ice --conf " + opt_conf_file + consolelog + " 2>&1";
+      tmp += "/opt/glite/bin/glite-wms-ice --conf " + opt_conf_file + " " + consolelog + " 2>&1";
     }
     
     
