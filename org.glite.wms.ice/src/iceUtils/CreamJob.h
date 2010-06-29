@@ -537,9 +537,17 @@ namespace glite {
 		    }
 		    boost::trim_if(m_ceid, boost::is_any_of("\"") );
 		    
+		    string shallow;
+		  
 		    if ( !classad_safe_ptr->EvaluateAttrString( "ReallyRunningToken", m_token_file ) ) {
 		      throw ClassadSyntax_ex("ReallyRunningToken attribute not found, or is not a string");
 		    }
+		    
+		    if( classad_safe_ptr->EvaluateAttrString( "ShallowRetryCount", shallow ) ) {
+		      if( atoi( shallow.c_str() ) == -1 )
+		        m_token_file = "";
+		    }
+		    
 		    boost::trim_if(m_token_file, boost::is_any_of("\"") );
 		    
 		    // Look for the "X509UserProxy" attribute
