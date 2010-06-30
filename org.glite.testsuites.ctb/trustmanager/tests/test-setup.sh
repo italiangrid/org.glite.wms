@@ -45,6 +45,8 @@ echo "Copying host certificates"
 cp $certdir/grid-security/hostcert.pem /etc/grid-security/tomcat-cert.pem
 cp $certdir/grid-security/hostkey.pem /etc/grid-security/tomcat-key.pem
 
+chown tomcat:tomcat /etc/grid-security/tomcat*
+
 if [ $? -ne 0 ] ; then
  echo "Error copying certificates"
  exit 1

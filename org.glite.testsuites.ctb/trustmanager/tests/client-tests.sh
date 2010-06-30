@@ -106,6 +106,8 @@ for f in $TOMCAT_WEBAPP/glite-security-trustmanager/WEB-INF/lib/*.jar  ; do
  CLASSPATH=$CLASSPATH:$f
 done
 
+CLASSPATH=/opt/glite/share/java/glite-security-util-java.jar:$CLASSPATH
+
 export CLASSPATH
 
 pushd .
@@ -128,6 +130,15 @@ java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocket
 if [ $? -ne 0 ] ; then 
  myecho "Error connecting to service with a proxy client certificate. Please change to $clidir and run the following to see the specific errors:"  
  echo "java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates  -DgridProxyFile=$certdir/trusted-certs/trusted_client.proxy.grid_proxy org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService"
+ myexit 1
+fi
+
+myecho "Testing client with pkcs8 key (bug #69163)"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client.priv.pkcs8 org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService
+
+if [ $? -ne 0 ] ; then 
+ myecho "Error connecting to service with a pkcs8 key. Please change to $clidir and run the following to see the specific errors:"  
+ echo "java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client.priv.pkcs8 org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService"
  myexit 1
 fi
 

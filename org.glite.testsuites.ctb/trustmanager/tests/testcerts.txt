@@ -17,3 +17,4 @@ trusted-certs/trusted_host_rev
 trusted-certs/trusted_host_baddn
 subsubca-certs/subsubca_client
 subsubca-certs/subsubca_clientbaddn
+slash-certs/slash_clientbaddn

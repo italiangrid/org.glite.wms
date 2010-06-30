@@ -54,8 +54,11 @@ function test_cert() {
 
  if [ x"$4" != x ] ;  then 
   CA_CMD="-CAfile $4"
+ else
+  CA_CMD=""
  fi
 
+# echo "openssl s_client -key $KEY -cert $CERT -CApath /etc/grid-security/certificates $CA_CMD -connect $HOST < input.txt"
  openssl s_client -key $KEY -cert $CERT -CApath /etc/grid-security/certificates $CA_CMD -connect $HOST < input.txt  2>/dev/null |grep "(ok)" 
  RES=$?
 
@@ -147,6 +150,9 @@ test_cert $certdir/trusted-certs/trusted_clientfuture_nopass.priv $certdir/trust
 myecho "Test passed"
 myecho "Testing with a certificate that doesn't match the signing policy nor namespace"
 test_cert $certdir/trusted-certs/trusted_clientbaddn_nopass.priv $certdir/trusted-certs/trusted_clientbaddn.cert  $FAIL 
+myecho "Test passed"
+myecho "Testing with a certificate which doesn't match the namespace, and whose CA uses / characters in the common name (bug #68981)"
+test_cert $certdir/slash-certs/slash_clientbaddn_nopass.priv $certdir/slash-certs/slash_clientbaddn.cert  $FAIL
 myecho "Test passed"
 
 

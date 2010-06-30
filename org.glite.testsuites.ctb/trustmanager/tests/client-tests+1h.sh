@@ -139,7 +139,7 @@ myecho "Removing the CA file"
 mv /etc/grid-security/certificates/$ca_hash.0 /etc/grid-security/certificates/$ca_hash.0.bak 
 
 myecho "Testing client against untrusted CA" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep "No valid CA"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep "not trusted CA nor issued by one"
 
 if [ $? -ne 0 ] ; then 
  myecho "Succesfully connected to service even if the CA was untrusted."  
