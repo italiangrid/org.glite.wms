@@ -28,9 +28,10 @@ limitations under the License.
 
 
 //      $Id$
+#include <glite/jobid/JobId.h>
 
 #include "jobcancel.h"
-#include "lbapi.h"
+#include "lbapi.h" // class Status
 #include <string>
 // streams
 #include<sstream>
@@ -147,13 +148,19 @@ void JobCancel::cancel ( ){
 	// ask users to be sure to want the job cancelling
          if ( wmcUtils->answerYes("\nAre you sure you want to remove specified job(s)", 1, 1) ){
 		LbApi lbApi;
+		LbApi lbApi2;
 		// Jobid's loop
 		vector<string>::iterator it2 = jobIds.begin();
 		vector<string>::iterator const end2 = jobIds.end();
 
-                for ( ; it2 != end2 ; it2++){
+		map<string, string> jobid_endpoint;
+
+                for ( ; it2 != end2 ; ++it2 ){
 			// JobId
 			string jobid = *it2;
+			
+			
+			
 			logInfo->print(WMS_DEBUG, "Checking the status of the job:",  jobid );
 			lbApi.setJobId(jobid);
 			try{
@@ -167,7 +174,23 @@ void JobCancel::cancel ( ){
 					logInfo->print(WMS_WARNING, jobid.toString() + ": " + warns, "trying to cancel the job...", true);
 				}
 				// EndPoint URL
-				setEndPoint(status.getEndpoint());
+				//glite::jobid::JobId id( status.getParent() );
+
+				string thisEndPoint( status.getEndpoint() );
+				if( thisEndPoint.empty() )
+				  {
+				    lbApi2.setJobId( status.getParent() );
+				    thisEndPoint = lbApi2.getStatus(true).getEndpoint();
+				  }
+				    
+
+				// lbApi2.setJobId( status.getParent() );
+				// cout << "jobcancel.cpp: JobId child endpoint=[" << status.getEndpoint() << "]" << endl;
+				// cout << "jobcancel.cpp: JobId parent endpoint=[" << lbApi2.getStatus(true).getEndpoint() << "]" << endl;
+			
+				setEndPoint( /*status.getEndpoint()*/ thisEndPoint );
+				jobid_endpoint[ jobid ] = thisEndPoint; //status.getEndpoint();
+				
 			} catch (WmsClientException &exc){
 				// cancellation not allowed due to its current status
 				// If the request contains only one jobid, an exception is thrown
@@ -177,6 +200,8 @@ void JobCancel::cancel ( ){
 				// goes on with the following job
 				continue ;
 			}
+
+			
 
   			try{
 	                        //  performs cancelling
@@ -238,20 +263,22 @@ void JobCancel::cancel ( ){
 				out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n\n";
                                 cout << out.str( );
    			}
-    	} else if (json) {
+    		} else if (json) {
 				//format the output message in json format
 				string json = "";
 
-				json += "result: success \n";
-				json += "endpoint: "+getEndPoint()+"\n" ;
+				json += "  result: success \n";
+				//json += "endpoint: "+getEndPoint()+"\n" ;
 
 				int sizeJ = jobIds.size();
-
+				json += "  jobs: {\n";
 				for (int i=0;i<sizeJ;i++) {
-					json += "jobid: "+jobIds[i]+" {\n";
-					json += "   status: cancel requested\n   }\n";
+					json += "    " + jobIds[i] + ": {\n";
+					json += "      endpoint: "+jobid_endpoint[jobIds[i]] +"\n";
+					json += "      status: cancel requested\n";
+					json += "    }\n";
 				}
-
+				json += "  }\n";
 				json = "{\n"+json+"}\n";
 				cout << json;
 

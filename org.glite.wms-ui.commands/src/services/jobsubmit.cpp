@@ -37,6 +37,7 @@ limitations under the License.
 #include "utilities/options_utils.h"
 //  wmp-client exceptions
 #include "utilities/excman.h"
+
 // streams
 #include <sstream>
 #include <iostream>
@@ -70,6 +71,20 @@ namespace wms{
 namespace client {
 namespace services {
 
+std::string join( const std::vector<std::string>& pieces, const std::string& sep)
+{
+  vector<string>::const_iterator sequence = pieces.begin( );
+  vector<string>::const_iterator end_sequence = pieces.end( );
+  if(sequence == end_sequence) return "";
+  string joinstring("");
+  for( ; sequence != end_sequence; ++sequence ) {
+    joinstring += *sequence + sep;
+  }
+  string::size_type pos = joinstring.find_last_of( sep );
+  if( pos == string::npos )
+    return joinstring;
+  return joinstring.substr( 0, pos-sep.length()+1 );
+}
 
 /**
 * File structs
@@ -112,6 +127,7 @@ JobSubmit::JobSubmit( ){
 	// init of the boolean attributes
 	nomsgOpt = false ;
 	json = false;
+	prettyprint = false;
 	nolistenOpt = false ;
 	startJob = false ;
 	// JDL file
@@ -191,7 +207,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 
 	nomsgOpt = wmcOpts->getBoolAttribute (Options::NOMSG);
 	json = wmcOpts->getBoolAttribute (Options::JSON);
-
+	prettyprint = wmcOpts->getBoolAttribute (Options::PRETTYPRINT);
 	if (json && nomsgOpt) {
 		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";
@@ -296,8 +312,21 @@ void JobSubmit::readOptions (int argc,char **argv){
 		// Retrieves the endpoint URL in case of --start
 		logInfo->print(WMS_DEBUG, "Getting the enpoint URL");
 		LbApi lbApi;
+		LbApi lbApi2;
+
 		lbApi.setJobId(m_startOpt);
-		setEndPoint(lbApi.getStatus(true,true).getEndpoint());
+
+		string thisEndPoint( lbApi.getStatus(true,true).getEndpoint() );
+		if( thisEndPoint.empty() )
+		  {
+		    lbApi2.setJobId( lbApi.getStatus(true,true).getParent() );
+		    thisEndPoint = lbApi2.getStatus(true).getEndpoint();
+		  }
+		
+		//cout << "child  endpoint = " << lbApi.getStatus(true,true).getEndpoint() << endl;
+		//cout << "parent endpoint = " << thisEndPoint << endl;
+		//exit(1);
+		setEndPoint( thisEndPoint /*lbApi.getStatus(true,true).getEndpoint()*/ );
 		// checks if --endpoint option has been specified with a different endpoint url
 		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
 		if ( !endpoint.empty() && endpoint.compare(getEndPoint( )) !=0 ) {
@@ -469,27 +498,63 @@ void JobSubmit::submission ( ){
         	cout << this->getJobId( ) << "\n";
     } else if (json) {
 			//format the output message in json format
+			
+			vector<string> toJoin, toJoin_children;
+			
+			string carriage;
+			if(prettyprint)
+			  carriage="\n";
+			else
+			  carriage=", ";
+			
 			string json = "";
 
 			vector<string> jobids = this->getJobIdsAndNodes();
-			json += "result: success\n";
-			json += jobids[0]+": "+jobids[1]+"\n";
-			json += "endpoint: "+getEndPoint()+"\n" ;
+			if(!prettyprint)
+			  toJoin.push_back( "\"result\": \"success\"" );
+			else
+			  toJoin.push_back( "  result: success" );
+			//json += "  result: success"+carriage;//\n";
+			
+			if(!prettyprint)
+			  toJoin.push_back( "\"" + jobids[0]+"\": \""+jobids[1]+"\"" );
+			else
+			  toJoin.push_back( "  " + jobids[0]+": "+jobids[1] );
+			//json += "  " + jobids[0]+": "+jobids[1]+carriage;//"\n";
+			
+			if(!prettyprint)
+			  toJoin.push_back( "\"endpoint\": \""+getEndPoint() + "\"" );
+			else
+			  toJoin.push_back( "  endpoint: "+getEndPoint() );
+			//json += "  endpoint: "+getEndPoint()+carriage;//"\n" ;
 
 			int sizeN = jobids.size();
 			if (sizeN>2) {
-
-				json += "children: {\n";
-
+				
 				for (int i=2;i<sizeN;i++) {
-					json += "    "+jobids[i]+": "+jobids[i+1]+"\n";
+					if(!prettyprint)
+					  toJoin_children.push_back( "\""+jobids[i]+"\": \""+jobids[i+1]+"\"" );
+					else
+					  toJoin_children.push_back( "      "+jobids[i]+": "+jobids[i+1] );
+					//json += "      "+jobids[i]+": "+jobids[i+1]+carriage;//"\n";
 					i++;
 				}
-				json += "   }\n";
+				
+				//cout << boost::algorithm::join( toJoin_children, "," ) << endl<<endl;
+				
+				//toJoin.push_back( boost::algorithm::join( toJoin_children, "," ) );
+				
+				if(!prettyprint)
+				  toJoin.push_back( "\"children\": {" + join( toJoin_children, carriage ) + "}" );
+				else
+				  toJoin.push_back( "  children: {" + carriage + join( toJoin_children, carriage ) + carriage + "     }" );
+				
 			}
-
-			json = "{\n"+json+"}\n";
-			cout << json;
+			if(prettyprint)
+			  json = "{" + carriage + join( toJoin, carriage ) + carriage + "}";
+			else
+			  json = "{" + join( toJoin, carriage ) + "}";
+			cout << json << endl;
 	}
 
 }

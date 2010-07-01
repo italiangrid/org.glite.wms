@@ -328,6 +328,7 @@ class JobSubmit : public Job {
                 *	Boolean input arguments
                 */
         bool json ;
+	bool prettyprint;
 		bool nomsgOpt ;
 		bool nolistenOpt ;
         bool registerOnly;

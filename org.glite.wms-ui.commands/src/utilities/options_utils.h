@@ -79,6 +79,7 @@ class Options
 			JDL,
 			JDLORIG,
 			JSON,
+	    PRETTYPRINT,
 			JSDL,
    			LISTONLY,
 			LRMS ,
@@ -409,6 +410,7 @@ class Options
 		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
 		static const char* LONG_JSON ;
+		static const char* LONG_PRETTYPRINT;
 		static const char* LONG_JSDL ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
@@ -502,6 +504,7 @@ class Options
 		static const std::string USG_JDL ;
 		static const std::string USG_JDLORIG ;
 		static const std::string USG_JSON ;
+		static const std::string USG_PRETTYPRINT;
 		static const std::string USG_JSDL ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
@@ -578,6 +581,7 @@ class Options
 		bool jdl ;
 		bool jdlorig ;
 		bool json ;
+		bool prettyprint;
         bool listonly ;
 		bool nodisplay ;
 		bool nosubdir ;

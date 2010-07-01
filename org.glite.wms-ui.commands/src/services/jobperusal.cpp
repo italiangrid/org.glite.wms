@@ -379,7 +379,7 @@ void JobPerusal::jobPerusal ( ){
 void JobPerusal::checkStatus( ){
 	string warnings = "";
 	int code = 0;
-	LbApi lbApi;
+	LbApi lbApi, lbApi2;
 	lbApi.setJobId(jobId);
 	Status status=lbApi.getStatus(true,true);
 	if (getOpt){
@@ -392,6 +392,17 @@ void JobPerusal::checkStatus( ){
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
 		// Initialize ENDPOINT (start a new (thread of) job (s)
+
+	  string thisEndPoint( status.getEndpoint() );
+	  if( thisEndPoint.empty( ) ) {
+	    lbApi2.setJobId( status.getParent( ) );
+	    thisEndPoint = lbApi2.getStatus( true, true ).getEndpoint( );
+	  }
+
+	  cout << "child  endpoint = " << status.getEndpoint() << endl;
+	  cout << "parent endpoint = " << thisEndPoint << endl;
+	  exit(1);
+
 		setEndPoint (status.getEndpoint());
 		// checks if --endpoint optstatus.getEndpoint()ion has been specified with a different endpoint url
 		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;

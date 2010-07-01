@@ -121,6 +121,7 @@ const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_INPUTFILE		= "input-file";
 const char* Options::LONG_JSON      = "json";
+const char* Options::LONG_PRETTYPRINT = "pretty-print";
 const char* Options::LONG_JSDL		= "jsdl";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
@@ -225,7 +226,8 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
- 	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
+ 	{	Options::LONG_JSON,    			no_argument,			0,		Options::JSON   },
+	{       Options::LONG_PRETTYPRINT,		no_argument,      	        0, 		Options::PRETTYPRINT},
 	{0, 0, 0, 0}
 };
 /*
@@ -425,6 +427,7 @@ const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_J
 const string Options::USG_JSDL = "--" + string(LONG_JSDL)	 + "\t<file_path>" ;
 
 const string Options::USG_JSON = "--" + string(LONG_JSON) ;
+const string Options::USG_PRETTYPRINT = "--" + string(LONG_PRETTYPRINT);
 
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
@@ -525,6 +528,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
         cerr << "\t" << USG_DAG << " (**)\n";
         cerr << "\t" << USG_JSDL << " (**)\n";
         cerr << "\t" << USG_JSON << "\n" ;
+	cerr << "\t" << USG_PRETTYPRINT << "\n";
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
         cerr << "\t" << "(**) Not to be used with a JDL file\n\n";
@@ -805,6 +809,7 @@ Options::Options (const WMPCommands &command){
 	jdl = false ;
 	jdlorig = false ;
 	json = false ;
+	prettyprint = false;
     listonly = false;
 	nodisplay = false ;
 	nosubdir = false ;
@@ -1271,7 +1276,11 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = json;
 			break ;
 		}
-        case(DBG) : {
+		case(PRETTYPRINT) : {
+			value = prettyprint;
+			break;
+		}
+        	case(DBG) : {
 			value = debug ;
 			break ;
 		}
@@ -1393,6 +1402,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		case(JSON) : {
 			msg = USG_JSON ;
 			break ;
+		}
+		case(PRETTYPRINT) : {
+			msg = USG_PRETTYPRINT;
+			break;
 		}
 		case(DAG) : {
 			msg = USG_DAG ;
@@ -2413,7 +2426,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                       }
                         break ;
 		};
-		        case ( Options::JSON ) : {
+		case ( Options::JSON ) : {
 					if (json){
 						dupl = LONG_JSON;
 					} else {
@@ -2421,6 +2434,15 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
   						inCmd += px + LONG_JSON + ws + ";" + ws ;
 					}
 					break ;
+		};
+		case (Options::PRETTYPRINT ) : {
+					if(prettyprint){
+						dupl = LONG_PRETTYPRINT;
+					} else {
+						prettyprint = true;
+						inCmd += px + LONG_PRETTYPRINT + ws + ";" + ws ;
+					}
+					break;
 		};
                 case ( Options::UIVERSION ) : {
                 	if (version){

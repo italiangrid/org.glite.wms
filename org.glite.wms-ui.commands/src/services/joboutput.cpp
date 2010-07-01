@@ -185,7 +185,7 @@ namespace glite {
 	  char* environ=getenv("LOGNAME");
 	  if (environ){m_logName="/"+string(environ);}
 	  else{m_logName="/jobOutput";}
-	  LbApi lbApi;
+	  LbApi lbApi, lbApi2;
 	  // Jobid's loop
 	  vector<string>::iterator it = m_jobIds.begin() ;
 	  vector<string>::iterator const end = m_jobIds.end();
@@ -200,7 +200,15 @@ namespace glite {
 	      string dirName = "" ;
 	      Status status=lbApi.getStatus(true,true);
 	      // Initialize ENDPOINT (start a new (thread of) job (s)
-	      setEndPoint (status.getEndpoint());
+
+	      string thisEndPoint( status.getEndpoint() );
+	      if( thisEndPoint.empty( ) ) {
+		lbApi2.setJobId( status.getParent( ) );
+		thisEndPoint = lbApi2.getStatus(true,true).getEndpoint( ) ;
+	      }
+		
+
+	      setEndPoint ( thisEndPoint /*status.getEndpoint()*/);
 	      // Properly set destination Directory
 	      if (!m_dirOpt.empty()){
 		// if --nosubdir do not create subdir in the specified directory with the option --dir
