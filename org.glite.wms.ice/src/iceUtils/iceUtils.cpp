@@ -822,6 +822,22 @@ namespace {
 };
 	
 //______________________________________________________________________________
+string glite::wms::ice::util::utilities::join(const vector<string>& array, const string& sep )
+{
+  vector<string>::const_iterator sequence = array.begin( );
+  vector<string>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) return "";
+  string joinstring("");
+  for( ; sequence != end_sequence; ++sequence ) {
+    joinstring += *sequence + sep;
+  }
+  string::size_type pos = joinstring.find_last_of( sep );
+  if( pos == string::npos )
+    return joinstring;
+  return joinstring.substr( 0, pos-sep.length()+1 );
+}
+	
+//______________________________________________________________________________
 string glite::wms::ice::util::utilities::canonizeString( const string& aString ) throw()
 {
   canonizerObject c;

@@ -138,6 +138,9 @@ namespace glite {
 	  static std::string to_string( float );
 	  static std::string to_string( bool );
 	  static std::string to_string( const std::string& str ) { return str; }
+
+	  static std::string join( const std::vector<std::string>& array, const std::string& sep );
+
 	  //static std::string to_string( ssize_t );
 
         }; // class utilities
