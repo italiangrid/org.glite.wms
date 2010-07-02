@@ -827,14 +827,21 @@ string glite::wms::ice::util::utilities::join(const vector<string>& array, const
   vector<string>::const_iterator sequence = array.begin( );
   vector<string>::const_iterator end_sequence = array.end( );
   if(sequence == end_sequence) return "";
-  string joinstring("");
-  for( ; sequence != end_sequence; ++sequence ) {
-    joinstring += *sequence + sep;
+
+  string joinstring( "" );
+  if (sequence != end_sequence) {
+    joinstring += *sequence;
+    ++sequence;
   }
-  string::size_type pos = joinstring.find_last_of( sep );
-  if( pos == string::npos )
-    return joinstring;
-  return joinstring.substr( 0, pos-sep.length()+1 );
+
+  for( ; sequence != end_sequence; ++sequence )
+    joinstring += sep + *sequence;
+
+//   string::size_type pos = joinstring.find_last_of( sep );
+//   if( pos == string::npos )
+//     return joinstring;
+//   return joinstring.substr( 0, pos-sep.length()+1 );
+  return joinstring;
 }
 	
 //______________________________________________________________________________
