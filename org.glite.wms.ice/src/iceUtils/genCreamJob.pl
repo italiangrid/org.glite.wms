@@ -284,7 +284,7 @@ foreach ( @members ) {
 print join("; \n\t\t    ", @inits ) ;
 #. ";\n\t\t  }\n\n";
 print ";\n\t\t    m_new = false;";
-print ";\n\t\t  }\n\n";
+print "\n\t\t  }\n\n";
 
 
 @inits = ();
@@ -312,26 +312,38 @@ print "\t\t  \t\t\t return \"" . (join ",", @members) . "\"; }\n";
 #
 ##
 
-print "\n\n\t\t  std::string get_query_update_values( void ) const { \n";
+#print "\n\n\t\t  std::string get_query_update_values( void ) const { \n\n";
 
-foreach ( @members ) {
-  push @values, "\"$_=\" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_$_) + glite::wms::ice::Ice::instance()->get_tmp_name()";
-}
+#foreach ( @members ) {
+#  print "\t\t    query += \"$_=\";\n";
+#  print "\t\t    query += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+#  print "\t\t    query += utilities::to_string(m_$_);\n";
+#  print "\t\t    query += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+#  print "\t\t    query += \", \";\n";
 
-print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
+#  push @values, "\"$_=\" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_$_) + glite::wms::ice::Ice::instance()->get_tmp_name()";
+#}
 
-print "\n\n\t\t  std::string get_query_values( void ) const { \n";
+#print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
+#print "\t\t    return query;\n\t\t  }";
 
 
-
+print "\n\n\t\t  std::string get_query_values( void ) const { \n\n";
+print "\t\t    string sql;\n";
 @values = ();
-
 foreach ( @members ) {
+
+  print "\t\t    sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+  print "\t\t    sql += utilities::to_string(m_$_);\n";
+  print "\t\t    sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+  print "\t\t    sql += \",\";\n";
+
   push @values, "glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_$_) + glite::wms::ice::Ice::instance()->get_tmp_name()";
 }
-
-print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
-
+print "\t\t    sql = sql.substr(0, sql.length() -1 );\n";
+print "\t\t    return sql;\n";
+print "\t\t  }\n";
+#print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
 #print "\t\t  \t\t\t return \"" . (join ",", @members) . "\"; }";
 
 #exit;
@@ -359,43 +371,34 @@ print "\"; }\n";
 #
 ##
 print "\n\n\t\t  void update_database( std::string& target ) const {\n";
-print "\t\t    std::string sql= \"UPDATE jobs SET \";\n\n";
-print "\t\t    std::string _sql=\"\";\n";
+print "\t\t    std::string _sql;\n";
+
 for($i = 0; $i < scalar @data_members; $i++) {
   $line = $data_members[$i];
   chomp $line;
   @pieces = split(",", $line);
   $member = $pieces[2];
-  print "\t\t    if(m_changed_$pieces[2]) _sql += this->$pieces[2]_field( ) \n\t\t    \t\t+ \"=\" + glite::wms::ice::Ice::instance()->get_tmp_name() \n\t\t    \t\t+ utilities::to_string(this->$pieces[2]( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + \",\";\n\n";
+  print "\t\t    if(m_changed_$pieces[2]) {\n";
+  print "\t\t      _sql += this->$pieces[2]_field( ); \n";
+  print "\t\t      _sql += \"=\";\n";
+  print "\t\t      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); \n";
+  print "\t\t      _sql += utilities::to_string( this->$pieces[2]( ) );\n";
+  print "\t\t      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+  print "\t\t      _sql += \",\";\n\n";
+  print "\t\t    }\n";
 }
-print "\t\t    if( _sql.empty() ) return;\n";
-print "\t\t    if( boost::ends_with( _sql, \",\") ) _sql = _sql.substr(0, _sql.length() -1 );\n";
-print "\t\t    _sql += \" WHERE \" + this->grid_jobid_field() + \"=\" + glite::wms::ice::Ice::instance()->get_tmp_name() + this->grid_jobid( ) + glite::wms::ice::Ice::instance()->get_tmp_name() + \";\";\n";
-print "\t\t    target = sql + _sql;\n";
+print "\n\t\t    if( _sql.empty() ) {return;}\n\n";
+print "\t\t    if( boost::ends_with( _sql, \",\") ) { _sql = _sql.substr(0, _sql.length() -1 ); }\n\n";
+print "\t\t    _sql += \" WHERE \";\n";
+print "\t\t    _sql += this->grid_jobid_field();\n";
+print "\t\t    _sql += \"=\";\n";
+print "\t\t    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+print "\t\t    _sql += this->grid_jobid( );\n";
+print "\t\t    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+print "\t\t    _sql += \";\";\n";
+print "\t\t    target = string(\"UPDATE jobs SET \") + _sql;\n";
 print "\t\t  }\n";
 
-##
-#
-#
-# Make the object persisten
-#
-#
-#
-##
-#print "\n\n\t\t  void store( const std::string& caller = \"CreamJob::store\" ) {\n";
-#print "\t\t    if( m_new ) {\n";
-#print "\t\t      glite::wms::ice::db::CreateJob creator( *this, caller );\n";
-#print "\t\t      glite::wms::ice::db::Transaction tnx( false, false );\n";
-#print "\t\t      tnx.execute( &creator );\n";
-#print "\t\t    } else {\n";
-#print "\t\t      if( this->is_to_update( ) ) {\n";
-#print "\t\t        glite::wms::ice::db::UpdateJob updater( *this, caller );\n";
-#print "\t\t        glite::wms::ice::db::Transaction tnx( false, false );\n";
-#print "\t\t        tnx.execute( &updater );\n";
-#print "\t\t      }\n";
-#print "\t\t    }\n";
-#print "\t\t    this->reset_change_flags( );\n";
-#print "\t\t  }\n";
 
 ##
 #

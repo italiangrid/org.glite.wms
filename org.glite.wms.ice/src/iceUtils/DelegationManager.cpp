@@ -31,7 +31,6 @@ END LICENSE */
 
 #include "iceDb/Transaction.h"
 #include "iceDb/GetDelegation.h"
-#include "iceDb/GetFieldsCount.h"
 #include "iceDb/GetAllDelegation.h"
 #include "iceDb/GetDelegationByID.h"
 #include "iceDb/CreateDelegation.h"

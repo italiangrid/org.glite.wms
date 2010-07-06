@@ -822,20 +822,24 @@ namespace {
 };
 	
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::join(const vector<string>& array, const string& sep )
+string glite::wms::ice::util::utilities::join(const list<string>& array, const string& sep )
 {
-  vector<string>::const_iterator sequence = array.begin( );
-  vector<string>::const_iterator end_sequence = array.end( );
-  if(sequence == end_sequence) return "";
+  list<string>::const_iterator sequence = array.begin( );
+  const list<string>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) {
+    return "";
+  }
 
-  string joinstring( "" );
+  string joinstring;
   if (sequence != end_sequence) {
     joinstring += *sequence;
     ++sequence;
   }
 
-  for( ; sequence != end_sequence; ++sequence )
-    joinstring += sep + *sequence;
+  for( ; sequence != end_sequence; ++sequence ) {
+    joinstring += sep;// + *sequence;
+    joinstring += *sequence;
+  }
 
 //   string::size_type pos = joinstring.find_last_of( sep );
 //   if( pos == string::npos )

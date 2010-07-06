@@ -341,7 +341,7 @@ namespace glite {
 		    m_changed_last_poller_visited = false; 
 		    m_changed_cream_dbid = false; 
 		    m_changed_token_file = false;
-		    m_new = false;;
+		    m_new = false;
 		  }
 
 		  bool is_to_update( void ) const {
@@ -352,148 +352,436 @@ namespace glite {
 		  			 return "grid_jobid,cream_jobid,complete_cream_jobid,jdl,ceid,endpoint,cream_address,cream_deleg_address,user_proxyfile,user_dn,sequence_code,delegation_id,wn_sequence_code,prev_status,status,num_logged_status_changes,last_seen,lease_id,status_poll_retry_count,exit_code,failure_reason,worker_node,killed_byice,last_empty_notification_time,proxy_renewable,myproxy_address,isbproxy_time_end,modified_jdl,last_poller_visited,cream_dbid,token_file"; }
 
 
-		  std::string get_query_update_values( void ) const { 
-		  			 return "grid_jobid=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_grid_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "cream_jobid=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "complete_cream_jobid=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_complete_cream_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "jdl=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_jdl) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "ceid=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_ceid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "endpoint=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_endpoint) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "cream_address=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "cream_deleg_address=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_deleg_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "user_proxyfile=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_user_proxyfile) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "user_dn=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_user_dn) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "sequence_code=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_sequence_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "delegation_id=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_delegation_id) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "wn_sequence_code=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_wn_sequence_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "prev_status=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_prev_status) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "status=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_status) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "num_logged_status_changes=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_num_logged_status_changes) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "last_seen=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_seen) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "lease_id=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_lease_id) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "status_poll_retry_count=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_status_poll_retry_count) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "exit_code=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_exit_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "failure_reason=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_failure_reason) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "worker_node=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_worker_node) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "killed_byice=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_killed_byice) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "last_empty_notification_time=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_empty_notification_time) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "proxy_renewable=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_proxy_renewable) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "myproxy_address=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_myproxy_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "isbproxy_time_end=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_isbproxy_time_end) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "modified_jdl=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_modified_jdl) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "last_poller_visited=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_poller_visited) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "cream_dbid=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_dbid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + "token_file=" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_token_file) + glite::wms::ice::Ice::instance()->get_tmp_name(); }
-
 		  std::string get_query_values( void ) const { 
-		  			 return glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_grid_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_complete_cream_jobid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_jdl) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_ceid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_endpoint) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_deleg_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_user_proxyfile) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_user_dn) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_sequence_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_delegation_id) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_wn_sequence_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_prev_status) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_status) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_num_logged_status_changes) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_seen) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_lease_id) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_status_poll_retry_count) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_exit_code) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_failure_reason) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_worker_node) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_killed_byice) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_empty_notification_time) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_proxy_renewable) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_myproxy_address) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_isbproxy_time_end) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_modified_jdl) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_last_poller_visited) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_cream_dbid) + glite::wms::ice::Ice::instance()->get_tmp_name() + "," + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_token_file) + glite::wms::ice::Ice::instance()->get_tmp_name(); }
+
+		    string sql;
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_grid_jobid);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_cream_jobid);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_complete_cream_jobid);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_jdl);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_ceid);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_endpoint);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_cream_address);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_cream_deleg_address);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_user_proxyfile);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_user_dn);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_sequence_code);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_delegation_id);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_wn_sequence_code);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_prev_status);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_status);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_num_logged_status_changes);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_last_seen);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_lease_id);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_status_poll_retry_count);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_exit_code);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_failure_reason);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_worker_node);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_killed_byice);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_last_empty_notification_time);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_proxy_renewable);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_myproxy_address);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_isbproxy_time_end);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_modified_jdl);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_last_poller_visited);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_cream_dbid);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += utilities::to_string(m_token_file);
+		    sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    sql += ",";
+		    sql = sql.substr(0, sql.length() -1 );
+		    return sql;
+		  }
+
 
 		  static std::string get_createdb_query( void ) { 
 		  			 return "grid_jobid text primary key not null,cream_jobid text  not null,complete_cream_jobid text  not null,jdl blob  not null,ceid text  not null,endpoint text  not null,cream_address text  not null,cream_deleg_address text  not null,user_proxyfile text  not null,user_dn text  not null,sequence_code text  not null,delegation_id text  not null,wn_sequence_code text  not null,prev_status integer(2)  not null,status integer(2)  not null,num_logged_status_changes integer(2)  not null,last_seen integer(8)  not null,lease_id text  not null,status_poll_retry_count integer(2)  not null,exit_code integer(2)  not null,failure_reason blob  not null,worker_node text  not null,killed_byice integer(1)  not null,last_empty_notification_time integer(8)  not null,proxy_renewable integer(1)  not null,myproxy_address text  not null,isbproxy_time_end integer(8)  not null,modified_jdl blob  not null,last_poller_visited integer(8)  not null,cream_dbid integer(8)  not null,token_file text  not null"; }
 
 
 		  void update_database( std::string& target ) const {
-		    std::string sql= "UPDATE jobs SET ";
+		    std::string _sql;
+		    if(m_changed_grid_jobid) {
+		      _sql += this->grid_jobid_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->grid_jobid( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    std::string _sql="";
-		    if(m_changed_grid_jobid) _sql += this->grid_jobid_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->grid_jobid( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_cream_jobid) {
+		      _sql += this->cream_jobid_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->cream_jobid( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_cream_jobid) _sql += this->cream_jobid_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->cream_jobid( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_complete_cream_jobid) {
+		      _sql += this->complete_cream_jobid_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->complete_cream_jobid( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_complete_cream_jobid) _sql += this->complete_cream_jobid_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->complete_cream_jobid( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_jdl) {
+		      _sql += this->jdl_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->jdl( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_jdl) _sql += this->jdl_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->jdl( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_ceid) {
+		      _sql += this->ceid_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->ceid( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_ceid) _sql += this->ceid_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->ceid( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_endpoint) {
+		      _sql += this->endpoint_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->endpoint( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_endpoint) _sql += this->endpoint_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->endpoint( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_cream_address) {
+		      _sql += this->cream_address_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->cream_address( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_cream_address) _sql += this->cream_address_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->cream_address( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_cream_deleg_address) {
+		      _sql += this->cream_deleg_address_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->cream_deleg_address( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_cream_deleg_address) _sql += this->cream_deleg_address_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->cream_deleg_address( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_user_proxyfile) {
+		      _sql += this->user_proxyfile_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->user_proxyfile( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_user_proxyfile) _sql += this->user_proxyfile_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->user_proxyfile( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_user_dn) {
+		      _sql += this->user_dn_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->user_dn( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_user_dn) _sql += this->user_dn_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->user_dn( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_sequence_code) {
+		      _sql += this->sequence_code_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->sequence_code( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_sequence_code) _sql += this->sequence_code_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->sequence_code( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_delegation_id) {
+		      _sql += this->delegation_id_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->delegation_id( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_delegation_id) _sql += this->delegation_id_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->delegation_id( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_wn_sequence_code) {
+		      _sql += this->wn_sequence_code_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->wn_sequence_code( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_wn_sequence_code) _sql += this->wn_sequence_code_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->wn_sequence_code( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_prev_status) {
+		      _sql += this->prev_status_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->prev_status( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_prev_status) _sql += this->prev_status_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->prev_status( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_status) {
+		      _sql += this->status_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->status( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_status) _sql += this->status_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->status( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_num_logged_status_changes) {
+		      _sql += this->num_logged_status_changes_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->num_logged_status_changes( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_num_logged_status_changes) _sql += this->num_logged_status_changes_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->num_logged_status_changes( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_last_seen) {
+		      _sql += this->last_seen_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->last_seen( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_last_seen) _sql += this->last_seen_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->last_seen( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_lease_id) {
+		      _sql += this->lease_id_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->lease_id( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_lease_id) _sql += this->lease_id_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->lease_id( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_status_poll_retry_count) {
+		      _sql += this->status_poll_retry_count_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->status_poll_retry_count( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_status_poll_retry_count) _sql += this->status_poll_retry_count_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->status_poll_retry_count( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_exit_code) {
+		      _sql += this->exit_code_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->exit_code( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_exit_code) _sql += this->exit_code_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->exit_code( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_failure_reason) {
+		      _sql += this->failure_reason_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->failure_reason( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_failure_reason) _sql += this->failure_reason_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->failure_reason( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_worker_node) {
+		      _sql += this->worker_node_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->worker_node( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_worker_node) _sql += this->worker_node_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->worker_node( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_killed_byice) {
+		      _sql += this->killed_byice_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->killed_byice( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_killed_byice) _sql += this->killed_byice_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->killed_byice( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_last_empty_notification_time) {
+		      _sql += this->last_empty_notification_time_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->last_empty_notification_time( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_last_empty_notification_time) _sql += this->last_empty_notification_time_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->last_empty_notification_time( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_proxy_renewable) {
+		      _sql += this->proxy_renewable_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->proxy_renewable( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_proxy_renewable) _sql += this->proxy_renewable_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->proxy_renewable( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_myproxy_address) {
+		      _sql += this->myproxy_address_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->myproxy_address( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_myproxy_address) _sql += this->myproxy_address_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->myproxy_address( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_isbproxy_time_end) {
+		      _sql += this->isbproxy_time_end_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->isbproxy_time_end( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_isbproxy_time_end) _sql += this->isbproxy_time_end_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->isbproxy_time_end( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_modified_jdl) {
+		      _sql += this->modified_jdl_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->modified_jdl( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_modified_jdl) _sql += this->modified_jdl_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->modified_jdl( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_last_poller_visited) {
+		      _sql += this->last_poller_visited_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->last_poller_visited( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_last_poller_visited) _sql += this->last_poller_visited_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->last_poller_visited( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_cream_dbid) {
+		      _sql += this->cream_dbid_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->cream_dbid( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_cream_dbid) _sql += this->cream_dbid_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->cream_dbid( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
+		    if(m_changed_token_file) {
+		      _sql += this->token_file_field( ); 
+		      _sql += "=";
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); 
+		      _sql += utilities::to_string( this->token_file( ) );
+		      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		      _sql += ",";
 
-		    if(m_changed_token_file) _sql += this->token_file_field( ) 
-		    		+ "=" + glite::wms::ice::Ice::instance()->get_tmp_name() 
-		    		+ utilities::to_string(this->token_file( ) ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ",";
+		    }
 
-		    if( _sql.empty() ) return;
-		    if( boost::ends_with( _sql, ",") ) _sql = _sql.substr(0, _sql.length() -1 );
-		    _sql += " WHERE " + this->grid_jobid_field() + "=" + glite::wms::ice::Ice::instance()->get_tmp_name() + this->grid_jobid( ) + glite::wms::ice::Ice::instance()->get_tmp_name() + ";";
-		    target = sql + _sql;
+		    if( _sql.empty() ) {return;}
+
+		    if( boost::ends_with( _sql, ",") ) { _sql = _sql.substr(0, _sql.length() -1 ); }
+
+		    _sql += " WHERE ";
+		    _sql += this->grid_jobid_field();
+		    _sql += "=";
+		    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    _sql += this->grid_jobid( );
+		    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();
+		    _sql += ";";
+		    target = string("UPDATE jobs SET ") + _sql;
 		  }
 
 		  void set_status ( const glite::ce::cream_client_api::job_statuses::job_status& st ) {
