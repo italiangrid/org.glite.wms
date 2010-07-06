@@ -40,7 +40,6 @@ END LICENSE */
 
 //#include "iceDb/GetJobs.h"
 #include "iceDb/GetJobsToPoll.h"
-#include "iceDb/GetFieldsCount.h"
 #include "iceDb/CheckGridJobID.h"
 #include "iceDb/GetTerminatedJobs.h"
 #include "iceDb/Transaction.h"
@@ -236,7 +235,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
      Query calls must be done with fromDate = 'now', because ICE is not
      intersted in old jobs/events that has been removed from its database
   */
-  bool db_empty = false;
+/*  bool db_empty = false;
   {
     list<string> fields;
     fields.push_back( util::CreamJob::grid_jobid_field( ) );
@@ -249,7 +248,8 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_start_time = time(0)-600;
   else
     m_start_time = -1;
-
+*/
+  m_start_time = time(0)-600;
 
   if(m_reqnum < 5) m_reqnum = 5;
    int thread_num = m_configuration->ice()->max_ice_threads();
