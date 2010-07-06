@@ -21,10 +21,7 @@ END LICENSE */
 #include "GetLease.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <vector>
-
-#include <boost/tuple/tuple.hpp>
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -57,32 +54,26 @@ namespace { // begin local namespace
 //______________________________________________________________________________
 void db::GetLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd("SELECT * FROM lease WHERE userdn=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd +=  m_userdn ;
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += " AND creamurl=";
+  sqlcmd +=  Ice::get_tmp_name();
+  sqlcmd += m_creamurl ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-//   string dn( m_userdn );
-
-//   boost::replace_all( dn, "'", "''" );
- 
-  sqlcmd << "SELECT * FROM lease WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name() 
-	 << " AND creamurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name()
-	 << ";";
-
-  boost::tuple< string, string, time_t, string> tmp;
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  //  boost::tuple< string, string, time_t, string> tmp;
+  do_query( db, sqlcmd, fetch_fields_callback, &m_result );
   
-  if( !tmp.get<0>().empty() ) {
+  if( !m_result.get<0>().empty() ) {
     m_found = true;
-    m_result = glite::wms::ice::util::Lease_manager::Lease_t( 
-							   tmp.get<0>(), 
-							   tmp.get<1>(),
-							   tmp.get<2>(), 
-							   tmp.get<3>()
-							   );
+//     m_result = glite::wms::ice::util::Lease_manager::Lease_t( 
+// 							   tmp.get<0>(), 
+// 							   tmp.get<1>(),
+// 							   tmp.get<2>(), 
+// 							   tmp.get<3>()
+// 							   );
   }
 }

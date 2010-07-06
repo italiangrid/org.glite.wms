@@ -24,7 +24,9 @@ END LICENSE */
 #include "AbsDbOperation.h"
 #include <string>
 #include <ctime>
-#include "iceUtils/LeaseManager.h"
+//#include "iceUtils/LeaseManager.h"
+
+#include <boost/tuple/tuple.hpp>
 
 namespace glite {
   namespace wms {
@@ -36,7 +38,10 @@ namespace glite {
 	 */
 	class GetLease : public AbsDbOperation {
 	protected:
-	  glite::wms::ice::util::Lease_manager::Lease_t  m_result;
+	  //glite::wms::ice::util::Lease_manager::Lease_t  m_result;
+
+	  boost::tuple< std::string, std::string, time_t, std::string>  m_result;
+
 	  const std::string                              m_userdn, m_creamurl;
 	  bool                                           m_found;
 
@@ -44,18 +49,21 @@ namespace glite {
 	  GetLease( const std::string& userdn, 
 		    const std::string& creamurl, 
 		    const std::string& caller ) 
-	    : AbsDbOperation( caller ), m_result( "", "", time(0), ""), m_userdn( userdn ), m_creamurl( creamurl )
-	    { }
+	    : AbsDbOperation( caller ), 
+	    m_result( boost::make_tuple("", "", time(0), "") ), 
+	    m_userdn( userdn ), 
+	    m_creamurl( creamurl ) { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  
 	  /**
 	   * Return the list of jobs to poll
 	   */ 
-	  glite::wms::ice::util::Lease_manager::Lease_t
-	    get_lease( void ) const {
-              return m_result;
-	    }
+// 	  glite::wms::ice::util::Lease_manager::Lease_t
+// 	    get_lease( void ) const {
+//               return m_result;
+// 	    }
+	  boost::tuple< std::string, std::string, time_t, std::string> get_lease( void ) const { return m_result; }
 	  
 	  bool found( void ) const { return m_found; }
 	  

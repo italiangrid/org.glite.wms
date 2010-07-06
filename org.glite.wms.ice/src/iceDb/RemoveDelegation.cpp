@@ -28,20 +28,19 @@ using namespace std;
 void db::RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  string sqlcmd;
-  sqlcmd += "DELETE FROM delegation WHERE digest="
-	 + Ice::get_tmp_name()
-	 + m_digest 
-	 + Ice::get_tmp_name()
-	 + " AND creamurl="
-	 + Ice::get_tmp_name()
-	 + m_creamurl 
-	 + Ice::get_tmp_name()
-	 + " AND myproxyurl="
-	 + Ice::get_tmp_name()
-	 + m_myproxy
-	 + Ice::get_tmp_name()
-	 + ";";
+  string sqlcmd("DELETE FROM delegation WHERE digest=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_digest ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND creamurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_creamurl ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND myproxyurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_myproxy;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   do_query( db, sqlcmd );
 }

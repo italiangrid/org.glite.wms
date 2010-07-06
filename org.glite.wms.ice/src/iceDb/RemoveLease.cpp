@@ -21,29 +21,21 @@ END LICENSE */
 #include "RemoveLease.h"
 #include "ice-core.h"
 
-#include <sstream>
-
 using namespace glite::wms::ice;
 using namespace std;
 
 //______________________________________________________________________________
 void db::RemoveLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
+  string sqlcmd("DELETE FROM lease WHERE userdn=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_userdn ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND creamurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_creamurl;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-  sqlcmd << "DELETE FROM lease WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << " AND creamurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl
-	 << Ice::get_tmp_name()
-	 << ";";
-
-//     string sqlcmd = boost::str( boost::format( 
-//       "DELETE FROM lease " 
-//       " where userdn = \'%1%\' AND creamurl = \'%2%\'; " ) % m_userdn % m_creamurl );
-
-  do_query( db, sqlcmd.str() );
+  do_query( db, sqlcmd );
 }

@@ -50,14 +50,14 @@ namespace { // begin local namespace
 void db::GetJobByGid::execute( sqlite3* db ) throw ( db::DbOperationException& )
 {
 
-
-  string sqlcmd;
-  sqlcmd += "SELECT " 
-    + util::CreamJob::get_query_fields() 
-    + " FROM jobs WHERE " + util::CreamJob::grid_jobid_field() + "=" 
-    + Ice::get_tmp_name()
-    + m_gridjobid 
-    + Ice::get_tmp_name() + ";";
+  string sqlcmd("SELECT ");
+  sqlcmd += util::CreamJob::get_query_fields() ;
+  sqlcmd += " FROM jobs WHERE ";
+  sqlcmd += util::CreamJob::grid_jobid_field() ;
+  sqlcmd += "=" ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_gridjobid ;
+  sqlcmd += Ice::get_tmp_name() + ";";
     
   vector<string> fields;
     

@@ -18,7 +18,6 @@ limitations under the License.
 
 END LICENSE */
 
-#include <sstream>
 #include <cstdlib>
 
 #include "GetDbID.h"
@@ -46,13 +45,13 @@ namespace {
 //______________________________________________________________________________
 void db::GetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-  sqlcmd << "SELECT db_id FROM ce_dbid WHERE ceurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd = "SELECT db_id FROM ce_dbid WHERE ceurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_creamurl;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
+  do_query( db, sqlcmd, fetch_jobs_callback, &m_result );
 
   if(m_result>-1)
     m_found = true;

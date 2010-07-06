@@ -44,13 +44,15 @@ static int fetch_job_callback(void *param, int argc, char **argv, char **azColNa
 void db::GetJobByCid::execute( sqlite3* db ) throw ( db::DbOperationException& )
 {
 
-    string sqlcmd = "";
-    sqlcmd += "SELECT " 
-	   + util::CreamJob::get_query_fields() 
-	   + " FROM jobs WHERE " + util::CreamJob::complete_cream_jobid_field() + "=" 
-	   + Ice::get_tmp_name()
-	   + m_complete_creamjobid 
-	   + Ice::get_tmp_name() + ";";
+    string sqlcmd = "SELECT ";
+    sqlcmd += util::CreamJob::get_query_fields();
+    sqlcmd += " FROM jobs WHERE ";
+    sqlcmd += util::CreamJob::complete_cream_jobid_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += m_complete_creamjobid;
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += ";";
     
     vector<string> fields;
     

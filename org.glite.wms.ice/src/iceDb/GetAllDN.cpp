@@ -46,10 +46,8 @@ namespace { // begin local namespace
 
 void GetAllDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
- 
-  sqlcmd << "SELECT userdn FROM proxy;";
+  string sqlcmd("SELECT userdn FROM proxy;");
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, m_dns );
+  do_query( db, sqlcmd, fetch_fields_callback, m_dns );
   
 }

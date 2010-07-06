@@ -27,27 +27,25 @@ using namespace std;
 
 void db::CreateLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-
-  sqlcmd = string("INSERT OR REPLACE INTO lease (" )
-	 + "userdn,creamurl,exptime,leaseid"
-         + " ) VALUES ("
-	 + Ice::get_tmp_name()
-	 + m_userdn 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_creamurl 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((long int)m_exptime )
-	 + Ice::get_tmp_name()
-	 + ","	
-	 + Ice::get_tmp_name()
-	 + m_leaseid 
-	 + Ice::get_tmp_name()
-	 + ");";
+  string sqlcmd = string("INSERT OR REPLACE INTO lease (" );
+sqlcmd	 += "userdn,creamurl,exptime,leaseid";
+sqlcmd   += " ) VALUES (";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_userdn ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_creamurl ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += util::utilities::to_string((long int)m_exptime );
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ","	;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_leaseid ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ");";
  
   do_query( db, sqlcmd );
 }

@@ -27,12 +27,11 @@ using namespace std;
 //______________________________________________________________________________
 void db::RemoveDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  sqlcmd += "DELETE FROM delegation WHERE delegationid="
-	 + Ice::get_tmp_name()
-	 + m_id
-	 + Ice::get_tmp_name()
-	 + ";";
+  string sqlcmd("DELETE FROM delegation WHERE delegationid=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_id;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   do_query( db, sqlcmd );
 }

@@ -44,7 +44,7 @@ namespace glite {
 	  GetStats( std::vector< std::pair< time_t, int > >& target, 
 	  	    const time_t datefrom,
 		    const time_t dateto,
-		    const std::string& caller );
+		    const std::string& caller ) : AbsDbOperation( caller ), m_target(&target), m_datefrom( datefrom ), m_dateto( dateto ) {}
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

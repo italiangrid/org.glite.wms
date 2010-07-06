@@ -55,18 +55,20 @@ namespace { // begin local namespace
 
 void db::GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd( "" );
-  if( m_only_renewable)
-    sqlcmd << "SELECT * FROM delegation WHERE renewable="
-	   << Ice::get_tmp_name()
-	   << "1"
-	   << Ice::get_tmp_name() << ";";
+  string sqlcmd;
+  if( m_only_renewable) {
+    sqlcmd += "SELECT * FROM delegation WHERE renewable=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += "1";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += ";";
+  }
   else
-    sqlcmd << "SELECT * FROM delegation;";
+    sqlcmd = "SELECT * FROM delegation;";
 
   list<vector<string> > tmp;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {
     for(list<vector<string> >::const_iterator it = tmp.begin();

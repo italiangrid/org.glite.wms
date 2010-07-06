@@ -45,10 +45,11 @@ namespace { // begin local namespace
 
 void db::CheckDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-
-  sqlcmd = string("SELECT delegationid FROM delegation WHERE delegationid=")
-	+ Ice::get_tmp_name() + m_delegid + Ice::get_tmp_name() + ";";
+  string sqlcmd = "SELECT delegationid FROM delegation WHERE delegationid=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_delegid;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   string tmp;
 

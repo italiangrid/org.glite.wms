@@ -17,8 +17,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 END LICENSE */
-
+ 
 #include "GetFieldsCount.h"
+#include "iceUtils.h"
 #include "ice-core.h"
 #include <cstdlib>
 
@@ -43,25 +44,26 @@ namespace { // begin local namespace
 
 void db::GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
- 
-  sqlcmd = "SELECT COUNT(";
+  string sqlcmd = "SELECT COUNT(";
 
   fields_count_a = m_fields_to_retrieve.size();
 
-  for(list< string>::const_iterator it=m_fields_to_retrieve.begin();
-      it!=m_fields_to_retrieve.end();
-      ++it)
-    {
-      sqlcmd += *it + ",";
-    }
-  
-  string tmp = sqlcmd;
-  if( !tmp.empty() )
-    tmp = tmp.substr(0, tmp.length()-1); // remove the trailing ","
-  
-  sqlcmd = "";
-  sqlcmd += tmp + ") FROM jobs";
+  sqlcmd = util::utilities::join(m_fields_to_retrieve, "," );
+
+
+//   for(list< string>::const_iterator it=m_fields_to_retrieve.begin();
+//       it!=m_fields_to_retrieve.end();
+//       ++it)
+//     {
+//       sqlcmd += *it + ",";
+//     }
+//   
+//   string tmp = sqlcmd;
+//   if( !tmp.empty() )
+//     tmp = tmp.substr(0, tmp.length()-1); // remove the trailing ","
+//   
+//   sqlcmd = "";
+  sqlcmd += ") FROM jobs";
 
   if( !m_clause.empty() )
     {
@@ -81,10 +83,11 @@ void db::GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
 
       string tmp = sqlcmd;
       if( !tmp.empty() )
-	tmp = tmp.substr(0, tmp.length()-4); // remove the trailing ","
+	tmp = tmp.substr(0, tmp.length()-4); // remove the trailing "AND"
       
       sqlcmd = "";
-      sqlcmd += tmp + ";";
+      sqlcmd += tmp;
+      sqlcmd += ";";
 
     } else {
     sqlcmd += ";";

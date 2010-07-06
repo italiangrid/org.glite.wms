@@ -27,45 +27,41 @@ using namespace std;
 
 void db::CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-
-
-
-  sqlcmd = string("INSERT INTO delegation (")
-	 + "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl"
-         + " ) VALUES ("
-	 + Ice::get_tmp_name()
-	 + m_digest 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_creamurl
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((long int)m_exptime) 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((long int)m_duration )
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_delegid 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_userdn 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + ( m_renewable ? "1" : "0" ) 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_myproxyurl 
-	 + Ice::get_tmp_name()
-	 + ");";
+  string sqlcmd = string("INSERT INTO delegation (");
+  sqlcmd	 += "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl";
+   sqlcmd      += " ) VALUES (";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_digest ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_creamurl;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += util::utilities::to_string((long int)m_exptime) ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += util::utilities::to_string((long int)m_duration );
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_delegid ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_userdn ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ( m_renewable ? "1" : "0" ) ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_myproxyurl ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ");";
 
   do_query( db, sqlcmd );
 }

@@ -21,7 +21,6 @@ END LICENSE */
 #include "GetDelegation.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
@@ -61,28 +60,23 @@ namespace { // begin local namespace
 //______________________________________________________________________________
 void db::GetDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-
-//   string digest( m_digest );
-
-//   boost::replace_all( digest, "'", "''" );
- 
-  sqlcmd << "SELECT * FROM delegation WHERE digest="
-	 << Ice::get_tmp_name()
-	 << m_digest 
-	 << Ice::get_tmp_name()
-	 << " AND creamurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name() 
-	 << " AND myproxyurl="
-	 << Ice::get_tmp_name()
-	 << m_myproxyurl 
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd = "SELECT * FROM delegation WHERE digest=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_digest ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND creamurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_creamurl ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND myproxyurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_myproxyurl ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   boost::tuple< string, string, time_t, int, string, string, bool, string> tmp;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( !tmp.get<0>().empty() ) {
     m_found = true;

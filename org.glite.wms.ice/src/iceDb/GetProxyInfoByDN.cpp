@@ -21,7 +21,6 @@ END LICENSE */
 #include "GetProxyInfoByDN.h"
 #include "ice-core.h"
 
-#include <sstream>
 #include <vector>
 
 using namespace glite::wms::ice;
@@ -48,17 +47,15 @@ namespace { // begin local namespace
 
 void db::GetProxyInfoByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
- 
-  sqlcmd << "SELECT proxyfile,exptime,counter FROM proxy WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name()
-	 << " ORDER BY exptime DESC LIMIT 1;";
+  string sqlcmd("SELECT proxyfile,exptime,counter FROM proxy WHERE userdn=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_userdn;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " ORDER BY exptime DESC LIMIT 1;";
 
   vector<string> tmp;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {
     m_found = true;

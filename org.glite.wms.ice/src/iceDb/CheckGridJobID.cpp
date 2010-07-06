@@ -43,10 +43,15 @@ namespace { // begin local namespace
 void db::CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  string sqlcmd;
-  sqlcmd = string( "SELECT ") + util::CreamJob::grid_jobid_field( ) 
-	   + " FROM jobs WHERE " + util::CreamJob::grid_jobid_field( ) + "="
-	   + Ice::get_tmp_name() + m_gridjobid + Ice::get_tmp_name() + ";";
+  string sqlcmd = "SELECT ";
+  sqlcmd += util::CreamJob::grid_jobid_field( ) ;
+  sqlcmd += " FROM jobs WHERE ";
+  sqlcmd += util::CreamJob::grid_jobid_field( ) ;
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += m_gridjobid;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   string gid;
 

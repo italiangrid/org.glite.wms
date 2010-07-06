@@ -27,19 +27,19 @@ using namespace std;
 
 void db::InsertStat::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-
-  sqlcmd += "INSERT INTO stats (timestamp,ce_timestamp,status) VALUES (" 
-	 + Ice::get_tmp_name()
-	 +  util::utilities::to_string( (unsigned long long int)m_timestamp  )
-	 + Ice::get_tmp_name() + ", "
-	 + Ice::get_tmp_name() 
-	 + util::utilities::to_string( (unsigned long long int)m_ce_timestamp )
-	 + Ice::get_tmp_name() + ", "
-	 + Ice::get_tmp_name() 
-	 + util::utilities::to_string( (unsigned long int)m_status )
-	 + Ice::get_tmp_name()
-	 + ");";
+  string sqlcmd("INSERT INTO stats (timestamp,ce_timestamp,status) VALUES (" );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd +=  util::utilities::to_string( (unsigned long long int)m_timestamp  );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ", ";
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::to_string( (unsigned long long int)m_ce_timestamp );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ", ";
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::to_string( (unsigned long int)m_status );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ");";
 
   do_query( db, sqlcmd );
 }

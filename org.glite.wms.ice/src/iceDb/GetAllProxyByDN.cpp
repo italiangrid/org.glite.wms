@@ -43,22 +43,34 @@ void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd;
   
-  if( m_all )
-    sqlcmd = "SELECT " + util::CreamJob::user_proxyfile_field( ) + " FROM jobs;";
+  if( m_all ) {
+    sqlcmd += "SELECT ";
+    sqlcmd += util::CreamJob::user_proxyfile_field( );
+    sqlcmd += " FROM jobs;";
+  }
   else {
   
-    if( m_proxy_renewable )
-      sqlcmd = string("SELECT ") + util::CreamJob::user_proxyfile_field( ) 
-             + " FROM jobs WHERE " + util::CreamJob::proxy_renewable_field() + "="
-	     + Ice::get_tmp_name()
-	     + "1"
-	     + Ice::get_tmp_name() + ";" ;
+    if( m_proxy_renewable ) {
+      sqlcmd = string("SELECT ");
+      sqlcmd += util::CreamJob::user_proxyfile_field( ); 
+      sqlcmd += " FROM jobs WHERE ";
+      sqlcmd += util::CreamJob::proxy_renewable_field();
+      sqlcmd += "=";
+      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += "1";
+      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += ";";
+    }
     else
-      sqlcmd = string("SELECT ") + util::CreamJob::user_proxyfile_field( ) 
-             + " FROM jobs WHERE " + util::CreamJob::proxy_renewable_field( ) + "="
-	     + Ice::get_tmp_name()
-	     + "0"
-	     + Ice::get_tmp_name() + ";" ;
+      sqlcmd = string("SELECT ");
+      sqlcmd += util::CreamJob::user_proxyfile_field( );
+      sqlcmd += " FROM jobs WHERE ";
+      sqlcmd += util::CreamJob::proxy_renewable_field( );
+      sqlcmd += "=";
+      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += "0";
+      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += ";";
   }
   
   do_query( db, sqlcmd, fetch_proxy_job_id_callback, &m_result );

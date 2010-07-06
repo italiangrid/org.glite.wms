@@ -20,28 +20,25 @@ END LICENSE */
 
 #include "UpdateProxyCounterByDN.h"
 #include "ice-core.h"
-#include <sstream>
 
 using namespace glite::wms::ice;
 using namespace std;
 
 void db::UpdateProxyCounterByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    ostringstream sqlcmd("");
- 
-    sqlcmd << "UPDATE proxy SET counter=" 
-	   << Ice::get_tmp_name() 
-	   << m_counter 
-	   << Ice::get_tmp_name()
-	   << " WHERE userdn="
-	   << Ice::get_tmp_name()
-	   << m_dn 
-	   << Ice::get_tmp_name()
-	   << " AND myproxyurl="
-	   << Ice::get_tmp_name() 
-	   << m_myproxy 
-	   << Ice::get_tmp_name()
-	   << ";";
-    
-    do_query( db, sqlcmd.str() );
+  string sqlcmd("UPDATE proxy SET counter=" );
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += m_counter ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " WHERE userdn=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_dn ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND myproxyurl=";
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += m_myproxy ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
+  
+  do_query( db, sqlcmd );
 }

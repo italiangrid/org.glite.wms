@@ -27,20 +27,20 @@ using namespace std;
 
 void db::UpdateDelegationTimesByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd;
+  string sqlcmd("UPDATE delegation SET exptime=");
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::to_string( m_exptime );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ",";
+  sqlcmd += "duration=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string( (unsigned long int)m_duration ) ;
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += " WHERE delegationid=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_delegid ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-    sqlcmd += "UPDATE delegation SET exptime="
-	   + Ice::get_tmp_name() 
-           + util::utilities::to_string( m_exptime )
-	   + Ice::get_tmp_name() + ","
-	   + "duration="
-	   + Ice::get_tmp_name() 
-	   + util::utilities::to_string( (unsigned long int)m_duration ) 
-	   + Ice::get_tmp_name() 
-	   + " WHERE delegationid="
-	   + Ice::get_tmp_name()
-	   + m_delegid 
-	   + Ice::get_tmp_name() + ";";
-
-    do_query( db, sqlcmd );
+  do_query( db, sqlcmd );
 }

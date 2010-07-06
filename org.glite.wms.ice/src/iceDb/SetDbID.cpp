@@ -29,14 +29,15 @@ using namespace glite::wms::ice;
 //______________________________________________________________________________
 void db::SetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  sqlcmd += "INSERT OR REPLACE INTO ce_dbid (ceurl,db_id) VALUES (" 
-	 + Ice::get_tmp_name() 
-	 + m_creamurl 
-	 + Ice::get_tmp_name() + ", " 
-	 + Ice::get_tmp_name() 
-	 + util::utilities::to_string( (unsigned long long int)m_new_dbid )
-	 + Ice::get_tmp_name() + ");";
+  string sqlcmd( "INSERT OR REPLACE INTO ce_dbid (ceurl,db_id) VALUES (" );
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += m_creamurl ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ", " ;
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::to_string( (unsigned long long int)m_new_dbid );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ");";
 
   do_query( db, sqlcmd );
 }

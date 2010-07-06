@@ -27,12 +27,13 @@ using namespace std;
 
 void db::RemoveJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  sqlcmd = string("DELETE FROM jobs ")
-	 + " WHERE " + util::CreamJob::cream_dbid_field() + "=" 
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((unsigned long long int)m_dbid) 
-	 + Ice::get_tmp_name() + ";";
+  string sqlcmd("DELETE FROM jobs WHERE");
+  sqlcmd += util::CreamJob::cream_dbid_field();
+  sqlcmd += "=" ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string((unsigned long long int)m_dbid) ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
   
   do_query( db, sqlcmd );
 }

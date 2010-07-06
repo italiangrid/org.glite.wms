@@ -27,31 +27,28 @@ using namespace std;
 
 void db::CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-
-  string sqlcmd;
-
-  sqlcmd = string("INSERT OR REPLACE INTO proxy (" )
-         + " userdn,myproxyurl,proxyfile,exptime,counter) VALUES ("
-	 + Ice::get_tmp_name()
-	 + m_userdn 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_myproxy 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + m_proxyfile 
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((long int)m_exptime )
-	 + Ice::get_tmp_name()
-	 + ","
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((long int)m_counter )
-	 + Ice::get_tmp_name()
-	 + ");";
+  string sqlcmd = string("INSERT OR REPLACE INTO proxy (" );
+  sqlcmd += " userdn,myproxyurl,proxyfile,exptime,counter) VALUES (";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_userdn ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_myproxy ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += m_proxyfile ;
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += util::utilities::to_string((long int)m_exptime );
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ",";
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += util::utilities::to_string((long int)m_counter );
+sqlcmd	 += Ice::get_tmp_name();
+sqlcmd	 += ");";
    		      
   do_query( db, sqlcmd );
 }

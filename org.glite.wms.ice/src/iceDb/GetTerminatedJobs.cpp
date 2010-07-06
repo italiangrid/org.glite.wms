@@ -35,82 +35,35 @@ namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice;
 using namespace std;
 
-// namespace { // begin local namespace
-// 
-//   // Local helper function: callback for sqlite
-//   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
-// 
-//     list<CreamJob>* jobs = (list<CreamJob>*)param;
-// 
-//     if( argv && argv[0] ) {
-//       vector<string> fields;
-//       for(int i = 0; i<=util::CreamJob::num_of_members()-1; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded complete_cream_jobid from the query
-// 	if( argv[i] )
-// 	  fields.push_back( argv[i] );
-// 	else
-// 	  fields.push_back( "" );
-//       }
-//       
-//       CreamJob tmpJob(fields.at(0),
-// 		      fields.at(1),
-// 		      fields.at(2),
-// 		      fields.at(3),
-// 		      fields.at(4),
-// 		      fields.at(5),
-// 		      fields.at(6),
-// 		      fields.at(7),
-// 		      fields.at(8),
-// 		      fields.at(9),
-// 		      fields.at(10),
-// 		      fields.at(11),
-// 		      fields.at(12),
-// 		      (const api::job_statuses::job_status)atoi(fields.at(13).c_str()),
-// 		      (const api::job_statuses::job_status)atoi(fields.at(14).c_str()),
-// 		      strtoul(fields.at(15).c_str(), 0, 10),
-// 		      (time_t)strtoll(fields.at(16).c_str(), 0, 10),
-// 		      fields.at(17),
-// 		      strtoul(fields.at(18).c_str(), 0, 10),
-// 		      strtoul(fields.at(19).c_str(), 0, 10),
-// 		      fields.at(20),
-// 		      fields.at(21),
-// 		      (fields.at(22)=="1" ? true : false),
-// 		      (time_t)strtoll(fields.at(23).c_str(), 0, 10),
-// 		      (fields.at(24) == "1" ? true : false ),
-// 		      fields.at(25),
-// 		      (time_t)strtoll(fields.at(26).c_str(), 0, 10),
-// 		      fields.at(27),
-// 		      (time_t)strtoll(fields.at(28).c_str(), 0, 10),
-// 		      strtoull(fields.at(29).c_str(), 0, 10),
-// 		      fields.at(30)
-// 		      );
-//       //tmpJob.reset_change_flags( );      
-//       jobs->push_back( tmpJob );
-//       
-//     }
-//     return 0;
-//   }
-// } // end local namespace
-
 void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  sqlcmd += "SELECT " + CreamJob::get_query_fields() + " FROM jobs WHERE " 
-         + util::CreamJob::status_field() + "="
-	 + Ice::get_tmp_name() 
-	 + util::utilities::to_string( (unsigned long int)api::job_statuses::CANCELLED )
-	 + Ice::get_tmp_name()
-	 + " OR " + util::CreamJob::status_field() + "="
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_OK )
-	 + Ice::get_tmp_name()
-	 + " OR " + util::CreamJob::status_field() + "="
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_FAILED )
-	 + Ice::get_tmp_name()
-	 + " OR "+ util::CreamJob::status_field() + "="
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED )
-	 + Ice::get_tmp_name() + ";";
+  string sqlcmd("SELECT ");
+  sqlcmd += CreamJob::get_query_fields();
+  sqlcmd += " FROM jobs WHERE " ;
+  sqlcmd += util::CreamJob::status_field();
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::CANCELLED );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " OR ";
+  sqlcmd += util::CreamJob::status_field();
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_OK );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " OR ";
+  sqlcmd += util::CreamJob::status_field();
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_FAILED );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " OR ";
+  sqlcmd += util::CreamJob::status_field();
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
 }

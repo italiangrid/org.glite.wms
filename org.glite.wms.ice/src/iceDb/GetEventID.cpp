@@ -19,9 +19,7 @@ limitations under the License.
 END LICENSE */
 
 
-#include <sstream>
 #include <cstdlib>
-#include <iostream>
 
 #include "GetEventID.h"
 #include "ice-core.h"
@@ -48,17 +46,17 @@ namespace {
 //______________________________________________________________________________
 void db::GetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd = "SELECT eventid FROM event_id WHERE userdn=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_userdn;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND ceurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_creamurl;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-  sqlcmd << "SELECT eventid FROM event_id WHERE userdn="
-	 << Ice::get_tmp_name()
-	 << m_userdn 
-	 << Ice::get_tmp_name() << " AND ceurl="
-	 << Ice::get_tmp_name()
-	 << m_creamurl 
-	 << Ice::get_tmp_name() << ";";
-
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
+  do_query( db, sqlcmd, fetch_jobs_callback, &m_result );
   
   if(m_result>-1)
     m_found = true;

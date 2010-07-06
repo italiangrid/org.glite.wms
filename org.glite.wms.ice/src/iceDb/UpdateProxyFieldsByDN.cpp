@@ -28,25 +28,23 @@ using namespace std;
 
 void db::UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd;
-
-    sqlcmd += "UPDATE proxy SET proxyfile=" 
-	   + Ice::get_tmp_name()
-	   + m_proxyfile
-	   + Ice::get_tmp_name()
-	   + ",exptime=" 
-	   + Ice::get_tmp_name()
-	   + util::utilities::to_string( m_exptime )
-	   + Ice::get_tmp_name()
-	   + " WHERE userdn="
-	   + Ice::get_tmp_name()
-	   + m_dn
-	   + Ice::get_tmp_name()
-	   + " AND myproxyurl=" 
-	   + Ice::get_tmp_name()
-	   + m_myproxy 
-	   + Ice::get_tmp_name()
-	   + ";";
-    
-    do_query( db, sqlcmd );
+  string sqlcmd("UPDATE proxy SET proxyfile=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_proxyfile;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ",exptime=" ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::to_string( m_exptime );
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " WHERE userdn=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_dn;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND myproxyurl=" ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_myproxy ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
+  
+  do_query( db, sqlcmd );
 }

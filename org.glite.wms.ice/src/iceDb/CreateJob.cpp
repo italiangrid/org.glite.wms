@@ -29,12 +29,11 @@ using namespace std;
 void db::CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
-  string sqlcmd("");
-  sqlcmd = string( "INSERT OR REPLACE INTO jobs (" )
-    + util::CreamJob::get_query_fields( )
-    + ") VALUES (" 
-    + m_theJob.get_query_values( )
-    + ")";
+  string sqlcmd = string( "INSERT OR REPLACE INTO jobs (" );
+  sqlcmd  += util::CreamJob::get_query_fields( );
+  sqlcmd  += ") VALUES (" ;
+  sqlcmd  += m_theJob.get_query_values( );
+  sqlcmd  += ")";
 
  //  + Ice::get_tmp_name()
 //     + m_theJob.grid_jobid()

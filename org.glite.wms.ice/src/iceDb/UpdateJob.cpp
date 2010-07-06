@@ -20,11 +20,7 @@ END LICENSE */
 
 #include "UpdateJob.h"
 #include "ice-core.h"
-#include <iostream>
 
-
-
-//using namespace glite::wms::ice::db;
 using namespace glite::wms::ice;
 using namespace std;
 
@@ -32,13 +28,8 @@ void db::UpdateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = "";
 
-//    sqlcmd += "UPDATE jobs SET " + m_job.get_query_update_values();//fields( );
- //   sqlcmd += /*" VALUES(" + m_job.get_query_values( ) +*/ " WHERE ";
- //   sqlcmd += util::CreamJob::grid_jobid_field( ) + "=" + Ice::instance()->get_tmp_name() + m_job.grid_jobid( ) + Ice::instance()->get_tmp_name() + ";";
-   
     m_job.update_database( sqlcmd );
     if( sqlcmd.empty( ) ) return;
     
     do_query( db, sqlcmd );
-//    m_job.reset_change_flags( );
 }

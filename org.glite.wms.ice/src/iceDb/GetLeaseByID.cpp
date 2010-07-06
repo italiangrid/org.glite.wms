@@ -57,28 +57,23 @@ namespace { // begin local namespace
 //______________________________________________________________________________
 void db::GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
+  string sqlcmd("SELECT * FROM lease WHERE leaseid=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_leaseid ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
-//   string id( m_leaseid );
+  //  boost::tuple< string, string, time_t, string> tmp;
 
-//   boost::replace_all( id, "'", "''" );
- 
-  sqlcmd << "SELECT * FROM lease WHERE leaseid="
-	 << Ice::get_tmp_name()
-	 << m_leaseid 
-	 << Ice::get_tmp_name() << ";";
-
-  boost::tuple< string, string, time_t, string> tmp;
-
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &m_result );
   
-  if( !tmp.get<0>().empty() ) {
+  if( !m_result.get<0>().empty() ) {
     m_found = true;
-    m_result = glite::wms::ice::util::Lease_manager::Lease_t( 
-							   tmp.get<0>(), 
-							   tmp.get<1>(),
-							   tmp.get<2>(), 
-							   tmp.get<3>()
-							   );
+ //    m_result = glite::wms::ice::util::Lease_manager::Lease_t( 
+// 							   tmp.get<0>(), 
+// 							   tmp.get<1>(),
+// 							   tmp.get<2>(), 
+// 							   tmp.get<3>()
+// 							   );
   }
 }

@@ -93,42 +93,63 @@ using namespace std;
 void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = "";
-  if(m_only_active)
-    sqlcmd += "SELECT " 
-	   + util::CreamJob::get_query_fields() 
-	   + " FROM jobs WHERE " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   + util::utilities::to_string((unsigned long int)api::job_statuses::REGISTERED )
-	   + Ice::get_tmp_name()
-	   + " OR " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   +  util::utilities::to_string((unsigned long int)api::job_statuses::PENDING )
-	   + Ice::get_tmp_name()
-	   + " OR " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   +  util::utilities::to_string((unsigned long int)api::job_statuses::IDLE )
-	   + Ice::get_tmp_name()
-	   + " OR " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   +  util::utilities::to_string((unsigned long int)api::job_statuses::RUNNING )
-	   + Ice::get_tmp_name()
-	   + " OR " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   +  util::utilities::to_string((unsigned long int)api::job_statuses::REALLY_RUNNING )
-	   + Ice::get_tmp_name()
-	   + " OR " + util::CreamJob::status_field() + "="
-	   + Ice::get_tmp_name()
-	   +  util::utilities::to_string((unsigned long int)api::job_statuses::HELD)
-	   + Ice::get_tmp_name()
-	   + " AND " + util::CreamJob::killed_byice_field() + "="
-	   + Ice::get_tmp_name()
-	   + "0"
-	   + Ice::get_tmp_name();
-  else
-    sqlcmd += "SELECT " + util::CreamJob::get_query_fields() + " FROM jobs";
-
+  if(m_only_active) {
+    sqlcmd += "SELECT ";
+    sqlcmd += util::CreamJob::get_query_fields() ;
+    sqlcmd += " FROM jobs WHERE ";
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::REGISTERED );
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += " OR ";
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::PENDING );
+    sqlcmd +=  Ice::get_tmp_name();
+    sqlcmd += " OR " ;
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::IDLE );
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += " OR ";
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::RUNNING );
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += " OR ";
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::REALLY_RUNNING );
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += " OR ";
+    sqlcmd += util::CreamJob::status_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += util::utilities::to_string((unsigned long int)api::job_statuses::HELD);
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += " AND ";
+    sqlcmd += util::CreamJob::killed_byice_field();
+    sqlcmd += "=";
+    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += + "0";
+    sqlcmd += Ice::get_tmp_name();
+    }
+  else {
+    sqlcmd += "SELECT ";
+    sqlcmd += util::CreamJob::get_query_fields();
+    sqlcmd += " FROM jobs";
+  }
   if( m_limit > 0 ) {
-  	sqlcmd += " LIMIT " + util::utilities::to_string((unsigned long int )m_limit) + " OFFSET " + util::utilities::to_string((unsigned long int)m_offset) + ";"; 
+  	sqlcmd += " LIMIT ";
+	sqlcmd += util::utilities::to_string((unsigned long int )m_limit);
+	sqlcmd += " OFFSET ";
+	sqlcmd += util::utilities::to_string((unsigned long int)m_offset);
+	sqlcmd += ";"; 
   } else {
   	sqlcmd += ";";
   }

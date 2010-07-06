@@ -45,8 +45,7 @@ namespace {
 //______________________________________________________________________________
 void db::GetCEUrl::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  sqlcmd += "SELECT creamurl FROM delegation;";
+  string sqlcmd = "SELECT creamurl FROM delegation;";
 
   do_query( db, sqlcmd, fetch_jobs_callback, m_celist );
 

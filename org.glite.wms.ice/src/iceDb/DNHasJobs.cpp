@@ -49,12 +49,20 @@ void db::DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
   string sqlcmd = "SELECT ";
-  sqlcmd += util::CreamJob::grid_jobid_field( ) 
-            + " FROM jobs WHERE " + util::CreamJob::user_dn_field( )
-	    + "=" + Ice::get_tmp_name() + m_dn + Ice::get_tmp_name()
-	    + " AND " + util::CreamJob::cream_address_field( ) 
-	    + "=" +  Ice::get_tmp_name() + m_ce +  Ice::get_tmp_name()
-	    + " LIMIT 1";
+  sqlcmd += util::CreamJob::grid_jobid_field( );
+  sqlcmd += " FROM jobs WHERE " ;
+  sqlcmd += util::CreamJob::user_dn_field( );
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_dn;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND ";
+  sqlcmd += util::CreamJob::cream_address_field( ) ;
+  sqlcmd += "=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_ce;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " LIMIT 1";
 
   do_query( db, sqlcmd, fetch_jobs_callback, &m_found );
 }

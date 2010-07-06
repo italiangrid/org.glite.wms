@@ -26,17 +26,15 @@ using namespace std;
 
 void db::RemoveProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
-  
-  sqlcmd += "DELETE FROM proxy WHERE userdn="
-	 + Ice::get_tmp_name()
-	 + m_userdn 
-	 + Ice::get_tmp_name()
-	 + " AND myproxyurl="
-	 + Ice::get_tmp_name()
-	 + m_myproxy
-	 + Ice::get_tmp_name()
-	 + ";";
+  string sqlcmd("DELETE FROM proxy WHERE userdn=");
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_userdn ;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += " AND myproxyurl=";
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += m_myproxy;
+  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += ";";
 
   do_query( db, sqlcmd );
 }
