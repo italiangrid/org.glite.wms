@@ -150,11 +150,6 @@ namespace eventlogger    = glite::wms::wmproxy::eventlogger;
 namespace configuration  = glite::wms::common::configuration;
 namespace wmsutilities   = glite::wms::common::utilities;
 
-namespace {
-  classad::ExprTree* wms_requirements = 
-    (*configuration::Configuration::instance()->wm()).wms_requirements();
-}
-
 /* Common Methods:  */
 
 /* WMP Logger Initializer
@@ -253,7 +248,7 @@ appendExprTree(
   return classad::ClassAdParser().ParseExpression(expr, true);
 }
  
-void append_wms_requirements(JobAd *ad)
+void append_requirements(JobAd *ad, classad::ExprTree* wms_requirements)
 {
   classad::ExprTree const* const requirements =
     ad->delAttribute(JDL::REQUIREMENTS);
@@ -1503,7 +1498,10 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				throw JobOperationException(__FILE__, __LINE__,
 					"submit()", wmputilities::WMS_JDL_PARSING,msg);
 			}
-                        append_wms_requirements(&jad);
+  		        classad::ExprTree* wms_requirements = 
+    		          (*configuration::Configuration::instance()->wm()).wms_requirements();
+
+                        append_requirements(&jad, wms_requirements);
 			// \[ Do not separate
 			// Inserting sequence code
 			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
@@ -1628,7 +1626,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                                                       wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of input sandbox files is reached");
                                         }
                                 }
-                                append_wms_requirements(&nodead);
+  		                classad::ExprTree* wms_requirements = 
+    		                  (*configuration::Configuration::instance()->wm()).wms_requirements();
+                                append_requirements(&nodead, wms_requirements);
 				// Adding OutputSandboxDestURI attribute
 		        	if (nodead.hasAttribute(JDL::OUTPUTSB)) {
 					vector<string> osbdesturi;
@@ -2439,7 +2439,10 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
                 free(temp_user_dn);
 		ad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
 
-                append_wms_requirements(ad);
+                classad::ExprTree* wms_requirements = 
+                  (*configuration::Configuration::instance()->wm()).wms_requirements();
+
+                append_requirements(ad, wms_requirements);
 		// \/
 		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
 		if (ad->hasAttribute(JDL::WMPISB_BASE_URI)) {
