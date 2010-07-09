@@ -167,7 +167,7 @@ myecho "Confirming that tomcat came up properly"
 wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
- myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623?"
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
  myexit 1
 fi
 
@@ -248,4 +248,36 @@ if [ $? -ne 0 ] ; then
 fi
 
 myecho "Test against host certificate not conforming to the namespace successful"
+
+myecho "Switching tomcat certificate to one with the emailAddress field"
+
+cp -f $certdir/trusted-certs/trusted_host_email.cert $TOMCAT_CERT
+cp -f $certdir/trusted-certs/trusted_host_email_nopass.priv $TOMCAT_KEY
+
+chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
+chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
+
+myecho "Restarting tomcat"
+service $TOMCAT_SERVICE restart
+sleep 15
+
+myecho "Confirming that tomcat came up properly"
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+
+if [ $? -ne 0 ] ; then 
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myexit 1
+fi
+
+myecho "Tomcat up and running"
+
+myecho "Testing against host certificate with an emailAddress field (bug#69449)" 
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep EchoSecurityService
+
+if [ $? -ne 0 ] ; then 
+ myecho "Connection to server failed, when it should have succeeded"
+ myexit 1
+fi
+
+myecho "Test against host certificate with an emailAddress field successful"
 myexit 0
