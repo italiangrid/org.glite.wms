@@ -312,7 +312,7 @@ std::string getEnvFQAN();
  */
 char * getUserDN();
 
-char * convertDNEMailAddress(char * dn);
+char * convertDNEMailAddress(char const* const dn);
 
 /**
  * Parses the FQAN to get a vector containing the different elements

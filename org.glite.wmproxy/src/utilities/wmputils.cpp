@@ -492,7 +492,7 @@ bool checkGlobusVersion(){
  * --------------------------------------------------------------------------
  */
 char *
-convertDNEMailAddress(char * dn)
+convertDNEMailAddress(char const* const dn)
 {
 	GLITE_STACK_TRY("getEnvFQAN()");
 	edglog_fn("wmputils::convertDNEMailAddress");
