@@ -494,7 +494,7 @@ bool checkGlobusVersion(){
 char *
 convertDNEMailAddress(char const* const dn)
 {
-	GLITE_STACK_TRY("getEnvFQAN()");
+	GLITE_STACK_TRY("convertDNEMailAddress()");
 	edglog_fn("wmputils::convertDNEMailAddress");
 
 /* PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
@@ -1051,48 +1051,6 @@ void releaseChars( char **allocated, int size){
 
 
 /**
-* A forked child process may remain appended:
-* a simple call to glite_wms_wmproxy_exit make
-* sure the process successfully ends
-*/
-void
-doExit()
-{
-	GLITE_STACK_TRY("doExit()");
-	edglog_fn("wmputils::doExit");
-
-	// Calling exit script to "terminate" forked WMProxy process
-	// returning the exit value to the parent
-	string location = "";
-	if (char * glitelocation = getenv(GLITE_WMS_LOCATION)) {
-		location = string(glitelocation);
-	} else if (char * glitelocation = getenv(GLITE_LOCATION)) {
-		location = string(glitelocation);
-	} else {
-		location = FILE_SEP + "opt" + FILE_SEP + "glite";
-	}
-	string command = location + string(FILE_SEP + "sbin" + FILE_SEP
-		+ "glite_wms_wmproxy_exit");
-
-	edglog(debug)<<"Executing command: "<<command<<endl;
-	string param = boost::lexical_cast<string>(errno);
-	char **argvs;
-	argvs = (char **) calloc(3, sizeof(char *));
-	argvs[0] = (char *) malloc(command.length() + 1);
-	strcpy(argvs[0], command.c_str());
-	argvs[1] = (char *) malloc(param.length() + 1);
-	strcpy(argvs[1], param.c_str());
-	argvs[2] = (char *) 0;
-	if (execv(command.c_str(), argvs)) {
-		edglog(severe)<<"Unable to execute WMProxy exit script"<<endl;
-		edglog(severe)<<strerror(errno)<<endl;
-	}
-	releaseChars (argvs,3);
-	GLITE_STACK_CATCH();
-}
-
-
-/**
 * Perform a system call (through a process forked)
 */
 int
@@ -1130,7 +1088,6 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 				errormsg = strerror(errno);
 				edglog(severe)<<"execv error, errno: "<<errno
 					<<" - Error message: "<<errormsg<<endl;
-					doExit();
 			} else {
 				edglog(debug)<<"execv/command succesfully"<<endl;
 			}
@@ -1267,7 +1224,6 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 			default:
 				edglog(severe)<<"execv error, errno: "<<errno
     				<<" - Error message: "<<strerror(errno)<<endl;
-				doExit();
 				break;
 		}
 	} else {
@@ -1306,7 +1262,6 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 			// child
 			if (doExecvSplit(command, params, dirs, startIndex, endIndex)) {
 				edglog(severe)<<"execv error!"<<endl ;
-					doExit();
 			}
 			break;
 		default:

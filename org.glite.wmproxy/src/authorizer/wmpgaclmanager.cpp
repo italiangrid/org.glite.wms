@@ -994,7 +994,10 @@ int GaclManager::loadCredential ( ) {
 				  }					
 
 				  // Comparing the two credentials
-                                  if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) found = true;
+                                  if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) {
+		                    edglog(debug) << "GACL file entry " << cred->auri << " matched user's credentials\n";
+                                    found = true;
+                                  }
 
 				  // Releasing allocated credential memory
                                   GRSTgaclCredFree(cred_tmp);

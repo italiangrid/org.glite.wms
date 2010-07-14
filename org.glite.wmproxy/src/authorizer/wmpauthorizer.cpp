@@ -295,15 +295,18 @@ try {
               std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
             )
           );
-          if (grst_cred.substr(0, fqan_tag_size) == fqan_tag) {
-            fqan = grst_cred.substr(fqan_tag_size).substr(1); // remove trailing /
+          if (
+            grst_cred.size() > fqan_tag_size
+            && grst_cred.substr(0, fqan_tag_size) == fqan_tag
+          ) {
+            fqan = grst_cred.substr(fqan_tag_size);
           }
           ++i;
 	}
         if (fqan.empty()) {
           edglog(warning) << "Cannot extract fqan from gridsite" << endl;
         } else {
-	  edglog(debug) << "GRIDSITE_AURI_" << i << " extracted fqan: " << fqan << endl;
+	  edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
         }
 	
 	string dn = string(wmputilities::getUserDN()); // taken from ssl

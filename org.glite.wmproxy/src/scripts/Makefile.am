@@ -7,11 +7,10 @@
 ## *********************************************************************
 
 EXTRA_DIST = \
-	glite_wms_wmproxy_exit \
 	glite_wms_wmproxy_load_monitor  
 
 wletcwmdir = $(sbindir)
-wletcwm_DATA = glite_wms_wmproxy_exit glite_wms_wmproxy_load_monitor
+wletcwm_DATA = glite_wms_wmproxy_load_monitor
 
 bin_SCRIPTS = glite-wms-wmproxy-purge-proxycache.in 
 
