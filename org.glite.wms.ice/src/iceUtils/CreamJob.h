@@ -39,7 +39,6 @@ END LICENSE */
 #include "iceUtils.h"
 #include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
-#include "SerializeException.h"
 #include "classad_distribution.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 

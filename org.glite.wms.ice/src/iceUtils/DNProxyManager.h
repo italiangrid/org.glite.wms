@@ -27,9 +27,7 @@ END LICENSE */
 #include <boost/tuple/tuple.hpp>
 #include <cstring>
 #include <string.h>
-
 #include "SourceProxyNotFoundException.h"
-
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "IceConfManager.h"
 #include "iceUtils.h"
