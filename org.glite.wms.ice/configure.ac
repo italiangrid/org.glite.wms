@@ -17,7 +17,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS ICE], [3.1.39])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/ice/ice-core.h])
+AC_CONFIG_SRCDIR([src/ice/IceCore.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
