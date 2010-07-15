@@ -39,9 +39,9 @@ END LICENSE */
 #include "iceDb/GetAllJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "CreamProxyMethod.h"
-#include "iceConfManager.h"
-#include "iceUtils.h"
+#include "iceUtils/CreamProxyMethod.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/iceUtils.h"
 
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -131,9 +131,9 @@ int main(int argc, char*argv[])
   if( argv[optind] )
     gridjobid = string(argv[optind]);
 
-  util::iceConfManager::init( confile );
+  util::IceConfManager::init( confile );
   try{
-    util::iceConfManager::getInstance();
+    util::IceConfManager::instance();
   }
   catch(util::ConfigurationManager_ex& ex) {
     cerr << "glite-wms-ice-rm::main - ERROR: " << ex.what() << endl;

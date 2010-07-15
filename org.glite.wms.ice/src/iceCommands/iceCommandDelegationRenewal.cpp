@@ -20,12 +20,12 @@ END LICENSE */
 
 #include "iceCommandLBLogging.h"
 #include "iceCommandDelegationRenewal.h"
-#include "DelegationManager.h"
-#include "CreamProxyMethod.h"
-#include "DNProxyManager.h"
-#include "iceConfManager.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "iceUtils/DelegationManager.h"
+#include "iceUtils/CreamProxyMethod.h"
+#include "iceUtils/DNProxyManager.h"
+#include "iceUtils/IceConfManager.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 #include "iceDb/GetJobsByDNMyProxy.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
@@ -178,8 +178,8 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	 *
 	 */
 	string output;
-	string command = "export X509_USER_CERT=" + iceConfManager::getInstance()->getConfiguration()->common()->host_proxy_file();
-	command += "; export X509_USER_KEY=" + iceConfManager::getInstance()->getConfiguration()->common()->host_proxy_file();
+	string command = "export X509_USER_CERT=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
+	command += "; export X509_USER_KEY=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
 	command += "; /opt/glite/bin/glite-wms-ice-proxy-renew -s " + it->m_myproxyserver;
 	command += " -p " + certfile;
 	command += " -o " + certfile + ".renewed";
@@ -377,10 +377,10 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  }
 	  
 	  
-	  while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+	  while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
 	    sleep(2);
 	  
-	  Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+	  IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
 	  
 	  // TODO: Bisogna loggare un aborted per tutti i job relativi a questa delega
 	  // che non verra' piu' rinnovata ed e' stata rimossa dal DB di ICE.
@@ -417,8 +417,8 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  string thisDelegUrl = thisCEUrl;
 	  
 	  boost::replace_all( thisDelegUrl, 
-			      iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), 
-			      iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix() 
+			      IceConfManager::instance()->getConfiguration()->ice()->cream_url_postfix(), 
+			      IceConfManager::instance()->getConfiguration()->ice()->creamdelegation_url_postfix() 
 			      );
 	  
 	  CreamProxy_ProxyRenew( thisDelegUrl,

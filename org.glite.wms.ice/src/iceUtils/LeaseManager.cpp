@@ -21,7 +21,7 @@ END LICENSE */
 
 #include "Lease_manager.h"
 #include "CreamProxyMethod.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "iceUtils.h"
 #include "DNProxyManager.h"
 #include "iceDb/GetAllJobs.h"
@@ -82,7 +82,7 @@ Lease_manager::Lease_manager( ) :
     static char* method_name = "Lease_manager::Lease_manager() - ";
 
     try {
-        conf = iceConfManager::getInstance()->getConfiguration(); // can raise ConfigurationManager_ex
+        conf = IceConfManager::instance()->getConfiguration(); // can raise ConfigurationManager_ex
         m_lease_delta_time = conf->ice()->lease_delta_time();
         m_lease_update_frequency = conf->ice()->lease_update_frequency();
         m_host_dn = cert_util::getDN( conf->ice()->ice_host_cert() ); // can raise auth_ex 

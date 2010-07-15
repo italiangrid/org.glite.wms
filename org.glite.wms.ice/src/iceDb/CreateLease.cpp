@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateLease.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,24 +28,16 @@ using namespace std;
 void db::CreateLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = string("INSERT OR REPLACE INTO lease (" );
-sqlcmd	 += "userdn,creamurl,exptime,leaseid";
-sqlcmd   += " ) VALUES (";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_userdn ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_creamurl ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += util::utilities::to_string((long int)m_exptime );
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ","	;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_leaseid ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ");";
+  sqlcmd	 += "userdn,creamurl,exptime,leaseid";
+  sqlcmd   += " ) VALUES (";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_creamurl );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_exptime ) );
+  sqlcmd	 += ","	;
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_leaseid );
+  sqlcmd	 += ");";
  
   do_query( db, sqlcmd );
 }

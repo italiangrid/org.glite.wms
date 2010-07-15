@@ -22,18 +22,18 @@ END LICENSE */
 // ICE Headers
 #include "iceCommandStatusPoller.h"
 #include "iceCommandLBLogging.h"
-#include "subscriptionManager.h"
-#include "iceLBEventFactory.h"
-#include "iceLBEventFactory.h"
-#include "CreamProxyMethod.h"
-#include "iceConfManager.h"
-#include "DNProxyManager.h"
-#include "iceLBLogger.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
-#include "iceLBEvent.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "iceUtils/subscriptionManager.h"
+#include "iceUtils/iceLBEventFactory.h"
+#include "iceUtils/iceLBEventFactory.h"
+#include "iceUtils/CreamProxyMethod.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/DNProxyManager.h"
+#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/iceLBEvent.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/RemoveJobByGid.h"
@@ -71,7 +71,7 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 //____________________________________________________________________________
-iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, 
+iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::IceCore* theIce, 
 						const pair<string, string>& dnce,
 						bool poll_all_jobs
 						) :
@@ -79,11 +79,11 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce,
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_iceManager( theIce ),
-  m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
-  m_max_chunk_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
+  m_threshold( IceConfManager::instance()->getConfiguration()->ice()->poller_status_threshold_time() ),
+  m_max_chunk_size( IceConfManager::instance()->getConfiguration()->ice()->bulk_query_size() ), 
   m_empty_threshold( 10*60 ), // 10 minutes
   m_poll_all_jobs( poll_all_jobs ),
-  m_conf( iceConfManager::getInstance() ),
+  m_conf( IceConfManager::instance() ),
   m_stopped( false ),
   m_dnce( dnce )
 {
@@ -539,10 +539,10 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
     	jit->set_status( cream_api::job_statuses::ABORTED ); 
     	jit->set_exit_code( 0 );
       }
-      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+      while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
         sleep(2);
       
-      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
     //Ice::instance()->delete_jobs_by_dn( userdn );
     return;//continue;
   }  
@@ -570,10 +570,10 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
     	jit->set_status( cream_api::job_statuses::ABORTED ); 
     	jit->set_exit_code( 0 );
       }
-      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+      while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
         sleep(2);
       
-      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
     //Ice::instance()->delete_jobs_by_dn( userdn );
 
     return;//continue;

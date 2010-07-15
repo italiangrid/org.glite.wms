@@ -24,7 +24,7 @@ END LICENSE */
 #include "iceCommandSubmit.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
@@ -33,7 +33,7 @@ END LICENSE */
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
 
-#include "ClassadSyntax_ex.h"
+#include "iceUtils/ClassadSyntax_ex.h"
 #include "classad_distribution.h"
 
 #include <boost/scoped_ptr.hpp>

@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "GetJobByGid.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
+#include "ice/IceCore.h"
 
 #include <sstream>
 
@@ -55,9 +55,8 @@ void db::GetJobByGid::execute( sqlite3* db ) throw ( db::DbOperationException& )
   sqlcmd += " FROM jobs WHERE ";
   sqlcmd += util::CreamJob::grid_jobid_field() ;
   sqlcmd += "=" ;
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_gridjobid ;
-  sqlcmd += Ice::get_tmp_name() + ";";
+  sqlcmd += util::utilities::withSQLDelimiters( m_gridjobid );
+  sqlcmd += ";";
     
   vector<string> fields;
     

@@ -23,11 +23,11 @@ END LICENSE */
  * ICE Headers
  *
  */
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 #include "proxyRenewal.h"
-#include "iceConfManager.h"
-#include "iceCommandDelegationRenewal.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceCommands/iceCommandDelegationRenewal.h"
 
 
 /**
@@ -62,7 +62,7 @@ proxyRenewal::proxyRenewal() :
     iceThread( "ICE Proxy Renewer" ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-  m_delay = iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency();
+  m_delay = IceConfManager::instance()->getConfiguration()->ice()->proxy_renewal_frequency();
 }
 
 

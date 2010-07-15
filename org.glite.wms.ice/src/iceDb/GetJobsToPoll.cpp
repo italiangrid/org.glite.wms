@@ -18,14 +18,8 @@ limitations under the License.
 
 END LICENSE */
 
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "iceUtils/iceUtils.h"
 #include "GetJobsToPoll.h"
-//#include "iceUtils/iceConfManager.h"
-
-//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/wms/common/configuration/Configuration.h"
-//#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <cstdlib>
 
@@ -36,8 +30,8 @@ namespace cream_api = glite::ce::cream_client_api;
 void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     time_t 
-      threshold( util::iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
-      empty_threshold( util::iceConfManager::getInstance()->getConfiguration()->ice()->ice_empty_threshold() );
+      threshold( util::IceConfManager::instance()->getConfiguration()->ice()->poller_status_threshold_time() ),
+      empty_threshold( util::IceConfManager::instance()->getConfiguration()->ice()->ice_empty_threshold() );
 
 
         //
@@ -59,59 +53,82 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
     string sqlcmd;
 
     if ( m_poll_all_jobs ) {
-      sqlcmd += "SELECT " + util::CreamJob::get_query_fields() 
-	     + " FROM jobs WHERE (" + util::CreamJob::cream_jobid_field() + " not null) "
-	     + " AND ( " + util::CreamJob::cream_jobid_field() + " != "
-	     + Ice::get_tmp_name()
-	     + Ice::get_tmp_name()
-	     + " ) AND ( " + util::CreamJob::last_poller_visited_field() + " not null) " 
-	     + " AND " + util::CreamJob::cream_address_field() + "="
-	     + Ice::get_tmp_name()
-	     + m_creamurl 
-	     + Ice::get_tmp_name() 
-	     + " AND " + util::CreamJob::user_dn_field() + "=" 
-	     + Ice::get_tmp_name()
-	     + m_userdn 
-	     + Ice::get_tmp_name() 
-	     + " ORDER BY " + util::CreamJob::last_poller_visited_field() + " ASC";
+      sqlcmd += "SELECT " ;
+      sqlcmd += util::CreamJob::get_query_fields() ;
+      sqlcmd += " FROM jobs WHERE (";
+      sqlcmd += util::CreamJob::cream_jobid_field();
+      sqlcmd += " not null) ";
+      sqlcmd += " AND ( ";
+      sqlcmd += util::CreamJob::cream_jobid_field();
+      sqlcmd += " != ";
+      sqlcmd += util::utilities::withSQLDelimiters( "" );
+      sqlcmd += " ) AND ( " ;
+      sqlcmd += util::CreamJob::last_poller_visited_field();
+      sqlcmd += " not null) " ;
+      sqlcmd += " AND ";
+      sqlcmd += util::CreamJob::cream_address_field();
+      sqlcmd += "=";
+      sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+      sqlcmd += " AND ";
+      sqlcmd += util::CreamJob::user_dn_field();
+      sqlcmd += "=" ;
+      sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+      sqlcmd += " ORDER BY ";
+      sqlcmd += util::CreamJob::last_poller_visited_field();
+      sqlcmd += " ASC";
       
       if( m_limit ) {
-	sqlcmd += " LIMIT " + util::utilities::to_string((unsigned long int)m_limit) + ";";
+	sqlcmd += " LIMIT ";
+	sqlcmd += util::utilities::to_string((unsigned long int)m_limit);
+	sqlcmd += ";";
       } else {
 	sqlcmd += ";";
       }
       
     } else {
       time_t t_now( time(NULL) );
-      sqlcmd += "SELECT " + util::CreamJob::get_query_fields() 
-	     + " FROM jobs"					
-	     + " WHERE ( " + util::CreamJob::cream_jobid_field() + " not null ) "
-	     + " AND ( " + util::CreamJob::cream_jobid_field() + " != "
-	     + Ice::get_tmp_name()
-	     + Ice::get_tmp_name()
-	     + " ) AND (" + util::CreamJob::last_poller_visited_field() + " not null)"	
-	     + " AND " + util::CreamJob::user_dn_field() + "=" 
-	     + Ice::get_tmp_name()
-	     + m_userdn 
-	     + Ice::get_tmp_name() 
-	     + " AND " + util::CreamJob::cream_address_field() + "=" 
-	     + Ice::get_tmp_name()
-	     + m_creamurl 
-	     + Ice::get_tmp_name() 
-	     + " AND ("
-	     + "       (  ( " 
-	     + util::utilities::to_string((unsigned long long int)t_now)
-	     + " - " + util::CreamJob::last_seen_field() + " >= "
-	     + util::utilities::to_string((unsigned long int)threshold)
-	     + " ) ) "
-	     + "  OR   (  ( "
-	     + util::utilities::to_string((unsigned long long int)t_now)
-	     + " - " + util::CreamJob::last_empty_notification_time_field() + " > "
-	     + util::utilities::to_string((unsigned long int)empty_threshold)
-	     + " ) )"
-	     + ") ORDER BY " + util::CreamJob::last_poller_visited_field() + " ASC";
+      sqlcmd += "SELECT " + util::CreamJob::get_query_fields();
+      sqlcmd += " FROM jobs";
+      sqlcmd += " WHERE ( ";
+      sqlcmd += util::CreamJob::cream_jobid_field();
+      sqlcmd += " not null ) ";
+      sqlcmd += " AND ( ";
+      sqlcmd += util::CreamJob::cream_jobid_field();
+      sqlcmd += " != ";
+      sqlcmd += util::utilities::withSQLDelimiters( "" );
+      sqlcmd += " ) AND (";
+      sqlcmd += util::CreamJob::last_poller_visited_field();
+      sqlcmd += " not null)"	;
+      sqlcmd += " AND ";
+      sqlcmd += util::CreamJob::user_dn_field();
+      sqlcmd += "=" ;
+      sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+      sqlcmd += " AND ";
+      sqlcmd += util::CreamJob::cream_address_field();
+      sqlcmd += "=" ;
+      sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+      sqlcmd += " AND (";
+      sqlcmd += "       (  ( " ;
+      sqlcmd += util::utilities::to_string((unsigned long long int)t_now);
+      sqlcmd += " - ";
+      sqlcmd += util::CreamJob::last_seen_field();
+      sqlcmd += " >= ";
+      sqlcmd += util::utilities::to_string((unsigned long int)threshold);
+      sqlcmd += " ) ) ";
+      sqlcmd += "  OR   (  ( ";
+      sqlcmd += util::utilities::to_string((unsigned long long int)t_now);
+      sqlcmd += " - ";
+      sqlcmd += util::CreamJob::last_empty_notification_time_field();
+      sqlcmd += " > ";
+      sqlcmd += util::utilities::to_string((unsigned long int)empty_threshold);
+      sqlcmd += " ) )";
+      sqlcmd += ") ORDER BY ";
+      sqlcmd += util::CreamJob::last_poller_visited_field();
+      sqlcmd += " ASC";
       if( m_limit ) {
-	sqlcmd += " LIMIT " + util::utilities::to_string((unsigned long int)m_limit) + ";";
+	sqlcmd += " LIMIT ";
+	sqlcmd += util::utilities::to_string((unsigned long int)m_limit);
+	sqlcmd += ";";
       } else {
 	sqlcmd += ";";
       }

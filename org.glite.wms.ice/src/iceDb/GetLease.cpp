@@ -19,7 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "GetLease.h"
-#include "ice-core.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 #include <vector>
 
@@ -55,25 +56,14 @@ namespace { // begin local namespace
 void db::GetLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT * FROM lease WHERE userdn=");
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd +=  m_userdn ;
-  sqlcmd += Ice::get_tmp_name() ;
+  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
   sqlcmd += " AND creamurl=";
-  sqlcmd +=  Ice::get_tmp_name();
-  sqlcmd += m_creamurl ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
   sqlcmd += ";";
 
-  //  boost::tuple< string, string, time_t, string> tmp;
   do_query( db, sqlcmd, fetch_fields_callback, &m_result );
   
   if( !m_result.get<0>().empty() ) {
     m_found = true;
-//     m_result = glite::wms::ice::util::Lease_manager::Lease_t( 
-// 							   tmp.get<0>(), 
-// 							   tmp.get<1>(),
-// 							   tmp.get<2>(), 
-// 							   tmp.get<3>()
-// 							   );
   }
 }

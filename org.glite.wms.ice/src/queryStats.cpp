@@ -28,7 +28,7 @@ END LICENSE */
 
 #include "iceDb/Transaction.h"
 #include "iceDb/GetStats.h"
-#include "iceConfManager.h"
+#include "iceUtils/IceConfManager.h"
 
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
@@ -74,9 +74,6 @@ int main( int argc, char* argv[] )
   time_t           from = 0;
   time_t           to = time(0);
   
-  //int status_pos   = -1;
-  //int date_status  = -1;
-
   while( 1 ) {
     int c;
     static struct option long_options[] = {
@@ -111,9 +108,9 @@ int main( int argc, char* argv[] )
   }
 
   
-  iceUtil::iceConfManager::init( conf_file );
+  iceUtil::IceConfManager::init( conf_file );
   try{
-    iceUtil::iceConfManager::getInstance();
+    iceUtil::IceConfManager::instance();
   }
   catch(iceUtil::ConfigurationManager_ex& ex) {
     cerr << ex.what() << endl;

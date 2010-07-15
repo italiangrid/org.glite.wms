@@ -24,7 +24,7 @@ END LICENSE */
 #undef soapStub_H
 
 #include "iceAbsCommand.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -52,19 +52,19 @@ namespace glite {
   namespace wms {
     namespace ice {
 
-      class Ice;
+      class IceCore;
 
       namespace util {
         
         class iceLBLogger;
-	class iceConfManager;
+	class IceConfManager;
 
 	class iceCommandEventQuery : public iceAbsCommand {
 
           log4cpp::Category                     *m_log_dev;
           glite::wms::ice::util::iceLBLogger    *m_lb_logger;
-          Ice                                   *m_iceManager;
-	  glite::wms::ice::util::iceConfManager *m_conf;
+          IceCore                               *m_iceManager;
+	  glite::wms::ice::util::IceConfManager *m_conf;
 	  bool                                   m_stopped;
 	  const std::string                      m_dn, m_ce;
 	  
@@ -86,7 +86,7 @@ namespace glite {
 	  //	  void deleteJobsByDN( void ) throw();
 
 	public:
-	  iceCommandEventQuery( Ice*, const std::string& dn, const std::string& ce );
+	  iceCommandEventQuery( IceCore*, const std::string& dn, const std::string& ce );
 	  ~iceCommandEventQuery( ) throw();// {}
 	  
 	  void execute( const std::string& ) throw();

@@ -18,19 +18,18 @@ limitations under the License.
 
 END LICENSE */
 
-#include "Request.h"
-#include "iceUtils.h"
-#include "CreamJob.h"
-#include "ice-core.h"
-#include "iceLBEvent.h"
-#include "iceLBLogger.h"
-#include "DNProxyManager.h"
-#include "iceConfManager.h"
-#include "iceSubscription.h"
+#include "iceUtils/Request.h"
+#include "iceUtils/iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/DNProxyManager.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/iceSubscription.h"
 #include "iceCommandSubmit.h"
-#include "CreamProxyMethod.h"
-#include "DelegationManager.h"
-#include "eventStatusListener.h"
+#include "iceUtils/CreamProxyMethod.h"
+#include "iceUtils/DelegationManager.h"
+#include "iceThreads/eventStatusListener.h"
 #include "Request_source_purger.h"
 
 #include "iceDb/RemoveJobByGid.h"
@@ -124,11 +123,11 @@ namespace { // Anonymous namespace
 iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request, 
 				    const iceUtil::CreamJob& aJob )
   : iceAbsCommand( "iceCommandSubmit", "" ),
-    m_theIce( Ice::instance() ),
+    m_theIce( IceCore::instance() ),
     m_myname( m_theIce->getHostName() ),
     m_theJob( aJob ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_configuration( iceUtil::iceConfManager::getInstance()->getConfiguration() ),
+    m_configuration( iceUtil::IceConfManager::instance()->getConfiguration() ),
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
     m_request( request )  
 {
@@ -878,7 +877,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 								     _ceurl,
 								     m_theJob.myproxy_address()
 								     );
-      if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
+      if( deleg.m_expiration_time < time(0) + 2*m_configuration->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
 	force_delegation = true;
       
     }  // does exist SBP

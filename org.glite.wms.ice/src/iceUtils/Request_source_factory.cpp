@@ -23,7 +23,7 @@ END LICENSE */
 #include "Request_source_filelist.h"
 #include "Request_source_jobdir.h"
 
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -37,7 +37,7 @@ Request_source* Request_source_factory::make_source_input_wm( void )
     Request_source* result = 0;
     conf_ns::Configuration* conf = 0;
     try {
-        conf = iceConfManager::getInstance()->getConfiguration();
+        conf = IceConfManager::instance()->getConfiguration();
     } catch( ConfigurationManager_ex& ex ) {
         abort(); // FIXME: log message
     }
@@ -58,7 +58,7 @@ Request_source* Request_source_factory::make_source_input_ice( void )
     conf_ns::Configuration* conf = 0;
 
     try {
-        conf = iceConfManager::getInstance()->getConfiguration();
+        conf = IceConfManager::instance()->getConfiguration();
     } catch( ConfigurationManager_ex& ex ) {
         abort(); // FIXME: log message
     }

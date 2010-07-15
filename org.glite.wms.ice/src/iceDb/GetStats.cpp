@@ -18,8 +18,8 @@ limitations under the License.
 
 END LICENSE */
 #include "GetStats.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 #include <vector>
 #include <cstdlib>
@@ -45,21 +45,13 @@ namespace { // begin local namespace
 
 } // end local namespace
 
-// db::GetStats::GetStats( vector< pair< time_t, int > >& target, const time_t datefrom, const time_t dateto,const string& caller )
-// : AbsDbOperation( caller ), m_target(&target), m_datefrom( datefrom ), m_dateto( dateto )
-// {
-// }
-
 void db::GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT timestamp,status FROM stats WHERE timestamp >= ");
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long long int)m_datefrom );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_datefrom ) );
   sqlcmd += " AND timestamp <= ";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long long int)m_dateto  );
-  sqlcmd += Ice::get_tmp_name() + ";";
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_dateto  ) );
+  sqlcmd += ";";
 
   do_query( db, sqlcmd, fetch_fields_callback, m_target );
   

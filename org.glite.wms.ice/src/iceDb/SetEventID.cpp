@@ -21,8 +21,8 @@ END LICENSE */
 #include <cstdlib>
 
 #include "SetEventID.h"
-#include "iceUtils.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
+#include "ice/IceCore.h"
 
 using namespace std;
 using namespace glite::wms::ice;
@@ -31,17 +31,11 @@ using namespace glite::wms::ice;
 void db::SetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("INSERT OR REPLACE INTO event_id (userdn,ceurl,eventid) VALUES (");
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += m_userdn ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
   sqlcmd += ", ";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_creamurl ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
   sqlcmd += ", ";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long long int)m_new_eventid );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_new_eventid ) );
   sqlcmd += ");";
 
   do_query( db, sqlcmd );

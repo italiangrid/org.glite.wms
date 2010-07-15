@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "AbsDbOperation.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
 #include "boost/format.hpp"
 #include "boost/algorithm/string.hpp"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -37,7 +37,7 @@ void db::AbsDbOperation::do_query( sqlite3* db, const string& _sqlcmd, sqlite_ca
   string encoded_sql( _sqlcmd );
   boost::replace_all( encoded_sql, "'", "''" );
   
-  boost::replace_all( encoded_sql, Ice::get_tmp_name(), "'" );
+  boost::replace_all( encoded_sql, util::utilities::get_tmp_name(), "'" );
 
     char* errMsg; 
     string error;                               

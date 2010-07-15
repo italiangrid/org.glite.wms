@@ -42,6 +42,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 namespace glite {
   namespace wms {
@@ -52,8 +53,35 @@ namespace glite {
 	class Request;
 
 	class utilities {
+
+	  static std::string s_tmpname;
+	  static boost::recursive_mutex s_mutex_tmpname;
+
 	public:
-	
+	  inline static std::string get_tmp_name( void ) {
+	    boost::recursive_mutex::scoped_lock M( s_mutex_tmpname );
+	    if( s_tmpname.empty() ) {
+	      char *ptr = ::tmpnam( 0 );
+	      std::string tmp( "START_GLITEWMSICE_SQL_STRING_TAG_" );
+	      if(ptr)
+		tmp += to_string( (long long) ptr );
+	      
+	      struct timeval T;
+	      gettimeofday( &T, 0 );
+	      
+	      tmp += "_";
+	      tmp += to_string(T.tv_sec);
+	      tmp += "_";
+	      tmp += to_string( T.tv_usec );
+	      
+	      s_tmpname = tmp;
+	      
+	      boost::replace_all( s_tmpname, "'", "_" );
+	    }
+	    
+	    return s_tmpname;
+	  }
+	  
 	  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName);
 	  //static int fetch_single_job_callback(void *param, int argc, char **argv, char **azColName);
 	  
@@ -140,6 +168,13 @@ namespace glite {
 	  static std::string to_string( const std::string& str ) { return str; }
 
 	  static std::string join( const std::list<std::string>& array, const std::string& sep );
+
+	  inline static std::string withSQLDelimiters( const std::string& value ) {
+	    std::string delimitedString = get_tmp_name();
+	    delimitedString += value;
+	    delimitedString += get_tmp_name();
+	    return delimitedString;
+	  }
 
 	  //static std::string to_string( ssize_t );
 

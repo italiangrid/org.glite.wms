@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateDelegation.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -29,39 +29,23 @@ void db::CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
 {
   string sqlcmd = string("INSERT INTO delegation (");
   sqlcmd	 += "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl";
-   sqlcmd      += " ) VALUES (";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_digest ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_creamurl;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += util::utilities::to_string((long int)m_exptime) ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += util::utilities::to_string((long int)m_duration );
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_delegid ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_userdn ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ( m_renewable ? "1" : "0" ) ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_myproxyurl ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ");";
-
+  sqlcmd      += " ) VALUES (";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_digest );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_creamurl );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_exptime) );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_duration ) );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_delegid );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( ( m_renewable ? "1" : "0" ) );
+  sqlcmd	 += ",";
+  sqlcmd	 +=glite::wms::ice::util::utilities::withSQLDelimiters(  m_myproxyurl );
+  sqlcmd	 += ");";
+  
   do_query( db, sqlcmd );
 }

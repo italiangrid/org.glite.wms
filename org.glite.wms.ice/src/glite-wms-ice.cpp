@@ -34,23 +34,23 @@ END LICENSE */
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
-#include "ice-core.h"
-#include "iceAbsCommand.h"
-#include "iceCommandCancel.h"
-#include "iceCommandSubmit.h"
-#include "iceCommandReschedule.h"
+#include "ice/IceCore.h"
+#include "iceCommands/iceAbsCommand.h"
+#include "iceCommands/iceCommandCancel.h"
+#include "iceCommands/iceCommandSubmit.h"
+#include "iceCommands/iceCommandReschedule.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceCommandFatal_ex.h"
-#include "iceCommandTransient_ex.h"
-#include "iceConfManager.h"
-#include "iceUtils.h"
-#include "iceThreadPool.h"
-#include "DNProxyManager.h"
-#include "Request.h"
-#include "iceLBEvent.h"
-#include "iceLBLogger.h"
-#include "iceLBEventFactory.h"
+#include "iceCommands/iceCommandFatal_ex.h"
+#include "iceCommands/iceCommandTransient_ex.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/iceUtils.h"
+#include "iceThreads/iceThreadPool.h"
+#include "iceUtils/DNProxyManager.h"
+#include "iceUtils/Request.h"
+#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/iceLBEventFactory.h"
 
 #define RUN_ON_LINUX
 #include "segv_handler.h"
@@ -191,16 +191,16 @@ int main(int argc, char*argv[])
     /*****************************************************************************
      * Initializes configuration manager (that in turn loads configurations)
      ****************************************************************************/
-    iceUtil::iceConfManager::init( opt_conf_file );
+    iceUtil::IceConfManager::init( opt_conf_file );
     try{
-        iceUtil::iceConfManager::getInstance();
+        iceUtil::IceConfManager::instance();
     }
     catch(iceUtil::ConfigurationManager_ex& ex) {
         cerr << "glite-wms-ice::main() - ERROR: " << ex.what() << endl;
         exit(1);
     }
 
-    glite::wms::common::configuration::Configuration* conf = iceUtil::iceConfManager::getInstance()->getConfiguration();
+    glite::wms::common::configuration::Configuration* conf = iceUtil::IceConfManager::instance()->getConfiguration();
 
     //
     // Change user id to become the "dguser" specified in the configuratoin file
@@ -305,24 +305,15 @@ int main(int argc, char*argv[])
       tnx.execute(&getter);
     }
 
-    //exit(1);
- 
-    glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
+    /**
+     * Get Instance of IceCore component
+     */
+    glite::wms::ice::IceCore* iceManager( glite::wms::ice::IceCore::instance( ) );
 
-  
-    /*****************************************************************************
-     * Prepares a listr that will contains requests fetched from input file
-     * list.
-     ****************************************************************************/
-    list< iceUtil::Request* > requests;
-
-    /*****************************************************************************
+    /**
      * Starts status poller and/or listener if specified in the config file
-     ****************************************************************************/
-    //iceManager->startListener( );    
+     */
     iceManager->startPoller( );  
-    //iceManager->startLeaseUpdater( );
-    //iceManager->startProxyRenewer( );
     iceManager->startJobKiller( );
 
     /*
@@ -330,210 +321,17 @@ int main(int argc, char*argv[])
      * Starts the thread pool
      *
      */
-    iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
-    iceUtil::iceThreadPool* threadPool_ice_cmds( iceManager->get_ice_commands_pool() ); 
-    iceUtil::iceThreadPool* threadPool_lb_cmds( iceManager->get_ice_lblog_pool( ) );
+    //    iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
+    //iceUtil::iceThreadPool* threadPool_ice_cmds( iceManager->get_ice_commands_pool() ); 
+    //iceUtil::iceThreadPool* threadPool_lb_cmds( iceManager->get_ice_lblog_pool( ) );
     /*****************************************************************************
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
      * removes requests from input filelist.
      ****************************************************************************/
      
-    pid_t myPid = ::getpid();
-    int mem_threshold_counter = 0;
-
-    long long max_ice_mem = conf->ice()->max_ice_mem();
-    
-    CREAM_SAFE_LOG(log_dev->debugStream()
-		   << method_name
-		   << "Max ICE memory threshold set to "
-		   << max_ice_mem << " kB"
-		   
-		   );
-
-    while(true) {
-        
-        //
-        // BEWARE!! the get_command_count() method locks the
-        // threadPool object. Hence, it is *extremely* dangerous to
-        // call the get_command_count() method inside a CREAM_SAFE_LOG()
-        // block, because it would result in a hold-and-wait potential
-        // race condition.
-        //
-        unsigned int command_count = threadPool->get_command_count();
-        if ( command_count > conf->ice()->max_ice_threads() ) {
-            CREAM_SAFE_LOG(log_dev->debugStream()
-                           << method_name
-                           << "There are currently too many requests ("
-                           << command_count
-                           << ") in the internal command queue. "
-                           << "Will check again in 1 second."
-                           );
-        } else {
-	  
-	  requests.clear();
-	  iceManager->getNextRequests( requests );
-	  
-	  if( !requests.empty() )
-            CREAM_SAFE_LOG(
-                           log_dev->infoStream()
-                           << method_name 
-                           << "*** Found " << requests.size() << " new request(s)"
-                           
-                           );
-	  
-	  for( list< iceUtil::Request* >::iterator it = requests.begin();
-	       it != requests.end(); ++it ) 
-	    {
-	      string reqstr = (*it)->to_string();
-
-	      
-
-	      CREAM_SAFE_LOG(
-			     log_dev->debugStream()
-			     << method_name
-			     << "*** Unparsing request <"
-			     << reqstr
-			     << ">"
-			     
-			     );
-
-	      try {
-		glite::wms::ice::util::CreamJob theJob;
-		string cmdtype;
-		glite::wms::ice::util::utilities::full_request_unparse( *it,
-							     &theJob,
-							     cmdtype );
-
-		glite::wms::ice::iceAbsCommand* cmd = 0;	
-                if( boost::algorithm::iequals( cmdtype, "cancel" ) ) {
-		  cmd = new glite::wms::ice::iceCommandCancel( *it ); 
-		  threadPool->add_request( cmd );
-		  continue;
-		}
-	
-		cream_api::VOMSWrapper V( theJob.user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
-		if( !V.IsValid( ) ) {
-		  CREAM_SAFE_LOG( log_dev->errorStream()
-				  << method_name
-				  << "For job ["
-				  << theJob.grid_jobid() << "]"
-				  << " the proxyfile ["
-				  << theJob.user_proxyfile() 
-				  << "] is not valid: "
-				  << V.getErrorMessage()
-				  << ". Skipping processing of this job. "
-				  << "Logging an abort and removing request from filelist/jobdir"
-				  );
-			
-		  theJob.set_failure_reason( V.getErrorMessage() );
-		  theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
-		  /**
-		    The job will not be put in the ICE's database
-		    in fact logEvent just does an SQL UPDATE ... WHERE grid_jobid = ''.
-		    So if the gridjobid is not there the UPDATE does not take place.
-		  */
-		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
-  		  if ( ev ) {
-    		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev, false );
-  		  } else {
-		    CREAM_SAFE_LOG( log_dev->errorStream()
-				  << method_name
-				  << "For job ["
-				  << theJob.grid_jobid() 
-				  << "Couldn't log abort event."
-				  );
-		  }
-		  iceManager->removeRequest( *it );
-		  continue;
-		}
-
-		theJob.set_user_dn( V.getDNFQAN() );
-		theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
-
-		if( boost::algorithm::iequals( cmdtype, "submit" ) ) {
-		  cmd = new glite::wms::ice::iceCommandSubmit( *it, theJob ); 
-		}
-		
-		if( boost::algorithm::iequals( cmdtype, "reschedule" ) ) {
-		  cmd = new glite::wms::ice::iceCommandReschedule( *it, theJob );
-		}
-		
-		threadPool->add_request( cmd );
-
-	      } catch( std::exception& ex ) {
-		CREAM_SAFE_LOG( log_dev->errorStream()
-				<< method_name
-				<< "Got exception \"" << ex.what()
-				<< "\". Removing BAD request..." 
-				);
-
-		iceManager->removeRequest( *it );
-		delete( *it );
-	      }
-	    }
-	}
-
-	//usleep(500000);
-	sleep(1);
-	
-	/**
-	 *
-	 * Every 2 minutes ICE checks its mem usage
-	 *
-	 */
-	++mem_threshold_counter;
 
 
-	if(mem_threshold_counter >= 120) { // every 30 seconds check the memory
-	  mem_threshold_counter = 0;
-	  long long mem_now = check_my_mem(myPid);
-	  if(mem_now > max_ice_mem) {
-	    
-	    // let's lock the cache so no other thread try to do cache operations
-	    iceManager->stopAllThreads(); // this return only when all threads have finished
-	    threadPool->stopAllThreads();
-	    threadPool_ice_cmds->stopAllThreads();
-	    threadPool_lb_cmds->stopAllThreads();
-
-	    CREAM_SAFE_LOG( log_dev->fatalStream()
-			    << method_name
-			    << "glite-wms-ice::main - Max memory reached ["
-			    << mem_now << " kB] ! EXIT!"
-			    
-			    );
-		
-	    return 2; // exit to shell with specific error code
-	  }
-	}
-	
-    }
-    CREAM_SAFE_LOG( log_dev->fatalStream()
-			    << method_name
-			    << "glite-wms-ice::main - Returning '0' to the shell"
-			    
-			    );	
+    return iceManager->main_loop( );
+   
     return 0;
-}
-
-//______________________________________________________________________________
-long long check_my_mem( const pid_t pid ) throw()
-{
-  char cmd[128];
-  char used_rss_mem[64];
-  memset((void*) cmd, 0, 64);
-  
-  sprintf( cmd, "/bin/ps --cols 200 -orss -p %d |/bin/grep -v RSS", pid);
-
-
-  FILE * in = popen( cmd, "r");
-  if(!in) return (long long)0;
-  
-  while (fgets(used_rss_mem, 64, in) != NULL)
-    CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->debugStream()
-		    << "glite-wms-ice::main() - Used RSS Memory: "
-		    << used_rss_mem 
-		    );
-  pclose(in);
-
-  return atoll(used_rss_mem);
 }

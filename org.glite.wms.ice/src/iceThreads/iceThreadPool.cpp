@@ -19,11 +19,10 @@ limitations under the License.
 END LICENSE */
 #include "iceThreadPool.h"
 #include "iceThreadPoolState.h"
-#include "iceAbsCommand.h"
-#include "ice-core.h"
-#include "iceConfManager.h"
-#include "iceCommandFatal_ex.h"
-#include "iceCommandTransient_ex.h"
+#include "iceCommands/iceAbsCommand.h"
+#include "ice/IceCore.h"
+#include "iceCommands/iceCommandFatal_ex.h"
+#include "iceCommands/iceCommandTransient_ex.h"
 
 //#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"

@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetAllProxyByDN.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
 
 using namespace glite::wms::ice;
 
@@ -56,9 +55,7 @@ void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " FROM jobs WHERE ";
       sqlcmd += util::CreamJob::proxy_renewable_field();
       sqlcmd += "=";
-      sqlcmd += Ice::get_tmp_name();
-      sqlcmd += "1";
-      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += util::utilities::withSQLDelimiters( "1" );
       sqlcmd += ";";
     }
     else
@@ -67,9 +64,7 @@ void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " FROM jobs WHERE ";
       sqlcmd += util::CreamJob::proxy_renewable_field( );
       sqlcmd += "=";
-      sqlcmd += Ice::get_tmp_name();
-      sqlcmd += "0";
-      sqlcmd += Ice::get_tmp_name();
+      sqlcmd += util::utilities::withSQLDelimiters( "0" );
       sqlcmd += ";";
   }
   

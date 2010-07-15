@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_ICEDB_TRANSATION_H
 
 #include <string>
-#include "sqlite3.h"
+#include "sqlite/sqlite3.h"
 #include "AbsDbOperation.h"
 
 namespace log4cpp {

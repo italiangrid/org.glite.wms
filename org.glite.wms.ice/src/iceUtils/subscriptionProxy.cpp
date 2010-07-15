@@ -24,7 +24,7 @@ END LICENSE */
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
@@ -49,7 +49,7 @@ boost::recursive_mutex iceUtil::subscriptionProxy::mutex;
 
 //______________________________________________________________________________
 iceUtil::subscriptionProxy::subscriptionProxy() throw()
-  : m_conf( iceConfManager::getInstance() ),
+  : m_conf( IceConfManager::instance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
     m_myurl()
@@ -160,9 +160,9 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
   cemon_api::CESubscription ceS;
   ceS.setServiceURL(endpoint);
 
-  cemon_api::Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
+  cemon_api::Topic T( IceConfManager::instance()->getConfiguration()->ice()->ice_topic() );
   T.addDialect( m_D ); // this doesn't copy but put the argument into an array
-  cemon_api::Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
+  cemon_api::Policy P( IceConfManager::instance()->getConfiguration()->ice()->notification_frequency() );
   cemon_api::ActionW A1("SendNotification", "", true);
   cemon_api::ActionW A2("DoNotSendNotification", "", false);
   P.addAction( &A1 );
@@ -208,7 +208,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
                  << m_myurl << "] notification freq ["
 		 << m_conf->getConfiguration()->ice()->notification_frequency() << "] with proxy user ["
 		 << proxy << "] with topic ["
-		 << iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic()
+		 << IceConfManager::instance()->getConfiguration()->ice()->ice_topic()
 		 << "]"
 		 );
 
@@ -247,12 +247,12 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
 					             string& newID
 						    ) throw()
 {
-  cemon_api::Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
+  cemon_api::Topic T( IceConfManager::instance()->getConfiguration()->ice()->ice_topic() );
   cemon_api::ActionW A1("SendNotification", "", true);
   cemon_api::ActionW A2("DoNotSendNotification", "", false);
   cemon_api::QueryW Q;
 
-  cemon_api::Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
+  cemon_api::Policy P( IceConfManager::instance()->getConfiguration()->ice()->notification_frequency() );
   
   T.addDialect( m_D );
   string iceid;

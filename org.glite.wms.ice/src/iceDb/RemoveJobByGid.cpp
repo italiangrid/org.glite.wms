@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveJobByGid.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -30,9 +29,7 @@ void db::RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
   string sqlcmd("DELETE FROM jobs WHERE ");
   sqlcmd += util::CreamJob::grid_jobid_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_gridjobid;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_gridjobid );
   sqlcmd += ";";
   
   do_query( db, sqlcmd );

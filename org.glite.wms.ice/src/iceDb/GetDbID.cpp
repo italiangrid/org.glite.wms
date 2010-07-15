@@ -21,7 +21,7 @@ END LICENSE */
 #include <cstdlib>
 
 #include "GetDbID.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
 
 using namespace std;
 using namespace glite::wms::ice;
@@ -45,10 +45,8 @@ namespace {
 //______________________________________________________________________________
 void db::GetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd = "SELECT db_id FROM ce_dbid WHERE ceurl=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_creamurl;
-  sqlcmd += Ice::get_tmp_name();
+  string sqlcmd( "SELECT db_id FROM ce_dbid WHERE ceurl=" );
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, fetch_jobs_callback, &m_result );

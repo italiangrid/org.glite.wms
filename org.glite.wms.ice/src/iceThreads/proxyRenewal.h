@@ -22,7 +22,7 @@ END LICENSE */
 #define GLITE_WMS_ICE_UTIL_PROXYRENEWAL_H
 
 #include "iceThread.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 
 namespace log4cpp {    
   class Category;

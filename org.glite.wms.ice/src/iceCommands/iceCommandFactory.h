@@ -21,9 +21,9 @@ END LICENSE */
 #ifndef GLITE_WMS_ICE_ICECOMMANDFACTORY_H
 #define GLITE_WMS_ICE_ICECOMMANDFACTORY_H
 
-#include "ClassadSyntax_ex.h"
-#include "JobRequest_ex.h"
-#include "CreamJob.h"
+#include "iceUtils/ClassadSyntax_ex.h"
+#include "iceUtils/JobRequest_ex.h"
+#include "iceUtils/CreamJob.h"
 #include <string>
 
 namespace glite {

@@ -18,12 +18,9 @@ limitations under the License.
 
 END LICENSE */
 
-#include "ice-core.h"
-#include "iceUtils.h"
-#include "CreamJob.h"
+#include "iceUtils/iceUtils.h"
+#include "iceUtils/CreamJob.h"
 #include "GetJobsByDbID.h"
-
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <cstdlib>
 
@@ -34,13 +31,16 @@ namespace cream_api = glite::ce::cream_client_api;
 void db::GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd;
-  sqlcmd += "SELECT " + util::CreamJob::get_query_fields() 
-	 + " FROM jobs WHERE (" + util::CreamJob::cream_dbid_field() 
-         + " not null) AND ( " + util::CreamJob::cream_dbid_field() + "="
-	 + Ice::get_tmp_name()
-	 + util::utilities::to_string((unsigned long long int)m_dbid )
-	 + Ice::get_tmp_name() + ") ;";
+  sqlcmd += "SELECT ";
+  sqlcmd += util::CreamJob::get_query_fields() ;
+  sqlcmd += " FROM jobs WHERE (";
+  sqlcmd += util::CreamJob::cream_dbid_field() ;
+  sqlcmd += " not null) AND ( ";
+  sqlcmd += util::CreamJob::cream_dbid_field();
+  sqlcmd += "=";
+  sqlcmd += util::utilities::withSQLDelimiters(util::utilities::to_string((unsigned long long int)m_dbid ));
+  sqlcmd += ") ;";
     
-  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, util::utilities::fetch_jobs_callback, m_result );
 
 }

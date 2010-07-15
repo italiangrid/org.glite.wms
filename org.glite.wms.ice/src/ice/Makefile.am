@@ -20,14 +20,9 @@
 
 lib_LTLIBRARIES = libglite_wms_ice.la
 
-libglite_wms_ice_la_SOURCES = ice-core.cpp
+libglite_wms_ice_la_SOURCES = IceCore.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		-I$(top_srcdir)/src/iceUtils \
-		-I$(top_srcdir)/src/iceThreads \
-		-I$(top_srcdir)/src/iceCommands \
-		-I$(top_srcdir)/src/ice \
-		-I$(top_srcdir)/src/iceDb/sqlite \
 		$(GLITE_CFLAGS) \
 		$(GLITE_JOBID_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \

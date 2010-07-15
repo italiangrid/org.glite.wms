@@ -44,23 +44,23 @@ namespace glite {
     namespace ice {
       namespace util {
 
-	class iceConfManager {
+	class IceConfManager {
 	  
-	  static iceConfManager* s_instance;
+	  static IceConfManager* s_instance;
 	  static std::string s_conf_file;
 	  static bool s_initialized;
           
           boost::scoped_ptr< glite::wms::common::configuration::Configuration > m_configuration;
 
 	protected:
-	  iceConfManager()
+	  IceConfManager()
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  
 	public:
 	  
-	  virtual ~iceConfManager();
+	  virtual ~IceConfManager();
           
-	  static iceConfManager* getInstance() 
+	  static IceConfManager* instance() 
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  static void init(const std::string&);
 

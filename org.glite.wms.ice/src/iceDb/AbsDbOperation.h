@@ -21,7 +21,7 @@ END LICENSE */
 #ifndef GLITE_WMS_ICE_ABS_DB_OPERATION_H
 #define GLITE_WMS_ICE_ABS_DB_OPERATION_H
 
-#include "sqlite3.h" // for sqlite3
+#include "sqlite/sqlite3.h" // for sqlite3
 #include <exception>
 #include <string>
 

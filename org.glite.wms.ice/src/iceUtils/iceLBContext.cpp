@@ -39,7 +39,7 @@ namespace fs = boost::filesystem;
 #include "glite/lb/producer.h"
 #include "iceLBContext.h"
 #include "DNProxyManager.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -333,7 +333,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.user_dn());
 
     if ( !theJob.sequence_code().empty() ) {
-      if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy()) {
+      if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
 //#ifdef GLITE_WMS_HAVE_LBPROXY
         string const user_dn( get_proxy_subject( result.get<0>()) );
 

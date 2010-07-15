@@ -18,14 +18,10 @@ limitations under the License.
 
 END LICENSE */
 
-//#include "iceUtils/iceConfManager.h"
 #include "GetTerminatedJobs.h"
-//#include "creamJob.h"
-#include "iceUtils.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
+#include "ice/IceCore.h"
 
-//#include "glite/wms/common/configuration/Configuration.h"
-//#include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 #include <cstdlib>
@@ -42,27 +38,19 @@ void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException&
   sqlcmd += " FROM jobs WHERE " ;
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::CANCELLED );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::CANCELLED ));
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_OK );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_OK ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_FAILED );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_FAILED ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED ) );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );

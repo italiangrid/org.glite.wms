@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "InsertStat.h"
-#include "iceUtils.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
+#include "ice/IceCore.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,17 +28,11 @@ using namespace std;
 void db::InsertStat::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("INSERT INTO stats (timestamp,ce_timestamp,status) VALUES (" );
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd +=  util::utilities::to_string( (unsigned long long int)m_timestamp  );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_timestamp  ));
   sqlcmd += ", ";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long long int)m_ce_timestamp );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_ce_timestamp ));
   sqlcmd += ", ";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += util::utilities::to_string( (unsigned long int)m_status );
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)m_status ));
   sqlcmd += ");";
 
   do_query( db, sqlcmd );

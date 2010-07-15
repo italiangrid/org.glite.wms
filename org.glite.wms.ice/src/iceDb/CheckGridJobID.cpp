@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "CheckGridJobID.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
+#include "ice/IceCore.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -48,9 +48,7 @@ void db::CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += " FROM jobs WHERE ";
   sqlcmd += util::CreamJob::grid_jobid_field( ) ;
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name() ;
-  sqlcmd += m_gridjobid;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_gridjobid );
   sqlcmd += ";";
 
   string gid;

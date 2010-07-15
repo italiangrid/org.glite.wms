@@ -82,9 +82,9 @@ END LICENSE */
  * ICE and WMS Headers
  *
  */
-#include "ice-core.h"
+#include "ice/IceCore.h"
 #include "iceUtils.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
 #include "SerializeException.h"
 #include "classad_distribution.h"
@@ -304,49 +304,19 @@ print "\t\t  static std::string get_query_fields( void ) { \n";
 
 print "\t\t  \t\t\t return \"" . (join ",", @members) . "\"; }\n";
 
-##
-#
-#
-#  Print the VALUES part of an update query
-#
-#
-##
-
-#print "\n\n\t\t  std::string get_query_update_values( void ) const { \n\n";
-
-#foreach ( @members ) {
-#  print "\t\t    query += \"$_=\";\n";
-#  print "\t\t    query += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
-#  print "\t\t    query += utilities::to_string(m_$_);\n";
-#  print "\t\t    query += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
-#  print "\t\t    query += \", \";\n";
-
-#  push @values, "\"$_=\" + glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_$_) + glite::wms::ice::Ice::instance()->get_tmp_name()";
-#}
-
-#print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
-#print "\t\t    return query;\n\t\t  }";
-
-
 print "\n\n\t\t  std::string get_query_values( void ) const { \n\n";
 print "\t\t    string sql;\n";
 @values = ();
 foreach ( @members ) {
 
-  print "\t\t    sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
-  print "\t\t    sql += utilities::to_string(m_$_);\n";
-  print "\t\t    sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+  print "\t\t    sql += utilities::withSQLDelimiters( utilities::to_string(m_$_) );\n";
   print "\t\t    sql += \",\";\n";
 
-  push @values, "glite::wms::ice::Ice::instance()->get_tmp_name() + utilities::to_string(m_$_) + glite::wms::ice::Ice::instance()->get_tmp_name()";
+  push @values, " utilities::withSQLDelimiters( utilities::to_string(m_$_) ) ";
 }
 print "\t\t    sql = sql.substr(0, sql.length() -1 );\n";
 print "\t\t    return sql;\n";
 print "\t\t  }\n";
-#print "\t\t  \t\t\t return " . (join " + \",\" + ", @values) . "; }";
-#print "\t\t  \t\t\t return \"" . (join ",", @members) . "\"; }";
-
-#exit;
 
 print "\n\n\t\t  static std::string get_createdb_query( void ) { \n";
 
@@ -381,9 +351,7 @@ for($i = 0; $i < scalar @data_members; $i++) {
   print "\t\t    if(m_changed_$pieces[2]) {\n";
   print "\t\t      _sql += this->$pieces[2]_field( ); \n";
   print "\t\t      _sql += \"=\";\n";
-  print "\t\t      _sql += glite::wms::ice::Ice::instance()->get_tmp_name(); \n";
-  print "\t\t      _sql += utilities::to_string( this->$pieces[2]( ) );\n";
-  print "\t\t      _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+  print "\t\t      _sql += utilities::withSQLDelimiters( utilities::to_string( this->$pieces[2]( ) ) );\n";
   print "\t\t      _sql += \",\";\n\n";
   print "\t\t    }\n";
 }
@@ -392,9 +360,7 @@ print "\t\t    if( boost::ends_with( _sql, \",\") ) { _sql = _sql.substr(0, _sql
 print "\t\t    _sql += \" WHERE \";\n";
 print "\t\t    _sql += this->grid_jobid_field();\n";
 print "\t\t    _sql += \"=\";\n";
-print "\t\t    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
-print "\t\t    _sql += this->grid_jobid( );\n";
-print "\t\t    _sql += glite::wms::ice::Ice::instance()->get_tmp_name();\n";
+print "\t\t    _sql += utilities::withSQLDelimiters( this->grid_jobid( ) );\n";
 print "\t\t    _sql += \";\";\n";
 print "\t\t    target = string(\"UPDATE jobs SET \") + _sql;\n";
 print "\t\t  }\n";

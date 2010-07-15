@@ -23,7 +23,7 @@ END LICENSE */
 #include <string>
 #include <ctime>
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 
 #include <iostream>
 

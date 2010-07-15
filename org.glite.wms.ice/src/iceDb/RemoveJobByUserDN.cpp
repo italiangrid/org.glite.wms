@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveJobByUserDN.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
+#include "ice/IceCore.h"
 
 
 using namespace glite::wms::ice;
@@ -31,9 +31,7 @@ void db::RemoveJobByUserDN::execute( sqlite3* db ) throw ( DbOperationException&
   string sqlcmd("DELETE FROM jobs WHERE ");
   sqlcmd += util::CreamJob::user_dn_field() ;
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_dn ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_dn );
   sqlcmd += ";";
 		  
   do_query( db, sqlcmd );

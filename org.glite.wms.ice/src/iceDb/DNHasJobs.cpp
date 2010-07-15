@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "DNHasJobs.h"
-#include "CreamJob.h"
-#include "ice-core.h"
+#include "iceUtils/CreamJob.h"
+#include "ice/IceCore.h"
 
 #include <cstdlib>
 
@@ -53,15 +53,12 @@ void db::DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += " FROM jobs WHERE " ;
   sqlcmd += util::CreamJob::user_dn_field( );
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_dn;
-  sqlcmd += Ice::get_tmp_name();
+ 
+  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_dn );
   sqlcmd += " AND ";
   sqlcmd += util::CreamJob::cream_address_field( ) ;
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_ce;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_ce );
   sqlcmd += " LIMIT 1";
 
   do_query( db, sqlcmd, fetch_jobs_callback, &m_found );

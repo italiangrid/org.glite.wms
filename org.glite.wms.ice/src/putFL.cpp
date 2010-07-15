@@ -22,12 +22,12 @@ END LICENSE */
 #include "glite/wms/common/utilities/FileLocker.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "classad_distribution.h"
-#include "iceConfManager.h"
+#include "iceUtils/IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-#include "Request_source_factory.h"
-#include "Request_source.h"
-#include "Request.h"
+#include "iceUtils/Request_source_factory.h"
+#include "iceUtils/Request_source.h"
+#include "iceUtils/Request.h"
 
 #include <string>
 #include <iostream>
@@ -100,9 +100,9 @@ int main(int argc, char* argv[]) {
     
     //
     // Init ICE conf file
-    iceUtil::iceConfManager::init( opt_conf_file );
+    iceUtil::IceConfManager::init( opt_conf_file );
     try{
-        iceUtil::iceConfManager::getInstance();
+        iceUtil::IceConfManager::instance();
     }
     catch(iceUtil::ConfigurationManager_ex& ex) {
         cerr << "putFL::main() - ERROR: " << ex.what() << endl;
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    string filelist_name( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->input() );
+    string filelist_name( iceUtil::IceConfManager::instance()->getConfiguration()->ice()->input() );
 
     cout << "Adding JDL <" << request << "> to input queue " << filelist_name << endl;
 

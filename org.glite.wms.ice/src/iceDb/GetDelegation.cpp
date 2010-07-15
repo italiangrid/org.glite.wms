@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetDelegation.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
 
 #include <vector>
 
@@ -61,17 +61,11 @@ namespace { // begin local namespace
 void db::GetDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = "SELECT * FROM delegation WHERE digest=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_digest ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_digest );
   sqlcmd += " AND creamurl=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_creamurl ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
   sqlcmd += " AND myproxyurl=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_myproxyurl ;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_myproxyurl );
   sqlcmd += ";";
 
   boost::tuple< string, string, time_t, int, string, string, bool, string> tmp;

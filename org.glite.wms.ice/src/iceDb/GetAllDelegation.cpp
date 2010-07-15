@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetAllDelegation.h"
-#include "ice-core.h"
+#include "ice/IceCore.h"
 
 #include <string>
 #include <vector>
@@ -58,9 +58,7 @@ void db::GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
   string sqlcmd;
   if( m_only_renewable) {
     sqlcmd += "SELECT * FROM delegation WHERE renewable=";
-    sqlcmd += Ice::get_tmp_name();
-    sqlcmd += "1";
-    sqlcmd += Ice::get_tmp_name();
+    sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( "1" );
     sqlcmd += ";";
   }
   else

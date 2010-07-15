@@ -55,7 +55,7 @@ namespace ice {
      
 // Forward declarations
 namespace util {                
-    class iceConfManager;
+    class IceConfManager;
     class iceLBLogger;
 
      
@@ -66,7 +66,7 @@ namespace util {
    
    log4cpp::Category *m_log_dev;
    
-   iceConfManager *m_conf;
+   IceConfManager *m_conf;
 
    void retrieveCEURLs( std::set<std::string>& );
    void renewSubscriptions( std::vector<cemon_api::Subscription>& vec );

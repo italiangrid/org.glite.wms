@@ -47,7 +47,7 @@ namespace ice {
 
 namespace util {
 
-  class iceConfManager;
+  class IceConfManager;
 
   class subscriptionProxy {
 
@@ -57,7 +57,7 @@ namespace util {
     //DialectW	      *m_D;
     //Topic              m_T;
     //Policy             m_P;
-    iceConfManager    *m_conf;
+    IceConfManager    *m_conf;
     log4cpp::Category *m_log_dev;
     bool               m_valid;
 

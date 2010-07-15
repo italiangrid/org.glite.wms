@@ -22,9 +22,9 @@ END LICENSE */
 #ifndef GLITE_WMS_ICE_ICEABSCOMMAND_H
 #define GLITE_WMS_ICE_ICEABSCOMMAND_H
 
-#include "ClassadSyntax_ex.h"
+#include "iceUtils/ClassadSyntax_ex.h"
 #include "classad_distribution.h"
-#include "JobRequest_ex.h"
+#include "iceUtils/JobRequest_ex.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 

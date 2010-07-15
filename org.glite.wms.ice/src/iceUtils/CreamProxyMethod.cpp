@@ -24,7 +24,7 @@ END LICENSE */
 
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -49,7 +49,7 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
     log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
     bool do_retry = true;
     int retry_count = 1;
-    int conn_timeout = iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout(); // Timeout to set for each try
+    int conn_timeout = IceConfManager::instance()->getConfiguration()->ice()->soap_timeout(); // Timeout to set for each try
     int conn_timeout_delta = conn_timeout / 2; // Timeout increase for each try
     int delay = 1; // How much to sleep after each try
 

@@ -19,7 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "GetProxyInfoByDN_MYProxy.h"
-#include "ice-core.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 #include <vector>
 
@@ -48,14 +49,10 @@ namespace { // begin local namespace
 void db::GetProxyInfoByDN_MYProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT proxyfile,exptime,counter FROM proxy WHERE userdn=");
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_userdn;
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd +=  " AND myproxyurl=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_myproxy;
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += ";";
+    sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+    sqlcmd +=  " AND myproxyurl=";
+    sqlcmd += util::utilities::withSQLDelimiters( m_myproxy );
+    sqlcmd += ";";
 
   vector<string> tmp;
 

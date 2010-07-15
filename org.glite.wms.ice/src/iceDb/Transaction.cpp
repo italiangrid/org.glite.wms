@@ -24,7 +24,7 @@ END LICENSE */
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-#include "iceUtils/iceConfManager.h" // iceConfManager
+#include "iceUtils/IceConfManager.h" // iceConfManager
 #include "iceUtils/CreamJob.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "boost/filesystem/operations.hpp"
@@ -60,13 +60,11 @@ namespace {
       
         virtual void execute( sqlite3* db ) throw() {            
             try {
-	      ostringstream sqlcmd;
-	      sqlcmd << "CREATE TABLE IF NOT EXISTS jobs ( "
-		     << iceUtil::CreamJob::get_createdb_query()
-		     << ")";
-		   
+	      string sqlcmd( "CREATE TABLE IF NOT EXISTS jobs ( " );
+	      sqlcmd += iceUtil::CreamJob::get_createdb_query();
+	      sqlcmd += ")";
 
-	      do_query( db, sqlcmd.str() );
+	      do_query( db, sqlcmd );
 		
 	    } catch( DbOperationException& ex ) {
 	    
@@ -556,7 +554,7 @@ Transaction::Transaction( const bool read_only, const bool create_chek ) :
 void Transaction::create_db( const bool read_only, const bool create_check ) 
 {
     static const char* method_name = "Transaction::create_db() - ";
-    string persist_dir( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() );
+    string persist_dir( iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() );
 
     if( create_check ) {
       

@@ -28,7 +28,7 @@ END LICENSE */
 #include "iceLBEvent.h"
 #include "iceLBContext.h"
 #include "boost/format.hpp"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 //#include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
@@ -61,7 +61,7 @@ cream_transfer_start_event::cream_transfer_start_event( const CreamJob& j ) :
 int cream_transfer_start_event::execute( iceLBContext* ctx )
 {
 
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
 	return edg_wll_LogTransferSTARTProxy( *(ctx->el_context), 
                                           EDG_WLL_SOURCE_LRMS, 
                                           m_job.cream_address( ).c_str(),
@@ -93,7 +93,7 @@ cream_transfer_ok_event::cream_transfer_ok_event( const CreamJob& j ) :
 
 int cream_transfer_ok_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogTransferOKProxy( *(ctx->el_context), 
                                        EDG_WLL_SOURCE_LRMS, 
                                        m_job.cream_address( ).c_str(),
@@ -125,7 +125,7 @@ cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const s
 
 int cream_transfer_fail_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogTransferFAILProxy( *(ctx->el_context), 
                                          EDG_WLL_SOURCE_LRMS, 
                                          m_job.cream_address( ).c_str(),
@@ -158,7 +158,7 @@ cream_refused_event::cream_refused_event( const CreamJob& j, const std::string& 
 
 int cream_refused_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogRefusedProxy( *(ctx->el_context), 
                                     EDG_WLL_SOURCE_JOB_SUBMISSION,
                                     ctx->el_s_unavailable,
@@ -186,7 +186,7 @@ cream_cancel_request_event::cream_cancel_request_event( const CreamJob& j, const
 
 int cream_cancel_request_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogCancelREQProxy( *(ctx->el_context), 
                                       m_reason.c_str()
                                       );
@@ -212,7 +212,7 @@ cream_cancel_refuse_event::cream_cancel_refuse_event( const CreamJob& j, const s
 
 int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogCancelREFUSEProxy( *(ctx->el_context), 
                                          m_reason.c_str()
                                          );
@@ -241,7 +241,7 @@ int job_running_event::execute( iceLBContext* ctx )
         worker_node = "N/A"; // LB requires a nonempty worker_node to
                              // log the Running event.
     }
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogRunningProxy( *(ctx->el_context), m_job.worker_node().c_str() );
 else
     return edg_wll_LogRunning( *(ctx->el_context), m_job.worker_node().c_str() );
@@ -260,7 +260,7 @@ job_really_running_event::job_really_running_event( const CreamJob& j ) :
 
 int job_really_running_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogReallyRunningProxy( *(ctx->el_context), m_job.wn_sequence_code().c_str() );
 else
     return edg_wll_LogReallyRunning( *(ctx->el_context), m_job.wn_sequence_code().c_str() );
@@ -280,7 +280,7 @@ job_cancelled_event::job_cancelled_event( const CreamJob& j ) :
 
 int job_cancelled_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy()) {
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
 
     edg_wll_LogCancelDONEProxy( *(ctx->el_context), 
                                 m_job.failure_reason().c_str() );
@@ -313,7 +313,7 @@ job_aborted_event::job_aborted_event( const CreamJob& j ) :
 
 int job_aborted_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogAbortProxy( *(ctx->el_context), 
                                   m_job.failure_reason().c_str() );
 else
@@ -335,7 +335,7 @@ job_done_ok_event::job_done_ok_event( const CreamJob& j ) :
 
 int job_done_ok_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogDoneOKProxy( *(ctx->el_context), 
                                    ctx->el_s_succesfully,
                                    m_job.exit_code() );
@@ -358,7 +358,7 @@ job_done_failed_event::job_done_failed_event( const CreamJob& j ) :
 
 int job_done_failed_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogDoneFAILEDProxy( *(ctx->el_context), 
                                        m_job.failure_reason().c_str(), 
                                        m_job.exit_code() );
@@ -383,7 +383,7 @@ ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::
 
 int ns_enqueued_start_event::execute( iceLBContext* ctx ) 
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogEnQueuedSTARTProxy( *(ctx->el_context), 
                                           m_qname.c_str(),
                                           m_job.complete_cream_jobid().c_str(),
@@ -413,7 +413,7 @@ ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::st
 
 int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogEnQueuedFAILProxy( *(ctx->el_context), 
                                          m_qname.c_str(),
                                          m_job.complete_cream_jobid().c_str(),
@@ -441,7 +441,7 @@ ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string
 
 int ns_enqueued_ok_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogEnQueuedOKProxy( *(ctx->el_context), 
                                        m_qname.c_str(),
                                        m_job.complete_cream_jobid().c_str(),
@@ -469,7 +469,7 @@ ice_resubmission_event::ice_resubmission_event( const CreamJob& j, const std::st
 
 int ice_resubmission_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogResubmissionWILLRESUBProxy( *(ctx->el_context), 
                                                   m_reason.c_str(),
                                                   ctx->el_s_unavailable
@@ -496,7 +496,7 @@ wms_dequeued_event::wms_dequeued_event( const CreamJob& j, const std::string& qn
 
 int wms_dequeued_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogDeQueuedProxy( *(ctx->el_context), 
                                      m_qname.c_str(),
                                      m_job.grid_jobid().c_str()
@@ -522,7 +522,7 @@ job_suspended_event::job_suspended_event( const CreamJob& j ) :
 
 int job_suspended_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogSuspendProxy( *(ctx->el_context), 
                                     m_reason.c_str()
                                     );
@@ -546,7 +546,7 @@ job_resumed_event::job_resumed_event( const CreamJob& j ) :
 
 int job_resumed_event::execute( iceLBContext* ctx )
 {
-if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy())
+if(IceConfManager::instance()->getConfiguration()->common()->lbproxy())
     return edg_wll_LogResumeProxy( *(ctx->el_context), 
                                    m_reason.c_str()
                                    );

@@ -21,8 +21,9 @@ END LICENSE */
 
 #include <cstdlib>
 
+#include "iceUtils/iceUtils.h"
 #include "GetEventID.h"
-#include "ice-core.h"
+#include "ice/IceCore.h"
 
 using namespace std;
 using namespace glite::wms::ice;
@@ -47,13 +48,9 @@ namespace {
 void db::GetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = "SELECT eventid FROM event_id WHERE userdn=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_userdn;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
   sqlcmd += " AND ceurl=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_creamurl;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, fetch_jobs_callback, &m_result );

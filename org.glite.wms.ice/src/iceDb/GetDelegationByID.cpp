@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetDelegationByID.h"
-#include "ice-core.h"
+#include "iceUtils/iceUtils.h"
 
 #include <sstream>
 #include <vector>
@@ -54,16 +54,13 @@ namespace { // begin local namespace
 //______________________________________________________________________________
 void db::GetDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  ostringstream sqlcmd;
-
-  sqlcmd << "SELECT * FROM delegation WHERE delegationid="
-	 << Ice::get_tmp_name()
-	 << m_id 
-	 << Ice::get_tmp_name() << ";";
+  string sqlcmd( "SELECT * FROM delegation WHERE delegationid=");
+  sqlcmd += util::utilities::withSQLDelimiters( m_id );
+  sqlcmd += ";";
 
   vector<string> tmp;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {
     m_found = true;

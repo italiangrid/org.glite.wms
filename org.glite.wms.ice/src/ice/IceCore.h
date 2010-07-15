@@ -21,15 +21,16 @@ END LICENSE */
 #ifndef GLITE_WMS_ICE_ICE_CORE_H
 #define GLITE_WMS_ICE_ICE_CORE_H
 
-#include "iceInit_ex.h"
-//#include "creamJob.h"
-#include "iceThread.h"
-#include "iceThreadPool.h"
-
-#include "ClassadSyntax_ex.h"
+#include "ice/iceInit_ex.h"
+#include "iceThreads/iceThread.h"
+#include "iceUtils/iceUtils.h"
+#include "iceThreads/iceThreadPool.h"
+#include "iceUtils/ClassadSyntax_ex.h"
 
 #include <string>
 #include <list>
+#include <sys/types.h>          // getpid(), getpwnam()
+#include <unistd.h>             // getpid(), usleep
 
 #include <boost/shared_ptr.hpp>
 #include "boost/thread/recursive_mutex.hpp"
@@ -59,19 +60,14 @@ namespace ice {
 	class CreamJob;
     };
     
-    class Ice {
+    class IceCore {
         
-      static std::string s_tmpname;
-      static boost::recursive_mutex s_mutex_tmpname;
-      
     public:
 
-      static std::string get_tmp_name( void );// { return s_tmpname; }
-
-//      static boost::recursive_mutex ClassAd_Mutex;
       static boost::recursive_mutex s_mutex;
 
         class IceThreadHelper { 
+
         public:
             IceThreadHelper( const std::string& name );
             virtual ~IceThreadHelper( );
@@ -99,8 +95,8 @@ namespace ice {
              * start() method raised an exception.
              */
 	    void stop( void );
+
         protected:
-            
             /**
              * Stops this thread. This method has no effect if the
              * start() method was not called first, or if the
@@ -145,7 +141,7 @@ namespace ice {
         glite::wms::ice::util::iceThreadPool* m_ice_commands_pool; ///< This pool is used to process ICE internal commands (proxy renewal, lease updates and so on)
 	glite::wms::ice::util::iceThreadPool* m_ice_lblog_pool; ///< This pool is used to process async log to lb
 
-        static glite::wms::ice::Ice* s_instance; ///< Singleton instance of this class
+        static glite::wms::ice::IceCore* s_instance; ///< Singleton instance of this class
        
 	std::string m_hostdn;
  
@@ -153,7 +149,7 @@ namespace ice {
 
 	time_t      m_start_time;
 
-        Ice( ) throw(glite::wms::ice::iceInit_ex&);
+        IceCore( ) throw(glite::wms::ice::iceInit_ex&);
 
         // Some utility functions
         void deregister_proxy_renewal( const util::CreamJob* job ) throw();
@@ -195,9 +191,14 @@ namespace ice {
         //util::jobCache::iterator 
 	void purge_job( /*util::jobCache::iterator */ const util::CreamJob* j, const std::string& reason ) throw();
         
+	/**
+	 * The main loop: fetch requests from filelist/jobdir and process them
+	 */
+	int main_loop( void );
+
     public:
         
-        virtual ~Ice();
+        virtual ~IceCore();
        
 	std::string getHostDN( void ) const { return m_hostdn; }
  
@@ -255,7 +256,7 @@ namespace ice {
         /**
          * returns the singleton instance of this class.
          */
-        static glite::wms::ice::Ice* instance( void );
+        static glite::wms::ice::IceCore* instance( void );
 
         /**
          * Returns the thread pool responsible for processing
@@ -273,6 +274,9 @@ namespace ice {
 	glite::wms::ice::util::iceThreadPool* get_ice_lblog_pool( void ) { return m_ice_lblog_pool; };
 	
 	std::string getHostName( void ) const throw() { return m_myname; }
+
+    private:
+	long long int check_my_mem(pid_t);
 
     }; // class ice
     

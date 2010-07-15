@@ -40,7 +40,7 @@ METHOD:void,set_cream_jobid,( const std::string& cid ) {
   m_cream_jobid = cid; 
   if(!m_cream_jobid.empty() && !m_cream_address.empty()) {
     m_complete_cream_jobid = m_cream_address;
-    boost::replace_all( m_complete_cream_jobid, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
+    boost::replace_all( m_complete_cream_jobid, IceConfManager::instance()->getConfiguration()->ice()->cream_url_postfix(), "" );
     m_complete_cream_jobid += "/" + m_cream_jobid;
   }
   m_changed_cream_jobid = true;
@@ -119,11 +119,11 @@ METHOD:void,set_jdl,( const std::string& j, const std::string& cmdtype )
   
   m_endpoint = pieces[0] + ":" + pieces[1];
   
-  m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
-    + m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
+  m_cream_address = IceConfManager::instance()->getConfiguration()->ice()->cream_url_prefix() 
+    + m_endpoint + IceConfManager::instance()->getConfiguration()->ice()->cream_url_postfix();
   
-  m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
-    + m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
+  m_cream_deleg_address = IceConfManager::instance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
+    + m_endpoint + IceConfManager::instance()->getConfiguration()->ice()->creamdelegation_url_postfix();
   
   // It is important to get the jdl from the job itself, rather
   // than using the m_jdl attribute. This is because the
@@ -161,7 +161,7 @@ METHOD:bool,can_be_purged,( void ) const
 ENDMETHOD:
 METHOD:bool,can_be_resubmitted,( void ) const
 { 
-    int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
+    int threshold( IceConfManager::instance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
     api::soap_proxy::VOMSWrapper V( this->user_proxyfile( ) );
     if ( !V.IsValid() || 
          ( V.getProxyTimeEnd() < time(0) + threshold ) ) {

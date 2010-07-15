@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -29,25 +29,25 @@ namespace conf_ns = glite::wms::common::configuration;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-iceConfManager* iceConfManager::s_instance = 0;
-string iceConfManager::s_conf_file;
-bool iceConfManager::s_initialized = false;
+IceConfManager* IceConfManager::s_instance = 0;
+string IceConfManager::s_conf_file;
+bool IceConfManager::s_initialized = false;
 
 //____________________________________________________________________________
-iceConfManager* iceConfManager::getInstance( )
+IceConfManager* IceConfManager::instance( )
     throw ( ConfigurationManager_ex&)
 {
     if( !s_initialized ) {
         throw ConfigurationManager_ex("ConfigurationManager non initialized: must set the configuration filename before use");
     }
     if( !s_instance ) {
-        s_instance = new iceConfManager( );
+        s_instance = new IceConfManager( );
     }
     return s_instance;
 }
 
 //____________________________________________________________________________
-iceConfManager::iceConfManager( )
+IceConfManager::IceConfManager( )
     throw ( ConfigurationManager_ex& )
 {
     conf_ns::Configuration* config = 0;
@@ -59,13 +59,13 @@ iceConfManager::iceConfManager( )
     m_configuration.reset( config );
 }
 
-iceConfManager::~iceConfManager( )
+IceConfManager::~IceConfManager( )
 {
 
 }
 
 //____________________________________________________________________________
-void iceConfManager::init( const string& filename )
+void IceConfManager::init( const string& filename )
 {
     if ( !s_initialized ) {
         s_conf_file = filename;

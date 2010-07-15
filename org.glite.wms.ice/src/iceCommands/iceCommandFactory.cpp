@@ -25,8 +25,8 @@ END LICENSE */
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/scoped_ptr.hpp"
-#include "ice-core.h"
-#include "Request.h"
+#include "ice/IceCore.h"
+#include "iceUtils/Request.h"
 
 using namespace std;
 

@@ -24,7 +24,7 @@ END LICENSE */
 #undef soapStub_H
 
 #include "iceAbsCommand.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 #include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
 #include "iceDb/GetJobsToPoll.h" // needed for definition of type 'JobToPoll'
 
@@ -42,24 +42,24 @@ namespace glite {
   namespace wms {
     namespace ice {
 
-      class Ice;
+      class IceCore;
 
       namespace util {
         
         class iceLBLogger;
 	//	class jobCache;
-	class iceConfManager;
+	class IceConfManager;
 
 	class iceCommandStatusPoller : public iceAbsCommand {
 
           log4cpp::Category                           *m_log_dev;
           glite::wms::ice::util::iceLBLogger          *m_lb_logger;
-          Ice*                                         m_iceManager;
+          IceCore*                                         m_iceManager;
 	  time_t                                       m_threshold;
           const unsigned int                           m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
           time_t                                       m_empty_threshold; ///< Threshold for empty notifications
 	  bool                                         m_poll_all_jobs;
-	  glite::wms::ice::util::iceConfManager       *m_conf;
+	  glite::wms::ice::util::IceConfManager       *m_conf;
 	  bool 					       m_stopped;
 	  const std::pair< std::string, std::string >  m_dnce;
 	  
@@ -145,7 +145,7 @@ namespace glite {
             \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
             \sa ice
           */
-          iceCommandStatusPoller( Ice*, 
+          iceCommandStatusPoller( IceCore*, 
 				  const std::pair<std::string, std::string>&,
 				  bool poll_all_jobs = false ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
           

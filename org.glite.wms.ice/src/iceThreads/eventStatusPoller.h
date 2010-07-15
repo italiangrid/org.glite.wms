@@ -22,7 +22,7 @@ END LICENSE */
 
 #undef soapStub_H
 #include "iceThread.h"
-#include "iceCommandStatusPoller.h"
+#include "iceCommands/iceCommandStatusPoller.h"
 
 namespace log4cpp {
     class Category;
@@ -32,7 +32,7 @@ namespace glite {
 namespace wms {
 namespace ice {
     
-    class Ice;
+    class IceCore;
 
     namespace util {
         
@@ -50,7 +50,7 @@ namespace ice {
 	class eventStatusPoller : public iceThread {
 
 	  int m_delay;
-	  Ice* m_iceManager;
+	  IceCore* m_iceManager;
 	  log4cpp::Category* m_log_dev;
           iceThreadPool* m_threadPool;
 
@@ -71,7 +71,7 @@ namespace ice {
 	    \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
 	    \sa ice
 	  */
-	  eventStatusPoller( Ice* iceManager, int d=10 );
+	  eventStatusPoller( IceCore* iceManager, int d=10 );
 	  
 	  virtual ~eventStatusPoller();
 

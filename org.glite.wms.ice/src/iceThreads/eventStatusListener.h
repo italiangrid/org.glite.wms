@@ -47,7 +47,7 @@ namespace glite {
 
       namespace util {
           
-          class iceConfManager;
+          class IceConfManager;
 
 	//! A class that receives notification from CEMon about job status changes
 	/**!

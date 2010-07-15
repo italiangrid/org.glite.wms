@@ -20,8 +20,8 @@ END LICENSE */
 
 #include "iceUtils.h"
 #include "CreamJob.h"
-#include "iceConfManager.h"
-#include "ice-core.h"
+#include "IceConfManager.h"
+#include "ice/IceCore.h"
 #include "Request.h"
 
 #include <cstdlib>
@@ -63,6 +63,9 @@ int setET(char **errtxt, int rc);
 using namespace std;
 namespace api_util   = glite::ce::cream_client_api::util;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
+
+boost::recursive_mutex  glite::wms::ice::util::utilities::s_mutex_tmpname;
+string                  glite::wms::ice::util::utilities::s_tmpname = "";
 
 //______________________________________________________________________
 int
@@ -253,7 +256,7 @@ void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
 						       string& newjdl ) 
   throw( ClassadSyntax_ex& )
 { 
-  const glite::wms::common::configuration::WMConfiguration* WM_conf = iceConfManager::getInstance()->getConfiguration()->wm();
+  const glite::wms::common::configuration::WMConfiguration* WM_conf = IceConfManager::instance()->getConfiguration()->wm();
 	  
   classad::ClassAdParser parser;
   classad::ClassAd *root = parser.ParseClassAd( oldJdl );
@@ -264,7 +267,7 @@ void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
 	  
   boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
 
-  classad_safe_ptr->InsertAttr( "WMSHostname", Ice::instance()->getHostName() );
+  classad_safe_ptr->InsertAttr( "WMSHostname", IceCore::instance()->getHostName() );
 
   string ceid;
   //if( boost::algorithm::iequals( commandStr, "submit" ) ) {
@@ -349,7 +352,7 @@ int glite::wms::ice::util::utilities::updateIsbList( classad::ClassAd* jdl )
   // synchronized block because the caller is Classad-mutex synchronized
   const static char* method_name = "iceCommandSubmit::updateIsbList() - ";
   string default_isbURI = "gsiftp://";
-  default_isbURI.append( glite::wms::ice::Ice::instance()->getHostName() );
+  default_isbURI.append( glite::wms::ice::IceCore::instance()->getHostName() );
   default_isbURI.push_back( '/' );
   string isbPath;
   if ( jdl->EvaluateAttrString( "InputSandboxPath", isbPath ) ) {
@@ -444,7 +447,7 @@ int glite::wms::ice::util::utilities::updateOsbList( classad::ClassAd* jdl )
     return 1;
 	  
   string default_osbdURI = "gsiftp://";
-  default_osbdURI.append( glite::wms::ice::Ice::instance()->getHostName() );
+  default_osbdURI.append( glite::wms::ice::IceCore::instance()->getHostName() );
   default_osbdURI.push_back( '/' );
   string osbPath;
   if ( jdl->EvaluateAttrString( "OutputSandboxPath", osbPath ) ) {
@@ -770,12 +773,12 @@ string glite::wms::ice::util::utilities::getURL( void ) throw ( runtime_error& )
     throw ex;
   }
 	  
-  if( iceConfManager::getInstance()->getConfiguration()->ice()->listener_enable_authn() )
+  if( IceConfManager::instance()->getConfiguration()->ice()->listener_enable_authn() )
     tmp_prefix = "https";
   else
     tmp_prefix = "http";
 	  
-  string url = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getConfiguration()->ice()->listener_port() );
+  string url = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % IceConfManager::instance()->getConfiguration()->ice()->listener_port() );
   return url;
 }
 	

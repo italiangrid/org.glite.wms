@@ -32,11 +32,6 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandReschedule.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		-I$(top_srcdir)/src/iceUtils \
-		-I$(top_srcdir)/src/ice \
-		-I$(top_srcdir)/src/iceDb/sqlite \
-		-I$(top_srcdir)/src/iceCommands \
-		-I$(top_srcdir)/src/iceThreads \
 		$(GLITE_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \

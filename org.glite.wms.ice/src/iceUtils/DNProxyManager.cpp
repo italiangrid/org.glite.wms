@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 #include "DelegationManager.h"
 #include "DNProxyManager.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "iceUtils.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/security/proxyrenewal/renewal.h"
@@ -150,7 +150,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( dn ) + ".proxy";
+  string localProxy = iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( dn ) + ".proxy";
   
   
   bool found = false;
@@ -857,5 +857,5 @@ iceUtil::DNProxyManager::make_betterproxy_path( const string& dn,
 						const string& myproxy )
   throw()
 {
-  return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
+  return iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

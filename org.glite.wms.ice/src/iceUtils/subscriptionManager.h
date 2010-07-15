@@ -66,7 +66,7 @@ namespace wms {
 namespace ice {
 namespace util {
 	
-    class iceConfManager;
+    class IceConfManager;
     
     class subscriptionProxy;
     
@@ -87,7 +87,7 @@ namespace util {
         std::map<std::string, std::string>      		  m_mappingCreamCemon;
         std::map<std::string, std::string>      		  m_mappingCemonDN;
         
-        iceConfManager                         		         *m_conf;  
+        IceConfManager                         		         *m_conf;  
         subscriptionProxy                     		         *m_subProxy;
         static subscriptionManager                   		 *s_instance;
         log4cpp::Category                      		         *m_log_dev;

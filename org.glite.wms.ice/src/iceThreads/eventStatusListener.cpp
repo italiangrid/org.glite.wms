@@ -19,11 +19,9 @@ limitations under the License.
 END LICENSE */
 // ICE stuff
 #include "eventStatusListener.h"
-//#include "subscriptionManager.h"
-#include "iceConfManager.h"
-#include "iceUtils.h"
-#include "ice-core.h"
-#include "iceCommandUpdateStatus.h"
+#include "iceUtils/iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceCommand/iceCommandUpdateStatus.h"
 #include "iceThreadPool.h"
 
 // CREAM stuff
@@ -75,7 +73,7 @@ void eventStatusListener::createObject( void )
 eventStatusListener::eventStatusListener(const int& i)
     : CEConsumer(i),
       iceThread( "event status listener" ),
-      m_conf(iceConfManager::getInstance()->getConfiguration()->ice()),
+      m_conf(IceConfManager::instance()->getConfiguration()->ice()),
       m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
       m_isOK( true ),
       m_ice_manager( glite::wms::ice::Ice::instance() )
@@ -89,7 +87,7 @@ eventStatusListener::eventStatusListener(const int& i,
 						  const string& key)
   : CEConsumer(i, cert.c_str(), key.c_str()),
     iceThread( "event status listener" ),
-    m_conf(iceConfManager::getInstance()->getConfiguration()->ice()),
+    m_conf(IceConfManager::instance()->getConfiguration()->ice()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_isOK( true ),
     m_ice_manager( glite::wms::ice::Ice::instance() )

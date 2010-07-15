@@ -20,7 +20,7 @@ END LICENSE */
 
 #include "RemoveJobByCid.h"
 #include "CreamJob.h"
-#include "ice-core.h"
+#include "IceCore.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -30,9 +30,7 @@ void db::RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
   string sqlcmd("DELETE FROM jobs WHERE ");
   sqlcmd += util::CreamJob::complete_cream_jobid_field();
   sqlcmd += "=";
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_creamjobid;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_creamjobid );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

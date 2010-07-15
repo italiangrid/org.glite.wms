@@ -28,14 +28,14 @@ END LICENSE */
 #include "iceCommandStatusPoller.h"
 #include "iceCommandEventQuery.h"
 #include "iceCommandLBLogging.h"
-#include "iceLBEventFactory.h"
-#include "CreamProxyMethod.h"
-#include "DNProxyManager.h"
-#include "iceConfManager.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "iceUtils/iceLBEventFactory.h"
+#include "iceUtils/CreamProxyMethod.h"
+#include "iceUtils/DNProxyManager.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/iceLBEvent.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 #include "iceDb/GetDbID.h"
 #include "iceDb/SetDbID.h"
@@ -92,14 +92,14 @@ ice::util::iceCommandEventQuery::~iceCommandEventQuery( ) throw()
 }
 
 //______________________________________________________________________________
-ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce,
+ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::IceCore* theIce,
 						       const std::string& dn,
 						       const std::string& ce)
   : iceAbsCommand( "iceCommandEventQuery", "" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice::util::iceLBLogger::instance() ),
     m_iceManager( theIce ),
-    m_conf( ice::util::iceConfManager::getInstance() ),
+    m_conf( ice::util::IceConfManager::instance() ),
     m_stopped( false ),
     m_dn( dn ),
     m_ce( ce )
@@ -184,10 +184,10 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     	jit->set_status( cream_api::job_statuses::ABORTED ); 
     	jit->set_exit_code( 0 );
       }
-      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+      while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
         sleep(2);
       
-      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
       //Ice::instance()->delete_jobs_by_dn( m_dn );
       
       return;
@@ -217,10 +217,10 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     	jit->set_status( cream_api::job_statuses::ABORTED ); 
     	jit->set_exit_code( 0 );
       }
-      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+      while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
         sleep(2);
       
-      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
       //Ice::instance()->delete_jobs_by_dn( m_dn );
       
       return;
@@ -375,10 +375,10 @@ states.push_back( make_pair("STATUS", "IDLE") );
       }
       
       
-      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+      while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
 	sleep(2);
       
-      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
       
       {
 	db::SetEventID setter( m_dn, m_ce, 0, "iceCommandEventQuery::execute" );

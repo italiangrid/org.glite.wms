@@ -18,10 +18,10 @@ limitations under the License.
 
 END LICENSE */
 // ICE includes
-#include "ice-core.h"
+#include "ice/IceCore.h"
 #include "eventStatusPoller.h"
-#include "iceCommandStatusPoller.h"
-#include "iceCommandEventQuery.h"
+#include "iceCommands/iceCommandStatusPoller.h"
+#include "iceCommands/iceCommandEventQuery.h"
 
 #include "iceDb/GetAllDN.h"
 #include "iceDb/GetCEUrl.h"
@@ -49,7 +49,7 @@ using namespace std;
 //boost::recursive_mutex eventStatusPoller::s_proxymutex;
 
 //____________________________________________________________________________
-eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
+eventStatusPoller::eventStatusPoller( glite::wms::ice::IceCore* manager, int d )
     : iceThread( "event status poller" ),
       m_delay( d ),
       m_iceManager( manager ),
@@ -90,7 +90,7 @@ void eventStatusPoller::body( void )
     // Thread wakes up
     
     CREAM_SAFE_LOG( m_log_dev->infoStream()
-		    << "eventStatusPoller::body() - New iteration"
+		    << "eventStatusPoller::body - New iteration"
 		    );
     
     set< string > dns;
@@ -116,7 +116,7 @@ void eventStatusPoller::body( void )
     while( ceit != ces.end() ) {
 
       if(  ceit->empty() ) {
-	CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
 		       << "Empty CE string! Skipping..."
 		       );
 	continue;// next CE
@@ -127,7 +127,7 @@ void eventStatusPoller::body( void )
       for( dnit = dns.begin(); dnit != dns.end(); ++dnit ) {
 	
         if( dnit->empty() ) {
-          CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
+          CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
 			 << "Empty DN string! Skipping... "
 			 );
 	  continue; // next DN
@@ -138,7 +138,7 @@ void eventStatusPoller::body( void )
           db::Transaction tnx(false, false);
           tnx.execute( &hasjob );
           if( !hasjob.found( ) ) {
-            CREAM_SAFE_LOG(m_log_dev->warnStream() << "eventStatusPoller::body()"
+            CREAM_SAFE_LOG(m_log_dev->warnStream() << "eventStatusPoller::body - "
 		           << "DN [" 
 		           << *dnit << "] has not job one the CE ["
 			   << *ceit << "] in the ICE's database at the moment. Skipping query..."
@@ -149,14 +149,14 @@ void eventStatusPoller::body( void )
       
         while( m_threadPool->get_command_count( ) >= 10 ) {
 	  CREAM_SAFE_LOG( m_log_dev->debugStream()
-	  		  << "eventStatusPoller::body() - "
+	  		  << "eventStatusPoller::body - "
 			  << "Too many commands in the queue. Waiting 10 seconds..."
 			  );
 	  sleep( 10 );
 	}
       
         CREAM_SAFE_LOG( m_log_dev->debugStream()
- 			    << "eventStatusPoller::body() - "
+ 			    << "eventStatusPoller::body - "
  			    << "Adding EventQuery command for couple (" 
  			    << *dnit << ", "
  			    << *ceit << ") to the thread pool..."

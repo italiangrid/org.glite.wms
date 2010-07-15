@@ -19,8 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateProxyField.h"
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -29,26 +29,16 @@ void db::CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& 
 {
   string sqlcmd = string("INSERT OR REPLACE INTO proxy (" );
   sqlcmd += " userdn,myproxyurl,proxyfile,exptime,counter) VALUES (";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_userdn ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_myproxy ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += m_proxyfile ;
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += util::utilities::to_string((long int)m_exptime );
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ",";
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += util::utilities::to_string((long int)m_counter );
-sqlcmd	 += Ice::get_tmp_name();
-sqlcmd	 += ");";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_myproxy );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_proxyfile );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_exptime ) );
+  sqlcmd	 += ",";
+  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_counter ) );
+  sqlcmd	 += ");";
    		      
   do_query( db, sqlcmd );
 }

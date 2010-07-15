@@ -36,7 +36,7 @@ END LICENSE */
  */
 #include "subscriptionManager.h"
 #include "subscriptionProxy.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "DNProxyManager.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
@@ -96,7 +96,7 @@ iceUtil::subscriptionManager* iceUtil::subscriptionManager::getInstance() throw(
 
 //______________________________________________________________________________
 iceUtil::subscriptionManager::subscriptionManager() throw() :
-  m_conf(iceUtil::iceConfManager::getInstance()),
+  m_conf(iceUtil::IceConfManager::instance()),
   m_log_dev(api_util::creamApiLogger::instance()->getLogger()),
   //m_cache( iceUtil::jobCache::getInstance() ),
   m_authz( m_conf->getConfiguration()->ice()->listener_enable_authz() ),

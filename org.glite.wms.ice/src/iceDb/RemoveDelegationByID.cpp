@@ -19,7 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveDelegationByID.h"
-#include "ice-core.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,9 +29,7 @@ using namespace std;
 void db::RemoveDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("DELETE FROM delegation WHERE delegationid=");
-  sqlcmd += Ice::get_tmp_name();
-  sqlcmd += m_id;
-  sqlcmd += Ice::get_tmp_name();
+  sqlcmd += util::utilities::withSQLDelimiters( m_id );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

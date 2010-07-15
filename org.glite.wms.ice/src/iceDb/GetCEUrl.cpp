@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetCEUrl.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 
 using namespace std;
 using namespace glite::wms::ice;

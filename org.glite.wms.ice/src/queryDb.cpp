@@ -29,8 +29,8 @@ END LICENSE */
 
 #include "iceDb/Transaction.h"
 #include "iceDb/GetAllJobs.h"
-#include "iceConfManager.h"
-#include "CreamJob.h"
+#include "iceUtils/IceConfManager.h"
+#include "iceUtils/CreamJob.h"
 
 #include "boost/algorithm/string.hpp"
 
@@ -225,9 +225,9 @@ int main( int argc, char* argv[] )
   }
 
   
-  util::iceConfManager::init( conf_file );
+  util::IceConfManager::init( conf_file );
   try{
-    util::iceConfManager::getInstance();
+    util::IceConfManager::instance();
   }
   catch(util::ConfigurationManager_ex& ex) {
     cerr << ex.what() << endl;

@@ -32,7 +32,7 @@ END LICENSE */
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-#include "iceConfManager.h"
+#include "iceUtils/IceConfManager.h"
 
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
@@ -105,16 +105,16 @@ int main( int argc, char *argv[]) {
     return 0;
   }
 
-  iceUtil::iceConfManager::init( opt_conf_file );
+  iceUtil::IceConfManager::init( opt_conf_file );
   try{
-    iceUtil::iceConfManager::getInstance();
+    iceUtil::IceConfManager::instance();
   }
   catch(iceUtil::ConfigurationManager_ex& ex) {
     cerr << "glite-wms-ice-safe::main() - ERROR: " << ex.what() << endl;
     exit(1);
   }
 
-  glite::wms::common::configuration::Configuration* conf = iceUtil::iceConfManager::getInstance()->getConfiguration();
+  glite::wms::common::configuration::Configuration* conf = iceUtil::IceConfManager::instance()->getConfiguration();
 
   string logfile = conf->ice()->logfile();
 

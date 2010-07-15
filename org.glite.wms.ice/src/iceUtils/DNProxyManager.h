@@ -31,7 +31,7 @@ END LICENSE */
 #include "SourceProxyNotFoundException.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-#include "iceConfManager.h"
+#include "IceConfManager.h"
 #include "iceUtils.h"
 #include "CreamJob.h"
 

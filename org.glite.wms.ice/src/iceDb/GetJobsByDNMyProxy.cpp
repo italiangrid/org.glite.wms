@@ -18,8 +18,8 @@ limitations under the License.
 
 END LICENSE */
 
-#include "ice-core.h"
-#include "iceUtils.h"
+#include "ice/IceCore.h"
+#include "iceUtils/iceUtils.h"
 #include "GetJobsByDNMyProxy.h"
 
 #include <cstdlib>
@@ -31,18 +31,17 @@ namespace cream_api = glite::ce::cream_client_api;
 void db::GetJobsByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd;
-  sqlcmd += "SELECT " + util::CreamJob::get_query_fields() 
-	 + " FROM jobs WHERE " + util::CreamJob::user_dn_field() 
-         + "="
-	 + Ice::get_tmp_name()
-	 + m_dn
-	 + Ice::get_tmp_name() 
-	 + " AND " + util::CreamJob::myproxy_address_field() 
-	 + "="
-	 + Ice::get_tmp_name()
-	 + m_myproxy
-	 + Ice::get_tmp_name()
-	 + ";";
+  sqlcmd += "SELECT ";
+  sqlcmd += util::CreamJob::get_query_fields() ;
+  sqlcmd += " FROM jobs WHERE ";
+  sqlcmd += util::CreamJob::user_dn_field();
+  sqlcmd += "=";
+  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += " AND ";
+  sqlcmd += util::CreamJob::myproxy_address_field() ;
+  sqlcmd += "=";
+  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_myproxy);
+  sqlcmd += ";";
     
   do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
 

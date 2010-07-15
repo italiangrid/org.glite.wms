@@ -19,7 +19,6 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateJob.h"
-#include "ice-core.h"
 
 using namespace glite::wms::ice;
 using namespace std;
