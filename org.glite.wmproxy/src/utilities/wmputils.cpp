@@ -288,16 +288,7 @@ string
 getEnvVO()
 {
 	GLITE_STACK_TRY("getEnvVO()");
-	string vo = "";
-	string cred2 = getenv("GRST_CRED_2") ? string(getenv("GRST_CRED_2")) : "";
-	if (cred2 != "") {
-		std::string::size_type pos = cred2.find("/", 0);
-		if (pos != string::npos) {
-			string fqan = cred2.substr(pos, cred2.size());
-			vo = (parseFQAN(fqan))[0];
-		}
-	}
-	return vo;
+	return parseFQAN(getEnvFQAN()).front();
 	GLITE_STACK_CATCH();
 }
 
@@ -305,17 +296,31 @@ string
 getEnvFQAN()
 {
 	GLITE_STACK_TRY("getEnvFQAN()");
-	string fqan = "";
-	string cred2 = "";
-	if (getenv("GRST_CRED_2")) {
-		cred2 = string(getenv("GRST_CRED_2"));
-	}
-	if (cred2 != "") {
-		std::string::size_type pos = cred2.find("/", 0);
-		if (pos != string::npos) {
-			fqan = cred2.substr(pos, cred2.size());
-		}
-	}
+
+        int i = 0;
+        std::string fqan;
+        std::string const fqan_tag("fqan:");
+        int const fqan_tag_size = std::string(fqan_tag).size();
+        while (fqan.empty() && i < 5) {
+          std::string grst_cred(
+            getenv(
+              std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
+            )
+          );
+          if (
+            grst_cred.size() > fqan_tag_size
+            && grst_cred.substr(0, fqan_tag_size) == fqan_tag
+          ) {
+            fqan = grst_cred.substr(fqan_tag_size);
+          }
+          ++i;
+        }
+        if (fqan.empty()) {
+          edglog(warning) << "Cannot extract fqan from gridsite" << endl;
+        } else {
+          edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
+        }
+
 	return fqan;
 	GLITE_STACK_CATCH();
 }

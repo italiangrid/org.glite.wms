@@ -789,7 +789,6 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType &type){
 #endif
 	GRSTgaclCred  *cred = NULL;
 	GRSTgaclEntry *entry = NULL;
-	GRSTgaclNamevalue *nv = NULL;
 	vector<string> items ;
 	//operation not allow for any-user credential
 	if (type == WMPGACL_ANYUSER_TYPE){
@@ -805,8 +804,6 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType &type){
 	}
 	//sets credential type
 	setCredentialType(type, "");
-	// credential name
-	char* rawname =(char*) rawCred.first.c_str();
 	// looks for the specified credential
 	if (gaclAcl !=NULL) {
 		entry = gaclAcl-> firstentry ;
@@ -995,7 +992,6 @@ int GaclManager::loadCredential ( ) {
 
 				  // Comparing the two credentials
                                   if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) {
-		                    edglog(debug) << "GACL file entry " << cred->auri << " matched user's credentials\n";
                                     found = true;
                                   }
 
