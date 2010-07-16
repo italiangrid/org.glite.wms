@@ -330,7 +330,6 @@ try {
                                 "",GaclManager::WMPGACL_EXEC);
                 }
 
-edglog(debug) << "hasVOMSentry: " << gacl.hasEntry(authorizer::GaclManager::WMPGACL_VOMS_TYPE, fqan) << endl;
                 // FQAN authorization
                 if (exist) {
                         exec =  gacl.checkAllowPermission(
