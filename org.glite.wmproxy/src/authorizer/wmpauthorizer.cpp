@@ -285,30 +285,7 @@ try {
    	bool existDN = false;
     	bool existAU = false;
 
-	int i = 0;
-	std::string fqan;
-        std::string const fqan_tag("fqan:");
-        int const fqan_tag_size = std::string(fqan_tag).size();
-        while (fqan.empty() && i < 5) {
-	  std::string grst_cred(
-            getenv(
-              std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
-            )
-          );
-          if (
-            grst_cred.size() > fqan_tag_size
-            && grst_cred.substr(0, fqan_tag_size) == fqan_tag
-          ) {
-            fqan = grst_cred.substr(fqan_tag_size);
-          }
-          ++i;
-	}
-        if (fqan.empty()) {
-          edglog(warning) << "Cannot extract fqan from gridsite" << endl;
-        } else {
-	  edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
-        }
-	
+	std::string fqan = wmputilities::getEnvFQAN(); // taken from gridsite
 	string dn = string(wmputilities::getUserDN()); // taken from ssl
 	string dnConverted = wmputilities::convertDNEMailAddress(dn.c_str());
 
