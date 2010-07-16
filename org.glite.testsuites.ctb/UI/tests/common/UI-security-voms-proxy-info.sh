@@ -152,11 +152,12 @@ voms-proxy-info -acexists $VO
 if [ $? -eq 0 ]; then
   echo ""
   myecho "ERROR: voms-proxy-info claims $VO exists!"
-  echo "Expected failure, see bug #49614"
-else
-  echo "Of course not!"
-  echo "I was expecting a failure, is bug #49614 fixed?"
+  echo "bug #49614 should be fixed!"
   myexit 1
+else
+  echo "Of course not! (not exiting 0)"
+  echo "bug #49614 appears fixed?"
+  myexit 0
 fi
 
 myexit 0
