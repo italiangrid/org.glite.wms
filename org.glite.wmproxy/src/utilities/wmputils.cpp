@@ -300,7 +300,7 @@ getEnvFQAN()
         int i = 0;
         std::string fqan;
         std::string const fqan_tag("fqan:");
-        int const fqan_tag_size = std::string(fqan_tag).size();
+        unsigned int const fqan_tag_size = std::string(fqan_tag).size();
         while (fqan.empty() && i < 5) {
           std::string grst_cred(
             getenv(
@@ -316,7 +316,7 @@ getEnvFQAN()
           ++i;
         }
         if (fqan.empty()) {
-          edglog(warning) << "Cannot extract fqan from gridsite" << endl;
+          edglog(error) << "Cannot extract fqan from gridsite" << endl;
         } else {
           edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
         }

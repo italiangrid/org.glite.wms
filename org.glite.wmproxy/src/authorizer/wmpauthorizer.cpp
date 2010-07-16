@@ -98,12 +98,11 @@ const std::string FQAN_FIELDS[ ]  = { "vo", "group", "group", "role", "capabilit
 const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
 
- 
-
-
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile) {}
+WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
+: userid(0), usergroup(0), mapdone(false)
+{ }
 
 WMPAuthorizer::~WMPAuthorizer() {}
 
@@ -112,7 +111,7 @@ WMPAuthorizer::getUserName()
 {
 	GLITE_STACK_TRY("getUserName()");
 	if (!mapdone) {
-		mapUser(this->certfqan);
+		mapUser();
 	}
 	return this->username;
 	GLITE_STACK_CATCH();
@@ -123,7 +122,7 @@ WMPAuthorizer::getUserId()
 {
 	GLITE_STACK_TRY("getUserId()");
 	if (!mapdone) {
-		mapUser(this->certfqan);
+		mapUser();
 	}
 	return this->userid;
 	GLITE_STACK_CATCH();
@@ -134,7 +133,7 @@ WMPAuthorizer::getUserGroup()
 {
 	GLITE_STACK_TRY("getUserGroup()");
 	if (!mapdone) {
-		mapUser(this->certfqan);
+		mapUser();
 	}
 	return this->usergroup;
 	GLITE_STACK_CATCH();
@@ -146,12 +145,12 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	GLITE_STACK_TRY("authorize()");
 	edglog_fn("WMPAuthorizer::authorize");
 
+	string userdn = string(wmputilities::getUserDN());
 	if (jobid != "") {
 		// Checking job owner
 		string userproxypath = wmputilities::getJobDelegatedProxyPath(jobid);
 		// TODO change it to do check depending on the server operation requested:
 		// i.e. jobCancel check for write, getOutputFileList check for list/read
-		string userdn = string(wmputilities::getUserDN());
 		string gaclfile = wmputilities::getJobDirectoryPath(jobid) + "/"
 			+ GaclManager::WMPGACL_DEFAULT_FILE;
 		edglog(debug)<<"Job gacl file: "<<gaclfile<<endl;
@@ -173,11 +172,11 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 		}
 	}
 	// VOMS Authorizing
-	string envFQAN = wmputilities::getEnvFQAN();
+	string envFQAN = wmputilities::getEnvFQAN(); // taken from gridsite
 	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
 	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
 	if (certfqan != "") {
-		this->certfqan = certfqan;
+		certfqan_ = certfqan;
 		if (!compareFQANAuthN(certfqan, envFQAN)) {
 			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
@@ -187,12 +186,12 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 		}
 	} 
 	// Gacl Authorizing
-	checkGaclUserAuthZ();
+	checkGaclUserAuthZ(envFQAN, userdn);
 	GLITE_STACK_CATCH();
 }
 
 void
-WMPAuthorizer::mapUser(const std::string &certfqan)
+WMPAuthorizer::mapUser()
 {
 	GLITE_STACK_TRY("mapUser()");
 	edglog_fn("WMPAuthorizer::mapUser");
@@ -201,7 +200,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	struct passwd * user_info = NULL;
 	char * user_dn = wmputilities::getUserDN();
 
-	edglog(debug)<<"certfqan: "<<certfqan<<endl;
+	edglog(debug)<<"certfqan: "<<certfqan_<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
 	// Initialising structure
@@ -217,7 +216,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	int mapcounter = 0; // single mapping result
 	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
 	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
-	fqan_list[0] = const_cast<char*>(certfqan.c_str());
+	fqan_list[0] = const_cast<char*>(certfqan_.c_str());
 	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
 	char * temp_user_dn = wmputilities::convertDNEMailAddress(user_dn);
 	string str_tmp_dn(temp_user_dn);
@@ -273,7 +272,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 }
 
 void
-WMPAuthorizer::checkGaclUserAuthZ()
+WMPAuthorizer::checkGaclUserAuthZ(string const& fqan, string const& dn)
 try {
 	GLITE_STACK_TRY("checkGaclUserAuthZ()");
 	edglog_fn("WMPAuthorizer::checkGaclUserAuthZ");
@@ -285,7 +284,6 @@ try {
    	bool existDN = false;
     	bool existAU = false;
 
-	std::string fqan = wmputilities::getEnvFQAN(); // taken from gridsite
 	string dn = string(wmputilities::getUserDN()); // taken from ssl
 	string dnConverted = wmputilities::convertDNEMailAddress(dn.c_str());
 
@@ -499,8 +497,7 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 	GLITE_STACK_TRY("setJobGacl()");
 	edglog_fn("WMPAuthorizer::setJobGacl string");
 	
-	string user_dn = wmputilities::getUserDN();
-	string errmsg = "";
+	string user_dn = wmputilities::getUserDN(); // taken from ssl
 	
 	// Creates a gacl file in the job directory
 	authorizer::WMPgaclPerm permission =
@@ -522,7 +519,7 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 				user_dn, permission);
 		gacl.saveGacl( );
 	} catch (wmputilities::GaclException &exc) {
-		errmsg = "internal server error: unable to set the gacl user properties  ";
+		string errmsg = "internal server error: unable to set the gacl user properties";
 		errmsg += " (please contact server administrator)\n";
 		errmsg += "please report the following message:\n" ;
 		errmsg += exc.what ( );

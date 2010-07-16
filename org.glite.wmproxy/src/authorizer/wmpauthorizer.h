@@ -26,6 +26,7 @@ limitations under the License.
 
 #include <string>
 #include <vector>
+#include <string>
 
 namespace glite {
 namespace wms {
@@ -65,7 +66,7 @@ public:
      * Calls Gacl to check if the user is authorized to submit requests to WMProxy. 
      * Check is done on the basis of user's credential.
      */
-    void checkGaclUserAuthZ();
+    void checkGaclUserAuthZ(std::string const& fqan, std::string const& dn);
     
     //LCAS CHECK bool checkLCASUserAuthZ(const std::string &dn);
     
@@ -183,7 +184,7 @@ private:
 	uid_t usergroup;
 	std::string lcmaps_logfile;
 	bool mapdone;
-	std::string certfqan;
+	std::string certfqan_;
 
 	// job directories
 	static const char* INPUT_SB_DIRECTORY ;
@@ -200,7 +201,7 @@ private:
      * Calls LCMAPS to map the grid user to a local user.
      * Mapping is done on the basis of user's credential.
      */
-    void mapUser(const std::string &certfqan = "");
+    void mapUser();
     
   #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 };
