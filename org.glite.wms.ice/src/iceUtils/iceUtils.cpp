@@ -138,8 +138,9 @@ glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::uti
   
   const boost::regex my_filter( aJob.token_file( ) +"_" + "*" );
   boost::filesystem::directory_iterator end_itr;
+  boost::filesystem::path BasedirPath( basedir );
   try {
-    for( boost::filesystem::directory_iterator i( basedir ); i != end_itr; ++i )
+    for( boost::filesystem::directory_iterator i( BasedirPath ); i != end_itr; ++i )
     {
       boost::smatch what;
       if( boost::regex_match( i->leaf(), what, my_filter ) ) return true;//continue;
