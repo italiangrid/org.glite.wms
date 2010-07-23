@@ -37,7 +37,7 @@ END LICENSE */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <libgen.h>
+//#include <libgen.h>
 #include <iostream>
 
 #include "boost/format.hpp"
@@ -50,6 +50,7 @@ END LICENSE */
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
 
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -132,15 +133,13 @@ glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::uti
   if( boost::filesystem::exists( tokPath ) )
     return false;
   
-//  string basedir = boost::filesystem::dirname( tokPath );
-  
-  string basedir = ::dirname( (char*)aJob.token_file( ).c_str( ) );
+  //string basedir = ::dirname( (char*)aJob.token_file( ).c_str( ) );
   
   const boost::regex my_filter( aJob.token_file( ) +"_" + "*" );
   boost::filesystem::directory_iterator end_itr;
-  boost::filesystem::path BasedirPath( basedir );
+  //boost::filesystem::path BasedirPath( basedir );
   try {
-    for( boost::filesystem::directory_iterator i( BasedirPath ); i != end_itr; ++i )
+    for( boost::filesystem::directory_iterator i( IceConfManager::instance()->getConfiguration()->ns()->sandbox_staging_path() ); i != end_itr; ++i )
     {
       boost::smatch what;
       if( boost::regex_match( i->leaf(), what, my_filter ) ) return true;//continue;
@@ -153,16 +152,6 @@ glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::uti
     return false;
   }
 
- 
-//   for( int k = 1; k<100; ++k ) {
-//     string resched_token_file = aJob.token_file( ) + "_" + to_string( (long int)k );
-//     
-//     
-//     
-//     if( boost::filesystem::exists( boost::filesystem::path( resched_token_file , boost::filesystem::native) ) )
-//       return true;
-//   }
-  
   return false; 
 }
 
