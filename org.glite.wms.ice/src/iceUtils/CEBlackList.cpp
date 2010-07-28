@@ -20,8 +20,8 @@ END LICENSE */
 
 
 #include "CEBlackList.h"
-#include "iceUtils.h"
-#include "algorithm"
+#include "IceUtils.h"
+#include <algorithm>
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -62,7 +62,7 @@ void CEBlackList::blacklist_endpoint( const std::string& endpoint )
          m_blacklist[ endpoint ] < curtime ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Blacklisting CE " << endpoint
-                        << " until " << utilities::time_t_to_string( curtime + m_max_blacklist_time )
+                        << " until " << IceUtils::time_t_to_string( curtime + m_max_blacklist_time )
                         );
         m_blacklist[endpoint] = curtime + m_max_blacklist_time;
     }
@@ -84,7 +84,7 @@ bool CEBlackList::is_blacklisted( const std::string& endpoint )
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "CE " << endpoint
                         << " is blacklisted until " 
-                        << utilities::time_t_to_string( m_blacklist[endpoint]) );
+                        << IceUtils::time_t_to_string( m_blacklist[endpoint]) );
         return true;        
     }
 }

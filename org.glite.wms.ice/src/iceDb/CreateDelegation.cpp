@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateDelegation.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -30,21 +29,21 @@ void db::CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
   string sqlcmd = string("INSERT INTO delegation (");
   sqlcmd	 += "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl";
   sqlcmd      += " ) VALUES (";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_digest );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_digest );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_creamurl );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_exptime) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_exptime) );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( util::utilities::to_string((long int)m_duration ) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_duration ) );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_delegid );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_delegid );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_userdn );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::utilities::withSQLDelimiters( ( m_renewable ? "1" : "0" ) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( ( m_renewable ? "1" : "0" ) );
   sqlcmd	 += ",";
-  sqlcmd	 +=glite::wms::ice::util::utilities::withSQLDelimiters(  m_myproxyurl );
+  sqlcmd	 +=glite::wms::ice::util::IceUtils::withSQLDelimiters(  m_myproxyurl );
   sqlcmd	 += ");";
   
   do_query( db, sqlcmd );

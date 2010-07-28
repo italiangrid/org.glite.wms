@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetTerminatedJobs.h"
-#include "iceUtils/iceUtils.h"
-#include "ice/IceCore.h"
+#include "iceUtils/IceUtils.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
@@ -38,20 +37,20 @@ void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException&
   sqlcmd += " FROM jobs WHERE " ;
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::CANCELLED ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::CANCELLED ));
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_OK ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::DONE_OK ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::DONE_FAILED ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::DONE_FAILED ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)api::job_statuses::ABORTED ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::ABORTED ) );
   sqlcmd += ";";
 
-  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, glite::wms::ice::util::IceUtils::fetch_jobs_callback, m_result );
 }

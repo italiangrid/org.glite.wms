@@ -36,8 +36,9 @@ END LICENSE */
 #include "iceUtils/Request_source_factory.h"
 #include "iceUtils/Request_source.h"
 #include "iceUtils/Request.h"
+#include "iceUtils/RequestParser.h"
 #include "iceUtils/DNProxyManager.h"
-#include "iceUtils/iceUtils.h"
+//#include "iceUtils/IceUtils.h"
 #include "iceUtils/CreamJob.h"
 
 #include "iceDb/GetJobsToPoll.h"
@@ -232,20 +233,6 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
      Query calls must be done with fromDate = 'now', because ICE is not
      intersted in old jobs/events that has been removed from its database
   */
-/*  bool db_empty = false;
-  {
-    list<string> fields;
-    fields.push_back( util::CreamJob::grid_jobid_field( ) );
-    db::GetFieldsCount counter( fields, list<pair<string, string> >(), "Ice::Ice");
-    db::Transaction tnx(false, false);
-    tnx.execute( &counter );
-    db_empty = ( counter.get_count() == 0 );
-  }
-  if( db_empty )
-    m_start_time = time(0)-600;
-  else
-    m_start_time = -1;
-*/
   m_start_time = time(0)-600;
 
   if(m_reqnum < 5) m_reqnum = 5;
@@ -275,9 +262,9 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
                         );
         exit(1);
     }
-
+/*
     try {
-      m_myname = util::utilities::getHostName();
+      m_myname = util::IceUtils::getHostName();
     } catch( runtime_error& ex ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
                         << "IceCore::CTOR() - Couldn't determine hostname: ["
@@ -285,7 +272,7 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
                         );
         exit(1);
     }
-
+*/
 }
 
 //____________________________________________________________________________
@@ -1101,19 +1088,27 @@ int IceCore::main_loop( void ) {
 			 << ">"  
 			 );
 
+	  util::RequestParser parser( *it );
+	  glite::wms::ice::util::CreamJob theJob;
+	  
 	  try {
-	    glite::wms::ice::util::CreamJob theJob;
+	    
 	    string cmdtype;
-	    glite::wms::ice::util::utilities::full_request_unparse( *it,
-								    &theJob,
-								    cmdtype );
+// 	    glite::wms::ice::util::utilities::full_request_unparse( *it,
+// 								    &theJob,
+// 								    cmdtype );
+
+	    parser.unparse_request( );
+	    
 
 	    glite::wms::ice::iceAbsCommand* cmd = 0;	
-	    if( boost::algorithm::iequals( cmdtype, "cancel" ) ) {
+	    if( boost::algorithm::iequals( parser.get_command( ), "cancel" ) ) {
 	      cmd = new glite::wms::ice::iceCommandCancel( *it ); 
 	      this->get_requests_pool()->add_request( cmd );
 	      continue;
 	    }
+	
+	    theJob = parser.get_job( );
 	
 	    glite::ce::cream_client_api::soap_proxy::VOMSWrapper V( theJob.user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 	    if( !V.IsValid( ) ) {
@@ -1154,11 +1149,11 @@ int IceCore::main_loop( void ) {
 	    theJob.set_user_dn( V.getDNFQAN() );
 	    theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
 
-	    if( boost::algorithm::iequals( cmdtype, "submit" ) ) {
+	    if( boost::algorithm::iequals( parser.get_command( ), "submit" ) ) {
 	      cmd = new glite::wms::ice::iceCommandSubmit( *it, theJob ); 
 	    }
 		
-	    if( boost::algorithm::iequals( cmdtype, "reschedule" ) ) {
+	    if( boost::algorithm::iequals( parser.get_command( ), "reschedule" ) ) {
 	      cmd = new glite::wms::ice::iceCommandReschedule( *it, theJob );
 	    }
 		

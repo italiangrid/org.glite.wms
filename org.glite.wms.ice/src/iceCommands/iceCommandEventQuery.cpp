@@ -35,7 +35,7 @@ END LICENSE */
 #include "iceUtils/iceLBLogger.h"
 #include "iceUtils/iceLBEvent.h"
 #include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 #include "iceDb/GetDbID.h"
 #include "iceDb/SetDbID.h"
@@ -230,7 +230,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 //    ostringstream from, to;
 //    from << thisEventID;
     
-    string from( util::utilities::to_string( (long long int)thisEventID ) );
+    string from( util::IceUtils::to_string( (long long int)thisEventID ) );
     
     string sdbid;
     time_t exec_time;
@@ -700,7 +700,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
    * The following if is for the feedback
    */
   if( !theJob.is_active( ) ) {
-    if( util::utilities::is_rescheduled_job( theJob ) ) {
+    if( util::IceUtils::is_rescheduled_job( theJob ) ) {
       removed = false;
       return;
     }

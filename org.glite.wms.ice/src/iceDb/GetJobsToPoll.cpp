@@ -18,7 +18,7 @@ limitations under the License.
 
 END LICENSE */
 
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "GetJobsToPoll.h"
 
 #include <cstdlib>
@@ -61,25 +61,25 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " AND ( ";
       sqlcmd += util::CreamJob::cream_jobid_field();
       sqlcmd += " != ";
-      sqlcmd += util::utilities::withSQLDelimiters( "" );
+      sqlcmd += util::IceUtils::withSQLDelimiters( "" );
       sqlcmd += " ) AND ( " ;
       sqlcmd += util::CreamJob::last_poller_visited_field();
       sqlcmd += " not null) " ;
       sqlcmd += " AND ";
       sqlcmd += util::CreamJob::cream_address_field();
       sqlcmd += "=";
-      sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+      sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
       sqlcmd += " AND ";
       sqlcmd += util::CreamJob::user_dn_field();
       sqlcmd += "=" ;
-      sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+      sqlcmd += util::IceUtils::withSQLDelimiters( m_userdn );
       sqlcmd += " ORDER BY ";
       sqlcmd += util::CreamJob::last_poller_visited_field();
       sqlcmd += " ASC";
       
       if( m_limit ) {
 	sqlcmd += " LIMIT ";
-	sqlcmd += util::utilities::to_string((unsigned long int)m_limit);
+	sqlcmd += util::IceUtils::to_string((unsigned long int)m_limit);
 	sqlcmd += ";";
       } else {
 	sqlcmd += ";";
@@ -95,39 +95,39 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " AND ( ";
       sqlcmd += util::CreamJob::cream_jobid_field();
       sqlcmd += " != ";
-      sqlcmd += util::utilities::withSQLDelimiters( "" );
+      sqlcmd += util::IceUtils::withSQLDelimiters( "" );
       sqlcmd += " ) AND (";
       sqlcmd += util::CreamJob::last_poller_visited_field();
       sqlcmd += " not null)"	;
       sqlcmd += " AND ";
       sqlcmd += util::CreamJob::user_dn_field();
       sqlcmd += "=" ;
-      sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+      sqlcmd += util::IceUtils::withSQLDelimiters( m_userdn );
       sqlcmd += " AND ";
       sqlcmd += util::CreamJob::cream_address_field();
       sqlcmd += "=" ;
-      sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+      sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
       sqlcmd += " AND (";
       sqlcmd += "       (  ( " ;
-      sqlcmd += util::utilities::to_string((unsigned long long int)t_now);
+      sqlcmd += util::IceUtils::to_string((unsigned long long int)t_now);
       sqlcmd += " - ";
       sqlcmd += util::CreamJob::last_seen_field();
       sqlcmd += " >= ";
-      sqlcmd += util::utilities::to_string((unsigned long int)threshold);
+      sqlcmd += util::IceUtils::to_string((unsigned long int)threshold);
       sqlcmd += " ) ) ";
       sqlcmd += "  OR   (  ( ";
-      sqlcmd += util::utilities::to_string((unsigned long long int)t_now);
+      sqlcmd += util::IceUtils::to_string((unsigned long long int)t_now);
       sqlcmd += " - ";
       sqlcmd += util::CreamJob::last_empty_notification_time_field();
       sqlcmd += " > ";
-      sqlcmd += util::utilities::to_string((unsigned long int)empty_threshold);
+      sqlcmd += util::IceUtils::to_string((unsigned long int)empty_threshold);
       sqlcmd += " ) )";
       sqlcmd += ") ORDER BY ";
       sqlcmd += util::CreamJob::last_poller_visited_field();
       sqlcmd += " ASC";
       if( m_limit ) {
 	sqlcmd += " LIMIT ";
-	sqlcmd += util::utilities::to_string((unsigned long int)m_limit);
+	sqlcmd += util::IceUtils::to_string((unsigned long int)m_limit);
 	sqlcmd += ";";
       } else {
 	sqlcmd += ";";
@@ -136,6 +136,6 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 
     list< vector<string> > jobs;
 
-  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, glite::wms::ice::util::IceUtils::fetch_jobs_callback, m_result );
 
 }

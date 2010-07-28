@@ -20,7 +20,6 @@ END LICENSE */
 
 #include "RemoveJobByUserDN.h"
 #include "iceUtils/CreamJob.h"
-#include "ice/IceCore.h"
 
 
 using namespace glite::wms::ice;
@@ -31,7 +30,7 @@ void db::RemoveJobByUserDN::execute( sqlite3* db ) throw ( DbOperationException&
   string sqlcmd("DELETE FROM jobs WHERE ");
   sqlcmd += util::CreamJob::user_dn_field() ;
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += ";";
 		  
   do_query( db, sqlcmd );

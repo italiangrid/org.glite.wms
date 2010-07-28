@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveLease.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -29,9 +28,9 @@ using namespace std;
 void db::RemoveLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("DELETE FROM lease WHERE userdn=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_userdn );
   sqlcmd += " AND creamurl=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

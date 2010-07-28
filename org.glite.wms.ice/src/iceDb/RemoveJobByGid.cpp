@@ -29,7 +29,7 @@ void db::RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
   string sqlcmd("DELETE FROM jobs WHERE ");
   sqlcmd += util::CreamJob::grid_jobid_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_gridjobid );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_gridjobid );
   sqlcmd += ";";
   
   do_query( db, sqlcmd );

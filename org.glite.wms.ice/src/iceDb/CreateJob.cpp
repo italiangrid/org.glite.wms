@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateJob.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 
 using namespace glite::wms::ice;

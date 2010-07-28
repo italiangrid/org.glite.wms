@@ -30,7 +30,7 @@ END LICENSE */
 #include "SourceProxyNotFoundException.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "IceConfManager.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 #include "CreamJob.h"
 
 namespace log4cpp {

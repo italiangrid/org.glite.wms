@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "InsertStat.h"
-#include "iceUtils/iceUtils.h"
-#include "ice/IceCore.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,11 +27,11 @@ using namespace std;
 void db::InsertStat::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("INSERT INTO stats (timestamp,ce_timestamp,status) VALUES (" );
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_timestamp  ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_timestamp  ));
   sqlcmd += ", ";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_ce_timestamp ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_ce_timestamp ));
   sqlcmd += ", ";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)m_status ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)m_status ));
   sqlcmd += ");";
 
   do_query( db, sqlcmd );

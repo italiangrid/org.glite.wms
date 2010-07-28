@@ -18,7 +18,7 @@ limitations under the License.
 
 END LICENSE */
 #include "iceThread.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 using namespace glite::wms::ice;
@@ -29,7 +29,7 @@ util::iceThread::iceThread( const std::string& name ) :
     m_running( false ),
     m_stopped( false )
 {
-  m_thread_id = util::utilities::to_string( (long long)this );//os.str();
+  m_thread_id = util::IceUtils::to_string( (long long)this );//os.str();
 }
 
 util::iceThread::iceThread( ) :
@@ -37,7 +37,7 @@ util::iceThread::iceThread( ) :
     m_running( false ),
     m_stopped( false )
 {
-  m_thread_id = util::utilities::to_string( (long long) this ) ;
+  m_thread_id = util::IceUtils::to_string( (long long) this ) ;
 }
 
 void util::iceThread::operator()()

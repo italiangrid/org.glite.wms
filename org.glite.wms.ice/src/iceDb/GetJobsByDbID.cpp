@@ -18,7 +18,7 @@ limitations under the License.
 
 END LICENSE */
 
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "iceUtils/CreamJob.h"
 #include "GetJobsByDbID.h"
 
@@ -38,9 +38,9 @@ void db::GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += " not null) AND ( ";
   sqlcmd += util::CreamJob::cream_dbid_field();
   sqlcmd += "=";
-  sqlcmd += util::utilities::withSQLDelimiters(util::utilities::to_string((unsigned long long int)m_dbid ));
+  sqlcmd += util::IceUtils::withSQLDelimiters(util::IceUtils::to_string((unsigned long long int)m_dbid ));
   sqlcmd += ") ;";
     
-  do_query( db, sqlcmd, util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, util::IceUtils::fetch_jobs_callback, m_result );
 
 }

@@ -41,7 +41,6 @@ END LICENSE */
 #include "iceDb/Transaction.h"
 #include "iceUtils/CreamProxyMethod.h"
 #include "iceUtils/IceConfManager.h"
-#include "iceUtils/iceUtils.h"
 
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"

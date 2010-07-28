@@ -83,7 +83,7 @@ END LICENSE */
  *
  */
 #include "ice/IceCore.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 #include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -308,10 +308,10 @@ print "\t\t    string sql;\n";
 @values = ();
 foreach ( @members ) {
 
-  print "\t\t    sql += utilities::withSQLDelimiters( utilities::to_string(m_$_) );\n";
+  print "\t\t    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_$_) );\n";
   print "\t\t    sql += \",\";\n";
 
-  push @values, " utilities::withSQLDelimiters( utilities::to_string(m_$_) ) ";
+  push @values, " IceUtils::withSQLDelimiters( IceUtils::to_string(m_$_) ) ";
 }
 print "\t\t    sql = sql.substr(0, sql.length() -1 );\n";
 print "\t\t    return sql;\n";
@@ -350,7 +350,7 @@ for($i = 0; $i < scalar @data_members; $i++) {
   print "\t\t    if(m_changed_$pieces[2]) {\n";
   print "\t\t      _sql += this->$pieces[2]_field( ); \n";
   print "\t\t      _sql += \"=\";\n";
-  print "\t\t      _sql += utilities::withSQLDelimiters( utilities::to_string( this->$pieces[2]( ) ) );\n";
+  print "\t\t      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->$pieces[2]( ) ) );\n";
   print "\t\t      _sql += \",\";\n\n";
   print "\t\t    }\n";
 }
@@ -359,7 +359,7 @@ print "\t\t    if( boost::ends_with( _sql, \",\") ) { _sql = _sql.substr(0, _sql
 print "\t\t    _sql += \" WHERE \";\n";
 print "\t\t    _sql += this->grid_jobid_field();\n";
 print "\t\t    _sql += \"=\";\n";
-print "\t\t    _sql += utilities::withSQLDelimiters( this->grid_jobid( ) );\n";
+print "\t\t    _sql += IceUtils::withSQLDelimiters( this->grid_jobid( ) );\n";
 print "\t\t    _sql += \";\";\n";
 print "\t\t    target = string(\"UPDATE jobs SET \") + _sql;\n";
 print "\t\t  }\n";

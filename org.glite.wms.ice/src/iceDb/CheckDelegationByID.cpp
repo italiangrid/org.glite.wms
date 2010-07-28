@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "CheckDelegationByID.h"
-#include "iceUtils/iceUtils.h"
-#include "ice/IceCore.h"
+#include "iceUtils/IceUtils.h"
 
 #include <vector>
 
@@ -47,7 +46,7 @@ namespace { // begin local namespace
 void db::CheckDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = "SELECT delegationid FROM delegation WHERE delegationid=";
-  sqlcmd +=  glite::wms::ice::util::utilities::withSQLDelimiters( m_delegid );
+  sqlcmd +=  glite::wms::ice::util::IceUtils::withSQLDelimiters( m_delegid );
   sqlcmd += ";";
 
   string tmp;

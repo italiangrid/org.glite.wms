@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateProxyCounterByDN.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,11 +27,11 @@ using namespace std;
 void db::UpdateProxyCounterByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("UPDATE proxy SET counter=" );
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( m_counter ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( m_counter ) );
   sqlcmd += " WHERE userdn=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND myproxyurl=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_myproxy );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_myproxy );
   sqlcmd += ";";
   
   do_query( db, sqlcmd );

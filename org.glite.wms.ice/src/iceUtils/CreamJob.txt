@@ -132,7 +132,7 @@ METHOD:void,set_jdl,( const std::string& j, const std::string& cmdtype )
   // "last" sequence code as the job wrapper will need to log
   // the "really running" event.
   //if( boost::algorithm::iequals( cmdtype, "submit" ) )
-  glite::wms::ice::util::utilities::creamJdlHelper( (const string&)this->jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
+  glite::wms::ice::util::IceUtils::cream_jdl_helper( (const string&)this->jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
   
   // release of Classad-mutex
   m_changed_jdl = true;

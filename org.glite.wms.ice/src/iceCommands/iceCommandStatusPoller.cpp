@@ -22,7 +22,6 @@ END LICENSE */
 // ICE Headers
 #include "iceCommandStatusPoller.h"
 #include "iceCommandLBLogging.h"
-#include "iceUtils/subscriptionManager.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/CreamProxyMethod.h"
@@ -33,7 +32,7 @@ END LICENSE */
 #include "iceUtils/iceLBEvent.h"
 #include "iceUtils/iceLBEvent.h"
 #include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/RemoveJobByGid.h"
@@ -456,7 +455,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
           tmp_job.reset_change_flags( );
 	  
 	  if( !tmp_job.is_active( ) ) {
-    	    if( util::utilities::is_rescheduled_job( tmp_job ) ) {
+    	    if( util::IceUtils::is_rescheduled_job( tmp_job ) ) {
       	      return;
     	    }
   	  }
@@ -546,7 +545,7 @@ void iceCommandStatusPoller::execute( const std::string& tid ) throw()
     //Ice::instance()->delete_jobs_by_dn( userdn );
     return;//continue;
   }  
-  if( !(utilities::isvalid( proxy ).first) ) {
+  if( !(IceUtils::is_valid_proxy( proxy ).first) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		   << "Proxy ["
 		   << proxy << "] for user ["

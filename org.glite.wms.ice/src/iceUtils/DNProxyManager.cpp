@@ -20,7 +20,7 @@ END LICENSE */
 #include "DelegationManager.h"
 #include "DNProxyManager.h"
 #include "IceConfManager.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
@@ -150,7 +150,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  string localProxy = iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( dn ) + ".proxy";
+  string localProxy = iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + IceUtils::compressed_string( dn ) + ".proxy";
   
   
   bool found = false;
@@ -197,7 +197,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << dn << "] not found. Inserting the new proxy ["
 		   << prx << "]. Will be Copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << utilities::time_t_to_string(exptime) << "]"
+		   << IceUtils::time_t_to_string(exptime) << "]"
 		   );
     
     try {
@@ -241,7 +241,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << utilities::time_t_to_string(exptime) << "]"
+		   << IceUtils::time_t_to_string(exptime) << "]"
 		   );
     try {
       db::CreateProxyField creator( dn, "", localProxy, exptime, 0,"DNProxyManager::setUserProxyIfLonger_Legacy" );
@@ -288,7 +288,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
-		   << utilities::time_t_to_string(newT) << "]"
+		   << IceUtils::time_t_to_string(newT) << "]"
 		   );
 
     try {
@@ -857,5 +857,5 @@ iceUtil::DNProxyManager::make_betterproxy_path( const string& dn,
 						const string& myproxy )
   throw()
 {
-  return iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + utilities::compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
+  return iceUtil::IceConfManager::instance()->getConfiguration()->ice()->persist_dir() + "/" + IceUtils::compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

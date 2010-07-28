@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "iceCommandLBLogging.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
@@ -77,7 +77,7 @@ string util::iceCommandLBLogging::get_grid_job_id( ) const
   string randid( "" );
   struct timeval T;
   gettimeofday( &T, 0 );
-  randid += util::utilities::to_string( T.tv_sec ) + "." + util::utilities::to_string( T.tv_usec );
+  randid += util::IceUtils::to_string( T.tv_sec ) + "." + util::IceUtils::to_string( T.tv_usec );
   return randid;
 }
 
@@ -91,7 +91,7 @@ void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
     /**
      * The following if is for the feedback
      */
-    if( util::utilities::is_rescheduled_job( *jobit ) )
+    if( util::IceUtils::is_rescheduled_job( *jobit ) )
       continue;
       
     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );

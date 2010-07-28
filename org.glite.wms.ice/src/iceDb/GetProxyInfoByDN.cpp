@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetProxyInfoByDN.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 #include <vector>
 
@@ -49,7 +48,7 @@ namespace { // begin local namespace
 void db::GetProxyInfoByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT proxyfile,exptime,counter FROM proxy WHERE userdn=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_userdn );
   sqlcmd += " ORDER BY exptime DESC LIMIT 1;";
 
   vector<string> tmp;

@@ -18,7 +18,7 @@ limitations under the License.
 
 END LICENSE */
 
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "GetAllJobs.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -36,31 +36,31 @@ void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd += " FROM jobs WHERE ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::REGISTERED ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::REGISTERED ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::PENDING ));
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::PENDING ));
     sqlcmd += " OR " ;
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::IDLE ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::IDLE ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::RUNNING ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::RUNNING ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::REALLY_RUNNING ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::REALLY_RUNNING ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string((unsigned long int)api::job_statuses::HELD) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::HELD) );
     sqlcmd += " AND ";
     sqlcmd += util::CreamJob::killed_byice_field();
     sqlcmd += "=";
-    sqlcmd += util::utilities::withSQLDelimiters( "0" );
+    sqlcmd += util::IceUtils::withSQLDelimiters( "0" );
     }
   else {
     sqlcmd += "SELECT ";
@@ -69,14 +69,14 @@ void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
   }
   if( m_limit > 0 ) {
   	sqlcmd += " LIMIT ";
-	sqlcmd += util::utilities::to_string((unsigned long int )m_limit);
+	sqlcmd += util::IceUtils::to_string((unsigned long int )m_limit);
 	sqlcmd += " OFFSET ";
-	sqlcmd += util::utilities::to_string((unsigned long int)m_offset);
+	sqlcmd += util::IceUtils::to_string((unsigned long int)m_offset);
 	sqlcmd += ";"; 
   } else {
   	sqlcmd += ";";
   }
 
-  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, glite::wms::ice::util::IceUtils::fetch_jobs_callback, m_result );
 
 }

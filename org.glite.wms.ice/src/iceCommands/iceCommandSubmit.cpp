@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "iceUtils/Request.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "ice/IceCore.h"
 #include "iceUtils/iceLBEvent.h"
 #include "iceUtils/iceLBLogger.h"
@@ -124,7 +124,7 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request,
 				    const iceUtil::CreamJob& aJob )
   : iceAbsCommand( "iceCommandSubmit", "" ),
     m_theIce( IceCore::instance() ),
-    m_myname( m_theIce->getHostName() ),
+    m_myname( IceUtils::get_host_name( ) ),
     m_theJob( aJob ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_configuration( iceUtil::IceConfManager::instance()->getConfiguration() ),

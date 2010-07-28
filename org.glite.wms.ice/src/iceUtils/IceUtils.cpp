@@ -18,11 +18,12 @@ limitations under the License.
 
 END LICENSE */
 
-#include "iceUtils.h"
-#include "CreamJob.h"
-#include "IceConfManager.h"
-#include "ice/IceCore.h"
 #include "Request.h"
+#include "IceUtils.h"
+#include "CreamJob.h"
+#include "ice/IceCore.h"
+#include "IceConfManager.h"
+
 
 #include <cstdlib>
 #include <unistd.h>
@@ -37,7 +38,6 @@ END LICENSE */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-//#include <libgen.h>
 #include <iostream>
 
 #include "boost/format.hpp"
@@ -65,12 +65,14 @@ using namespace std;
 namespace api_util   = glite::ce::cream_client_api::util;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 
-boost::recursive_mutex  glite::wms::ice::util::utilities::s_mutex_tmpname;
-string                  glite::wms::ice::util::utilities::s_tmpname = "";
+boost::recursive_mutex  glite::wms::ice::util::IceUtils::s_mutex_tmpname;
+boost::recursive_mutex  glite::wms::ice::util::IceUtils::s_mutex_myname;
+string                  glite::wms::ice::util::IceUtils::s_tmpname = "";
+string                  glite::wms::ice::util::IceUtils::s_myname = "";
 
 //______________________________________________________________________
 int
-glite::wms::ice::util::utilities::fetch_jobs_callback(void *param, int argc, char **argv, char **azColName)
+glite::wms::ice::util::IceUtils::fetch_jobs_callback(void *param, int argc, char **argv, char **azColName)
 {
     list<glite::wms::ice::util::CreamJob>* jobs = (list<glite::wms::ice::util::CreamJob>*)param;
     
@@ -124,7 +126,7 @@ glite::wms::ice::util::utilities::fetch_jobs_callback(void *param, int argc, cha
 
 //______________________________________________________________________
 bool 
-glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::util::CreamJob& aJob)
+glite::wms::ice::util::IceUtils::is_rescheduled_job( const glite::wms::ice::util::CreamJob& aJob)
 {
   glite::ce::cream_client_api::util::scoped_timer T( "utilities::is_rescheduled_job" );
   
@@ -156,85 +158,85 @@ glite::wms::ice::util::utilities::is_rescheduled_job( const glite::wms::ice::uti
 }
 
 //______________________________________________________________________
-void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
-							    CreamJob* theJob,
-							    std::string& commandStr )
-  throw(ClassadSyntax_ex&, JobRequest_ex&)
-{
-  string protocolStr;
-  string jdl;
-  {// Classad-mutex protected region  
-    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
-	    
-    classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
-	    
-    if (!rootAD) {
-      throw ClassadSyntax_ex( boost::str( boost::format( "full_request_unparse: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
-    }
-	    
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
-	    
-    // Parse the "command" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-      throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
-    }
-    boost::trim_if( commandStr, boost::is_any_of("\"") );
-	    
-    if ( !boost::algorithm::iequals( commandStr, "submit" ) 
-         && !boost::algorithm::iequals( commandStr, "cancel" )
-	 && !boost::algorithm::iequals( commandStr, "reschedule" )
-	 ) 
-    {
-      throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
-    }
-	    
-    if( boost::algorithm::iequals( commandStr, "cancel" ) )
-      return;
- 
-    // Parse the "version" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
-      throw JobRequest_ex("attribute \"Protocol\" not found or is not a string");
-    }
-    // Check if the version is exactly 1.0.0
-    if ( protocolStr.compare("1.0.0") ) {
-      throw JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
-    }
-	    
-    classad::ClassAd *argumentsAD = 0; // no need to free this
-    // Parse the "arguments" attribute
-    if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
-      throw JobRequest_ex("attribute 'arguments' not found or is not a classad");
-    }
-
-    classad::ClassAd *adAD = 0; // no need to free this
-    if( boost::algorithm::iequals( commandStr, "submit" ) || boost::algorithm::iequals( commandStr, "reschedule" ) ) {
-      // Look for "JobAd" attribute inside "arguments"
-      if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-	throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
-      }
-    }
-	    
-    // initializes the m_jdl attribute
-    classad::ClassAdUnParser unparser;
-    unparser.Unparse( jdl, argumentsAD->Lookup( "jobad" ) );
-	    
-  } // end classad-mutex protected regions
-	  
-  try {
-    theJob->set_jdl( jdl, commandStr ); // this puts another mutex
-    theJob->set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
-  } catch( ClassadSyntax_ex& ex ) {
-	    
-    CREAM_SAFE_LOG(
-		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-		   << "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
-		   << "] due to classad excaption: " << ex.what()
-			   
-		   );
-    throw( ClassadSyntax_ex( ex.what() ) );
-  }
-} // full_request_unparse
+// void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
+// 							    CreamJob* theJob,
+// 							    std::string& commandStr )
+//   throw(ClassadSyntax_ex&, JobRequest_ex&)
+// {
+//   string protocolStr;
+//   string jdl;
+//   {// Classad-mutex protected region  
+//     boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
+// 	    
+//     classad::ClassAdParser parser;
+//     classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
+// 	    
+//     if (!rootAD) {
+//       throw ClassadSyntax_ex( boost::str( boost::format( "full_request_unparse: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
+//     }
+// 	    
+//     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
+// 	    
+//     // Parse the "command" attribute
+//     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
+//       throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
+//     }
+//     boost::trim_if( commandStr, boost::is_any_of("\"") );
+// 	    
+//     if ( !boost::algorithm::iequals( commandStr, "submit" ) 
+//          && !boost::algorithm::iequals( commandStr, "cancel" )
+// 	 && !boost::algorithm::iequals( commandStr, "reschedule" )
+// 	 ) 
+//     {
+//       throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
+//     }
+// 	    
+//     if( boost::algorithm::iequals( commandStr, "cancel" ) )
+//       return;
+//  
+//     // Parse the "version" attribute
+//     if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
+//       throw JobRequest_ex("attribute \"Protocol\" not found or is not a string");
+//     }
+//     // Check if the version is exactly 1.0.0
+//     if ( protocolStr.compare("1.0.0") ) {
+//       throw JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
+//     }
+// 	    
+//     classad::ClassAd *argumentsAD = 0; // no need to free this
+//     // Parse the "arguments" attribute
+//     if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
+//       throw JobRequest_ex("attribute 'arguments' not found or is not a classad");
+//     }
+// 
+//     classad::ClassAd *adAD = 0; // no need to free this
+//     if( boost::algorithm::iequals( commandStr, "submit" ) || boost::algorithm::iequals( commandStr, "reschedule" ) ) {
+//       // Look for "JobAd" attribute inside "arguments"
+//       if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
+// 	throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+//       }
+//     }
+// 	    
+//     // initializes the m_jdl attribute
+//     classad::ClassAdUnParser unparser;
+//     unparser.Unparse( jdl, argumentsAD->Lookup( "jobad" ) );
+// 	    
+//   } // end classad-mutex protected regions
+// 	  
+//   try {
+//     theJob->set_jdl( jdl, commandStr ); // this puts another mutex
+//     theJob->set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
+//   } catch( ClassadSyntax_ex& ex ) {
+// 	    
+//     CREAM_SAFE_LOG(
+// 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+// 		   << "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
+// 		   << "] due to classad excaption: " << ex.what()
+// 			   
+// 		   );
+//     throw( ClassadSyntax_ex( ex.what() ) );
+//   }
+// } // full_request_unparse
 
 	
 //____________________________________________________________________________
@@ -242,8 +244,8 @@ void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
    Remember to call this method inside a mutex-protected region
    'cause classad is not thread-safe
 */
-void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
-						       string& newjdl ) 
+void glite::wms::ice::util::IceUtils::cream_jdl_helper( const string& oldJdl,
+						        string& newjdl ) 
   throw( ClassadSyntax_ex& )
 { 
   const glite::wms::common::configuration::WMConfiguration* WM_conf = IceConfManager::instance()->getConfiguration()->wm();
@@ -257,7 +259,7 @@ void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
 	  
   boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
 
-  classad_safe_ptr->InsertAttr( "WMSHostname", IceCore::instance()->getHostName() );
+  classad_safe_ptr->InsertAttr( "WMSHostname", get_host_name() );
 
   string ceid;
   //if( boost::algorithm::iequals( commandStr, "submit" ) ) {
@@ -283,8 +285,8 @@ void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
 
 	  
 	  
-  glite::wms::ice::util::utilities::updateIsbList( classad_safe_ptr.get() );
-  glite::wms::ice::util::utilities::updateOsbList( classad_safe_ptr.get() );
+  glite::wms::ice::util::IceUtils::update_isb_list( classad_safe_ptr.get() );
+  glite::wms::ice::util::IceUtils::update_osb_list( classad_safe_ptr.get() );
 	  
 #ifdef PIPPO  
   // Set CERequirements
@@ -337,12 +339,12 @@ void glite::wms::ice::util::utilities::creamJdlHelper( const string& oldJdl,
 	
 
 //______________________________________________________________________________
-int glite::wms::ice::util::utilities::updateIsbList( classad::ClassAd* jdl )
+int glite::wms::ice::util::IceUtils::update_isb_list( classad::ClassAd* jdl )
 { 
   // synchronized block because the caller is Classad-mutex synchronized
   const static char* method_name = "iceCommandSubmit::updateIsbList() - ";
   string default_isbURI = "gsiftp://";
-  default_isbURI.append( glite::wms::ice::IceCore::instance()->getHostName() );
+  default_isbURI.append( get_host_name() );
   default_isbURI.push_back( '/' );
   string isbPath;
   if ( jdl->EvaluateAttrString( "InputSandboxPath", isbPath ) ) {
@@ -428,16 +430,16 @@ int glite::wms::ice::util::utilities::updateIsbList( classad::ClassAd* jdl )
   }
   return 0;
 }
-
-//______________________________________________________________________________
-int glite::wms::ice::util::utilities::updateOsbList( classad::ClassAd* jdl )
+// 
+// //______________________________________________________________________________
+int glite::wms::ice::util::IceUtils::update_osb_list( classad::ClassAd* jdl )
 {
   // If no OutputSandbox attribute is defined, then nothing has to be done
   if ( 0 == jdl->Lookup( "OutputSandbox" ) )
     return 1;
 	  
   string default_osbdURI = "gsiftp://";
-  default_osbdURI.append( glite::wms::ice::IceCore::instance()->getHostName() );
+  default_osbdURI.append( get_host_name() );
   default_osbdURI.push_back( '/' );
   string osbPath;
   if ( jdl->EvaluateAttrString( "OutputSandboxPath", osbPath ) ) {
@@ -523,9 +525,9 @@ int glite::wms::ice::util::utilities::updateOsbList( classad::ClassAd* jdl )
   return 0;
 }
 
-//-----------------------------------------------------------------------------
-// URI utility class
-//-----------------------------------------------------------------------------
+// //-----------------------------------------------------------------------------
+// // URI utility class
+// //-----------------------------------------------------------------------------
 glite::wms::ice::util::pathName::pathName( const string& p ) :
   //m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
   m_fullName( p ),
@@ -580,7 +582,7 @@ glite::wms::ice::util::pathName::pathName( const string& p ) :
 }
 
 //______________________________________________________________________________
-pair<bool, time_t> glite::wms::ice::util::utilities::isgood( const std::string& proxyfile ) throw() {
+pair<bool, time_t> glite::wms::ice::util::IceUtils::is_good_proxy( const std::string& proxyfile ) throw() {
   X509* x;
   try {
     x = glite::ce::cream_client_api::certUtil::read_BIO(proxyfile);
@@ -600,7 +602,7 @@ pair<bool, time_t> glite::wms::ice::util::utilities::isgood( const std::string& 
 }
 	
 //______________________________________________________________________________
-pair<bool, time_t> glite::wms::ice::util::utilities::isvalid( const std::string& proxyfile ) throw() {
+pair<bool, time_t> glite::wms::ice::util::IceUtils::is_valid_proxy( const std::string& proxyfile ) throw() {
 	  
   X509* x;
   try {
@@ -640,7 +642,7 @@ pair<bool, time_t> glite::wms::ice::util::utilities::isvalid( const std::string&
  * "fea00190"
  */ 
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::bintostring( unsigned char* buf, size_t len ) {
+string glite::wms::ice::util::IceUtils::bin_to_string( unsigned char* buf, size_t len ) {
   string result;
   const char alpha[] = "0123456789abcdef";
 	  
@@ -652,7 +654,7 @@ string glite::wms::ice::util::utilities::bintostring( unsigned char* buf, size_t
 };
 	
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
+string glite::wms::ice::util::IceUtils::compute_sha1_digest( const string& proxyfile ) throw(runtime_error&) {
   static const char* method_name = "util::computeSHA1Digest() - ";
 	  
   unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
@@ -681,12 +683,16 @@ string glite::wms::ice::util::utilities::computeSHA1Digest( const string& proxyf
 	  
   close( fd );
 	  
-  return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+  return bin_to_string( bin_sha1_digest, SHA_DIGEST_LENGTH );
 }
 	
 //________________________________________________________________________
-string glite::wms::ice::util::utilities::getHostName( void ) throw ( runtime_error& )
+string glite::wms::ice::util::IceUtils::get_host_name( void ) throw ( runtime_error& )
 {
+  boost::recursive_mutex::scoped_lock M_classad( s_mutex_myname );
+  if( !s_myname.empty() )
+    return s_myname;
+
   char name[256];
 	  
   if ( ::gethostname(name, 256) == -1 ) { // FIXME: is it thread safe ?
@@ -715,7 +721,7 @@ string glite::wms::ice::util::utilities::getHostName( void ) throw ( runtime_err
 			   +string(strerror(errno)));
     }
 	  
-  string myname = "UnresolvedHost";
+  s_myname = "UnresolvedHost";
 	  
   for (res = result; res != NULL; res = res->ai_next)
     {
@@ -732,13 +738,13 @@ string glite::wms::ice::util::utilities::getHostName( void ) throw ( runtime_err
       if (*hostname)
 	{
 	  //printf("hostname: %s\n", hostname);
-	  myname = hostname;
+	  s_myname = hostname;
 	  break;
 	}
 	      
     }
 	  
-  if( myname == "UnresolvedHost" )
+  if( s_myname == "UnresolvedHost" )
     {
       freeaddrinfo(result);
       throw runtime_error( string( "Could not resolve local hostname for an unknown reason"));
@@ -748,17 +754,17 @@ string glite::wms::ice::util::utilities::getHostName( void ) throw ( runtime_err
 	  
   //cout << "getHostName() - RETURNING myname=[" << myname << "]"<<endl;
 	  
-  return myname;
+  return s_myname;
 	  
 }
 	
 //________________________________________________________________________
-string glite::wms::ice::util::utilities::getURL( void ) throw ( runtime_error& )
+string glite::wms::ice::util::IceUtils::get_url( void ) throw ( runtime_error& )
 {
   string tmp_myname, tmp_prefix;
 	  
   try {
-    tmp_myname = getHostName();        
+    tmp_myname = get_host_name();        
   } catch(runtime_error& ex) {
     throw ex;
   }
@@ -773,7 +779,7 @@ string glite::wms::ice::util::utilities::getURL( void ) throw ( runtime_error& )
 }
 	
 //________________________________________________________________________
-string glite::wms::ice::util::utilities::time_t_to_string( time_t tval ) {
+string glite::wms::ice::util::IceUtils::time_t_to_string( time_t tval ) {
   char buf[26]; // ctime_r wants a buffer of at least 26 bytes
   ctime_r( &tval, buf );
   if(buf[strlen(buf)-1] == '\n')
@@ -815,7 +821,7 @@ namespace {
 };
 	
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::join(const list<string>& array, const string& sep )
+string glite::wms::ice::util::IceUtils::join(const list<string>& array, const string& sep )
 {
   list<string>::const_iterator sequence = array.begin( );
   const list<string>::const_iterator end_sequence = array.end( );
@@ -842,7 +848,7 @@ string glite::wms::ice::util::utilities::join(const list<string>& array, const s
 }
 	
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::canonizeString( const string& aString ) throw()
+string glite::wms::ice::util::IceUtils::canonizeString( const string& aString ) throw()
 {
   canonizerObject c;
   c = for_each(aString.begin(), aString.end(), c);
@@ -850,7 +856,7 @@ string glite::wms::ice::util::utilities::canonizeString( const string& aString )
 }
 	
 //______________________________________________________________________________
-string glite::wms::ice::util::utilities::compressed_string( const string& name ) {
+string glite::wms::ice::util::IceUtils::compressed_string( const string& name ) {
   string result;
   unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
   const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
@@ -869,7 +875,7 @@ string glite::wms::ice::util::utilities::compressed_string( const string& name )
 	
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( short int s ) {
+glite::wms::ice::util::IceUtils::to_string( short int s ) {
 
   return boost::str( boost::format( "%1%" ) % s );
 /*
@@ -882,7 +888,7 @@ glite::wms::ice::util::utilities::to_string( short int s ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( unsigned short int s ) {
+glite::wms::ice::util::IceUtils::to_string( unsigned short int s ) {
 
   return boost::str( boost::format( "%1%" ) % s );
 /*
@@ -895,7 +901,7 @@ glite::wms::ice::util::utilities::to_string( unsigned short int s ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( long int l ) {
+glite::wms::ice::util::IceUtils::to_string( long int l ) {
 
   return boost::str( boost::format( "%1%" ) % l );
 /*
@@ -908,7 +914,7 @@ glite::wms::ice::util::utilities::to_string( long int l ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( unsigned long int l ) {
+glite::wms::ice::util::IceUtils::to_string( unsigned long int l ) {
 
   return boost::str( boost::format( "%1%" ) % l );
 /*
@@ -921,7 +927,7 @@ glite::wms::ice::util::utilities::to_string( unsigned long int l ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( long long int l ) {
+glite::wms::ice::util::IceUtils::to_string( long long int l ) {
 
   return boost::str( boost::format( "%1%" ) % l );
 /*
@@ -934,7 +940,7 @@ glite::wms::ice::util::utilities::to_string( long long int l ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( unsigned long long int l ) {
+glite::wms::ice::util::IceUtils::to_string( unsigned long long int l ) {
 
   return boost::str( boost::format( "%1%" ) % l );
 /*
@@ -947,7 +953,7 @@ glite::wms::ice::util::utilities::to_string( unsigned long long int l ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( float f ) {
+glite::wms::ice::util::IceUtils::to_string( float f ) {
 
   return boost::str( boost::format( "%1%" ) % f );
 /*
@@ -960,7 +966,7 @@ glite::wms::ice::util::utilities::to_string( float f ) {
 
 //------------------------------------------------------------------------------
 string
-glite::wms::ice::util::utilities::to_string( bool b ) {
+glite::wms::ice::util::IceUtils::to_string( bool b ) {
 
   return ( b ? "1" : "0" );
   //	  if(b) return "true";

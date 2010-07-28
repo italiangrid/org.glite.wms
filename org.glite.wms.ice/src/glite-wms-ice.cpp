@@ -44,7 +44,6 @@ END LICENSE */
 #include "iceCommands/iceCommandFatal_ex.h"
 #include "iceCommands/iceCommandTransient_ex.h"
 #include "iceUtils/IceConfManager.h"
-#include "iceUtils/iceUtils.h"
 #include "iceThreads/iceThreadPool.h"
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/Request.h"
@@ -265,9 +264,7 @@ int main(int argc, char*argv[])
 		   );
     cout << "Logfile is [" << logfile << "]" << endl;
 
-    
     signal(SIGPIPE, sigpipe_handle);
-
     signal(SIGUSR1, sigusr1_handle);
     signal(SIGUSR2, sigusr2_handle);
 
@@ -316,22 +313,13 @@ int main(int argc, char*argv[])
     iceManager->startPoller( );  
     iceManager->startJobKiller( );
 
-    /*
-     *
-     * Starts the thread pool
-     *
-     */
-    //    iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
-    //iceUtil::iceThreadPool* threadPool_ice_cmds( iceManager->get_ice_commands_pool() ); 
-    //iceUtil::iceThreadPool* threadPool_lb_cmds( iceManager->get_ice_lblog_pool( ) );
+
     /*****************************************************************************
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
      * removes requests from input filelist.
      ****************************************************************************/
      
-
-
     return iceManager->main_loop( );
    
-    return 0;
+    //return 0;
 }

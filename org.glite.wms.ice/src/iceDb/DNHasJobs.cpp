@@ -20,7 +20,6 @@ END LICENSE */
 
 #include "DNHasJobs.h"
 #include "iceUtils/CreamJob.h"
-#include "ice/IceCore.h"
 
 #include <cstdlib>
 
@@ -54,11 +53,11 @@ void db::DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += util::CreamJob::user_dn_field( );
   sqlcmd += "=";
  
-  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND ";
   sqlcmd += util::CreamJob::cream_address_field( ) ;
   sqlcmd += "=";
-  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_ce );
+  sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_ce );
   sqlcmd += " LIMIT 1";
 
   do_query( db, sqlcmd, fetch_jobs_callback, &m_found );

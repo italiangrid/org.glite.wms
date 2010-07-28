@@ -46,7 +46,7 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 // #include "jobCache.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 
 //#include <netdb.h>
 
@@ -136,7 +136,7 @@ iceLBContext::iceLBContext( void ) :
 
     try {
       if( s_localHostName.empty() ) {
-        el_s_localhost_name = utilities::getHostName();  
+        el_s_localhost_name = IceUtils::get_host_name();  
         s_localHostName = el_s_localhost_name;
       } else {
         el_s_localhost_name = s_localHostName;

@@ -30,7 +30,7 @@ END LICENSE */
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
-#include "subscriptionManager.h"
+//#include "subscriptionManager.h"
 #include "DNProxyManager.h"
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
@@ -230,8 +230,8 @@ void iceCommandUpdateStatus::execute( const std::string& tid) throw( )
 		iceSubscription subscription;
 		string cemon_url;
 		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
-		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_cream_address(), cemon_url);
-		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.get_user_dn(), cemon_url, subscription );
+		//subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_cream_address(), cemon_url);
+		//subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.get_user_dn(), cemon_url, subscription );
                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
 		
                 // Then, push the pair (subs_id, cemondn) into the

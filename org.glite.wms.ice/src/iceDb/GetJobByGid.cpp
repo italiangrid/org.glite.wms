@@ -20,7 +20,6 @@ END LICENSE */
 
 #include "GetJobByGid.h"
 #include "iceUtils/CreamJob.h"
-#include "ice/IceCore.h"
 
 #include <sstream>
 
@@ -55,7 +54,7 @@ void db::GetJobByGid::execute( sqlite3* db ) throw ( db::DbOperationException& )
   sqlcmd += " FROM jobs WHERE ";
   sqlcmd += util::CreamJob::grid_jobid_field() ;
   sqlcmd += "=" ;
-  sqlcmd += util::utilities::withSQLDelimiters( m_gridjobid );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_gridjobid );
   sqlcmd += ";";
     
   vector<string> fields;

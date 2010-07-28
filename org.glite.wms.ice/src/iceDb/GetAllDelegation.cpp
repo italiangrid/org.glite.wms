@@ -58,7 +58,7 @@ void db::GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
   string sqlcmd;
   if( m_only_renewable) {
     sqlcmd += "SELECT * FROM delegation WHERE renewable=";
-    sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( "1" );
+    sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( "1" );
     sqlcmd += ";";
   }
   else

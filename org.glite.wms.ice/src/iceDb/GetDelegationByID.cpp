@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetDelegationByID.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 #include <sstream>
 #include <vector>
@@ -55,7 +55,7 @@ namespace { // begin local namespace
 void db::GetDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd( "SELECT * FROM delegation WHERE delegationid=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_id );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_id );
   sqlcmd += ";";
 
   vector<string> tmp;

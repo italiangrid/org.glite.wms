@@ -25,7 +25,7 @@ END LICENSE */
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/IceConfManager.h"
 #include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "iceDb/GetJobsByDNMyProxy.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
@@ -140,7 +140,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			    << "Delegation ID ["
 			    << thisDelegID << "] will expire in ["
 			    << remainingTime << "] seconds (on ["
-			    << utilities::time_t_to_string(thisExpTime) << "]). Duration is ["
+			    << IceUtils::time_t_to_string(thisExpTime) << "]). Duration is ["
 			    << thisDuration << "] seconds. Will NOT renew it now..."
 			    );
 	    mapDelegTime.erase( thisDelegID );
@@ -322,7 +322,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	
 	//	cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
 
-	pair<bool, time_t> result_validity = utilities::isgood( thisBetterPrx.get<0>() );
+	pair<bool, time_t> result_validity = IceUtils::is_good_proxy( thisBetterPrx.get<0>() );
 	if(!result_validity.first) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			 << "iceCommandProxyRenewal::renewAllDelegations() - "
@@ -410,7 +410,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			<< thisDelegID << "] with BetterProxy ["
 			<< thisBetterPrx.get<0>()
 			<< "] that will expire on ["
-			<< utilities::time_t_to_string(thisBetterPrx.get<1>()) << "]"
+			<< IceUtils::time_t_to_string(thisBetterPrx.get<1>()) << "]"
 			);
 	try {
 	  

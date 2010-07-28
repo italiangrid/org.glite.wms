@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateProxyFieldsByDN.h"
-#include "iceUtils/iceUtils.h"
-#include "ice/IceCore.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 
@@ -29,13 +28,13 @@ using namespace std;
 void db::UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("UPDATE proxy SET proxyfile=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_proxyfile );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_proxyfile );
   sqlcmd += ",exptime=" ;
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( m_exptime ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( m_exptime ) );
   sqlcmd += " WHERE userdn=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND myproxyurl=" ;
-  sqlcmd += util::utilities::withSQLDelimiters( m_myproxy );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_myproxy );
   sqlcmd += ";";
   
   do_query( db, sqlcmd );

@@ -18,8 +18,7 @@ limitations under the License.
 
 END LICENSE */
 #include "RemoveDelegationByDNMyProxy.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,9 +27,9 @@ using namespace std;
 void db::RemoveDelegationByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("DELETE FROM delegation WHERE userdn=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_userdn );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_userdn );
   sqlcmd += " AND myproxyurl=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_myproxy );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_myproxy );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

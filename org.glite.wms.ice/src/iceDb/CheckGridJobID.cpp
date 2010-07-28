@@ -20,7 +20,6 @@ END LICENSE */
 
 #include "CheckGridJobID.h"
 #include "iceUtils/CreamJob.h"
-#include "ice/IceCore.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -48,7 +47,7 @@ void db::CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += " FROM jobs WHERE ";
   sqlcmd += util::CreamJob::grid_jobid_field( ) ;
   sqlcmd += "=";
-  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_gridjobid );
+  sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_gridjobid );
   sqlcmd += ";";
 
   string gid;

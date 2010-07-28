@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "GetLeaseByID.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 #include <sstream>
 #include <vector>
@@ -59,7 +58,7 @@ namespace { // begin local namespace
 void db::GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT * FROM lease WHERE leaseid=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_leaseid );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_leaseid );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, fetch_fields_callback, &m_result );

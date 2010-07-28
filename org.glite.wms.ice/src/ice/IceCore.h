@@ -23,7 +23,7 @@ END LICENSE */
 
 #include "ice/iceInit_ex.h"
 #include "iceThreads/iceThread.h"
-#include "iceUtils/iceUtils.h"
+//#include "iceUtils/IceUtils.h"
 #include "iceThreads/iceThreadPool.h"
 #include "iceUtils/ClassadSyntax_ex.h"
 
@@ -145,7 +145,7 @@ namespace ice {
        
 	std::string m_hostdn;
  
-	std::string m_myname;
+	//std::string m_myname;
 
 	time_t      m_start_time;
 
@@ -273,7 +273,7 @@ namespace ice {
         
 	glite::wms::ice::util::iceThreadPool* get_ice_lblog_pool( void ) { return m_ice_lblog_pool; };
 	
-	std::string getHostName( void ) const throw() { return m_myname; }
+	//std::string getHostName( void ) const throw() { return m_myname; }
 
     private:
 	long long int check_my_mem(pid_t);

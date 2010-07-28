@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "UpdateDelegationTimesByID.h"
-#include "iceUtils/iceUtils.h"
-#include "ice/IceCore.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -28,12 +27,12 @@ using namespace std;
 void db::UpdateDelegationTimesByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("UPDATE delegation SET exptime=");
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( m_exptime ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( m_exptime ) );
   sqlcmd += ",";
   sqlcmd += "duration=";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long int)m_duration ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)m_duration ) );
   sqlcmd += " WHERE delegationid=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_delegid );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_delegid );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

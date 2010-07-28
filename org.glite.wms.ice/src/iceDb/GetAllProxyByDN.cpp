@@ -55,7 +55,7 @@ void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " FROM jobs WHERE ";
       sqlcmd += util::CreamJob::proxy_renewable_field();
       sqlcmd += "=";
-      sqlcmd += util::utilities::withSQLDelimiters( "1" );
+      sqlcmd += util::IceUtils::withSQLDelimiters( "1" );
       sqlcmd += ";";
     }
     else
@@ -64,7 +64,7 @@ void db::GetAllProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += " FROM jobs WHERE ";
       sqlcmd += util::CreamJob::proxy_renewable_field( );
       sqlcmd += "=";
-      sqlcmd += util::utilities::withSQLDelimiters( "0" );
+      sqlcmd += util::IceUtils::withSQLDelimiters( "0" );
       sqlcmd += ";";
   }
   

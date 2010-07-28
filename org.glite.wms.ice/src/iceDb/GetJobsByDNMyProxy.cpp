@@ -18,8 +18,7 @@ limitations under the License.
 
 END LICENSE */
 
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 #include "GetJobsByDNMyProxy.h"
 
 #include <cstdlib>
@@ -36,13 +35,13 @@ void db::GetJobsByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException
   sqlcmd += " FROM jobs WHERE ";
   sqlcmd += util::CreamJob::user_dn_field();
   sqlcmd += "=";
-  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_dn );
+  sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND ";
   sqlcmd += util::CreamJob::myproxy_address_field() ;
   sqlcmd += "=";
-  sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_myproxy);
+  sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_myproxy);
   sqlcmd += ";";
     
-  do_query( db, sqlcmd, glite::wms::ice::util::utilities::fetch_jobs_callback, m_result );
+  do_query( db, sqlcmd, glite::wms::ice::util::IceUtils::fetch_jobs_callback, m_result );
 
 }

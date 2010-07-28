@@ -19,7 +19,6 @@ limitations under the License.
 END LICENSE */
 
 #include "GetJobByCid.h"
-#include "IceCore.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -49,7 +48,7 @@ void db::GetJobByCid::execute( sqlite3* db ) throw ( db::DbOperationException& )
     sqlcmd += " FROM jobs WHERE ";
     sqlcmd += util::CreamJob::complete_cream_jobid_field();
     sqlcmd += "=";
-    sqlcmd += glite::wms::ice::util::utilities::withSQLDelimiters( m_complete_creamjobid );
+    sqlcmd += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_complete_creamjobid );
     sqlcmd += ";";
     
     vector<string> fields;

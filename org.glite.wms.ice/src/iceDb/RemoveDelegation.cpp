@@ -19,8 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveDelegation.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -30,11 +29,11 @@ void db::RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
 {
 
   string sqlcmd("DELETE FROM delegation WHERE digest=");
-  sqlcmd += util::utilities::withSQLDelimiters( m_digest );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_digest );
   sqlcmd += " AND creamurl=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_creamurl );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd += " AND myproxyurl=";
-  sqlcmd += util::utilities::withSQLDelimiters( m_myproxy );
+  sqlcmd += util::IceUtils::withSQLDelimiters( m_myproxy );
   sqlcmd += ";";
 
   do_query( db, sqlcmd );

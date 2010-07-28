@@ -21,7 +21,7 @@
 lib_LTLIBRARIES = libglite_wms_iceUtils.la
 
 libglite_wms_iceUtils_la_SOURCES = \
-				iceUtils.cpp \
+				IceUtils.cpp \
 				CreamJob.cpp \
 				DNProxyManager.cpp \
 				DelegationManager.cpp \
@@ -32,11 +32,11 @@ libglite_wms_iceUtils_la_SOURCES = \
 				iceLBEventFactory.cpp \
 				iceLBEvent.cpp \
 				iceLBLogger.cpp \
-				iceSubscription.cpp \
 				Request_jobdir.cpp \
 				Request_source_factory.cpp \
 				Request_source_filelist.cpp \
-				Request_source_jobdir.cpp
+				Request_source_jobdir.cpp \
+				RequestParser.cpp
 
 AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \

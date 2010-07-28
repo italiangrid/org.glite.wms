@@ -25,7 +25,7 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 #include <stdexcept>
 #include <sys/time.h>
 
@@ -105,7 +105,7 @@ util::Delegation_manager::delegate( const CreamJob& job,
       str_sha1_digest = job.user_dn();
     }
     else {
-      str_sha1_digest = utilities::computeSHA1Digest( job.user_proxyfile() );
+      str_sha1_digest = IceUtils::compute_sha1_digest( job.user_proxyfile() );
     }
 
     
@@ -149,7 +149,7 @@ util::Delegation_manager::delegate( const CreamJob& job,
         // Delegation id not found (or force). Performs a new delegation   
 
         // The delegation ID is the "canonized" GRID job id
-      delegation_id   = utilities::canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
+      delegation_id   = IceUtils::canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
       expiration_time = job.isbproxy_time_end(); 
       duration        = job.isbproxy_time_end() - time(0);
       
@@ -168,7 +168,7 @@ util::Delegation_manager::delegate( const CreamJob& job,
                         << str_sha1_digest
 			<< "] MyProxy Server ["
 			<< myproxy_address << "] Expiring on [" 
-			<< utilities::time_t_to_string( expiration_time ) << "]"
+			<< IceUtils::time_t_to_string( expiration_time ) << "]"
                          );
         
         try {
@@ -307,7 +307,7 @@ util::Delegation_manager::updateDelegation( const boost::tuple<string, time_t, i
 		      << "Old Delegation was: ID=[" 
 		      << tb.m_delegation_id << "] user_dn=["
 		      << tb.m_user_dn << "] expiration time=["
-		      << utilities::time_t_to_string(tb.m_expiration_time) << "] CEUrl=["
+		      << IceUtils::time_t_to_string(tb.m_expiration_time) << "] CEUrl=["
 		      << tb.m_cream_url << "]"
 		      );
       
@@ -316,7 +316,7 @@ util::Delegation_manager::updateDelegation( const boost::tuple<string, time_t, i
 		      << "New Delegation id: ID=[" 
 		      << tb.m_delegation_id << "] user_dn=["
 		      << tb.m_user_dn << "] expiration time=["
-		      << utilities::time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
+		      << IceUtils::time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
 		      << tb.m_cream_url << "]"
 		      );
       try {
@@ -503,8 +503,6 @@ string util::Delegation_manager::generateDelegationID( ) throw()
   ::gettimeofday( &T, 0 );
 
   //  ostringstream id;
-  string id = util::utilities::to_string( T.tv_sec ) + "." + util::utilities::to_string(T.tv_usec) + utilities::getHostName();
-  //id << T.tv_sec << "." << T.tv_usec << getHostName();
-  //return id.str();
+  string id = util::IceUtils::to_string( T.tv_sec ) + "." + util::IceUtils::to_string(T.tv_usec) + IceUtils::get_host_name();
   return id;
 }

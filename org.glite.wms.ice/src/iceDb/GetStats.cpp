@@ -18,8 +18,7 @@ limitations under the License.
 
 END LICENSE */
 #include "GetStats.h"
-#include "ice/IceCore.h"
-#include "iceUtils/iceUtils.h"
+#include "iceUtils/IceUtils.h"
 
 #include <vector>
 #include <cstdlib>
@@ -48,9 +47,9 @@ namespace { // begin local namespace
 void db::GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("SELECT timestamp,status FROM stats WHERE timestamp >= ");
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_datefrom ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_datefrom ) );
   sqlcmd += " AND timestamp <= ";
-  sqlcmd += util::utilities::withSQLDelimiters( util::utilities::to_string( (unsigned long long int)m_dateto  ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_dateto  ) );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, fetch_fields_callback, m_target );

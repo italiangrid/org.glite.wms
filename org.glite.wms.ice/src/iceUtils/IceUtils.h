@@ -52,10 +52,12 @@ namespace glite {
 	class CreamJob;
 	class Request;
 
-	class utilities {
+	class IceUtils {
 
-	  static std::string s_tmpname;
-	  static boost::recursive_mutex s_mutex_tmpname;
+	  static std::string             s_tmpname;
+	  static boost::recursive_mutex  s_mutex_tmpname;
+	  static boost::recursive_mutex  s_mutex_myname;
+	  static std::string             s_myname;
 
 	public:
 	  inline static std::string get_tmp_name( void ) {
@@ -83,32 +85,22 @@ namespace glite {
 	  }
 	  
 	  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName);
-	  //static int fetch_single_job_callback(void *param, int argc, char **argv, char **azColName);
-	  
-	  //static bool exists_job_reschedule_semaphore( const std::string& );// { return false; }
-	  
-	  //static std::string get_semaphore_filename( const std::string& );
 	  
 	  static bool is_rescheduled_job( const CreamJob& );
 	  
-	  static std::pair<bool, time_t> isgood( const std::string& proxyfile ) throw();
+	  static std::pair<bool, time_t> is_good_proxy( const std::string& proxyfile ) throw();
 
-	  static std::pair<bool, time_t> isvalid( const std::string& proxyfile ) throw();
+	  static std::pair<bool, time_t> is_valid_proxy( const std::string& proxyfile ) throw();
 
-	  static std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
-	  static std::string bintostring( unsigned char* buf, size_t len );
+	  static std::string compute_sha1_digest( const std::string& proxyfile ) throw( std::runtime_error& );
+	  static std::string bin_to_string( unsigned char* buf, size_t len );
 
-	  static void full_request_unparse(Request* request,
-				    CreamJob* theJob,
-				    std::string& cmdtype )
-	    throw( ClassadSyntax_ex&, JobRequest_ex& );
-  
-	  static void creamJdlHelper( const std::string& oldJdl,
-			       std::string& newjdl ) 
+	  static void cream_jdl_helper( const std::string& oldJdl,
+			              std::string& newjdl ) 
 	    throw( ClassadSyntax_ex& );
 
-	  static int updateIsbList( classad::ClassAd* );
-	  static int updateOsbList( classad::ClassAd* jdl );
+	  static int update_isb_list( classad::ClassAd* );
+	  static int update_osb_list( classad::ClassAd* jdl );
 
 	  //
 	  // Utility function: Computes a SHA1 hash of the input string. The
@@ -128,9 +120,9 @@ namespace glite {
 	   *
 	   * @return the host name
 	   */
-	  static std::string getHostName( void ) throw ( std::runtime_error& );
+	  static std::string get_host_name( void ) throw ( std::runtime_error& );
   
-	  static std::string getURL( void ) throw ( std::runtime_error& );
+	  static std::string get_url( void ) throw ( std::runtime_error& );
   
 	  /**
 	   * Converts a time_t value to a string. This function
@@ -176,8 +168,6 @@ namespace glite {
 	    return delimitedString;
 	  }
 
-	  //static std::string to_string( ssize_t );
-
         }; // class utilities
 
 	class pathName {
@@ -201,21 +191,21 @@ namespace glite {
 	  std::string m_fileName;
 	};
 	
-	struct ltstring {
-	  bool operator()( const std::pair<std::string, std::string>& s1, 
-			   const std::pair<std::string, std::string>& s2) const
-	  {
-	    if ( s1.first.compare(s2.first) < 0 ) return true;
-	    else {
-	      if(s2.first.compare(s1.first) < 0 ) return false;
-	      else {
-		if( s1.second.compare(s2.second) < 0 ) return true;
-		else return false;
-	      }
-	    }
-	    
-	  }
-	};
+// 	struct ltstring {
+// 	  bool operator()( const std::pair<std::string, std::string>& s1, 
+// 			   const std::pair<std::string, std::string>& s2) const
+// 	  {
+// 	    if ( s1.first.compare(s2.first) < 0 ) return true;
+// 	    else {
+// 	      if(s2.first.compare(s1.first) < 0 ) return false;
+// 	      else {
+// 		if( s1.second.compare(s2.second) < 0 ) return true;
+// 		else return false;
+// 	      }
+// 	    }
+// 	    
+// 	  }
+// 	};
 
       } // namespace util
     } // namespace ice

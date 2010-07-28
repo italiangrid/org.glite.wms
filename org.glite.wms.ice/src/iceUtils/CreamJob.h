@@ -36,7 +36,7 @@ END LICENSE */
  *
  */
 #include "ice/IceCore.h"
-#include "iceUtils.h"
+#include "IceUtils.h"
 #include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -354,67 +354,67 @@ namespace glite {
 		  std::string get_query_values( void ) const { 
 
 		    string sql;
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_grid_jobid) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_grid_jobid) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_cream_jobid) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_cream_jobid) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_complete_cream_jobid) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_complete_cream_jobid) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_jdl) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_jdl) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_ceid) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_ceid) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_endpoint) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_endpoint) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_cream_address) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_cream_address) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_cream_deleg_address) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_cream_deleg_address) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_user_proxyfile) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_user_proxyfile) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_user_dn) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_user_dn) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_sequence_code) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_sequence_code) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_delegation_id) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_delegation_id) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_wn_sequence_code) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_wn_sequence_code) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_prev_status) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_prev_status) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_status) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_status) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_num_logged_status_changes) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_num_logged_status_changes) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_last_seen) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_last_seen) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_lease_id) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_lease_id) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_status_poll_retry_count) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_status_poll_retry_count) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_exit_code) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_exit_code) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_failure_reason) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_failure_reason) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_worker_node) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_worker_node) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_killed_byice) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_killed_byice) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_last_empty_notification_time) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_last_empty_notification_time) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_proxy_renewable) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_proxy_renewable) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_myproxy_address) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_myproxy_address) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_isbproxy_time_end) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_isbproxy_time_end) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_modified_jdl) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_modified_jdl) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_last_poller_visited) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_last_poller_visited) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_cream_dbid) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_cream_dbid) );
 		    sql += ",";
-		    sql += utilities::withSQLDelimiters( utilities::to_string(m_token_file) );
+		    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_token_file) );
 		    sql += ",";
 		    sql = sql.substr(0, sql.length() -1 );
 		    return sql;
@@ -430,217 +430,217 @@ namespace glite {
 		    if(m_changed_grid_jobid) {
 		      _sql += this->grid_jobid_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->grid_jobid( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->grid_jobid( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_cream_jobid) {
 		      _sql += this->cream_jobid_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->cream_jobid( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->cream_jobid( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_complete_cream_jobid) {
 		      _sql += this->complete_cream_jobid_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->complete_cream_jobid( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->complete_cream_jobid( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_jdl) {
 		      _sql += this->jdl_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->jdl( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->jdl( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_ceid) {
 		      _sql += this->ceid_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->ceid( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->ceid( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_endpoint) {
 		      _sql += this->endpoint_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->endpoint( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->endpoint( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_cream_address) {
 		      _sql += this->cream_address_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->cream_address( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->cream_address( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_cream_deleg_address) {
 		      _sql += this->cream_deleg_address_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->cream_deleg_address( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->cream_deleg_address( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_user_proxyfile) {
 		      _sql += this->user_proxyfile_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->user_proxyfile( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->user_proxyfile( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_user_dn) {
 		      _sql += this->user_dn_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->user_dn( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->user_dn( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_sequence_code) {
 		      _sql += this->sequence_code_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->sequence_code( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->sequence_code( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_delegation_id) {
 		      _sql += this->delegation_id_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->delegation_id( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->delegation_id( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_wn_sequence_code) {
 		      _sql += this->wn_sequence_code_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->wn_sequence_code( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->wn_sequence_code( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_prev_status) {
 		      _sql += this->prev_status_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->prev_status( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->prev_status( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_status) {
 		      _sql += this->status_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->status( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->status( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_num_logged_status_changes) {
 		      _sql += this->num_logged_status_changes_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->num_logged_status_changes( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->num_logged_status_changes( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_last_seen) {
 		      _sql += this->last_seen_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->last_seen( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->last_seen( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_lease_id) {
 		      _sql += this->lease_id_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->lease_id( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->lease_id( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_status_poll_retry_count) {
 		      _sql += this->status_poll_retry_count_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->status_poll_retry_count( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->status_poll_retry_count( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_exit_code) {
 		      _sql += this->exit_code_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->exit_code( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->exit_code( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_failure_reason) {
 		      _sql += this->failure_reason_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->failure_reason( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->failure_reason( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_worker_node) {
 		      _sql += this->worker_node_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->worker_node( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->worker_node( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_killed_byice) {
 		      _sql += this->killed_byice_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->killed_byice( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->killed_byice( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_last_empty_notification_time) {
 		      _sql += this->last_empty_notification_time_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->last_empty_notification_time( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->last_empty_notification_time( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_proxy_renewable) {
 		      _sql += this->proxy_renewable_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->proxy_renewable( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->proxy_renewable( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_myproxy_address) {
 		      _sql += this->myproxy_address_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->myproxy_address( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->myproxy_address( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_isbproxy_time_end) {
 		      _sql += this->isbproxy_time_end_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->isbproxy_time_end( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->isbproxy_time_end( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_modified_jdl) {
 		      _sql += this->modified_jdl_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->modified_jdl( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->modified_jdl( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_last_poller_visited) {
 		      _sql += this->last_poller_visited_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->last_poller_visited( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->last_poller_visited( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_cream_dbid) {
 		      _sql += this->cream_dbid_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->cream_dbid( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->cream_dbid( ) ) );
 		      _sql += ",";
 
 		    }
 		    if(m_changed_token_file) {
 		      _sql += this->token_file_field( ); 
 		      _sql += "=";
-		      _sql += utilities::withSQLDelimiters( utilities::to_string( this->token_file( ) ) );
+		      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->token_file( ) ) );
 		      _sql += ",";
 
 		    }
@@ -652,7 +652,7 @@ namespace glite {
 		    _sql += " WHERE ";
 		    _sql += this->grid_jobid_field();
 		    _sql += "=";
-		    _sql += utilities::withSQLDelimiters( this->grid_jobid( ) );
+		    _sql += IceUtils::withSQLDelimiters( this->grid_jobid( ) );
 		    _sql += ";";
 		    target = string("UPDATE jobs SET ") + _sql;
 		  }
@@ -759,7 +759,7 @@ namespace glite {
 		    // "last" sequence code as the job wrapper will need to log
 		    // the "really running" event.
 		    //if( boost::algorithm::iequals( cmdtype, "submit" ) )
-		    glite::wms::ice::util::utilities::creamJdlHelper( (const string&)this->jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
+		    glite::wms::ice::util::IceUtils::cream_jdl_helper( (const string&)this->jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
 		    
 		    // release of Classad-mutex
 		    m_changed_jdl = true;
