@@ -170,7 +170,7 @@ namespace glite {
 	void JobOutput::getOutput ( ){
 	  int code = FAILED;
 	  ostringstream out ;
-	  string result="";
+	  string result="", cumulResult="";
 	  int size = 0;
 	  // checks that the jobids vector is not empty
 	  if (m_jobIds.empty()){
@@ -246,11 +246,13 @@ namespace glite {
 		}
 	      }
 	      // calling the retrieveOutput with the dir name just processed
-			
+		//cout << "result before retrieve: " << result << endl;
 	      retrieveOutput (result,status,dirName, true);
+	      //cout << "result after retrieve: " << result << endl;
 			
 	      // if the output has been successfully retrieved for at least one job
 	      code = SUCCESS;
+	      cumulResult += result;
 	      string _result;
 
 	      //cout << " result=" <<result << endl;
@@ -260,7 +262,7 @@ namespace glite {
 
 	      if( result.find( "No output files to be retrieved for" ) != string::npos )
 		{
-		  result = "";
+		  //result = "";
 		  continue;
 		}
 	    
@@ -285,7 +287,7 @@ namespace glite {
 	      continue ;
 	    }
 	  } // iteration on jobids
-	  
+	  //cout << "result fouri loop: " << result << endl;
 	  if (code == SUCCESS && m_successRt){
 	    
 	    if (m_json ){
@@ -305,10 +307,8 @@ namespace glite {
 		json += "JobOutput: {\n";
 		json += "  jobid: " + m_jobIds[i] + "\n";
 		string avail("");
-		//		boost::regex match( "No output files to be retrieved for the job" );
-		//		boost::smatch what;
-		//cout << "locations[ m_jobIds[i] ] = " << locations[ m_jobIds[i] ] << endl;
-		if ( locations[ m_jobIds[i] ].empty() /*find( "No output files to be retrieved") != string::npos*/ ) 
+		
+		if ( locations[ m_jobIds[i] ].empty()  ) 
 		  avail = "0";
 		else avail = "1";
 
@@ -318,11 +318,7 @@ namespace glite {
 		else
 		  json += "  location: None\n";
 		json += "}\n";
-		/*
-		  json += "jobid: "+m_jobIds[i]+" {\n";
-		  json += result ;
-		  json += " }\n";
-		*/
+		
 	      }
 	      json += m_parentFileList + m_childrenFileList + m_fileList;
 	      
@@ -336,10 +332,11 @@ namespace glite {
 		out << m_parentFileList  << m_childrenFileList << m_fileList;
 		// Prints the results into the log file
 		logInfo->print(WMS_INFO,  string(m_parentFileList+m_childrenFileList+m_fileList), "", false );
+		//cout << "ALVISE DEBUG ********* - " << out.str() << endl;
 	      } else {
-		out << result ;
+		out << cumulResult ;
 		// Prints the results into the log file
-		logInfo->print (WMS_INFO,  result, "", false );
+		logInfo->print (WMS_INFO,  cumulResult, "", false );
 	      }
 	      out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
 	      // Warnings/errors messages
@@ -361,6 +358,7 @@ namespace glite {
 	  out << getLogFileMsg ( ) << "\n";
 	  // STD-OUT
 	  cout << out.str ( );
+	  //exit(1);
 	}
 	/*********************************************
 	 *	PRIVATE METHODS:
