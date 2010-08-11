@@ -38,7 +38,6 @@ END LICENSE */
 #include "iceUtils/Request.h"
 #include "iceUtils/RequestParser.h"
 #include "iceUtils/DNProxyManager.h"
-//#include "iceUtils/IceUtils.h"
 #include "iceUtils/CreamJob.h"
 
 #include "iceDb/GetJobsToPoll.h"
@@ -1094,12 +1093,8 @@ int IceCore::main_loop( void ) {
 	  try {
 	    
 	    string cmdtype;
-// 	    glite::wms::ice::util::utilities::full_request_unparse( *it,
-// 								    &theJob,
-// 								    cmdtype );
 
 	    parser.unparse_request( );
-	    
 
 	    glite::wms::ice::iceAbsCommand* cmd = 0;	
 	    if( boost::algorithm::iequals( parser.get_command( ), "cancel" ) ) {
@@ -1143,6 +1138,7 @@ int IceCore::main_loop( void ) {
 				);
 	      }
 	      this->removeRequest( *it );
+	      delete( *it );
 	      continue;
 	    }
 

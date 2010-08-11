@@ -50,7 +50,6 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/JobDescriptionWrapper.h"
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -87,7 +86,7 @@ namespace { // Anonymous namespace
     // This class is used by a scope_guard to delete a job from the
     // job cache if something goes wrong during the submission.
     //
-    class remove_job_from_cache {
+    class remove_job_from_database {
     protected:
         const std::string m_grid_job_id;
         
@@ -96,7 +95,7 @@ namespace { // Anonymous namespace
          * Construct a remove_job_from_cache object which will remove
          * the job with given grid_job_id from the cache.
          */
-        remove_job_from_cache( const std::string& grid_job_id ) :
+        remove_job_from_database( const std::string& grid_job_id ) :
             m_grid_job_id( grid_job_id )
         { };
         /**
@@ -105,7 +104,7 @@ namespace { // Anonymous namespace
          */
         void operator()( void ) {
 	 
-	  db::RemoveJobByGid remover( m_grid_job_id, "remove_job_from_cache::operator()" );
+	  db::RemoveJobByGid remover( m_grid_job_id, "remove_job_from_database::operator()" );
 
 	  db::Transaction tnx(false, false);
 
@@ -218,7 +217,7 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 
     // This must be left AFTER the above code. The remove_job_guard
     // object will REMOVE the job from the cache when being destroied.
-    remove_job_from_cache remove_f( _gid );
+    remove_job_from_database remove_f( _gid );
     wms_utils::scope_guard remove_job_guard( remove_f );
 
     /**

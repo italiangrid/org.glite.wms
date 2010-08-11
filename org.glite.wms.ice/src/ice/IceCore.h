@@ -23,7 +23,6 @@ END LICENSE */
 
 #include "ice/iceInit_ex.h"
 #include "iceThreads/iceThread.h"
-//#include "iceUtils/IceUtils.h"
 #include "iceThreads/iceThreadPool.h"
 #include "iceUtils/ClassadSyntax_ex.h"
 

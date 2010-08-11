@@ -139,7 +139,7 @@ int main( int argc, char *argv[]) {
   //----------------------------------------------
   if( conf->ice( )->input_type( ) == "jobdir" ) {
     string jobdirpath( conf->ice( )->input( ) );
-    string tmp = "mv";
+    string tmp = "/bin/mv ";
     tmp += jobdirpath + "/old/* " + jobdirpath + "/new/ >/dev/null 2>&1";
 
     cout << "Executing [" << tmp << "]" << endl;
