@@ -20,8 +20,8 @@ END LICENSE */
 
 
 #include "iceLBLogger.h"
-#include "iceLBContext.h"
-#include "iceLBEvent.h"
+#include "IceLBContext.h"
+#include "IceLBEvent.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -76,7 +76,7 @@ iceLBLogger::~iceLBLogger( void )
 
 }
 
-CreamJob iceLBLogger::logEvent( iceLBEvent* ev, const bool updatedb )
+CreamJob iceLBLogger::logEvent( IceLBEvent* ev, const bool updatedb )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
 #ifdef ICE_PROFILE_ENABLE
@@ -92,16 +92,16 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev, const bool updatedb )
     }
 
     // Destroys the parameter "ev" when exiting this function
-    boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
+    boost::scoped_ptr< IceLBEvent > scoped_ev( ev );
 
     // Allocates a new (temporary) LB context
-    boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
+    boost::scoped_ptr< IceLBContext > m_ctx( new IceLBContext() );
 
     std::string new_seq_code;
         
     try {
         m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
-    } catch( iceLBException& ex ) {
+    } catch( IceLBException& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << method_name
                        << ev->describe()

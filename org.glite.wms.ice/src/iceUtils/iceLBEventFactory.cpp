@@ -20,7 +20,7 @@ END LICENSE */
 
 
 #include "iceLBEventFactory.h"
-#include "iceLBEvent.h"
+#include "IceLBEvent.h"
 
 #include <string>
 
@@ -28,7 +28,7 @@ using namespace glite::wms::ice::util;
 namespace jobstat = glite::ce::cream_client_api::job_statuses;
 
 //------------------------------------------------------------------------------
-iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
+IceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
 {
     switch( theJob.status() ) {
     case jobstat::PENDING:

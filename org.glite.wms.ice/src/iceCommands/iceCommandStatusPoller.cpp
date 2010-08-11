@@ -22,15 +22,15 @@ END LICENSE */
 // ICE Headers
 #include "iceCommandStatusPoller.h"
 #include "iceCommandLBLogging.h"
-#include "iceUtils/iceLBEventFactory.h"
+//#include "iceUtils/IceLBEventFactory.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/CreamProxyMethod.h"
 #include "iceUtils/IceConfManager.h"
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBEvent.h"
-#include "iceUtils/iceLBEvent.h"
+//#include "iceUtils/iceLBLogger.h"
+#include "iceUtils/IceLBEvent.h"
+//#include "iceUtils/iceLBEvent.h"
 #include "ice/IceCore.h"
 #include "iceUtils/IceUtils.h"
 #include "iceDb/GetJobByGid.h"
@@ -461,7 +461,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
   	  }
 	  
 	  // Log to L&B
-	  iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+	  IceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
 	  if ( ev ) {
 	    tmp_job = m_lb_logger->logEvent( ev, true );
 	  }

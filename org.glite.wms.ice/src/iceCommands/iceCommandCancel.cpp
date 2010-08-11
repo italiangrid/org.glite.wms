@@ -25,7 +25,7 @@ END LICENSE */
 #include "iceCommandCancel.h"
 #include "ice/IceCore.h"
 #include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/IceLBEvent.h"
 #include "iceUtils/CreamProxyMethod.h"
 #include "Request_source_purger.h"
 #include "iceUtils/Request.h"

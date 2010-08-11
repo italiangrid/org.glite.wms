@@ -28,7 +28,7 @@ namespace glite {
         namespace ice {
             namespace util {
 
-                class iceLBEvent; // forward declaration
+                class IceLBEvent; // forward declaration
 
                 /**
                  * This class is a factory used to build a logging
@@ -56,7 +56,7 @@ namespace glite {
                      * The caller owns the returned pointer, and is
                      * thus responsible for relinquishing it.
                      */
-                    static iceLBEvent* mkEvent( const CreamJob& j );
+                    static IceLBEvent* mkEvent( const CreamJob& j );
 
                 protected:
                     iceLBEventFactory( ) { };

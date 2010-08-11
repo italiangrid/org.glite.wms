@@ -28,9 +28,9 @@ libglite_wms_iceUtils_la_SOURCES = \
 				CEBlackList.cpp \
 				CreamProxyMethod.cpp \
 				IceConfManager.cpp \
-				iceLBContext.cpp \
+				IceLBContext.cpp \
 				iceLBEventFactory.cpp \
-				iceLBEvent.cpp \
+				IceLBEvent.cpp \
 				iceLBLogger.cpp \
 				Request_jobdir.cpp \
 				Request_source_factory.cpp \

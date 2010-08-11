@@ -22,11 +22,11 @@ END LICENSE */
 #include "IceCore.h"
 #include "iceUtils/IceConfManager.h"
 #include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/IceLBEvent.h"
 #include "iceThreads/eventStatusPoller.h"
 #include "iceThreads/leaseUpdater.h"
 #include "iceThreads/proxyRenewal.h"
-#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/IceLBEvent.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/iceLBLogger.h"
 #include "iceUtils/CreamProxyMethod.h"
@@ -1131,7 +1131,7 @@ int IceCore::main_loop( void ) {
 		 in fact logEvent just does an SQL UPDATE ... WHERE grid_jobid = ''.
 		 So if the gridjobid is not there the UPDATE does not take place.
 	      */
-	      glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
+	      glite::wms::ice::util::IceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
 	      if ( ev ) {
 		theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev, false );
 	      } else {

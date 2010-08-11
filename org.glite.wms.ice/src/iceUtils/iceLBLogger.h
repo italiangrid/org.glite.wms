@@ -38,7 +38,7 @@ namespace glite {
             namespace util {
 
                 // Forward declarations
-                class iceLBEvent;
+                class IceLBEvent;
                 // class iceLBContext;
 
                 /**
@@ -71,7 +71,7 @@ namespace glite {
                      * from the one stored in the logged event ev in
                      * the sequence code only.
                      */
-                    CreamJob logEvent( iceLBEvent* ev, const bool updatedb );
+                    CreamJob logEvent( IceLBEvent* ev, const bool updatedb );
 
                     ~iceLBLogger( void );
                 protected:

@@ -33,7 +33,7 @@ END LICENSE */
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/IceConfManager.h"
 #include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/IceLBEvent.h"
 #include "ice/IceCore.h"
 #include "iceUtils/IceUtils.h"
 
@@ -706,7 +706,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
     }
   }
   
-  iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
+  IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
   if ( ev ) {
     api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
     theJob = m_lb_logger->logEvent( ev, true );

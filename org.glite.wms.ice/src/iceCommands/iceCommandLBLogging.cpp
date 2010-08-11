@@ -24,7 +24,7 @@ END LICENSE */
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceUtils/iceLBLogger.h"
-#include "iceUtils/iceLBEvent.h"
+#include "iceUtils/IceLBEvent.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -94,7 +94,7 @@ void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
     if( util::IceUtils::is_rescheduled_job( *jobit ) )
       continue;
       
-    iceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
+    IceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {
       m_lb_logger->logEvent( ev, false );
     }
