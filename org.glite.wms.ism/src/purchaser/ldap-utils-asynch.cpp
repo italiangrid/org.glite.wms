@@ -521,7 +521,7 @@ fetch_bdii_se_info(
     );
     se_info_container[se_it->first]=se_it->second.ad;
   }
-  Debug("ClassAd reppresentation built in " << std::time(0) - t1 << " seconds");
+  Debug("ClassAd representation built in " << std::time(0) - t1 << " seconds");
 }
 
 void 
@@ -800,7 +800,7 @@ fetch_bdii_ce_info(
      }
     }
   }
-  Debug("ClassAd reppresentation built in " << std::time(0) - t1 << " seconds");
+  Debug("ClassAd representation built in " << std::time(0) - t1 << " seconds");
 }
 
 void fetch_bdii_info(

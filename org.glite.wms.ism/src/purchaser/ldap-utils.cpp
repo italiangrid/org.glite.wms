@@ -288,7 +288,7 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
       for( ; se_it != se_e; ++se_it) {
 
         if (!boost::tuples::get<0>(se_it->second)) {
-          Debug("Skipping se " << se_it->first << " due to empty classad reppresentation ");
+          Debug("Skipping se " << se_it->first << " due to empty classad representation ");
           continue;
         }       
         if (!boost::tuples::get<1>(se_it->second).empty()) {
