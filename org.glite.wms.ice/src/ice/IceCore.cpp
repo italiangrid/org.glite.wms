@@ -177,10 +177,6 @@ void IceCore::IceThreadHelper::stop( void )
 
 }
 
-//
-// End inner class definitions
-//
-
 //____________________________________________________________________________
 IceCore* IceCore::instance( void )
 {

@@ -137,7 +137,7 @@ glite::wms::ice::util::IceUtils::is_rescheduled_job( const glite::wms::ice::util
   
   //string basedir = ::dirname( (char*)aJob.token_file( ).c_str( ) );
   
-  const boost::regex my_filter( aJob.token_file( ) +"_" + "*" );
+  const boost::regex my_filter( aJob.token_file( ) +"_.*" );
   boost::filesystem::directory_iterator end_itr;
   //boost::filesystem::path BasedirPath( basedir );
   try {
@@ -156,88 +156,6 @@ glite::wms::ice::util::IceUtils::is_rescheduled_job( const glite::wms::ice::util
 
   return false; 
 }
-
-//______________________________________________________________________
-// void glite::wms::ice::util::utilities::full_request_unparse(Request* request,
-// 							    CreamJob* theJob,
-// 							    std::string& commandStr )
-//   throw(ClassadSyntax_ex&, JobRequest_ex&)
-// {
-//   string protocolStr;
-//   string jdl;
-//   {// Classad-mutex protected region  
-//     boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
-// 	    
-//     classad::ClassAdParser parser;
-//     classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
-// 	    
-//     if (!rootAD) {
-//       throw ClassadSyntax_ex( boost::str( boost::format( "full_request_unparse: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
-//     }
-// 	    
-//     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
-// 	    
-//     // Parse the "command" attribute
-//     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-//       throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
-//     }
-//     boost::trim_if( commandStr, boost::is_any_of("\"") );
-// 	    
-//     if ( !boost::algorithm::iequals( commandStr, "submit" ) 
-//          && !boost::algorithm::iequals( commandStr, "cancel" )
-// 	 && !boost::algorithm::iequals( commandStr, "reschedule" )
-// 	 ) 
-//     {
-//       throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
-//     }
-// 	    
-//     if( boost::algorithm::iequals( commandStr, "cancel" ) )
-//       return;
-//  
-//     // Parse the "version" attribute
-//     if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
-//       throw JobRequest_ex("attribute \"Protocol\" not found or is not a string");
-//     }
-//     // Check if the version is exactly 1.0.0
-//     if ( protocolStr.compare("1.0.0") ) {
-//       throw JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
-//     }
-// 	    
-//     classad::ClassAd *argumentsAD = 0; // no need to free this
-//     // Parse the "arguments" attribute
-//     if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
-//       throw JobRequest_ex("attribute 'arguments' not found or is not a classad");
-//     }
-// 
-//     classad::ClassAd *adAD = 0; // no need to free this
-//     if( boost::algorithm::iequals( commandStr, "submit" ) || boost::algorithm::iequals( commandStr, "reschedule" ) ) {
-//       // Look for "JobAd" attribute inside "arguments"
-//       if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-// 	throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
-//       }
-//     }
-// 	    
-//     // initializes the m_jdl attribute
-//     classad::ClassAdUnParser unparser;
-//     unparser.Unparse( jdl, argumentsAD->Lookup( "jobad" ) );
-// 	    
-//   } // end classad-mutex protected regions
-// 	  
-//   try {
-//     theJob->set_jdl( jdl, commandStr ); // this puts another mutex
-//     theJob->set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
-//   } catch( ClassadSyntax_ex& ex ) {
-// 	    
-//     CREAM_SAFE_LOG(
-// 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-// 		   << "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
-// 		   << "] due to classad excaption: " << ex.what()
-// 			   
-// 		   );
-//     throw( ClassadSyntax_ex( ex.what() ) );
-//   }
-// } // full_request_unparse
-
 	
 //____________________________________________________________________________
 /**
