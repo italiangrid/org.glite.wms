@@ -91,6 +91,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(WMPROXY_AUTHZ) \
 	$(WMPROXY_COMMANDS) \
 	$(CLASSAD_LIBS) \
+	$(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \

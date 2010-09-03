@@ -25,6 +25,7 @@ glite_wms_wmproxy_purge_proxycache_binary_LDFLAGS = -Xlinker --export-dynamic -D
 glite_wms_wmproxy_purge_proxycache_binary_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
   	$(CLASSAD_LIBS) \
+	$(ARES_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
@@ -42,6 +43,7 @@ glite_wms_wmproxy_gacladmin_LDADD = \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(GRIDSITE_LIBS) \
+        $(ARES_LIBS) \
   -lglite_lbu_trio \
   -lglite_jobid
 
@@ -51,6 +53,7 @@ glite_wms_wmproxy_gridmapfile2gacl_LDFLAGS = -Xlinker --export-dynamic -DGLITE_W
 glite_wms_wmproxy_gridmapfile2gacl_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(GRIDSITE_LIBS) \
+        $(ARES_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
