@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.3  2010/09/03 10:11:46  pandreet
+#       Ares AC definitions in build files
+#
 #       Revision 1.17.2.3.4.1.2.2  2010/02/16 15:26:01  fcapanni
 #       wrong lib staging by lb
 #
@@ -126,6 +129,7 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
+	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
@@ -153,6 +157,7 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
+	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
         $(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \

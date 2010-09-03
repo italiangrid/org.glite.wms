@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.1  2010/09/03 10:11:46  pandreet
+#       Ares AC definitions in build files
+#
 #       Revision 1.22.2.16  2008/05/20 11:36:59  eronchie
 #       increased version
 #
@@ -228,6 +231,8 @@ AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+
+AC_ARES
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
