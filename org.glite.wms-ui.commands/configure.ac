@@ -87,6 +87,7 @@ AC_ZLIB([], have_zlib=yes, have_zlib=no)
 AC_MSG_RESULT(["ZLIB found $have_zlib"])
 
 AC_GSOAP
+AC_ARES
 
 if test "$have_globus" = "no"; then
   AC_MSG_RESULT(["Please verify GLOBUS package"])
