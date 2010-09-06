@@ -51,6 +51,7 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+		$(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -86,6 +87,7 @@ queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -121,6 +123,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -147,6 +150,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -176,6 +180,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -211,6 +216,7 @@ glite_wms_ice_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -246,6 +252,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
+                $(ARES_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \

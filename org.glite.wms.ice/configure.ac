@@ -84,6 +84,7 @@ AC_SUBST(GLITE_JOBID_CFLAGS)
 
 AC_OPTIMIZE
 AC_GLITE
+AC_ARES
 #AC_SQLITE3()
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
