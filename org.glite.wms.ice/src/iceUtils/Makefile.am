@@ -36,7 +36,8 @@ libglite_wms_iceUtils_la_SOURCES = \
 				Request_source_factory.cpp \
 				Request_source_filelist.cpp \
 				Request_source_jobdir.cpp \
-				RequestParser.cpp
+				RequestParser.cpp \
+				Url.cpp
 
 AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \

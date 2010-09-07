@@ -197,8 +197,11 @@ void glite::wms::ice::util::IceUtils::cream_jdl_helper( const string& oldJdl,
   classad_safe_ptr->InsertAttr( "QueueName", qname );
   classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
   //}
-  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
-    classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size());
+  if( WM_conf ) {
+    classad_safe_ptr->Delete( "maxOutputSandboxSize" );
+    //if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
+    classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size() );
+    //}
   }
 
 	  
@@ -206,48 +209,7 @@ void glite::wms::ice::util::IceUtils::cream_jdl_helper( const string& oldJdl,
   glite::wms::ice::util::IceUtils::update_isb_list( classad_safe_ptr.get() );
   glite::wms::ice::util::IceUtils::update_osb_list( classad_safe_ptr.get() );
 	  
-#ifdef PIPPO  
-  // Set CERequirements
-  if ( WM_conf ) {
-    std::vector<std::string> reqs_to_forward(WM_conf->ce_forward_parameters());
-	    
-    // In order to forward the required attributes, these
-    // have to be *removed* from the CE ad that is used
-    // for flattening.
-    classad::ClassAd* local_ce_ad(new classad::ClassAd(*ce_ad));
-    classad::ClassAd* local_job_ad(new classad::ClassAd(*job_ad));
-	    
-    std::vector<std::string>::const_iterator cur_req;
-    std::vector<std::string>::const_iterator req_end = 
-      reqs_to_forward.end();
-    for (cur_req = reqs_to_forward.begin();
-	 cur_req != req_end; ++cur_req)
-      {
-	local_ce_ad->Remove(*cur_req);
-	// Don't care if it doesn't succeed. If the attribute is
-	// already missing, so much the better.
-      }
-	    
-    // Now, flatten the Requirements expression of the Job Ad
-    // with whatever info is left from the CE ad.
-    // Recipe received from Nick Coleman, ncoleman@cs.wisc.edu
-    // on Tue, 8 Nov 2005
-    classad::MatchClassAd mad;
-    mad.ReplaceLeftAd( local_job_ad );
-    mad.ReplaceRightAd( local_ce_ad );
-	    
-    classad::ExprTree *req = mad.GetLeftAd()->Lookup( "Requirements" );
-    classad::ExprTree *flattened_req = 0;
-    classad::Value fval;
-    if( ! ( mad.GetLeftAd()->Flatten( req, fval, flattened_req ) ) ) {
-      // Error while flattening. Result is undefined.
-      return result;
-    }
-	    
-    // No remaining requirement. Result is undefined.
-    if (!flattened_req) return result;
-  }
-#endif
+
   // Produce resulting JDL
 	  
   classad::ClassAdUnParser unparser;
@@ -705,13 +667,6 @@ string glite::wms::ice::util::IceUtils::time_t_to_string( time_t tval ) {
   return string( buf );
 }
 	
-//________________________________________________________________________
-// 	string int_to_string( const int val ) {
-// 	  ostringstream os("");
-// 	  os << val;
-// 	  return os.str();
-// 	}
-	
 namespace {
 	  
   class canonizerObject {
@@ -737,7 +692,39 @@ namespace {
   };
 	  
 };
-	
+
+//______________________________________________________________________________
+bool glite::wms::ice::util::IceUtils::parse_url( const string& url,
+						 URL& target,
+						 string& error )
+{
+  static const boost::regex valid_url(
+    "([[:alpha:]][[:alnum:]+.-]*)" // scheme
+    "://"
+    "(([[:alnum:]_.~!$&'()-]|%[[:xdigit:]]{2})+)" // host
+    "(:([[:digit:]]*))?" // port
+    "((/([[:alpha:][:digit:]_.~!$&'()-]|%[[:xdigit:]]{2})+)*)/?" // path
+  );
+
+  
+  boost::smatch pieces;
+  if (boost::regex_match(url, pieces, valid_url)) {
+      target.proto.assign(pieces[1].first, pieces[1].second);
+      target.hostname.assign(pieces[2].first, pieces[2].second);
+      string port; port.assign(pieces[5].first, pieces[5].second);
+      target.tcpport = atoi( port.c_str() );
+      target.path.assign(pieces[6].first, pieces[6].second);
+  
+  } else {
+      error = "Invalid URL [";
+      error += url;
+      error += "]";
+      return false;
+  }
+      
+  return true;
+}
+
 //______________________________________________________________________________
 string glite::wms::ice::util::IceUtils::join(const list<string>& array, const string& sep )
 {
@@ -758,10 +745,6 @@ string glite::wms::ice::util::IceUtils::join(const list<string>& array, const st
     joinstring += *sequence;
   }
 
-//   string::size_type pos = joinstring.find_last_of( sep );
-//   if( pos == string::npos )
-//     return joinstring;
-//   return joinstring.substr( 0, pos-sep.length()+1 );
   return joinstring;
 }
 	

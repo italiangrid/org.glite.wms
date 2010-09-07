@@ -31,10 +31,35 @@ using namespace glite::wms::ice;
 void iceCommandReschedule::execute( const std::string& tid ) 
   throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-  if( !boost::filesystem::exists( boost::filesystem::path( m_theJob.token_file( ) ) ) )
+  m_thread_id = tid;
+  
+  CREAM_SAFE_LOG(
+                   m_log_dev->infoStream()
+                   << "iceCommandReschedule::execute - TID=[" << getThreadID() << "] "
+                   << "This request is a Reschedule..."
+                   );  
+
+  if( !boost::filesystem::exists( boost::filesystem::path( m_theJob.token_file( ) ) ) ) {
+  
+    CREAM_SAFE_LOG(
+                   m_log_dev->warnStream()
+                   << "iceCommandReschedule::execute - TID=[" << getThreadID() << "] "
+                   << "Missing token file ["
+		   << m_theJob.token_file( )
+		   << "]. Dropping the request."
+                   );
+  
     return;
     
+  }
+    
   {
+    CREAM_SAFE_LOG(
+                   m_log_dev->debugStream()
+                   << "iceCommandReschedule::execute -  TID=[" << getThreadID() << "] "
+                   << "Ok, token file is there. Removing job from ICE's database and submitting job ["
+		   << m_theJob.grid_jobid( ) << "]"
+                   );
     db::RemoveJobByGid remover( m_theJob.grid_jobid(), "iceCommandReschedule::execute" );
     db::Transaction tnx( false, false );
     tnx.execute( &remover );

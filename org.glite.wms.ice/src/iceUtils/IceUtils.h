@@ -49,6 +49,13 @@ namespace glite {
     namespace ice {
       namespace util {
 	
+        struct URL {
+	    std::string proto;
+	    std::string hostname;
+	    int         tcpport;
+	    std::string path;
+	};
+	
 	class CreamJob;
 	class Request;
 
@@ -161,12 +168,16 @@ namespace glite {
 
 	  static std::string join( const std::list<std::string>& array, const std::string& sep );
 
-	  inline static std::string withSQLDelimiters( const std::string& value ) {
+	  static std::string withSQLDelimiters( const std::string& value ) {
 	    std::string delimitedString = get_tmp_name();
 	    delimitedString += value;
 	    delimitedString += get_tmp_name();
 	    return delimitedString;
 	  }
+	  
+
+	  
+	  static bool parse_url( const std::string& url, URL& target, std::string& error );
 
         }; // class utilities
 

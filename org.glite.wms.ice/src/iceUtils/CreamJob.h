@@ -7,6 +7,7 @@
 
 
 
+
 /* LICENSE:
 Copyright (c) Members of the EGEE Collaboration. 2010. 
 See http://www.eu-egee.org/partners/ for details on the copyright
@@ -827,6 +828,29 @@ namespace glite {
 		    m_failure_reason = f;
 		  
 		    m_changed_failure_reason = true;
+		  }
+
+		  string token_file( void ) {
+		    //boost::replace_all( m_token_file, "gsiftp://", "" );
+		    //boost::replace_all( m_token_file, "http://", "" );
+		    //boost::replace_all( m_token_file, "https://", "" );
+		    
+		  /*  string token( m_token_file );
+		    
+		    string::size_type pos = token.find( "://", 0 ); 
+		    if( pos == string::npos ) return token;
+		    token = token.substr( pos+3, token.length( ) - 3 - pos );
+		  
+		    pos = token.find( "/", 0 );
+		    token = token.substr( pos, token.length( ) - pos );
+		    return token;*/
+		    
+		    struct glite::wms::ice::util::URL url;
+		    string error;
+		    if(!glite::wms::ice::util::IceUtils::parse_url( m_token_file, url, error ))
+		      return error;
+		    else
+		      return url.path;
 		  }
 
 		  virtual ~CreamJob( void ) {
