@@ -243,7 +243,7 @@ fatal_error() # 1 - reason, 2 - transfer OSB
 {
   push_in_done_reason "$1"
   log_done_failed 1
-  if [ "x$2" -eq "xOSB" ]; then
+  if [ "x$2" == "xOSB" ]; then
     OSB_transfer
   fi
   doExit 1
