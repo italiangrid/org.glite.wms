@@ -701,6 +701,10 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
    */
   if( !theJob.is_active( ) ) {
     if( util::IceUtils::is_rescheduled_job( theJob ) ) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
+		   << "Job [" << jobdesc
+		   << "] is RESCHEDULED. Will not log anything to LB about it..."
+		   );
       removed = false;
       return;
     }

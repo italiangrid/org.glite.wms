@@ -135,16 +135,21 @@ glite::wms::ice::util::IceUtils::is_rescheduled_job( const glite::wms::ice::util
   if( boost::filesystem::exists( tokPath ) )
     return false;
   
-  //string basedir = ::dirname( (char*)aJob.token_file( ).c_str( ) );
-  
   const boost::regex my_filter( aJob.token_file( ) +"_.*" );
   boost::filesystem::directory_iterator end_itr;
-  //boost::filesystem::path BasedirPath( basedir );
+  
   try {
     for( boost::filesystem::directory_iterator i( IceConfManager::instance()->getConfiguration()->ns()->sandbox_staging_path() ); i != end_itr; ++i )
     {
       boost::smatch what;
-      if( boost::regex_match( i->leaf(), what, my_filter ) ) return true;//continue;
+      if( boost::regex_match( i->leaf(), what, my_filter ) ) {
+        CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+		   << "utilities::is_rescheduled_job - FOUND TOKEN FILE [" 
+		   << i->leaf( ) << "]"   
+		   );
+        return true;//continue;
+      }
     }
   } catch( exception& ex ) {
         CREAM_SAFE_LOG(
