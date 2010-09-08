@@ -70,9 +70,16 @@ void db::AbsDbOperation::do_query( sqlite3* db, const string& _sqlcmd, sqlite_ca
 	sleep(s);
 	s = s*2;
 	++retry;
-	if(retry > 5)
-          throw DbOperationException( error );
 	
+	//cout << "retrying... " << s << endl;
+	
+	if(retry > 4) {
+	  CREAM_SAFE_LOG(
+		 	api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+			<< "AbsDbOperation::do_query - " << error);
+	  exit(1);
+          //throw DbOperationException( error );
+	}
       }
     }
 }
