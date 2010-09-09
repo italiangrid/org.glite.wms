@@ -17,10 +17,10 @@
 
 #!/bin/sh
 
-trap 'fatal_error "Job has been terminated (got SIGXCPU)" "OSB"' XCPU
-trap 'fatal_error "Job has been terminated (got SIGQUIT)" "OSB"' QUIT
-trap 'fatal_error "Job has been terminated (got SIGINT)" "OSB"' INT
-trap 'fatal_error "Job has been terminated (got SIGTERM)" "OSB"' TERM
+trap 'fatal_error "Job has been terminated (got SIGXCPU)" "1" "OSB"' XCPU
+trap 'fatal_error "Job has been terminated (got SIGQUIT)" "1" "OSB"' QUIT
+trap 'fatal_error "Job has been terminated (got SIGINT)" "1" "OSB"' INT
+trap 'fatal_error "Job has been terminated (got SIGTERM)" "1" "OSB"' TERM
 #trap 'warning "Job has been signalled (got SIGUSR1)" "OSB"' SIGUSR1
 
 # the bash builtin kill command is sometimes buggy with process groups
@@ -236,14 +236,16 @@ warning()
   push_in_done_reason "job received SIGUSR1 as warning, terminating in $term_delay seconds"
   kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
   sleep $term_delay
-  fatal_error "Job termination $term_delay seconds after having being warned" $2
+  fatal_error "Job termination $term_delay seconds after having being warned" "1" $2
 }
 
-fatal_error() # 1 - reason, 2 - transfer OSB
+fatal_error() # 1 - reason, 2 - toggle logging, 3 - transfer OSB
 {
   push_in_done_reason "$1"
-  log_done_failed 1
-  if [ "x$2" == "xOSB" ]; then
+  if [ "$2" != "0" ]; then
+    log_done_failed 1
+  fi
+  if [ "x$3" == "xOSB" ]; then
     OSB_transfer
   fi
   doExit 1
@@ -790,8 +792,6 @@ else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
 fi
 jw_workdir="`pwd`"
 
-log_event "Running"
-
 max_osb_size=${__max_outputsandbox_size}
 is_integer ${GLITE_LOCAL_MAX_OSB_SIZE}
 if [ $? -eq 0 ]; then
@@ -918,6 +918,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     fi
     result=$?
     if [ $result -eq 0 ]; then
+      log_event "Running"
       log_event "ReallyRunning"
       jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
     else
