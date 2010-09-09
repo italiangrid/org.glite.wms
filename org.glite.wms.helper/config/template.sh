@@ -922,7 +922,8 @@ if [ -n "${__shallow_resubmission_token}" ]; then
       log_event "ReallyRunning"
       jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
     else
-      fatal_error "Cannot take token for ${GLITE_WMS_JOBID}"
+      fatal_error "Cannot take token for ${GLITE_WMS_JOBID}" "0"
+      jw_echo "Cannot take token for ${GLITE_WMS_JOBID}"
     fi
   fi
 fi
