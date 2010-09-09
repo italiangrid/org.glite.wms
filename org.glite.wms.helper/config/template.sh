@@ -867,7 +867,7 @@ fi
 if [ -n "${__prologue}" ]; then
   if [ -r "${__prologue}" ]; then
     (
-    for env in ${__environment[@]}
+    for env in "${__environment[@]}"
     do
       eval export $env
     done
@@ -983,7 +983,7 @@ fi
 
 log_event "ReallyRunning"
 (
-  for env in ${__environment[@]}
+  for env in "${__environment[@]}"
   do
     eval export $env
   done
@@ -1095,7 +1095,7 @@ fi
 if [ -n "${__epilogue}" ]; then
   if [ -r "${__epilogue}" ]; then
     (
-    for env in ${__environment[@]}
+    for env in "${__environment[@]}"
     do
       eval export $env
     done
