@@ -18,6 +18,9 @@ limitations under the License.
 
 END LICENSE */
 
+#ifndef ICEUTILURL_H
+#define ICEUTILURL_H
+
 #include <string>
 
 
@@ -55,3 +58,5 @@ namespace glite {
     }
   }
 }
+
+#endif

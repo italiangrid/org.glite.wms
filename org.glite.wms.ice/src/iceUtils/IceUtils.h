@@ -93,7 +93,9 @@ namespace glite {
 	  
 	  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName);
 	  
-	  static bool is_rescheduled_job( const CreamJob& );
+	  //static bool is_rescheduled_job( const CreamJob& );
+	  static bool exists_subsequent_token( const std::string&, std::string& );
+	  static bool ignore_job( const std::string& CID, CreamJob& tmp_job, std::string& reason );
 	  
 	  static std::pair<bool, time_t> is_good_proxy( const std::string& proxyfile ) throw();
 

@@ -18,12 +18,14 @@ limitations under the License.
 
 END LICENSE */
 
+#include "Url.h"
 #include "Request.h"
 #include "IceUtils.h"
 #include "CreamJob.h"
 #include "ice/IceCore.h"
 #include "IceConfManager.h"
-
+#include "iceDb/GetJobByCid.h"
+#include "iceDb/Transaction.h"
 
 #include <cstdlib>
 #include <unistd.h>
@@ -32,7 +34,7 @@ END LICENSE */
 #include <vector>
 #include <ctype.h>
 #include <cstdio>
-
+#include <libgen.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -124,42 +126,152 @@ glite::wms::ice::util::IceUtils::fetch_jobs_callback(void *param, int argc, char
     return 0;
 }
 
+//______________________________________________________________________________
+bool 
+glite::wms::ice::util::IceUtils::ignore_job( const string& CID, 
+					     CreamJob& tmp_job, string& reason ) 
+{
+   
+  
+    glite::wms::ice::db::GetJobByCid getter( CID, "iceCommandEventQuery::processEventsForJob" );
+    glite::wms::ice::db::Transaction tnx(false, false);
+    tnx.execute( &getter );
+    if( !getter.found() )
+      {
+	reason = "JobID disappeared from ICE database !";		       
+	return true;
+      }
+    
+    tmp_job = getter.get_job();
+    
+    /**
+     * The following if is needed by the Feedback mechanism
+     */
+    if( tmp_job.cream_jobid( ).empty( ) ) {
+      reason = "CreamJobID is EMPTY";
+      return true;
+    }
+  
+  
+  string new_token;
+  if( !boost::filesystem::exists( boost::filesystem::path( tmp_job.token_file() , boost::filesystem::native ) )
+      && exists_subsequent_token( tmp_job.token_file(), new_token ) ) 
+  {
+    reason = "Token file [";
+    reason += tmp_job.token_file();
+    reason += "] DOES NOT EXISTS but subsequent token [";
+    reason += new_token;
+    reason += "] does exist; the job could have been just reschedule by WM.";
+    return true;
+  }
+}
 //______________________________________________________________________
 bool 
-glite::wms::ice::util::IceUtils::is_rescheduled_job( const glite::wms::ice::util::CreamJob& aJob)
+glite::wms::ice::util::IceUtils::exists_subsequent_token( const string& _token_file, string& new_token )
 {
-  glite::ce::cream_client_api::util::scoped_timer T( "utilities::is_rescheduled_job" );
+  glite::ce::cream_client_api::util::scoped_timer T( "utilities::exists_subsequent_token" );
   
-  boost::filesystem::path tokPath( aJob.token_file( ), boost::filesystem::native);
+  string token_file( _token_file );
   
-  if( boost::filesystem::exists( tokPath ) )
-    return false;
   
-  const boost::regex my_filter( aJob.token_file( ) +"_.*" );
+  CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+		   << "utilities::exists_subsequent_token - Checking subsequent token files of [" 
+		   << token_file << "]"
+		   );
+
+  string base_token_file( basename( (char*)token_file.c_str() ) );
+  
+  string base_token_dir( dirname( (char*)token_file.c_str() ) );
+  
+  string::size_type pos = base_token_file.find_last_of( "_" );
+  if(string::npos != pos ) {
+    base_token_file = base_token_file.substr(0, pos );
+  }
+  
+  string filter = base_token_file + "_[0-9]+";
+  
+  const boost::regex my_filter( filter );
+  
+  boost::filesystem::path tokPath( base_token_dir, boost::filesystem::native );
   boost::filesystem::directory_iterator end_itr;
   
   try {
-    for( boost::filesystem::directory_iterator i( IceConfManager::instance()->getConfiguration()->ns()->sandbox_staging_path() ); i != end_itr; ++i )
-    {
-      boost::smatch what;
-      if( boost::regex_match( i->leaf(), what, my_filter ) ) {
+    for( boost::filesystem::directory_iterator i( tokPath ); i != end_itr; ++i ) {
+//     CREAM_SAFE_LOG(
+//		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+//		   << "utilities::exists_subsequent_token - CHECKING [" 
+//		   << i->string() << "] filter=["
+//		   << filter << "]"
+//		   );
+      if( boost::regex_match( i->leaf(), my_filter ) ) {
         CREAM_SAFE_LOG(
-		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-		   << "utilities::is_rescheduled_job - FOUND TOKEN FILE [" 
-		   << i->leaf( ) << "]"   
+		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+		   << "utilities::exists_subsequent_token - FOUND TOKEN FILE [" 
+		   << i->string() << "]"
 		   );
-        return true;//continue;
+        new_token = i->string();
+        return true;
       }
     }
+    
+  
   } catch( exception& ex ) {
-        CREAM_SAFE_LOG(
-		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-		   << "utilities::is_rescheduled_job - " << ex.what()   
-		   );
-    return false;
+    CREAM_SAFE_LOG(
+ 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+ 		   << "utilities::exists_subsequent_token - " << ex.what()   
+ 		   );
+     return false;
   }
-
-  return false; 
+  
+  
+  return false;
+  
+  
+//  return true;
+  
+//   string tmpTok = file;
+//   string::size_type pos = tmpTok.find_last_of("_", tmpTok.length()-1);
+//   if( pos != string::npos ) {
+//     filter = basename((char*)(tmpTok.substr(0, pos) + "_[0-9]+").c_str() );
+//   } else {
+//     filter = basename((char*)(tmpTok + "_[0-9]+").c_str() );
+//   }
+//   
+//   const boost::regex my_filter( filter /*string(basename((char*)aJob.token_file( ).c_str())) +"_.*"*/ );
+//   boost::filesystem::directory_iterator end_itr;
+//   
+//   try {
+//     for( boost::filesystem::directory_iterator i( tokPath )/*IceConfManager::instance()->getConfiguration()->ns()->sandbox_staging_path() ) */; i != end_itr; ++i )
+//     {
+//       //boost::smatch what;
+//       //boost::match_results<std::string::const_iterator> what;
+//       //string leaf( i->leaf( ) );
+//       CREAM_SAFE_LOG(
+// 		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+// 		   << "utilities::is_rescheduled_job - CHECKING [" 
+// 		   << i->string() << "] filter=["
+// 		   << filter << "]"
+// 		   );
+//       if( boost::regex_match( i->leaf(), my_filter ) ) {
+//         CREAM_SAFE_LOG(
+// 		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+// 		   << "utilities::is_rescheduled_job - FOUND TOKEN FILE [" 
+// 		   << i->string() << "]. Job orig token file [" 
+// 		   <<    aJob.token_file( ) << "]"
+// 		   );
+//         return true;//continue;
+//       }
+//     }
+//   } catch( exception& ex ) {
+//         CREAM_SAFE_LOG(
+// 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+// 		   << "utilities::is_rescheduled_job - " << ex.what()   
+// 		   );
+//     return false;
+//   }
+// 
+//   return false; 
 }
 	
 //____________________________________________________________________________

@@ -70,7 +70,7 @@ namespace glite {
 	  
 	  long long getEventID( const std::string&, const std::string& );
 	  bool checkDatabaseID( const std::string&, const long long, long long& );
-	  long long processEvents( std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
+	  long long processEvents( const std::string& endpoint, std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
 	  void processEventsForJob( const std::string&,
 				    const std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
 	  
@@ -79,6 +79,8 @@ namespace glite {
 				   const bool is_last_one_event,
 				   bool& );
 
+	  //bool ignore_job( const std::string& CID, CreamJob& tmp_job, std::string& reason );
+	   
 	  void setEventID( const std::string&, const std::string&, const long long );
 
 	  void getJobsByDbID( std::list<glite::wms::ice::util::CreamJob>& jobs, const long long db_id );

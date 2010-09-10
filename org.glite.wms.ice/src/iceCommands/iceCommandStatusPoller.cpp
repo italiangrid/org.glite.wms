@@ -455,9 +455,16 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
           tmp_job.reset_change_flags( );
 	  
 	  if( !tmp_job.is_active( ) ) {
-    	    if( util::IceUtils::is_rescheduled_job( tmp_job ) ) {
-      	      return;
-    	    }
+	    CreamJob _tmp;
+	    string ignore_reason;
+	    if( util::IceUtils::ignore_job( tmp_job.cream_jobid(), _tmp, ignore_reason ) ) {
+	      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
+      		      << "IGNORING CreamJobID ["
+		      << tmp_job.cream_jobid() << "] for reason: " << ignore_reason;
+		      );
+	      return;
+	    }
+	  
   	  }
 	  
 	  // Log to L&B

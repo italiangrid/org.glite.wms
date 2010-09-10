@@ -52,6 +52,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				RemoveLease.cpp \
 				GetAllJobs.cpp \
 				GetJobByGid.cpp \
+				GetJobByCid.cpp \
 				GetJobsToPoll.cpp \
 				GetJobsByDbID.cpp \
 				GetEventID.cpp \

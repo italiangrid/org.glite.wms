@@ -45,6 +45,7 @@ END LICENSE */
 #include "iceDb/GetEventID.h"
 #include "iceDb/SetEventID.h"
 #include "iceDb/GetJobByGid.h"
+#include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetJobsByDbID.h"
 #include "iceDb/RemoveJobByGid.h"
@@ -404,7 +405,10 @@ states.push_back( make_pair("STATUS", "IDLE") );
     
     if( events.size() ) {
 
-      long long last_event_id = this->processEvents( events );
+      Url url( m_ce );
+      string endpoint( url.get_schema() + "://" + url.get_endpoint() );
+
+      long long last_event_id = this->processEvents( endpoint, events );
       
       this->setEventID( m_dn, m_ce, last_event_id+1 );
     }
@@ -501,7 +505,7 @@ ice::util::iceCommandEventQuery::checkDatabaseID( const string& ceurl,
 
 //______________________________________________________________________________
 long long
-ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>& events )
+ice::util::iceCommandEventQuery::processEvents( const std::string& endpoint, list<soap_proxy::EventWrapper*>& events )
 {
 
   api_util::scoped_timer procTimeEvents( string("iceCommandEventQuery::processEvents() - TID=[") + getThreadID() + "] All Events Proc Time" );
@@ -521,7 +525,13 @@ ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>&
     if( tmpid > last_id )
       last_id = tmpid;
 
-    mapped_events[ (*it)->getPropertyValue("gridJobId") ].push_back( *it );
+//    mapped_events[ (*it)->getPropertyValue("gridJobId") ].push_back( *it );
+
+//cout << "jobId=" << (*it)->getPropertyValue("jobId") << endl;
+//cout << "gridjobid=" << (*it)->getPropertyValue("gridJobId") << endl;
+
+      mapped_events[ endpoint + "/" + (*it)->getPropertyValue("jobId") ].push_back( *it );
+
 //    ++it;
   }
 
@@ -537,43 +547,28 @@ ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>&
 
 //______________________________________________________________________________
 void
-ice::util::iceCommandEventQuery::processEventsForJob( const string& GID, 
+ice::util::iceCommandEventQuery::processEventsForJob( const string& CID, 
 						      const list<soap_proxy::EventWrapper*>& ev )
 {
   
 
   static const char* method_name = "iceCommandEventQuery::processEventsForJob() - ";
 
-  if(GID=="N/A") return;
+  //if(GID=="N/A") return;
 
-  CreamJob tmp_job;
-  
-  {
-    glite::wms::ice::db::GetJobByGid getter( GID, "iceCommandEventQuery::processEventsForJob" );
-    glite::wms::ice::db::Transaction tnx(false, false);
-    tnx.execute( &getter );
-    if( !getter.found() )
-      {
-	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name  << " TID=[" << getThreadID() << "] "
-		       << "GridJobID [" << GID
-		       << "] disappeared!"
-		       );
-	return;
-      }
-    
-    tmp_job = getter.get_job();
-    
-    /**
-     * The following if is needed by the Feedback mechanism
-     */
-    if( tmp_job.cream_jobid( ).empty( ) ) {
-      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
-		       << "GridJobID [" << GID
-		       << "] has an EMPTY CREAM JobID. Skipping..."
-		       );
+  {  //MUTEX FOR RESCHEDULE
+    boost::recursive_mutex::scoped_lock M_reschedule( glite::wms::ice::util::CreamJob::s_reschedule_mutex );
+    string ignore_reason;  
+    CreamJob tmp_job;
+    if( glite::wms::ice::util::IceUtils::ignore_job( CID, tmp_job, ignore_reason ) ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
+      		      << "IGNORING EVENTS for CreamJobID ["
+		      << CID << "] for reason: " << ignore_reason;
+		      );
       return;
     }
-  }
+  
+   
   
   int num_events = ev.size();
 
@@ -609,6 +604,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
     
     ++evt_counter;
   }
+  } // MUTEX FOR RESCHEDULE
 }
 
 //______________________________________________________________________________
@@ -699,16 +695,16 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   /**
    * The following if is for the feedback
    */
-  if( !theJob.is_active( ) ) {
-    if( util::IceUtils::is_rescheduled_job( theJob ) ) {
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-		   << "Job [" << jobdesc
-		   << "] is RESCHEDULED. Will not log anything to LB about it..."
-		   );
-      removed = false;
-      return;
-    }
-  }
+//   if( !theJob.is_active( ) ) {
+//     if( util::IceUtils::is_rescheduled_job( theJob ) ) {
+//       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
+// 		   << "Job [" << jobdesc
+// 		   << "] is RESCHEDULED. Will not log anything to LB about it..."
+// 		   );
+//       removed = false;
+//       return;
+//     }
+//   }
   
   IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
   if ( ev ) {
@@ -766,4 +762,44 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 //     tnx.execute( &remover );
 //   }
 
+// }
+
+//______________________________________________________________________________
+// bool 
+// ice::util::iceCommandEventQuery::ignore_job( const string& CID, 
+// 					     CreamJob& tmp_job, string& reason ) 
+// {
+//    
+//   
+//     glite::wms::ice::db::GetJobByCid getter( CID, "iceCommandEventQuery::processEventsForJob" );
+//     glite::wms::ice::db::Transaction tnx(false, false);
+//     tnx.execute( &getter );
+//     if( !getter.found() )
+//       {
+// 	reason = "JobID disappeared from ICE database !"		       
+// 	return true;
+//       }
+//     
+//     tmp_job = getter.get_job();
+//     
+//     /**
+//      * The following if is needed by the Feedback mechanism
+//      */
+//     if( tmp_job.cream_jobid( ).empty( ) ) {
+//       reason = "CreamJobID is EMPTY";
+//       return true;
+//     }
+//   
+//   
+//   string new_token;
+//   if( !boost::filesystem::exists( boost::filesystem::path( tmp_job.token_file() ) )
+//       && glite::wms::ice::util::IceUtils::exists_subsequent_token( tmp_job.token_file(), new_token ) ) 
+//   {
+//     reason = "Token file [";
+//     reason += tmp_job.token_file();
+//     reason += "] DOES NOT EXISTS but subsequent token [";
+//     reason += new_token;
+//     reason += "] does exist; the job could have been just reschedule by WM.";
+//     return true;
+//   }
 // }

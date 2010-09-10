@@ -84,6 +84,7 @@ END LICENSE */
  */
 #include "ice/IceCore.h"
 #include "IceUtils.h"
+#include "Url.h"
 #include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -177,6 +178,7 @@ printf "\n\t\t  %30s  m_new;\n", "bool";
 
 print "\n\t\t public:\n";
 print "\t\t  static boost::recursive_mutex s_classad_mutex;\n";
+print "\t\t  static boost::recursive_mutex s_reschedule_mutex;\n";
 print "\t\t  static int num_of_members( void ) { return $num_of_members; }";
 print "\n\n\t\tpublic:\n";
 print "\n\t\t /**\n";

@@ -26,3 +26,4 @@ END LICENSE */
 #include "CreamJob.h"
 
 boost::recursive_mutex  glite::wms::ice::util::CreamJob::s_classad_mutex;
+boost::recursive_mutex  glite::wms::ice::util::CreamJob::s_reschedule_mutex;

@@ -91,8 +91,17 @@ void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
     /**
      * The following if is for the feedback
      */
-    if( util::IceUtils::is_rescheduled_job( *jobit ) )
+    //if( util::IceUtils::is_rescheduled_job( *jobit ) )
+    CreamJob _tmp;
+    string ignore_reason;
+    if( glite::wms::ice::util::IceUtils::ignore_job( jobit->cream_jobid(), _tmp, ignore_reason ) ) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
+                      << "Will not LOG anything to LB for Job ["
+		      << jobit->grid_jobid() << "] for reason: "
+		      << ignore_reason
+		      );
       continue;
+    }
       
     IceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {

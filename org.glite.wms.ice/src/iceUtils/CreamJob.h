@@ -38,6 +38,7 @@ END LICENSE */
  */
 #include "ice/IceCore.h"
 #include "IceUtils.h"
+#include "Url.h"
 #include "IceConfManager.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -163,6 +164,7 @@ namespace glite {
 
 		 public:
 		  static boost::recursive_mutex s_classad_mutex;
+		  static boost::recursive_mutex s_reschedule_mutex;
 		  static int num_of_members( void ) { return 31; }
 
 		public:
@@ -234,7 +236,6 @@ namespace glite {
 		  virtual std::string  modified_jdl( void ) const { return m_modified_jdl; }
 		  virtual time_t  last_poller_visited( void ) const { return m_last_poller_visited; }
 		  virtual unsigned long long int  cream_dbid( void ) const { return m_cream_dbid; }
-		  virtual std::string  token_file( void ) const { return m_token_file; }
 
 		 /**
 		  *
@@ -830,27 +831,18 @@ namespace glite {
 		    m_changed_failure_reason = true;
 		  }
 
-		  string token_file( void ) {
-		    //boost::replace_all( m_token_file, "gsiftp://", "" );
-		    //boost::replace_all( m_token_file, "http://", "" );
-		    //boost::replace_all( m_token_file, "https://", "" );
-		    
-		  /*  string token( m_token_file );
-		    
-		    string::size_type pos = token.find( "://", 0 ); 
-		    if( pos == string::npos ) return token;
-		    token = token.substr( pos+3, token.length( ) - 3 - pos );
+		  string token_file ( void ) const {
 		  
-		    pos = token.find( "/", 0 );
-		    token = token.substr( pos, token.length( ) - pos );
-		    return token;*/
-		    
-		    struct glite::wms::ice::util::URL url;
-		    string error;
-		    if(!glite::wms::ice::util::IceUtils::parse_url( m_token_file, url, error ))
-		      return error;
-		    else
-		      return url.path;
+		    glite::wms::ice::util::Url url( m_token_file );
+		    if(!url.is_valid() )
+		      return url.get_error();
+		  
+		    if(url.get_path().at(0) == '/')
+		      return url.get_path( );
+		    else {
+		      return string("/")+url.get_path( ); 
+		    }
+		  
 		  }
 
 		  virtual ~CreamJob( void ) {
