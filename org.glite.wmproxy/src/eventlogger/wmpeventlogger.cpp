@@ -398,41 +398,32 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	vector<string> jdls = ad->getSubmissionStrings(&jobids);
 	unsigned int jdlssize = jdls.size();
 	if (jdlssize != jobids.size()) {
-		// This is a fatal Exception and should never be raised
 		string msg = "Number of nodes do not correspond to number of "
 			"inserted jobids";
 		throw JobOperationException(__FILE__, __LINE__, "registerSubJobs()",
 			WMS_IS_FAILURE, msg);
 	}
 
-	// Define useful structures
-	char **jdls_char;
-	char **zero_char;
+	char **jdls_char = (char**) malloc(sizeof(char*) * (jdlssize + 1)); // same size for both arrays
 
-	jdls_char = (char**) malloc(sizeof(char*) * (jdlssize + 1)); // same size for both arrays
-
-	zero_char = jdls_char;
-	jdls_char[jdlssize] = NULL;
-
-	edg_wlc_JobId jids_id[jdlssize];
+	glite_jobid_t jids_id[jdlssize];
 	
-	// Create needed structures
-	vector<string>::iterator iter = jdls.begin();
-	vector<string>::iterator const end = jdls.end();
-        for (unsigned int jid_i = 0; iter != end; ++iter, ++jid_i) {
-                *zero_char = (char*) malloc(iter->size() + 1);
-                sprintf(*zero_char, "%s", iter->c_str());
-                zero_char++;
-                jids_id[jid_i]= const_cast<edg_wlc_JobId>(glite::jobid::JobId (*iter).c_jobid());
+	vector<string>::const_iterator iter = jdls.begin();
+	vector<string>::const_iterator const end = jdls.end();
+	vector<string>::iterator iter_jobid = jobids.begin();
+        for (unsigned int i = 0; iter != end; ++iter, ++iter_jobid, ++i) {
+                jdls_char[i] = (char*) malloc(sizeof(char*) * (int(iter->size()) + 1));
+		strcpy(jdls_char[i], iter->c_str());
+		glite_jobid_parse(iter_jobid->c_str(), &jids_id[i]);
         }
+	jdls_char[jdlssize] = NULL;
 
 	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->c_jobid(),
-				jdls_char, str_nsAddr, jids_id);
+			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->c_jobid(), jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
 					"edg_wll_RegisterSubjobsProxy", register_result)<<endl;
@@ -442,8 +433,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	} else {
 		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobs(ctx, id->c_jobid(),
-				jdls_char, str_nsAddr, jids_id);
+			register_result = edg_wll_RegisterSubjobs(ctx, id->c_jobid(), jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
 					"edg_wll_RegisterSubjobs", register_result)<<endl;
@@ -452,22 +442,19 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		}
 	}
 
+	// Release allocated memory
+	for (unsigned int i = 0; i < jdlssize; i++) {
+	        glite_jobid_free(jids_id[i]);
+		free(jdls_char[i]);
+	}
+	free(jdls_char);
 	if (register_result) {
 		// Error while registering! release memory & raise exception
-		for (unsigned int i = 0; i < jdlssize; i++) {
-		free(jdls_char[i]);
-		}
-		free(jdls_char);
 		string msg = error_message("Register DAG subjobs failed\n"
 			"edg_wll_RegisterSubjobs[Proxy]", register_result);
 		throw LBException(__FILE__, __LINE__, "registerSubJobs()",
 			WMS_LOGGING_ERROR, msg);
 	}
-	// Release allocated memory
-	for (unsigned int i = 0; i < jdlssize; i++) {
-		free(jdls_char[i]);
-	}
-	free(jdls_char);
 	// Logging children user tags
 	logUserTags(ad->getSubAttributes(JDL::USERTAGS));
 	GLITE_STACK_CATCH();
