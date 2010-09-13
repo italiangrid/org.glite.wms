@@ -208,7 +208,7 @@ WMP2WM::submit(const string &jdl, const string &jdlpath)
 			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			e.what(), true, true, "", regjdl.c_str());
 		}
-	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
+	edglog(critical)<<"Submit EnQueued FAIL"<< e.what() << endl;
 	}
 	edglog(debug)<<"Submit Forwarded"<<endl;
 	GLITE_STACK_CATCH();

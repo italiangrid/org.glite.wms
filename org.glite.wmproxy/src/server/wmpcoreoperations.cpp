@@ -1900,7 +1900,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			throw exc;
 		}
 	} catch (JobOperationException &exc) {
-		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
+		edglog(error)<<"Logging LOG_ENQUEUE_FAIL, exception JobOperationException "<< exc.what() <<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			exc.what(), true, true, filelist_global.c_str(),
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
@@ -1915,7 +1915,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			throw exc;
 		}
 	} catch (exception &ex) {
-		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
+		edglog(error)<<"Logging LOG_ENQUEUE_FAIL, std::exception "<< ex.what() <<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			ex.what(), true, true, filelist_global.c_str(),
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
