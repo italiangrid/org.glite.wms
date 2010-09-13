@@ -419,14 +419,13 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	// Create needed structures
 	vector<string>::iterator iter = jdls.begin();
 	vector<string>::iterator const end = jdls.end();
-	vector<string>::iterator iterId = jobids.begin();
-	for (unsigned int jid_i = 0; iter != end; ++iter, ++iterId, jid_i++) {
-		*zero_char = (char*) malloc(iter->size() + 1);
-		sprintf(*zero_char, "%s", iter->c_str());
-		zero_char++;
-		jids_id[jid_i]= const_cast<edg_wlc_JobId> (glite::jobid::JobId (*iterId).c_jobid());
-	}
-	
+        for (unsigned int jid_i = 0; iter != end; ++iter, ++jid_i) {
+                *zero_char = (char*) malloc(iter->size() + 1);
+                sprintf(*zero_char, "%s", iter->c_str());
+                zero_char++;
+                jids_id[jid_i]= const_cast<edg_wlc_JobId>(glite::jobid::JobId (*iter).c_jobid());
+        }
+
 	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
 	if (m_lbProxy_b) {
