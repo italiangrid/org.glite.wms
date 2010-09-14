@@ -1799,7 +1799,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					+ FLAG_FILE_UNZIP;
 				if (!wmputilities::fileExists(flagfile)) {
 					//Uncompressing zip file
-					vector<string> files = dag.getAttribute(ExpDagAd::ZIPPED_ISB);
+					vector<string> files = dag.getStringValue(JDLPrivate::ZIPPED_ISB);
 					string targetdir = getenv(DOCUMENT_ROOT);
 					string jobpath = wmputilities::getInputSBDirectoryPath(*jid)
 						+ FILE_SEPARATOR;
