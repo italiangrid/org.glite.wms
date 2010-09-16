@@ -56,6 +56,49 @@ namespace client {
 namespace services {
 
 
+std::string join( const std::vector<std::string>& array, const std::string& sep)
+{
+  vector<string>::const_iterator sequence = array.begin( );
+  vector<string>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) return "";
+
+  string joinstring( "" );
+  if (sequence != end_sequence) {
+    joinstring += *sequence;
+    ++sequence;
+  }
+
+  for( ; sequence != end_sequence; ++sequence )
+    joinstring += sep + *sequence;
+  
+  return joinstring;
+}
+
+std::string join( const std::vector<long int>& array, const std::string& sep)
+{
+  vector<long int>::const_iterator sequence = array.begin( );
+  vector<long int>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) return "";
+
+  string joinstring( "" );
+  if (sequence != end_sequence) {
+    ostringstream tmp( "" );
+    tmp << *sequence;
+    joinstring += tmp.str( );//*sequence;
+    ++sequence;
+  }
+
+  for( ; sequence != end_sequence; ++sequence ) {
+  
+    ostringstream tmp( "" );
+    tmp << *sequence;
+  
+    joinstring += sep + tmp.str( );//*sequence;
+  }
+  
+  return joinstring;
+}
+
 JobListMatch::JobListMatch(){
 	// init of the boolean attributes
         rankOpt  = false ;
@@ -64,6 +107,8 @@ JobListMatch::JobListMatch(){
         m_jdlString = "";
         //Ad
         jobAd = NULL;
+	m_json = false;
+	pprint = false;
   };
 /*
 *	Default destructor
@@ -83,6 +128,10 @@ void JobListMatch::readOptions (int argc,char **argv) {
 	// rank
         rankOpt =  wmcOpts->getBoolAttribute (Options::RANK);
 	// checks if the output file already exists
+	
+	m_json = wmcOpts->getBoolAttribute (Options::JSON);
+	pprint = wmcOpts->getBoolAttribute (Options::PRETTYPRINT);
+	
 	if (!m_outOpt.empty() && !wmcUtils->askForFileOverwriting(m_outOpt) ){
 		cout << "bye\n";
 		getLogFileMsg ( );
@@ -112,19 +161,62 @@ void JobListMatch::listMatching ( ){
 	} else {
 
 
-		out  << wmcUtils->getStripe(74, "=") << "\n\n";
-		out << "\t\t     COMPUTING ELEMENT IDs LIST ";
-		out << "\n The following CE(s) matching your job requirements have been found:\n";
-		out << "\n\t*CEId*";
-		if (rankOpt) {
+		
+		if(!m_json ) {
+		  out  << wmcUtils->getStripe(74, "=") << "\n\n";
+		  out << "\t\t     COMPUTING ELEMENT IDs LIST ";
+		  out << "\n The following CE(s) matching your job requirements have been found:\n";
+		  out << "\n\t*CEId*";
+		}
+		if(m_json) {
+		  string quote;
+		  if(pprint) {
+		    quote = "";
+		    
+		  } else {
+		    quote = "\"";
+		  }
+		  out << "\n";
+		  out << "{" << ( pprint ? "\n" : " " );//  {\n ";
+		  out << ( pprint ? "\t" : " " ) << quote << "result" << quote << ": " << quote << "success" << quote << ( pprint ? "\n" : ", " );//\"\n";
+		  vector <pair<string , long> > ::iterator it = m_listResult_v.begin( );
+		  vector <pair<string , long> > ::iterator const end = m_listResult_v.end( );
+		  vector<string> ce_pieces;
+		  vector<long int> rank_pieces;
+		  for (  ; it != end;  it++ ){
+			string ce = it->first ;
+			long int rank = it->second;
+			
+			ce_pieces.push_back( ce );
+			rank_pieces.push_back( rank );
+			
+//			out << "\t\"CE\": { ceid=\"" << ce << "\"";
+//			if(rankOpt)
+//			  out << ", Rank=\"" << it->second << "\" }";
+//			else
+//			  out << "}\n\n";
+//			
+//			out << "\n";
+		  }
+		  
+		  string CEs = join( ce_pieces, quote + ", " + quote );
+		  string RANKs = join( rank_pieces, ", " );
+		  
+		  out << ( pprint ? "\t" : " " ) << quote << "ceid" << quote << ": " << (pprint ? "" : "[" ) << quote << CEs << quote << (pprint ? "" : "]" ) << ( pprint ? "\n" : " " );
+		  if(rankOpt)
+		    out << ( pprint ? "\t" : " " ) << quote << "rank" << quote << ": " << (pprint ? "" : "[" ) << RANKs << (pprint ? "" : "]" ) << ( pprint ? "\n" : " " );
+		  
+		  out <<"  }\n";
+		} else {
+		  if (rankOpt) {
 			spaces = tab - 9  ;
 			for ( int i = 0; i < spaces ; i++ ) { out << ws ; }
 			out << "*Rank*\n";
-		}
-		out << "\n";
-		vector <pair<string , long> > ::iterator it = m_listResult_v.begin( );
-		vector <pair<string , long> > ::iterator const end = m_listResult_v.end( );
-		for (  ; it != end;  it++ ){
+		  }
+		  out << "\n";
+		  vector <pair<string , long> > ::iterator it = m_listResult_v.begin( );
+		  vector <pair<string , long> > ::iterator const end = m_listResult_v.end( );
+		  for (  ; it != end;  it++ ){
 			ce = it->first ;
 			out << " - " << it->first ;
 			if(rankOpt) {
@@ -133,6 +225,7 @@ void JobListMatch::listMatching ( ){
 				out << it->second ;
 			}
 			out << "\n";
+		  }
 		}
 	}
         // saves the result
@@ -151,8 +244,12 @@ void JobListMatch::listMatching ( ){
                 }
         } else{
 		// if no output file ....
-		out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+		if(!m_json) {
+		  out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+		}
+		
 		cout << out.str( );
+		
 	}
 	// log file info
 	cout << getLogFileMsg ( ) << "\n";

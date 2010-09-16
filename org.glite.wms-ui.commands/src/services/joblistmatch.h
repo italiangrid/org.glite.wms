@@ -117,6 +117,9 @@ class JobListMatch : public Job {
 		* List of the matched CEs
 		*/
 		std::vector <std::pair<std::string , long> > m_listResult_v ;
+		
+		bool m_json;
+		bool pprint;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H

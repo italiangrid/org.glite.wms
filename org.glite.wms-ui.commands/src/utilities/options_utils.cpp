@@ -302,6 +302,7 @@ const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{ 	Options::LONG_DEBUG,              no_argument,			0,		Options::DBG},
         {       Options::LONG_JSON,                     no_argument,                    0,              Options::JSON   },
+	{ 	Options::LONG_PRETTYPRINT,      no_argument,                    0,              Options::PRETTYPRINT},
 	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
