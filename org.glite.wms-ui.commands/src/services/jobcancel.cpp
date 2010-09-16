@@ -56,6 +56,26 @@ namespace glite {
 namespace wms{
 namespace client {
 namespace services {
+
+std::string join( const std::vector<std::string>& array, const std::string& sep)
+{
+  vector<string>::const_iterator sequence = array.begin( );
+  vector<string>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) return "";
+
+  string joinstring( "" );
+  if (sequence != end_sequence) {
+    joinstring += *sequence;
+    ++sequence;
+  }
+
+  for( ; sequence != end_sequence; ++sequence )
+    joinstring += sep + *sequence;
+  
+  return joinstring;
+}
+
+
 /**
 * Default constructor
 */
@@ -63,6 +83,7 @@ JobCancel::JobCancel() {
 	// init of the string attributes
         m_inOpt = "";
         json = false;
+	pprint = false;
 };
 
 /**
@@ -82,7 +103,8 @@ void JobCancel::readOptions (int argc,char **argv){
 
         // json output
     	json = wmcOpts->getBoolAttribute (Options::JSON);
-
+	pprint = wmcOpts->getBoolAttribute (Options::PRETTYPRINT);
+	
 	// JobId's
         if (!m_inOpt.empty()){
 		// From input file
@@ -264,22 +286,45 @@ void JobCancel::cancel ( ){
                                 cout << out.str( );
    			}
     		} else if (json) {
+				string separator, quote;
+				// TODO: GESTIRE IL PRETTY PRINT
+				if(pprint) {
+				  separator = "\n";
+				  quote = "";
+				}
+				else {
+				  separator = ", ";
+				  quote = "\"";
+				}
+				  
 				//format the output message in json format
 				string json = "";
 
-				json += "  result: success \n";
-				//json += "endpoint: "+getEndPoint()+"\n" ;
+				json += "   " + quote + "result" + quote + ": " + quote + "success" + quote + separator;//\n";
 
 				int sizeJ = jobIds.size();
-				json += "  jobs: {\n";
+				json += string("   ") + quote + "jobs" + quote +": {" + ( pprint ? "\n" : " " );//\n";
+				vector<string> pieces;
 				for (int i=0;i<sizeJ;i++) {
-					json += "    " + jobIds[i] + ": {\n";
-					json += "      endpoint: "+jobid_endpoint[jobIds[i]] +"\n";
-					json += "      status: cancel requested\n";
-					json += "    }\n";
+					string piece = string( pprint ? "     "  : "" ) + quote + jobIds[i] + quote + ": {" + ( pprint ? "\n" : " " ) 
+						       + ( pprint ? "       " : "" ) + quote + "endpoint" + quote + ": " + quote + jobid_endpoint[jobIds[i]] + quote 
+						       + separator + ( pprint ? "       " : "" ) + quote + "status" + quote +": " + quote + "cancel requested"
+						       + quote  
+						       + ( pprint ? "\n" : " " ) + ( pprint ? "     "  : "" ) + "} " ;
+					pieces.push_back( piece );
+									
 				}
-				json += "  }\n";
-				json = "{\n"+json+"}\n";
+				
+				json += join( pieces, separator );
+				
+// 				for (int i=0;i<sizeJ;i++) {
+// 					json += "    " + jobIds[i] + ": {" + separator;//\n";
+// 					json += "      endpoint: "+jobid_endpoint[jobIds[i]] + separator;//"\n";
+// 					json += "      status: cancel requested" + separator;//\n";
+// 					json += "    }" + separator ;//\n";
+// 				}
+				json += ( pprint ? "\n" : " " ) + string("  }") + ( pprint ? "\n" : " " );//\n";
+				json = string("{") + ( pprint ? "\n" : " " ) + json + "}" + ( pprint ? "\n" : " " );// \n";
 				cout << json;
 
     	} else{

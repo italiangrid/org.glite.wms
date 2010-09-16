@@ -79,6 +79,7 @@ class JobCancel : public Job {
 		* bool input arguments
  		*/
  		bool json ;
+		bool pprint;
                 /*
                 * JobId's
                 */

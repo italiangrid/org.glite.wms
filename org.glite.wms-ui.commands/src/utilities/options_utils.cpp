@@ -273,15 +273,16 @@ const struct option Options::loginfoLongOpts[] = {
 */
 const struct option Options::cancelLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
-	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+	{	Options::LONG_HELP,		no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_INPUT,          	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_CONFIG,    	required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_OUTPUT,       	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
 	{	Options::LONG_LOGFILE,      	required_argument,		0,		Options::LOGFILE},
-        {	Options::LONG_VO,             	 required_argument,	0,		Options::VO	},
- 	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
+        {	Options::LONG_VO,             	required_argument,	        0,		Options::VO	},
+	{	Options::LONG_PRETTYPRINT,	no_argument,                    0,              Options::PRETTYPRINT},
+ 	{	Options::LONG_JSON,    	        no_argument,		        0,		Options::JSON},
 	{0, 0, 0, 0}
 };
 /*
@@ -300,6 +301,7 @@ const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_OUTPUT,             required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{ 	Options::LONG_DEBUG,              no_argument,			0,		Options::DBG},
+        {       Options::LONG_JSON,                     no_argument,                    0,              Options::JSON   },
 	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
