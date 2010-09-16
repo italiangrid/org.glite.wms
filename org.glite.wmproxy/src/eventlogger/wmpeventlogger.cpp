@@ -389,9 +389,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	GLITE_STACK_TRY("registerSubJobs()");
 	edglog_fn("WMPEventlogger::registerSubJobs");
 
-	char str_nsAddr[1024];
-	sprintf(str_nsAddr, "%s", server.c_str());
-	edglog(debug)<<"Server address: "<<str_nsAddr<<endl;
+	edglog(debug)<<"Server address: "<<server.c_str()<<endl;
 
 	// Prepare both jdls and subjobs for registering
 	vector<string> jobids;
@@ -404,52 +402,57 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 			WMS_IS_FAILURE, msg);
 	}
 
-	char **jdls_char = (char**) malloc(sizeof(char*) * (jdlssize + 1)); // same size for both arrays
+	char **jdls_char = (char**) calloc(jdlssize + 1, sizeof(char*)); // same size for both arrays
+	edg_wlc_JobId* jids_id = (edg_wlc_JobId*)calloc(jdlssize + 1, sizeof(edg_wlc_JobId));
 
-	glite_jobid_t jids_id[jdlssize];
-	
 	vector<string>::const_iterator iter = jdls.begin();
 	vector<string>::const_iterator const end = jdls.end();
 	vector<string>::iterator iter_jobid = jobids.begin();
         for (unsigned int i = 0; iter != end; ++iter, ++iter_jobid, ++i) {
-                jdls_char[i] = (char*) malloc(sizeof(char*) * (int(iter->size()) + 1));
+                jdls_char[i] = (char*) malloc(sizeof(char) * (int(iter->size()) + 1));
 		strcpy(jdls_char[i], iter->c_str());
 		glite_jobid_parse(iter_jobid->c_str(), &jids_id[i]);
         }
-	jdls_char[jdlssize] = NULL;
 
-	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
+	bool register_result = false;
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
-		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->c_jobid(), jdls_char, str_nsAddr, jids_id);
-			if (register_result) {
-				edglog(severe)<<error_message("Register DAG subjobs failed\n"
-					"edg_wll_RegisterSubjobsProxy", register_result)<<endl;
+		for (; i > 0; i--) {
+			if(edg_wll_RegisterSubjobsProxy(ctx, id->c_jobid(), (const char **)jdls_char, server.c_str(), jids_id)) {
+                                char *et, *ed;
+                                edg_wll_Error(ctx,&et,&ed);
+				edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobsProxy returned:" << et << '(' << ed << "), for jobid: " << id->toString() << endl;
 				randomsleep();				
+			} else {
+				register_result = true;
+				break;
 			}
 		}
 	} else {
 		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
-		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobs(ctx, id->c_jobid(), jdls_char, str_nsAddr, jids_id);
-			if (register_result) {
-				edglog(severe)<<error_message("Register DAG subjobs failed\n"
-					"edg_wll_RegisterSubjobs", register_result)<<endl;
+		for (; i > 0; i--) {
+			if (edg_wll_RegisterSubjobs(ctx, id->c_jobid(), jdls_char, server.c_str(), jids_id)) {
+                                char *et, *ed;
+                                edg_wll_Error(ctx,&et,&ed);
+				edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobs returned:" << et << '(' << ed << "), for jobid: " << id->toString() << endl;
 				randomsleep();				
+			} else {
+				register_result = true;
+				break;
 			}
 		}
 	}
 
-	// Release allocated memory
-	for (unsigned int i = 0; i < jdlssize; i++) {
-	        glite_jobid_free(jids_id[i]);
+	for (unsigned int i = 0; i < jdlssize; ++i) {
 		free(jdls_char[i]);
+	        glite_jobid_free(jids_id[i]);
 	}
 	free(jdls_char);
+	free(jids_id);
+
 	if (register_result) {
-		// Error while registering! release memory & raise exception
+		// Error while registering!
 		string msg = error_message("Register DAG subjobs failed\n"
 			"edg_wll_RegisterSubjobs[Proxy]", register_result);
 		throw LBException(__FILE__, __LINE__, "registerSubJobs()",
