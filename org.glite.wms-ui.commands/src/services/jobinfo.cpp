@@ -427,7 +427,7 @@ void JobInfo::retrieveInfo ( ){
 			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(m_outOpt));
 		} else {
 			logInfo->print (WMS_DEBUG, "The JobInfo result has been saved in the output file ", Utils::getAbsolutePath(m_outOpt));
-			out << "The DelegateProxy result  has been saved in the following file:\n";
+			out << "The JobInfo result  has been saved in the following file:\n";
 			out << Utils::getAbsolutePath(m_outOpt) << "\n\n";
 		}
 	}
