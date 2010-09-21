@@ -1,0 +1,4 @@
+
+chown root.root ${RPM_INSTALL_PREFIX:-/usr}/bin/glite_wms_wmproxy_dirmanager
+chmod u+s ${RPM_INSTALL_PREFIX:-/usr}/bin/glite_wms_wmproxy_dirmanager
+
