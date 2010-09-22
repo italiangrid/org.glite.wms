@@ -110,8 +110,18 @@ wmsui_checks.check_noint(sys.argv)
 #   Option check
 #=================================
 
-err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:" ,["help","version", \
+json = False
+pprint = False
+
+err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:j:" ,["help","version", "pretty-print", "json", \
 "input=","verbosity=","config=", "user-tag=","from=","to=","event=", "exclude=", "output=","noint","debug", "logfile="] )
+
+if    ("--json" in options):
+	json = True
+
+if    ("--pretty-print" in options):
+	pprint = True;
+
 if    ("--help" in options):
    print "\n" + prgname +" full help"
    wmsui_utils.printFullHelp(simple_usage, wmsui_checks.info.noint)
@@ -275,7 +285,7 @@ LBapproach = includes or excludes or userTags or issuer or fromT or toT
 
 # Check for LB Query or normal management
 if LBapproach:
-	
+	#print "LBapproach\n"
 	# Initialise the dictionary
 	queriedEvents = {}
 
@@ -290,17 +300,26 @@ if LBapproach:
 	   exit(1)
 
 else:
+	#print "NO LBapproach\n"
 	# Retrieve 
 	for jobid in jobs:
 	
 		try:
 			eventArray = wmsui_api.getEvents(jobid, level)
-			message += wmsui_api.printEvents(jobid, eventArray)
+			
+			message += wmsui_api.printEvents(jobid, eventArray, json, pprint)
 		except Exception, error:
 			errMsg('Error', 'UI_GENERIC_ERROR_ON_JOB_ID', jobid.jobid, error.args[0])
 
+
+
 if message:
-	message = sepStart + message + sepEnd
+	
+	if json is False:
+		message = sepStart + message + sepEnd
+	
+	#print "message=[" + message +"]"
+	
 	wmsui_utils.print_message(outFile, message)
 
 	if outFile:
