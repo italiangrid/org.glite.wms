@@ -63,6 +63,39 @@ namespace glite {
     namespace client {
       namespace services {
 
+std::string join( const std::vector<std::string>& array, const std::string& sep)
+{
+  vector<string>::const_iterator sequence = array.begin( );
+  vector<string>::const_iterator end_sequence = array.end( );
+  if(sequence == end_sequence) return "";
+
+  string joinstring( "" );
+  if (sequence != end_sequence) {
+    joinstring += *sequence;
+    ++sequence;
+  }
+
+  for( ; sequence != end_sequence; ++sequence )
+    joinstring += sep + *sequence;
+  
+  return joinstring;
+}
+
+void chomp( std::string& str ) {
+
+  if( str.length() > 1 ) {
+    if(str.at(str.length() - 1) == '\n' ) {
+      str = str.substr( 0, str.length() - 2 );
+      return ;  
+    }
+  }
+  
+  if( str.empty() ) return;
+  
+  if (str == "\n" ) str = "";
+
+}
+
 	const int SUCCESS = 0;
 	const int FAILED = -1;
 	const int FORK_FAILURE = -1;
@@ -86,6 +119,7 @@ namespace glite {
 	  m_listOnlyOpt = false;
 	  m_nosubdir = false;
 	  m_json = false;
+	  m_pprint = false;
 	  //nopgOpt = false;
 	  // list of files
 	  m_childrenFileList = "";
@@ -116,7 +150,7 @@ namespace glite {
 
 	  // --json
 	  m_json = wmcOpts->getBoolAttribute (Options::JSON);
-
+	  m_pprint = wmcOpts->getBoolAttribute (Options::PRETTYPRINT);
 	  // JobId's
 	  if (!m_inOpt.empty()){
 	    // From input file
@@ -191,7 +225,8 @@ namespace glite {
 	  vector<string>::iterator const end = m_jobIds.end();
 
 	  map<string, string> locations;
-
+	  map<string, string> endpoints;
+	  
 	  for ( ; it != end ; it++){
 	    //code = FAILED;
 	    // JobId
@@ -255,7 +290,7 @@ namespace glite {
 	      cumulResult += result;
 	      string _result;
 
-	      //cout << " result=" <<result << endl;
+//	      cout << " result=" <<result << endl;
 
 	      if( result.empty() )
 		continue;
@@ -271,9 +306,15 @@ namespace glite {
 	      if( pos != string::npos ) {
 		_result = result.substr( pos+9, result.length()-9-pos);
 		locations[*it] = _result;
-	      } else
+		
+		//cout << "EndPoint=[" << getEndPoint() << "]" << endl;
+		
+		endpoints[*it] = getEndPoint();
+	      } else {
+		//cout << "EndPoint=[" << getEndPoint() << "]" << endl;
 		locations[*it] = result;
-	      
+		endpoints[*it] = getEndPoint();
+	      }
 	      result = "";
 			
 	    } catch (WmsClientException &exc){
@@ -296,33 +337,58 @@ namespace glite {
 	      
 	      //format the output message in json format
 	      string json = "";
+	      string quote="\"";
+	      string carriage = "";
+	      string joinS = ",";
+	      string tab = "";
+	      string ccarriage = ", ";
+	      if(m_pprint) {
+	        carriage = "\n";
+		quote    = "";
+		joinS = "\n";
+		tab = "\t";
+		ccarriage = "";
+	      }
+	      json += tab + quote + "result" + quote + ": " + quote + "success" + quote + ccarriage + carriage;// \n";
+	      //json += "endpoint: "+getEndPoint()+"\n" ;
 	      
-	      json += "result: success \n";
-	      json += "endpoint: "+getEndPoint()+"\n" ;
+	      
 	      
 	      int sizeJ = m_jobIds.size();
 	      
+	      if( sizeJ > 0 )
+	        json += tab + quote + "jobs" + quote + ": {" + carriage;
+	      
+	      vector<string> pieces;
+	      
 	      for (int i=0;i<sizeJ;i++) {
-
-		json += "JobOutput: {\n";
-		json += "  jobid: " + m_jobIds[i] + "\n";
-		string avail("");
+		string location( locations[ m_jobIds[i] ] );
+		chomp( location );
 		
+		string tmpjson("");
+		tmpjson = tab + tab + quote + m_jobIds[i] + quote + ": {" + carriage;//"\n";
+		string avail("");
+		tmpjson += tab + tab + "  " + quote + "endpoint" + quote + ": " + quote + endpoints[m_jobIds[i]] + quote + ccarriage + carriage;
 		if ( locations[ m_jobIds[i] ].empty()  ) 
 		  avail = "0";
 		else avail = "1";
 
-		json += "  output_available: " + avail + "\n";
+		tmpjson += tab + tab + "  " + quote + "output_available" + quote + ": " + avail + ccarriage + carriage;//"\n";
 		if( avail == "1" )
-		  json += "  location: " + locations[ m_jobIds[i] ] + "\n";
+		  tmpjson += tab + tab +"  " + quote + "location" + quote + ": " + quote + location + quote + carriage;//"\n";
 		else
-		  json += "  location: None\n";
-		json += "}\n";
+		  tmpjson += tab + tab + "  " + quote + "location" + quote + ": " + quote + "None" + quote + carriage;//\n";
+		tmpjson += tab + tab + "}" + carriage;//\n";
+		
+		pieces.push_back( tmpjson );
 		
 	      }
+	      
+	      json += join(pieces, ccarriage+carriage) + tab + "}" + carriage;
+	      
 	      json += m_parentFileList + m_childrenFileList + m_fileList;
 	      
-	      json = "{\n"+json+"}\n";
+	      json = "{" + carriage + json + "}" + carriage;//\n";
 	      cout << json;
 	      
 	    } else {

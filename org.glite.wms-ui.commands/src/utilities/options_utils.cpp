@@ -325,6 +325,7 @@ const struct option Options::outputLongOpts[] = {
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
 	{	Options::LONG_NOPURG,    	no_argument,			0,	Options::SHORT_NOPURG},
  	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
+	{	Options::LONG_PRETTYPRINT,      no_argument,                    0,              Options::PRETTYPRINT},
 	{0, 0, 0, 0}
 };
 

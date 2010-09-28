@@ -111,6 +111,7 @@ class JobOutput  : public Job {
                 */
         bool m_listOnlyOpt ;
         bool m_json;
+	bool m_pprint;
 		bool m_nopgOpt ;
 		bool m_firstCall ;
 		bool m_nosubdir ;
