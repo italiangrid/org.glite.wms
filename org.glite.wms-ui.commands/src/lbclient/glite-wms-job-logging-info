@@ -292,7 +292,7 @@ if LBapproach:
 	# Perform the LB Query
 	queriedEvents = wmsui_api.queryEvents(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
 
-	message += wmsui_api.printQueriedEvents(jobs, queriedEvents)
+	message += wmsui_api.printQueriedEvents(jobs, queriedEvents, json, pprint)
 
 	if not queriedEvents: #Not able to open any of the LB's
 	   if em=="Warning":
