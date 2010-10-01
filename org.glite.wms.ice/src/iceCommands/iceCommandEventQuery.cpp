@@ -44,6 +44,7 @@ END LICENSE */
 #include "iceDb/InsertStat.h"
 #include "iceDb/GetEventID.h"
 #include "iceDb/SetEventID.h"
+#include "iceDb/SetEventIDForCE.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
@@ -159,7 +160,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     }
     
     boost::tuple<string, time_t, long long int> proxyinfo = DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn );
-    //string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>() );
+    
     if ( proxyinfo.get<0>().empty() ) {
     
       // see BUG https://savannah.cern.ch/bugs/index.php?59453 
@@ -171,11 +172,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		      );
       list< CreamJob > toRemove;
       {
-//    	list<pair<string, string> > clause;
- //   	clause.push_back( make_pair( util::CreamJob::user_dn_field(), m_dn ) );
-    
-    	//db::GetJobs getter( clause, toRemove, method_name );
-  	db::GetJobsByDN getter( toRemove, m_dn, method_name );
+    	db::GetJobsByDN getter( toRemove, m_dn, method_name );
     	db::Transaction tnx( false, false );
     	tnx.execute( &getter );
       }
@@ -189,7 +186,6 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
         sleep(2);
       
       IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
-      //Ice::instance()->delete_jobs_by_dn( m_dn );
       
       return;
       
@@ -228,9 +224,6 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       
     }
     
-//    ostringstream from, to;
-//    from << thisEventID;
-    
     string from( util::IceUtils::to_string( (long long int)thisEventID ) );
     
     string sdbid;
@@ -244,16 +237,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     try {
       api_util::scoped_timer Tot( string("iceCommandEventQuery::execute() - SOAP Connection for QueryEvent - ") + "TID=[" + getThreadID() + "]" );
       vector<pair<string, string> > states;
-/*      states.push_back( make_pair("STATUS", "REGISTERED") );
-states.push_back( make_pair("STATUS", "PENDING") );
-states.push_back( make_pair("STATUS", "IDLE") );
-      states.push_back( make_pair("STATUS", "RUNNING") );
-      states.push_back( make_pair("STATUS", "REALLY-RUNNING") );
-      states.push_back( make_pair("STATUS", "DONE-OK") );
-      states.push_back( make_pair("STATUS", "DONE-FAILED") );
-      states.push_back( make_pair("STATUS", "ABORTED") );
-      states.push_back( make_pair("STATUS", "CANCELLED") );
-      states.push_back( make_pair("STATUS", "HELD") ); */
+
       if( !thisEventID ) // EventID ZERO means ICE has been scratched
         CreamProxy_QueryEvent( m_ce, 
 			       proxyinfo.get<0>(), 
@@ -355,7 +339,13 @@ states.push_back( make_pair("STATUS", "IDLE") );
 		     << " ALL JOBS RELATED TO OLD DB_ID ["
 		     << olddbid << "] ***"
 		     );
-
+      
+      {
+	db::SetEventIDForCE setter( m_ce, 0, "iceCommandEventQuery::execute" );
+	db::Transaction tnx(false, false);
+	tnx.execute( &setter );
+      }
+      
       list<CreamJob> toRemove;
       {
 	list<pair<string, string> > clause;
@@ -381,11 +371,7 @@ states.push_back( make_pair("STATUS", "IDLE") );
       
       IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
       
-      {
-	db::SetEventID setter( m_dn, m_ce, 0, "iceCommandEventQuery::execute" );
-	db::Transaction tnx(false, false);
-	tnx.execute( &setter );
-      }
+
     } // if( !this->checkDatabaseID..... )
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
