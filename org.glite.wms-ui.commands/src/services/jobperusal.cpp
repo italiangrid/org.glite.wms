@@ -1,22 +1,3 @@
-/*
-Copyright (c) Members of the EGEE Collaboration. 2004.
-See http://www.eu-egee.org/partners/ for details on the
-copyright holders.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 /**
 *        Copyright (c) Members of the EGEE Collaboration. 2004.
 *        See http://public.eu-egee.org/partners/ for details on the copyright holders.
@@ -26,7 +7,6 @@ limitations under the License.
 *                       Marco Sottilaro <marco.sottilaro@datamat.it>
 */
 
-//      $Id$
 
 #include "jobperusal.h"
 #include <string>
@@ -379,7 +359,7 @@ void JobPerusal::jobPerusal ( ){
 void JobPerusal::checkStatus( ){
 	string warnings = "";
 	int code = 0;
-	LbApi lbApi, lbApi2;
+	LbApi lbApi;
 	lbApi.setJobId(jobId);
 	Status status=lbApi.getStatus(true,true);
 	if (getOpt){
@@ -392,17 +372,6 @@ void JobPerusal::checkStatus( ){
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
 		// Initialize ENDPOINT (start a new (thread of) job (s)
-
-	  string thisEndPoint( status.getEndpoint() );
-	  if( thisEndPoint.empty( ) ) {
-	    lbApi2.setJobId( status.getParent( ) );
-	    thisEndPoint = lbApi2.getStatus( true, true ).getEndpoint( );
-	  }
-
-	  cout << "child  endpoint = " << status.getEndpoint() << endl;
-	  cout << "parent endpoint = " << thisEndPoint << endl;
-	  exit(1);
-
 		setEndPoint (status.getEndpoint());
 		// checks if --endpoint optstatus.getEndpoint()ion has been specified with a different endpoint url
 		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
