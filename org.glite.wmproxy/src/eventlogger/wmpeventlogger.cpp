@@ -415,7 +415,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
         }
 
 	int i = LOG_RETRY_COUNT;
-	bool register_result = false;
+	bool register_success = false;
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		for (; i > 0; i--) {
@@ -425,7 +425,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 				edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobsProxy returned:" << et << '(' << ed << "), for jobid: " << id->toString() << endl;
 				randomsleep();				
 			} else {
-				register_result = true;
+				register_success = true;
 				break;
 			}
 		}
@@ -438,7 +438,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 				edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobs returned:" << et << '(' << ed << "), for jobid: " << id->toString() << endl;
 				randomsleep();				
 			} else {
-				register_result = true;
+				register_success = true;
 				break;
 			}
 		}
@@ -451,14 +451,11 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	free(jdls_char);
 	free(jids_id);
 
-	if (register_result) {
-		// Error while registering!
-		string msg = error_message("Register DAG subjobs failed\n"
-			"edg_wll_RegisterSubjobs[Proxy]", register_result);
+	if (!register_success) {
 		throw LBException(__FILE__, __LINE__, "registerSubJobs()",
-			WMS_LOGGING_ERROR, msg);
+			WMS_LOGGING_ERROR, error_message("Register DAG subjobs failed\n"
+                        "edg_wll_RegisterSubjobs[Proxy]"));
 	}
-	// Logging children user tags
 	logUserTags(ad->getSubAttributes(JDL::USERTAGS));
 	GLITE_STACK_CATCH();
 }
