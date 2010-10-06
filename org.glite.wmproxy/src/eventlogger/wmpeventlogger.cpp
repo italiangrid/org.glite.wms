@@ -22,6 +22,7 @@ limitations under the License.
 //
 
 #include "wmpeventlogger.h"
+#include "server/wmpconfiguration.h"
 
 #include "wmplbselector.h"
 
@@ -48,10 +49,12 @@ limitations under the License.
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
+
 #include "authorizer/wmpauthorizer.h"
 
 
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
+extern WMProxyConfiguration conf;
 
 // NAMESPACE
 namespace glite {
@@ -75,8 +78,6 @@ using namespace glite::wms::wmproxy::utilities; //Exception codes
 const char * GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
 
 // LB Proxy default availability status
-const bool DEFAULT_USER_PROXY = false;
-
 // BulkMM default availability status
 const bool DEFAULT_BULK_MM = false;
 
@@ -107,7 +108,7 @@ WMPEventLogger::WMPEventLogger(const string &endpoint)
 	m_subjobs = NULL;
 	this->server = endpoint;
 	this->delegatedproxy = "";
-	m_lbProxy_b = DEFAULT_USER_PROXY;
+	m_lbProxy_b = conf.isLBProxyAvailable();
 	m_bulkMM_b = DEFAULT_BULK_MM;
 
 	if (edg_wll_InitContext(&ctx)
