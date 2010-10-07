@@ -791,15 +791,12 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
-	edglog(debug)<<"LB Port: "
-		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
 
 	// Registering the job
 	jad->check();
@@ -968,9 +965,9 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 	vector<string> jobids;
 	if (jad) {
@@ -1155,13 +1152,13 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 	// Setting user proxy
-
 	wmplogger.setUserProxy(delegatedproxy); // delegated proxy may be returned by checkSecurity
+
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
 
 	// Checking proxy validity
 	try {
@@ -2079,9 +2076,9 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 	// Getting delegated proxy inside job directory
 	string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -2202,9 +2199,9 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
 
         WMPEventLogger wmplogger(wmputilities::getEndpoint());
         std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+        wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
         wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
                 conf.getDefaultProtocol(), conf.getDefaultPort());
-        wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
         // Getting delegated proxy inside job directory
         string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -2267,9 +2264,9 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 
 	// Setting user proxy

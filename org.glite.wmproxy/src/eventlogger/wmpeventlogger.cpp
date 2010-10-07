@@ -328,7 +328,6 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	
 	char str_addr[1024];
 	sprintf(str_addr, "%s", server.c_str());
-	edglog(debug)<<"Server address: "<<str_addr<<endl;
 
 	char * seqcode = getSequence();
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
@@ -1291,13 +1290,11 @@ WMPEventLogger::error_message(const string &message, int exitcode)
 	edg_wll_Error(ctx, &msg, &dsc);
 
 	string lb;
-	if (m_lbProxy_b) {
-		lb = "LBProxy is enabled\n";
-	} else {
+	if (!m_lbProxy_b) {
 		if (getenv(GLITE_WMS_LOG_DESTINATION)) {
-			lb = "LB (ENV): " + string(getenv(GLITE_WMS_LOG_DESTINATION)) + "\n";
+			lb = "LB server (ENV): " + string(getenv(GLITE_WMS_LOG_DESTINATION)) + "\n";
 		} else {
-			lb = "LB: " + this->lb_host + ":"
+			lb = "LB server: " + this->lb_host + ":"
 				+ boost::lexical_cast<string>(this->lb_port) + "\n";
 		}
 	}
