@@ -307,7 +307,13 @@ else:
 		try:
 			eventArray = wmsui_api.getEvents(jobid, level)
 			
-			message += wmsui_api.printEvents(jobid, eventArray, json, pprint)
+			if json is True:
+				if pprint is True:
+					message += "   {\n" + wmsui_api.printEvents(jobid, eventArray, json, pprint) + "   }\n"
+				else:
+					message += "{ " + wmsui_api.printEvents(jobid, eventArray, json, pprint) + " }"
+			else:
+				message += wmsui_api.printEvents(jobid, eventArray, json, pprint)
 		except Exception, error:
 			errMsg('Error', 'UI_GENERIC_ERROR_ON_JOB_ID', jobid.jobid, error.args[0])
 
@@ -317,7 +323,12 @@ if message:
 	
 	if json is False:
 		message = sepStart + message + sepEnd
-	
+	else:
+		if pprint is True:
+			message = "{\n" + message + "}\n"
+		else:
+			message = "{ " + message + " }"
+			
 	#print "message=[" + message +"]"
 	
 	wmsui_utils.print_message(outFile, message)
