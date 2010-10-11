@@ -43,6 +43,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/find.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace glite {
   namespace wms {
@@ -73,15 +74,15 @@ namespace glite {
 	      char *ptr = ::tmpnam( 0 );
 	      std::string tmp( "START_GLITEWMSICE_SQL_STRING_TAG_" );
 	      if(ptr)
-		tmp += to_string( (long long) ptr );
+		tmp += boost::lexical_cast<std::string>( (long long)ptr );//to_string( (long long) ptr );
 	      
 	      struct timeval T;
 	      gettimeofday( &T, 0 );
 	      
 	      tmp += "_";
-	      tmp += to_string(T.tv_sec);
+	      tmp += boost::lexical_cast<std::string>( T.tv_sec ); //to_string(T.tv_sec);
 	      tmp += "_";
-	      tmp += to_string( T.tv_usec );
+	      tmp += boost::lexical_cast<std::string>( T.tv_usec ); //to_string( T.tv_usec );
 	      
 	      s_tmpname = tmp;
 	      
@@ -157,7 +158,7 @@ namespace glite {
 	   */
   
 	  static std::string canonizeString( const std::string& ) throw();
-  
+ /* 
 	  static std::string to_string( long int );
 	  static std::string to_string( unsigned long int );
 	  static std::string to_string( long long );
@@ -167,7 +168,7 @@ namespace glite {
 	  static std::string to_string( float );
 	  static std::string to_string( bool );
 	  static std::string to_string( const std::string& str ) { return str; }
-
+*/
 	  static std::string join( const std::list<std::string>& array, const std::string& sep );
 
 	  static std::string withSQLDelimiters( const std::string& value ) {

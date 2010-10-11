@@ -23,6 +23,7 @@ END LICENSE */
 #include "SetEventIDForCE.h"
 #include "iceUtils/IceUtils.h"
 
+#include <boost/lexical_cast.hpp>
 using namespace std;
 using namespace glite::wms::ice;
 
@@ -30,7 +31,7 @@ using namespace glite::wms::ice;
 void db::SetEventIDForCE::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("UPDATE event_id SET eventid=");
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_new_eventid ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long long int)m_new_eventid ) );
   sqlcmd += " WHERE ceurl=";
   sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd += ";";

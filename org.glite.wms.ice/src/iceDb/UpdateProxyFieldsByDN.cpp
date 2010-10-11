@@ -20,6 +20,7 @@ END LICENSE */
 
 #include "UpdateProxyFieldsByDN.h"
 #include "iceUtils/IceUtils.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace glite::wms::ice;
 
@@ -30,7 +31,7 @@ void db::UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationExcept
   string sqlcmd("UPDATE proxy SET proxyfile=");
   sqlcmd += util::IceUtils::withSQLDelimiters( m_proxyfile );
   sqlcmd += ",exptime=" ;
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( m_exptime ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( m_exptime ) );
   sqlcmd += " WHERE userdn=";
   sqlcmd += util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND myproxyurl=" ;

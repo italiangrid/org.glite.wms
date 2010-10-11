@@ -36,16 +36,13 @@ END LICENSE */
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "iceUtils/CreamJob.h"
-#include "iceDb/GetAllJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceUtils/CreamProxyMethod.h"
+#include "iceDb/RemoveJobByGid.h"
 #include "iceUtils/IceConfManager.h"
+#include "iceUtils/DNProxyManager.h"
 #include "iceUtils/IceUtils.h"
 
-#include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
-#include "glite/ce/cream-client-api-c/ResultWrapper.h"
-#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -56,18 +53,10 @@ END LICENSE */
 #include <list>
 
 using namespace std;
-//using namespace glite::ce::cream_client_api;
 using namespace glite::wms::ice;
 
-//namespace iceUtil   = glite::wms::ice::util;
-//namespace iceDb     = glite::wms::ice::db;
-//namespace po        = boost::program_options;
-//namespace fs        = boost::filesystem;
-//namespace api_util  = glite::ce::cream_client_api::util;
-//namespace cream_api = glite::ce::cream_client_api::soap_proxy;
-
 bool get_job( const string& gid, util::CreamJob& );
-void get_all_jobs( list< util::CreamJob >& jobs );
+void remove_job_fromdb( const util::CreamJob& );
 
 int main(int argc, char*argv[]) 
 {
@@ -78,10 +67,10 @@ int main(int argc, char*argv[])
   }
   return 0;
   char*   confile = "glite_wms.conf";
-  bool    cancel_all = false;
+  //bool    cancel_all = false;
   string  gridjobid;
   int     option_index = 0;
-  bool    log_abort = false;
+  //bool    log_abort = false;
   string  abort_reason;
   char    c;
   bool    from_file = false;
@@ -90,9 +79,6 @@ int main(int argc, char*argv[])
   while(1) {
     static struct option long_options[] = {
       {"conf", 1, 0, 'c'},
-      {"all", 0, 0, 'a'},
-      {"log-abort", 1, 0, 'l'},
-      {"from-file", 1, 0, 'f'},
       {0, 0, 0, 0}
     };
     c = getopt_long(argc, argv, "c:al:", long_options, &option_index);
@@ -103,35 +89,22 @@ int main(int argc, char*argv[])
     case 'c':
       confile = optarg;//false;
       break;
-    case 'a':
-      cancel_all = true;
-      break;
-    case 'l':
-      log_abort = true;
-      abort_reason = optarg;
-      break;
-    case 'f':
-      from_file = true;
-      inputlist = optarg;
-      break;
     default:
       cerr << "Type " << argv[0] << " -h for help" << endl;
       exit(1);
     }
   }
   
-  if( ( argv[optind] && from_file ) ||
-      ( argv[optind] && cancel_all) ||
-      ( cancel_all   && from_file ) )
+  if( argv[optind] && from_file ) 
     {
-      cerr << "Only one of --all, --from-file <pathfile>, <gridjobid> "
+      cerr << "Only one of --from-file <pathfile> or <gridjobid> "
 	   << "must be specified in the command line" << endl;
       return 1;
     }
 
-  if (!argv[optind] && !from_file && !cancel_all )
+  if (!argv[optind] && !from_file )
     {
-      cerr << "Must specify one of the options --all, --from-file <pathfile>, <gridjobid>" << endl;
+      cerr << "Must specify at least one of the options --from-file <pathfile> or <gridjobid>" << endl;
       return 1;
     }
 
@@ -148,11 +121,10 @@ int main(int argc, char*argv[])
   }
   
   std::list< util::CreamJob > jobList;
-  //iceUtil::iceLBLogger *lb_logger( iceUtil::iceLBLogger::instance() );
   
   /**
      If specified by the user
-     read gridjobids to cancel from file
+     read gridjobids, to delete from DB, from file
   */
   if( from_file ) {
     
@@ -178,10 +150,6 @@ int main(int argc, char*argv[])
     }
   }
   
-  if( cancel_all ) {   
-    get_all_jobs( jobList );       
-  } 
-
   if( !gridjobid.empty() ) {
     util::CreamJob aJob;
     if( get_job( gridjobid, aJob ) )
@@ -194,42 +162,13 @@ int main(int argc, char*argv[])
   
   std::list< util::CreamJob >::iterator jit;
   jit = jobList.begin( );
-  while( jit != jobList.end( ) ) {
+  for( ; jit != jobList.end( ); ++jit ) {
     
-    vector<glite::ce::cream_client_api::soap_proxy::JobIdWrapper> toCancel;
-
-    toCancel.push_back( glite::ce::cream_client_api::soap_proxy::JobIdWrapper(jit->cream_jobid(), 
-									      jit->cream_address(), 
-									      std::vector<glite::ce::cream_client_api::soap_proxy::JobPropertyWrapper>())
-			);
+    remove_job_fromdb( *jit );
     
-    glite::ce::cream_client_api::soap_proxy::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
-    glite::ce::cream_client_api::soap_proxy::ResultWrapper res;
-
-    cout << "Sending JobCancel to CREAM for job [" 
+    cout << "Removing from ICE's DB job [" 
 	 << jit->grid_jobid() << "] -> [" << jit->complete_cream_jobid() << "]" << endl;
     
-    glite::ce::cream_client_api::soap_proxy::VOMSWrapper V( jit->user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
-
-    if( !V.IsValid( ) ) {
-      cerr <<"*** For job [" << jit->grid_jobid() << "] -> ["
-	   << jit->complete_cream_jobid() << "]"
-	   << " the proxyfile ["
-	   << jit->user_proxyfile() 
-	   << "] is not valid: "
-	   << V.getErrorMessage()
-	   << ". Skipping cancellation of this job. "
-	   << endl;
-    } else {
-      try {
-        util::CreamProxy_Cancel( jit->cream_address(), jit->user_proxyfile(), &req, &res ).execute( 3 );
-	cout << "CANCELLED JOB ["<< jit->grid_jobid() << "]" << endl;
-      } catch(exception& ex) {
-        cerr << "*** Error cancelling job [" << jit->grid_jobid() << "]: " << ex.what() << endl;
-      }
-    }
-    
-    ++jit;
   } 
   return 0;
 }
@@ -237,55 +176,26 @@ int main(int argc, char*argv[])
 //_______________________________________________________________________________
 bool get_job( const string& gid, util::CreamJob& target )
 {
-  //list<string> fields_to_get;
-  //list<vector<string> > result;
-  //list<pair<string, string> > clause;
-  
-  //  fields_to_get.push_back("creamjobid");	//0
-  // fields_to_get.push_back("creamurl");          //1
-  //fields_to_get.push_back("userproxy");		//2
-  //fields_to_get.push_back("gridjobid");         //3
-  
-  //clause.push_back( make_pair("gridjobid", gid ) );
-  
-  //iceDb::GetFields getter( fields_to_get, clause, result, "glite-wms-ice-rm::get_job" );
+
   db::GetJobByGid getter( gid, "glite-wms-ice-rm::get_job" );
   db::Transaction tnx( false, false );
   tnx.execute( &getter );
   
   if( !getter.found() ) return false;
-
-  //  if(result.begin() == result.end()) return false;
   
-  target = getter.get_job();//*result.begin( );
+  target = getter.get_job();
   
   return true;
 }
 
 //_______________________________________________________________________________
-void get_all_jobs( list< util::CreamJob >& jobs )
-{
-//   list<string> fields_to_get;
-//   list<vector<string> > result;
-  
-//   fields_to_get.push_back("creamjobid");	//0
-//   fields_to_get.push_back("creamurl");          //1
-//   fields_to_get.push_back("userproxy");		//2
-//   fields_to_get.push_back("gridjobid");		//3
-  
-  
-  //iceDb::GetFields getter( fields_to_get, list<pair<string,string> >(), result, "glite-wms-ice-rm::get_all_jobs" );
-  db::GetAllJobs getter( &jobs, 0, 0, "glite-wms-ice-rm::get_all_jobs", false );
-  db::Transaction tnx( false, false );
-  tnx.execute( &getter );
-  
-  //  if(result.begin() == result.end()) return;
-  
-  //  list<vector<string> >::iterator jit = result.begin( );
-  //  while( jit != result.end( ) )
-  //  {
-  //    jobs.push_back( *jit );
-  //    
-  //    ++jit;
-  //  }
+void remove_job_fromdb( const util::CreamJob& aJob ) {
+  if( aJob.proxy_renewable() )
+      util::DNProxyManager::getInstance()->decrementUserProxyCounter( aJob.user_dn(), aJob.myproxy_address() );
+      
+  {
+    db::RemoveJobByGid remover( aJob.grid_jobid(), "glite-wms-ice-db-rm::remove_job_fromdb" );
+    db::Transaction tnx(false, false);
+    tnx.execute( &remover );
+  }
 }

@@ -892,105 +892,105 @@ string glite::wms::ice::util::IceUtils::compressed_string( const string& name ) 
 }
 	
 //------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( short int s ) {
-
-  return boost::str( boost::format( "%1%" ) % s );
-/*
-  char buf[6];
-  memset( buf, 0, 6 );
-  snprintf( buf, 5, "%d", s );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( unsigned short int s ) {
-
-  return boost::str( boost::format( "%1%" ) % s );
-/*
-  char buf[6];
-  memset( buf, 0, 6 );
-  snprintf( buf, 5, "%u", s );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( long int l ) {
-
-  return boost::str( boost::format( "%1%" ) % l );
-/*
-  char buf[21];
-  memset( buf, 0, 21 );
-  snprintf( buf, 21, "%d", l );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( unsigned long int l ) {
-
-  return boost::str( boost::format( "%1%" ) % l );
-/*
-  char buf[21];
-  memset( buf, 0, 21 );
-  snprintf( buf, 21, "%u", l );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( long long int l ) {
-
-  return boost::str( boost::format( "%1%" ) % l );
-/*
-  char buf[21];
-  memset( buf, 0, 21 );
-  snprintf( buf, 21, "%d", l );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( unsigned long long int l ) {
-
-  return boost::str( boost::format( "%1%" ) % l );
-/*
-  char buf[21];
-  memset( buf, 0, 21 );
-  snprintf( buf, 21, "%u", l );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( float f ) {
-
-  return boost::str( boost::format( "%1%" ) % f );
-/*
-  char buf[sizeof(float)+1];
-  memset( buf, 0, sizeof(float)+1 );
-  snprintf( buf, sizeof(float), "%f", f );
-  return buf;
-*/
-}
-
-//------------------------------------------------------------------------------
-string
-glite::wms::ice::util::IceUtils::to_string( bool b ) {
-
-  return ( b ? "1" : "0" );
-  //	  if(b) return "true";
-  //	  else return "false";
-
-}
+// string
+// glite::wms::ice::util::IceUtils::to_string( short int s ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % s );
+// /*
+//   char buf[6];
+//   memset( buf, 0, 6 );
+//   snprintf( buf, 5, "%d", s );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( unsigned short int s ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % s );
+// /*
+//   char buf[6];
+//   memset( buf, 0, 6 );
+//   snprintf( buf, 5, "%u", s );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( long int l ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % l );
+// /*
+//   char buf[21];
+//   memset( buf, 0, 21 );
+//   snprintf( buf, 21, "%d", l );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( unsigned long int l ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % l );
+// /*
+//   char buf[21];
+//   memset( buf, 0, 21 );
+//   snprintf( buf, 21, "%u", l );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( long long int l ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % l );
+// /*
+//   char buf[21];
+//   memset( buf, 0, 21 );
+//   snprintf( buf, 21, "%d", l );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( unsigned long long int l ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % l );
+// /*
+//   char buf[21];
+//   memset( buf, 0, 21 );
+//   snprintf( buf, 21, "%u", l );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( float f ) {
+// 
+//   return boost::str( boost::format( "%1%" ) % f );
+// /*
+//   char buf[sizeof(float)+1];
+//   memset( buf, 0, sizeof(float)+1 );
+//   snprintf( buf, sizeof(float), "%f", f );
+//   return buf;
+// */
+// }
+// 
+// //------------------------------------------------------------------------------
+// string
+// glite::wms::ice::util::IceUtils::to_string( bool b ) {
+// 
+//   return ( b ? "1" : "0" );
+//   //	  if(b) return "true";
+//   //	  else return "false";
+// 
+// }
 
 
 

@@ -21,6 +21,8 @@ END LICENSE */
 #include "CreateProxyField.h"
 #include "iceUtils/IceUtils.h"
 
+#include <boost/lexical_cast.hpp>
+
 using namespace glite::wms::ice;
 using namespace std;
 
@@ -34,9 +36,9 @@ void db::CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& 
   sqlcmd	 += ",";
   sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_proxyfile );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_exptime ) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((long int)m_exptime ) );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_counter ) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((long int)m_counter ) );
   sqlcmd	 += ");";
    		      
   do_query( db, sqlcmd );

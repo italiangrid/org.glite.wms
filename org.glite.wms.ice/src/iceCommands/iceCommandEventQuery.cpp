@@ -224,7 +224,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       
     }
     
-    string from( util::IceUtils::to_string( (long long int)thisEventID ) );
+    string from( boost::lexical_cast<string>( (long long int) thisEventID)/*util::IceUtils::to_string( (long long int)thisEventID )*/ );
     
     string sdbid;
     time_t exec_time;

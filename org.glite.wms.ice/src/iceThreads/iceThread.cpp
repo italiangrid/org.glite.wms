@@ -21,6 +21,8 @@ END LICENSE */
 #include "iceUtils/IceUtils.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
+#include <boost/lexical_cast.hpp>
+
 using namespace glite::wms::ice;
 namespace apiLogger = glite::ce::cream_client_api::util;
 
@@ -29,7 +31,7 @@ util::iceThread::iceThread( const std::string& name ) :
     m_running( false ),
     m_stopped( false )
 {
-  m_thread_id = util::IceUtils::to_string( (long long)this );//os.str();
+  m_thread_id = boost::lexical_cast<std::string>( (long long)this );//os.str();
 }
 
 util::iceThread::iceThread( ) :
@@ -37,7 +39,7 @@ util::iceThread::iceThread( ) :
     m_running( false ),
     m_stopped( false )
 {
-  m_thread_id = util::IceUtils::to_string( (long long) this ) ;
+  m_thread_id = boost::lexical_cast<std::string>( (long long) this ) ;
 }
 
 void util::iceThread::operator()()

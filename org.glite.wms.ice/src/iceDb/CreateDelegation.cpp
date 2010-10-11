@@ -20,6 +20,7 @@ END LICENSE */
 
 #include "CreateDelegation.h"
 #include "iceUtils/IceUtils.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -33,9 +34,9 @@ void db::CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& 
   sqlcmd	 += ",";
   sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_exptime) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((long int)m_exptime) );
   sqlcmd	 += ",";
-  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((long int)m_duration ) );
+  sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((long int)m_duration ) );
   sqlcmd	 += ",";
   sqlcmd	 += glite::wms::ice::util::IceUtils::withSQLDelimiters( m_delegid );
   sqlcmd	 += ",";

@@ -40,6 +40,7 @@ END LICENSE */
 #include "iceDb/UpdateDelegationTimesByID.h"
 #include "iceDb/RemoveDelegationByDNMyProxy.h"
 
+#include <boost/lexical_cast.hpp>
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -503,6 +504,6 @@ string util::Delegation_manager::generateDelegationID( ) throw()
   ::gettimeofday( &T, 0 );
 
   //  ostringstream id;
-  string id = util::IceUtils::to_string( T.tv_sec ) + "." + util::IceUtils::to_string(T.tv_usec) + IceUtils::get_host_name();
+  string id = boost::lexical_cast<string>( T.tv_sec ) + "." + boost::lexical_cast<string>(T.tv_usec) + IceUtils::get_host_name();
   return id;
 }

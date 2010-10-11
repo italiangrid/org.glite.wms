@@ -39,6 +39,7 @@ END LICENSE */
 
 #include "iceUtils/DNProxyManager.h"
 
+#include <boost/lexical_cast.hpp>
 /**
  *
  * OS Headers
@@ -77,7 +78,7 @@ string util::iceCommandLBLogging::get_grid_job_id( ) const
   string randid( "" );
   struct timeval T;
   gettimeofday( &T, 0 );
-  randid += util::IceUtils::to_string( T.tv_sec ) + "." + util::IceUtils::to_string( T.tv_usec );
+  randid += boost::lexical_cast<string>( T.tv_sec ) + "." + boost::lexical_cast<string>( T.tv_usec );
   return randid;
 }
 

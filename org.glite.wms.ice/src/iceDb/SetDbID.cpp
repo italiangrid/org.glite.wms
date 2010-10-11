@@ -20,7 +20,7 @@ END LICENSE */
 
 #include "iceUtils/IceUtils.h"
 #include "SetDbID.h"
-
+#include <boost/lexical_cast.hpp>
 using namespace std;
 using namespace glite::wms::ice;
 
@@ -30,7 +30,7 @@ void db::SetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
   string sqlcmd( "INSERT OR REPLACE INTO ce_dbid (ceurl,db_id) VALUES (" );
   sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
   sqlcmd += ", " ;
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long long int)m_new_dbid ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long long int)m_new_dbid ) );
   sqlcmd += ");";
 
   do_query( db, sqlcmd );

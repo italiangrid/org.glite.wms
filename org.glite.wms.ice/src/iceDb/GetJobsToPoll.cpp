@@ -23,6 +23,8 @@ END LICENSE */
 
 #include <cstdlib>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace glite::wms::ice;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
@@ -79,7 +81,7 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       
       if( m_limit ) {
 	sqlcmd += " LIMIT ";
-	sqlcmd += util::IceUtils::to_string((unsigned long int)m_limit);
+	sqlcmd += boost::lexical_cast<string>((unsigned long int)m_limit);
 	sqlcmd += ";";
       } else {
 	sqlcmd += ";";
@@ -109,25 +111,25 @@ void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd += util::IceUtils::withSQLDelimiters( m_creamurl );
       sqlcmd += " AND (";
       sqlcmd += "       (  ( " ;
-      sqlcmd += util::IceUtils::to_string((unsigned long long int)t_now);
+      sqlcmd += boost::lexical_cast<string>((unsigned long long int)t_now);
       sqlcmd += " - ";
       sqlcmd += util::CreamJob::last_seen_field();
       sqlcmd += " >= ";
-      sqlcmd += util::IceUtils::to_string((unsigned long int)threshold);
+      sqlcmd += boost::lexical_cast<string>((unsigned long int)threshold);
       sqlcmd += " ) ) ";
       sqlcmd += "  OR   (  ( ";
-      sqlcmd += util::IceUtils::to_string((unsigned long long int)t_now);
+      sqlcmd += boost::lexical_cast<string>((unsigned long long int)t_now);
       sqlcmd += " - ";
       sqlcmd += util::CreamJob::last_empty_notification_time_field();
       sqlcmd += " > ";
-      sqlcmd += util::IceUtils::to_string((unsigned long int)empty_threshold);
+      sqlcmd += boost::lexical_cast<string>((unsigned long int)empty_threshold);
       sqlcmd += " ) )";
       sqlcmd += ") ORDER BY ";
       sqlcmd += util::CreamJob::last_poller_visited_field();
       sqlcmd += " ASC";
       if( m_limit ) {
 	sqlcmd += " LIMIT ";
-	sqlcmd += util::IceUtils::to_string((unsigned long int)m_limit);
+	sqlcmd += boost::lexical_cast<string>((unsigned long int)m_limit);
 	sqlcmd += ";";
       } else {
 	sqlcmd += ";";

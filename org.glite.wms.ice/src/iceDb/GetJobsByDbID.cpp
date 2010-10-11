@@ -23,6 +23,7 @@ END LICENSE */
 #include "GetJobsByDbID.h"
 
 #include <cstdlib>
+#include <boost/lexical_cast.hpp>
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -38,7 +39,7 @@ void db::GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd += " not null) AND ( ";
   sqlcmd += util::CreamJob::cream_dbid_field();
   sqlcmd += "=";
-  sqlcmd += util::IceUtils::withSQLDelimiters(util::IceUtils::to_string((unsigned long long int)m_dbid ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long long int)m_dbid ));
   sqlcmd += ") ;";
     
   do_query( db, sqlcmd, util::IceUtils::fetch_jobs_callback, m_result );

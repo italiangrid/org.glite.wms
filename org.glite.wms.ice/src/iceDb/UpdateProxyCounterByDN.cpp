@@ -20,6 +20,7 @@ END LICENSE */
 
 #include "UpdateProxyCounterByDN.h"
 #include "iceUtils/IceUtils.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -27,7 +28,7 @@ using namespace std;
 void db::UpdateProxyCounterByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd("UPDATE proxy SET counter=" );
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( m_counter ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<std::string>( m_counter ) );
   sqlcmd += " WHERE userdn=";
   sqlcmd += util::IceUtils::withSQLDelimiters( m_dn );
   sqlcmd += " AND myproxyurl=";

@@ -310,10 +310,10 @@ print "\t\t    string sql;\n";
 @values = ();
 foreach ( @members ) {
 
-  print "\t\t    sql += IceUtils::withSQLDelimiters( IceUtils::to_string(m_$_) );\n";
+  print "\t\t    sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(m_$_) );\n";
   print "\t\t    sql += \",\";\n";
 
-  push @values, " IceUtils::withSQLDelimiters( IceUtils::to_string(m_$_) ) ";
+  push @values, " IceUtils::withSQLDelimiters( boost::lexical_cast<string>(m_$_) ) ";
 }
 print "\t\t    sql = sql.substr(0, sql.length() -1 );\n";
 print "\t\t    return sql;\n";
@@ -352,7 +352,7 @@ for($i = 0; $i < scalar @data_members; $i++) {
   print "\t\t    if(m_changed_$pieces[2]) {\n";
   print "\t\t      _sql += this->$pieces[2]_field( ); \n";
   print "\t\t      _sql += \"=\";\n";
-  print "\t\t      _sql += IceUtils::withSQLDelimiters( IceUtils::to_string( this->$pieces[2]( ) ) );\n";
+  print "\t\t      _sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(this->$pieces[2]( )) );\n";
   print "\t\t      _sql += \",\";\n\n";
   print "\t\t    }\n";
 }

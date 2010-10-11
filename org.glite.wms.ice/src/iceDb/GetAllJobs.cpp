@@ -22,6 +22,7 @@ END LICENSE */
 #include "GetAllJobs.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include <boost/lexical_cast.hpp>
 
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice;
@@ -36,27 +37,27 @@ void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd += " FROM jobs WHERE ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::REGISTERED ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::REGISTERED ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::PENDING ));
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::PENDING ));
     sqlcmd += " OR " ;
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::IDLE ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::IDLE ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::RUNNING ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::RUNNING ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::REALLY_RUNNING ) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::REALLY_RUNNING ) );
     sqlcmd += " OR ";
     sqlcmd += util::CreamJob::status_field();
     sqlcmd += "=";
-    sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string((unsigned long int)api::job_statuses::HELD) );
+    sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>((unsigned long int)api::job_statuses::HELD) );
     sqlcmd += " AND ";
     sqlcmd += util::CreamJob::killed_byice_field();
     sqlcmd += "=";
@@ -69,9 +70,9 @@ void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
   }
   if( m_limit > 0 ) {
   	sqlcmd += " LIMIT ";
-	sqlcmd += util::IceUtils::to_string((unsigned long int )m_limit);
+	sqlcmd += boost::lexical_cast<string>((unsigned long int )m_limit);
 	sqlcmd += " OFFSET ";
-	sqlcmd += util::IceUtils::to_string((unsigned long int)m_offset);
+	sqlcmd += boost::lexical_cast<string>((unsigned long int)m_offset);
 	sqlcmd += ";"; 
   } else {
   	sqlcmd += ";";

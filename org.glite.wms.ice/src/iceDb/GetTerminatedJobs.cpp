@@ -25,6 +25,8 @@ END LICENSE */
 
 #include <cstdlib>
 
+#include <boost/lexical_cast.hpp>
+
 namespace api = glite::ce::cream_client_api;
 
 using namespace glite::wms::ice;
@@ -37,19 +39,19 @@ void db::GetTerminatedJobs::execute( sqlite3* db ) throw ( DbOperationException&
   sqlcmd += " FROM jobs WHERE " ;
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::CANCELLED ));
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long int)api::job_statuses::CANCELLED ));
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::DONE_OK ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long int)api::job_statuses::DONE_OK ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::DONE_FAILED ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long int)api::job_statuses::DONE_FAILED ) );
   sqlcmd += " OR ";
   sqlcmd += util::CreamJob::status_field();
   sqlcmd += "=";
-  sqlcmd += util::IceUtils::withSQLDelimiters( util::IceUtils::to_string( (unsigned long int)api::job_statuses::ABORTED ) );
+  sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<string>( (unsigned long int)api::job_statuses::ABORTED ) );
   sqlcmd += ";";
 
   do_query( db, sqlcmd, glite::wms::ice::util::IceUtils::fetch_jobs_callback, m_result );
