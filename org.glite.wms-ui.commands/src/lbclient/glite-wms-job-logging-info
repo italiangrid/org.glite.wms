@@ -113,7 +113,7 @@ wmsui_checks.check_noint(sys.argv)
 json = False
 pprint = False
 
-err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:j:" ,["help","version", "pretty-print", "json", \
+err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:j:" ,["help","version", \
 "input=","verbosity=","config=", "user-tag=","from=","to=","event=", "exclude=", "output=","noint","debug", "logfile="] )
 
 if    ("--json" in options):
