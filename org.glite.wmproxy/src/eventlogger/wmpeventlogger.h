@@ -95,7 +95,7 @@ class WMPEventLogger  {
 		void unregisterProxyRenewal();
 
 		// Register methods
-		void registerJob(glite::jdl::JobAd *ad, const std::string &path);
+		void registerJob(glite::jdl::JobAd *ad, glite::jobid::JobId const* const id, const std::string &path);
 		std::vector<std::string> registerDag(WMPExpDagAd *ad,
 			const std::string &path);
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
@@ -137,8 +137,8 @@ class WMPEventLogger  {
 		
 	private:
 		
-		edg_wll_Context ctx;
-		glite::jobid::JobId *id;
+		edg_wll_Context ctx_;
+		glite::jobid::JobId *id_;
 		std::string dest_uri;
 		std::string lb_host;
 		int lb_port;

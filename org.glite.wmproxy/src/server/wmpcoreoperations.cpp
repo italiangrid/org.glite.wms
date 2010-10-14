@@ -795,12 +795,12 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.registerJob(jad, jid, wmputilities::getJobJDLToStartPath(*jid, true));
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, conf.getDefaultProtocol(), conf.getDefaultPort());
 
 	// Registering the job
 	jad->check();
-	wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid, true));
+	//wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid, true));
 
 	// Registering for Proxy renewal
 	char * renewalproxy = NULL;
