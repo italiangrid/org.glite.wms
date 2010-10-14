@@ -1,5 +1,7 @@
 #!/bin/sh
 
+PAP_HOME=/opt/argus/pap
+
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
@@ -10,16 +12,16 @@ echo `date`
 echo "---Test-BAN/UNBAN-FQAN---"
 echo "1) testing fqan ban"
 
-$PAP_HOME/bin/pap-admin ban fqan "/badvo"
+/opt/argus/pap/bin/pap-admin ban fqan "/badvo"
 
 if [ $? -eq 0 ]; then
   echo "OK"
   echo "2) testing fqan unban"
-  $PAP_HOME/bin/pap-admin un-ban fqan "/badvo"
+  /opt/argus/pap/bin/pap-admin un-ban fqan "/badvo"
   if [ $? -eq 0 ]; then
     echo "OK"
     echo "3) testing unbanning non existing fqan"
-    $PAP_HOME/bin/pap-admin un-ban fqan "/badvo"
+    /opt/argus/pap/bin/pap-admin un-ban fqan "/badvo"
     if [ $? -ne 0 ]; then
       echo "OK"
       echo "---Test-BAN/UNBAND-FQAN: TEST PASSED---"
