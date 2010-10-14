@@ -376,7 +376,9 @@ edglog(error)<<"evntlogger_aaa2"<<endl;
 		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);
 	}
 	char * seqcode = getSequence();
-	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
+        if (seqcode) {
+		jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
+        }
 	
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
@@ -463,13 +465,13 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 }
 
 vector<string>
-WMPEventLogger::generateSubjobsIds(int res_num)
+WMPEventLogger::generateSubjobsIds(glite::jobid::JobId const* const j, int res_num)
 {
 	GLITE_STACK_TRY("generateSubjobsIds()");
 	edglog_fn("WMPEventlogger::generateSubjobsIds");
 
 	m_subjobs = NULL;
-	if (edg_wll_GenerateSubjobIds(ctx_, id_->c_jobid(), res_num, "WMPROXY", &m_subjobs)) {
+	if (edg_wll_GenerateSubjobIds(ctx_, j->c_jobid(), res_num, "WMPROXY", &m_subjobs)) {
 		string msg = error_message("Job ID generation failed\n"
 			"edg_wll_GenerateSubjobIds");
 		throw LBException(__FILE__, __LINE__, "generateSubjobsIds()",
@@ -486,20 +488,18 @@ WMPEventLogger::generateSubjobsIds(int res_num)
 	GLITE_STACK_CATCH();
 }
 
-vector<string>
-WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
+void WMPEventLogger::registerDag(
+	glite::jobid::JobId const* const id,
+	WMPExpDagAd *dag,
+	const string &path)
 {
 	GLITE_STACK_TRY("registerDag()");
 	edglog_fn("WMPEventlogger::registerDag");
 	
 	char str_addr[1024];
 	sprintf(str_addr, "%s", server.c_str());
-	edglog(debug)<<"Server address: "<<str_addr<<endl;
 	
-	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(getSequence()));
-    vector<string> jobids;
-    
-    int dagsize = dag->size();
+	int dagsize = dag->size();
     
 	// Setting LB log sync timeout
 	struct timeval timeout;
@@ -529,7 +529,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 			edglog(debug)<<"BulkMM activated but dependency found"<< endl;
 		}
 	}else {
-		edglog(debug)<<"BulkMM deactivated but dependency found"<< endl ;
+		edglog(debug)<<"BulkMM deactivated"<< endl ;
 	}
 
 	int register_result = 1;
@@ -537,7 +537,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering "<< registration_type_s <<" to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobProxy(ctx_, id_->c_jobid(),
+			register_result = edg_wll_RegisterJobProxy(ctx_, id->c_jobid(),
 				registration_type_i, path.c_str(), str_addr, dagsize,
 				"WMPROXY", &m_subjobs);
 			if (register_result) {
@@ -549,7 +549,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	} else {
 		edglog(debug)<<"Registering "<< registration_type_s <<"to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobSync(ctx_, id_->c_jobid(),
+			register_result = edg_wll_RegisterJobSync(ctx_, id->c_jobid(),
 				registration_type_i, path.c_str(), str_addr, dagsize,
 				"WMPROXY", &m_subjobs);
 			if (register_result) {
@@ -561,7 +561,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	}
 	if (register_result) {
 		string msg = error_message("Register "+ registration_type_s +"failed to LB server:"
-			+ id_->server()
+			+ id->server()
 			+ "\nedg_wll_RegisterJobProxy/Sync", register_result);
 
 		if (register_result == EAGAIN) {
@@ -581,6 +581,11 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);	
 	}
 	
+        char* seqcode = getSequence();
+        if (seqcode) {
+		dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(seqcode));
+	}
+    
 	// Logging parent user tags
 	if (dag->hasAttribute(JDL::USERTAGS)) {
 		logUserTags(dag->getAttributeAd(JDL::USERTAGS).ad());
@@ -588,8 +593,6 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	
 	// Logging children user tags
 	//logUserTags(dag->getSubAttributes(JDL::USERTAGS));
-	
-	return jobids;
 	
 	GLITE_STACK_CATCH();
 }

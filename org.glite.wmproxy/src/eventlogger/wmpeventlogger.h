@@ -96,10 +96,9 @@ class WMPEventLogger  {
 
 		// Register methods
 		void registerJob(glite::jdl::JobAd *ad, glite::jobid::JobId const* const id, const std::string &path);
-		std::vector<std::string> registerDag(WMPExpDagAd *ad,
-			const std::string &path);
+		void registerDag(glite::jobid::JobId const* const id, WMPExpDagAd *ad, const std::string &path);
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
-		std::vector<std::string> generateSubjobsIds(int res_num);
+		std::vector<std::string> generateSubjobsIds(glite::jobid::JobId const* const j, int res_num);
 		void logListener(const char* host, int port);
 		
 		// Event logging

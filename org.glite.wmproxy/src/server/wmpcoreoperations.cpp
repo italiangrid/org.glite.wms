@@ -800,7 +800,6 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 
 	// Registering the job
 	jad->check();
-	//wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid, true));
 
 	// Registering for Proxy renewal
 	char * renewalproxy = NULL;
@@ -962,12 +961,11 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	string stringjid = jid->toString();
 	edglog(info)<<"Registering job id: "<<stringjid<<endl;
 
-	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setUserProxy(delegatedproxy);
+	wmplogger.setBulkMM(configuration::Configuration::instance()->wm()->enable_bulk_mm());
 
 	vector<string> jobids;
 	if (jad) {
@@ -990,11 +988,13 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
 			dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
 		}
-        jobids = wmplogger.generateSubjobsIds(dag->size());
+        	jobids = wmplogger.generateSubjobsIds(jid, dag->size());
 	}
+       	dag->setJobIds(jobids);
 
-	// Setting generated sub jobs jobids
-	dag->setJobIds(jobids);
+	wmplogger.registerDag(jid, dag, wmputilities::getJobJDLToStartPath(*jid, true));
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
 
 	// Getting Input Sandbox Destination URI
 	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
@@ -1002,15 +1002,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
 	setAttributes(dag, jid, dest_uri, delegatedproxyfqan);
 
-	// Setting user proxy
-	wmplogger.setUserProxy(delegatedproxy);
-
-	// Setting Bulk MM
-	wmplogger.setBulkMM(configuration::Configuration::instance()->wm()->enable_bulk_mm());
-
 	// It is used also for attribute inheritance
 	//dag->toString(ExpDagAd::SUBMISSION);
-	wmplogger.registerDag(dag, wmputilities::getJobJDLToStartPath(*jid, true));
 
 	// Registering for Proxy renewal
 	char * renewalproxy = NULL;
@@ -1153,8 +1146,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-
-	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy); // delegated proxy may be returned by checkSecurity
 
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
@@ -1521,7 +1512,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			vector<JobIdStruct*> children = jobidstruct.children;
 
 			// [ Creating 'output' and 'peek' sub job directories
-			vector<string> jobids = wmplogger.generateSubjobsIds(dag.size()); //Filling wmplogger subjobs
+			vector<string> jobids = wmplogger.generateSubjobsIds(jid, dag.size()); //Filling wmplogger subjobs
 			// Getting LCMAPS mapped User ID
 			uid_t jobdiruserid = auth->getUserId();
 			edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
