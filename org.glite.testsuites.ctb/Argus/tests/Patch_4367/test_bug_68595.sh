@@ -1,0 +1,138 @@
+#!/bin/sh
+
+# This one should test the add obligation functionality
+
+script_name=`basename $0`
+failed="no"
+policyfile=policyfile.txt
+obligationfile=obligationfile.txt
+
+echo "Running: ${script_name}"
+echo `date`
+
+/etc/rc.d/init.d/pepd status > /dev/null
+if [ $? -ne 0 ]; then
+  echo "PEPd is not running. Starting one."
+  /etc/rc.d/init.d/pepd start
+  sleep 10
+fi
+
+/etc/rc.d/init.d/pdp status > /dev/null
+if [ $? -ne 0 ]; then
+  echo "PDP is not running. Starting one."
+  /etc/rc.d/init.d/pdp start
+  sleep 10
+fi
+
+/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  echo "PAP is not running"
+  /etc/rc.d/init.d/pap-standalone start;
+  sleep 10;
+fi
+
+# Remove all policies defined for the default pap
+$PAP_HOME/bin/pap-admin rap
+if [ $? -ne 0 ]; then
+  echo "Error cleaning the default pap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
+  exit 1
+fi
+
+# Get my cert DN for usage later
+declare subj_string;
+foo=`openssl x509 -in /etc/grid-security/hostcert.pem -subject -noout`;
+IFS=" "
+subj_string=( $foo )
+
+RESOURCE="resource_1"
+ACTION="test_werfer"
+RULE="permit"
+OBLIGATION="http://glite.org/xacml/obligation/local-environment-map"
+# Now should add the obligation?
+
+OPTS=" -v "
+OPTS=" "
+
+$PAP_HOME/bin/pap-admin $OPTS ap \
+             --resource ${RESOURCE} \
+             --action $ACTION \
+             --obligation $OBLIGATION \
+             ${RULE} subject="${subj_string[1]}"
+
+$PAP_HOME/bin/pap-admin lp -srai
+
+###############################################################
+
+# Is the obligation there?
+
+CMD="$PAP_HOME/bin/pap-admin lp -srai"; 
+$CMD > ${script_name}.out
+grep -q 'obligation' ${script_name}.out;result=$?
+if [ $result -ne 0 ]
+then
+    echo "${script_name}: No obligation found."
+    failed="yes"
+fi
+grep -q $OBLIGATION  ${script_name}.out;result=$?
+if [ $result -ne 0 ]
+then
+    echo "${script_name}: No $OBLIGATION found."
+    failed="yes"
+fi
+
+###############################################################
+
+# Now get the ID
+
+id=`$PAP_HOME/bin/pap-admin lp -srai | grep 'id=[^public]' | sed 's/id=//'`
+CMD="$PAP_HOME/bin/pap-admin ro $id $OBLIGATION";
+echo $CMD
+$CMD
+
+# Is the obligation there? It should not be
+# Below should see return codes <>0, <>0, 0
+
+CMD="$PAP_HOME/bin/pap-admin lp -srai"; 
+$CMD > ${script_name}.out
+grep $OBLIGATION  ${script_name}.out;result=$?
+if [ $result -eq 0 ]
+then
+    echo "${script_name}: Obligation not removed."
+    failed="yes"
+fi
+
+CMD="$PAP_HOME/bin/pap-admin ao $id $OBLIGATION"
+$CMD
+
+CMD="$PAP_HOME/bin/pap-admin lp -sai";
+$CMD > ${script_name}.out
+grep -q 'obligation' ${script_name}.out;result=$?
+if [ $result -ne 0 ]
+then
+    echo "${script_name}: No obligation found."
+    failed="yes"
+fi
+grep -q $OBLIGATION  ${script_name}.out;result=$?
+if [ $result -ne 0 ]
+then
+    echo "${script_name}: No $OBLIGATION found."
+    failed="yes"
+fi
+
+###############################################################
+#clean up
+
+clean_up=0
+# clean_up=1
+
+if [ $failed == "yes" ]; then
+  echo "---${script_name}: TEST FAILED---"
+  echo `date`
+  exit 1
+else 
+  echo "---${script_name}: TEST PASSED---"
+  echo `date`
+  exit 0
+fi
+
