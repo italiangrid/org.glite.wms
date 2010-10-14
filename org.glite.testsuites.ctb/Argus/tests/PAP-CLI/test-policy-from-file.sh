@@ -1,5 +1,6 @@
 #!/bin/sh
 
+PAP_HOME=/opt/argus/pap
 policyfile=policyfile.txt
 failed="no"
 
@@ -10,10 +11,10 @@ if [ $? -ne 0 ]; then
 fi
 
 #Remove all policies defined for the default pap
-$PAP_HOME/bin/pap-admin rap
+/opt/argus/pap/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
+  echo "Failed command: /opt/argus/pap/bin/pap-admin rap"
   exit 1
 fi
 
@@ -36,7 +37,7 @@ resource ".*" {
 }
 EOF
 
-$PAP_HOME/bin/pap-admin apf $policyfile
+/opt/argus/pap/bin/pap-admin apf $policyfile
 if [ $? -eq 0 ]; then
   echo "OK"
 else
@@ -44,8 +45,8 @@ else
   failed="yes"
 fi
 
-$PAP_HOME/bin/pap-admin un-ban subject "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=user/CN=999999/CN=user name"
-$PAP_HOME/bin/pap-admin un-ban fqan "/badvo"
+/opt/argus/pap/bin/pap-admin un-ban subject "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=user/CN=999999/CN=user name"
+/opt/argus/pap/bin/pap-admin un-ban fqan "/badvo"
 
 #########################################################
 echo "2) testing add policy from file with error"
@@ -58,7 +59,7 @@ resource ".*" {
 }
 EOF
 
-$PAP_HOME/bin/pap-admin apf $policyfile
+/opt/argus/pap/bin/pap-admin apf $policyfile
 if [ $? -ne 0 ]; then
   echo "OK"
 else
@@ -69,20 +70,20 @@ fi
 rm -f $policyfile
 
 #Remove all policies defined for the default pap
-$PAP_HOME/bin/pap-admin rap
+/opt/argus/pap/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
+  echo "Failed command: /opt/argus/pap/bin/pap-admin rap"
   exit 1
 fi
 
 if [ $failed == "yes" ]; then
-  echo "---Test-APF: TEST FAILED---"
-  echo `date`
-  exit 1
-else
   echo "---Test-APF: TEST PASSED---"
   echo `date`
   exit 0
+else
+  echo "---Test-APF: TEST PASSED---"
+  echo `date`
+  exit 1
 fi
 
