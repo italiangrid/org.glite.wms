@@ -797,6 +797,10 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 	wmplogger.setUserProxy(delegatedproxy);
 	wmplogger.registerJob(jad, jid, wmputilities::getJobJDLToStartPath(*jid, true));
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, conf.getDefaultProtocol(), conf.getDefaultPort());
+        char* seqcode = wmplogger.getSequence();
+        if (seqcode) {
+                jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
+        }
 
 	// Registering the job
 	jad->check();
@@ -962,7 +966,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(info)<<"Registering job id: "<<stringjid<<endl;
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	wmplogger.setUserProxy(delegatedproxy);
 	wmplogger.setBulkMM(configuration::Configuration::instance()->wm()->enable_bulk_mm());
@@ -993,8 +996,13 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
        	dag->setJobIds(jobids);
 
 	wmplogger.registerDag(jid, dag, wmputilities::getJobJDLToStartPath(*jid, true));
+	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
+	char* seqcode = wmplogger.getSequence();
+        if (seqcode) {
+		dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(seqcode));
+        }
 
 	// Getting Input Sandbox Destination URI
 	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),

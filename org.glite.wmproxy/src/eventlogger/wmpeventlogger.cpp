@@ -375,10 +375,6 @@ edglog(error)<<"evntlogger_aaa2"<<endl;
 		// Updating selected LB weight -> SUCCESS
 		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);
 	}
-	char * seqcode = getSequence();
-        if (seqcode) {
-		jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
-        }
 	
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
@@ -581,11 +577,6 @@ void WMPEventLogger::registerDag(
 		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);	
 	}
 	
-        char* seqcode = getSequence();
-        if (seqcode) {
-		dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(seqcode));
-	}
-    
 	// Logging parent user tags
 	if (dag->hasAttribute(JDL::USERTAGS)) {
 		logUserTags(dag->getAttributeAd(JDL::USERTAGS).ad());
