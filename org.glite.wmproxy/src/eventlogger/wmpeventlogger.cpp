@@ -334,10 +334,8 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering job to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-edglog(error)<<"evntlogger_aaa1 "<<path<<" " << str_addr << endl;
 			register_result = edg_wll_RegisterJobProxy(ctx_, jid->c_jobid(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
-edglog(error)<<"evntlogger_aaa2"<<endl;
 			if (register_result) {
 				edglog(severe)
 					<<error_message("Register job failed\nedg_wll_RegisterJobProxy",
