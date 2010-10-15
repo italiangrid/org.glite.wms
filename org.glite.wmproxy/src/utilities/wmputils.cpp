@@ -302,11 +302,13 @@ getEnvFQAN()
         std::string const fqan_tag("fqan:");
         unsigned int const fqan_tag_size = std::string(fqan_tag).size();
         while (fqan.empty() && i < 5) {
-          std::string grst_cred(
-            getenv(
-              std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
-            )
-          );
+          std::string grst_cred;
+          char* tmp = getenv(
+	    std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
+	  );
+          if (tmp) {
+            grst_cred = std::string(tmp);
+	  }
           if (
             grst_cred.size() > fqan_tag_size
             && grst_cred.substr(0, fqan_tag_size) == fqan_tag
