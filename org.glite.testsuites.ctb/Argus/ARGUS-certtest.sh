@@ -241,12 +241,12 @@ fi
 # Patch 4367 tests #                                                                                                     
 ####################                                                                                             
 
-SUITE="Patch 4367"        
+SUITE="Patch_4367"        
 echo "*Running $SUITE tests"
 unset tests_list
 
 if [ "x${Patch4367}" = "xyes" ]; then
-  pushd ./tests/PEP >> /dev/null
+  pushd ./tests/$SUITE >> /dev/null
 
   declare -a tests_list
   tests_list=`ls -1 *.sh`
