@@ -21,6 +21,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.10.2.2.2.1.2.1.2.2  2010/10/18 09:55:51  mcecchi
+	let google tcmalloc work on SL5 64-bit
+
 	Revision 1.10.2.2.2.1.2.1.2.1  2010/04/08 13:54:43  mcecchi
 	copyright and license
 

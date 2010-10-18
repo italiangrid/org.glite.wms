@@ -57,7 +57,8 @@ enum {
 
 // resource identifier
 typedef std::string id_type;
-// resource descritpion
+
+// resource description
 typedef boost::shared_ptr<classad::ClassAd> ad_ptr;
 // update function
 typedef boost::function<bool(int&, ad_ptr)> update_function_type;
@@ -72,6 +73,12 @@ typedef boost::tuple<
 
 // 1. resource identifier
 // 2. ism entry type
+typedef std::map<
+  id_type,
+  ism_entry_type,
+  std::less<id_type>
+  //,__gnu_cxx::malloc_allocator<ism_entry_type>
+> ism_type;
 typedef std::map<id_type, ism_entry_type> ism_type;
 //typedef std::multimap<double, ism_entry_type> ism_type;
 

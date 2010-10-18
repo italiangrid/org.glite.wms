@@ -21,6 +21,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 #include <classad_distribution.h>
+
 #include "ldap-utils.h"
 #include "ldap-utils-asynch.h"
 #include "glite/wms/ism/ism.h"
@@ -147,6 +148,23 @@ void populate_ism(
 void ism_ii_purchaser::operator()()
 {
   do {
+
+    // do not populate until the existing ism has threads still matching against it
+    while (ism::matching_threads(ism::dark_side()) > 0) {
+
+     Debug(
+       "waiting for " <<
+       ism::matching_threads(ism::active_side()) <<
+       " threads to match before switching the ISM side "
+     );
+
+     ::sleep(1); // TODO
+    }
+
+    // free this memory _before_ another huge allocation made by the purchaser
+    ism::get_ism(ism::ce, ism::dark_side()).clear();
+    ism::get_ism(ism::se, ism::dark_side()).clear();
+
     try {
 
      gluece_info_container_type gluece_info_container;
@@ -191,20 +209,6 @@ void ism_ii_purchaser::operator()()
        gluese_info_container_updated_entries,
        m_skip_predicate
      );
-
-     // do not populate until the existing ism has threads still matching against it
-     while (ism::matching_threads(ism::dark_side()) > 0) {
-
-      Debug(
-        "waiting for " <<
-        ism::matching_threads(ism::active_side()) <<
-        " threads to match before switching the ISM side "
-      );
-
-      ::sleep(1); // TODO
-     }
-     ism::get_ism(ism::ce, ism::dark_side()).clear();
-     ism::get_ism(ism::se, ism::dark_side()).clear();
 
      // incoming requests asking for MM will be assigned the current active
      // side so we can operate without locking here, now that older threads
