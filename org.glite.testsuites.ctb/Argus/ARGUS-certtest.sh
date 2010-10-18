@@ -219,8 +219,6 @@ if [ "x${PEP}" = "xyes" ]; then
   pushd ./tests/PEP >> /dev/null
   declare -a tests_list
   tests_list=("${tests_list[@]}" "test-configuration.sh")
- 
-#  tests_list=( test-policy-from-file.sh test-remove-all-policies.sh test-remove-policies.sh test-PAP-FUNC-1.sh test-list-policies.sh test-upp-from-file.sh )
 
   for item in ${tests_list[*]}
   do
@@ -237,6 +235,37 @@ if [ "x${PEP}" = "xyes" ]; then
   popd >> /dev/null
 else
   echo "*PEP tests skipped"
+fi
+
+####################                                                                                                   
+# Patch 4367 tests #                                                                                                     
+####################                                                                                             
+
+SUITE="Patch 4367"        
+echo "*Running $SUITE tests"
+unset tests_list
+
+if [ "x${Patch4367}" = "xyes" ]; then
+  pushd ./tests/PEP >> /dev/null
+
+  declare -a tests_list
+  tests_list=`ls -1 *.sh`
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt
+    ./$item  > $loglocation/${item}_result.txt 2>&1
+    if [ $? -ne 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else
+  echo "* $SUITE tests skipped"
 fi
 
 #########################
