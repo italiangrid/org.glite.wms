@@ -8,6 +8,17 @@ obligationfile=obligationfile.txt
 echo "Running: ${script_name}"
 echo `date`
 
+if [ -z $PAP_HOME ]
+then
+    if [ -d /opt/argus/pap ]
+    then
+        export PAP_HOME=/opt/argus/pap
+    else
+        echo "${script_name}: PAP_HOME cannot be found. Exiting"
+        exit 0;
+    fi
+fi
+
 /etc/rc.d/init.d/pepd status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
