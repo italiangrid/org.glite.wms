@@ -111,8 +111,8 @@ target_file=/etc/grid-security/grid-mapfile
 DTEAM=".dteam"
 DN_UID="glite"
 # echo \"/dteam\" ${DTEAM} >> ${target_file}
-echo \"${xxx_tmp}\" ${DN_UID} >> ${target_file}
-echo ${target_file};cat ${target_file}
+echo \"${xxx_tmp}\" ${DN_UID} >> ${target_file} # DN linked to dteam
+echo ${target_file};cat ${target_file}        
 
 target_file=/etc/grid-security/groupmapfile
 DTEAM="dteam"
@@ -237,8 +237,8 @@ echo "---------------------------------------"
 #
 # looking for
 # Username: glite
-# Group: testing
-# Secondary Groups: testing
+# Group: dteam 
+# Secondary Groups: dteam testing
 #
 if [ $result -eq 0 ]
 then
@@ -259,9 +259,9 @@ then
         grep_term="Group: "
         foo=`grep $grep_term /tmp/${script_name}.out`
         search_term=${foo#$grep_term};
-        if [ "${search_term}" != "${DN_UID_GROUP}" ]
+        if [ "${search_term}" != "dteam" ]
         then
-            echo "${script_name}: Did not find expected group: ${DN_UID_GROUP}."
+            echo "${script_name}: Did not find expected group: dteam."
             failed="yes"
         fi
 #

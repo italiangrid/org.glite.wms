@@ -276,7 +276,7 @@ then
         i=0
         while [ ! -z ${groups[$i]} ]
         do
-                if [ "${groups[$i]}" != "dteam" ]
+                if [ "${groups[$i]}" != "testing" ]
                 then
                     echo "${script_name}: Secondary groups $search_term found."
                     echo "${script_name}: Expecting ${DN_UID_GROUP}."

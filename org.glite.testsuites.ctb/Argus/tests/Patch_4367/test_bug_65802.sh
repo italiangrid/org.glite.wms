@@ -4,6 +4,17 @@ script_name=`basename $0`
 failed="no"
 host=`hostname`
 
+if [ -z $PAP_HOME ]
+then
+    if [ -d /opt/argus/pap ]
+    then
+        export PAP_HOME=/opt/argus/pap
+    else
+        echo "${script_name}: PAP_HOME cannot be found. Exiting"
+        exit 0;
+    fi
+fi
+
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   /etc/rc.d/init.d/pap-standalone start
@@ -24,6 +35,7 @@ wget --certificate=/etc/grid-security/hostcert.pem \
      --no-check-certificate \
      https://${host}:8150/status  > /dev/null 2>&1
 result=$?
+
 if [ $result -eq 0 ]
 then
     echo "${script_name}: wget https://${host}:8150/status SHOULD NOT work. Not OK."
