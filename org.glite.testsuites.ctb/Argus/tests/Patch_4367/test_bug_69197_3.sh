@@ -221,6 +221,8 @@ OPTS=" -d "
 OPTS=" -v "
 OPTS=" "
 
+echo "${script_name}.out: Testing with certificate/key."
+
 /opt/glite/bin/pepcli $OPTS -p https://`hostname`:8154/authz \
        -c $USERCERT \
        --capath /etc/grid-security/certificates/ \
@@ -257,25 +259,27 @@ then
             failed="yes"
         fi
         grep_term="Group: "
-        foo=`grep $grep_term /tmp/${script_name}.out`
-        search_term=${foo#$grep_term};
-        if [ "${search_term}" != "dteam" ]
+        foo=`grep $grep_term /tmp/${script_name}.out`; # echo $foo
+        search_term=${foo#$grep_term}; # echo $search_term; echo $DN_UID_GROUP
+        if [ "${search_term}" != "${DN_UID_GROUP}" ]
         then
-            echo "${script_name}: Did not find expected group: dteam."
+            echo "${script_name}: Did not find expected group: $DN_UID_GROUP."
             failed="yes"
+        else
+            echo "${script_name}: Group found."
         fi
 #
 # Secondary groups (will be $DN_UID_GROUP)
 #
         grep_term="Secondary "
         foo=`grep $grep_term /tmp/${script_name}.out`;
-        search_term=${foo#"Secondary "}; # echo $search_term
-        search_term=${search_term#"Groups: "}; # echo $search_term
+        search_term=${foo#"Secondary "};
+        search_term=${search_term#"Groups: "};
         groups=( $search_term )
         i=0
         while [ ! -z ${groups[$i]} ]
         do
-                if [ "${groups[$i]}" != "$DN_UID_GROUP" ]
+                if [ "${groups[$i]}" != "${DN_UID_GROUP}" ]
                 then
                     echo "${script_name}: Secondary groups $search_term found."
                     echo "${script_name}: Expecting ${DN_UID_GROUP}."
@@ -289,6 +293,8 @@ fi
 #
 # OK. Now we gotta test with a proxy!
 #
+
+echo "${script_name}.out: Testing with proxy file."
 
 /opt/glite/bin/pepcli $OPTS -p https://`hostname`:8154/authz \
        -c /tmp/x509up_u0 \
@@ -306,9 +312,10 @@ echo "---------------------------------------"
 
 #
 # looking for
-# Username: dteamXXX
-# Group: testing
-# Secondary Groups: testing dteam
+#
+# uid: glite
+# gid: dteam
+# secondary gids: dteam, testing
 #
 if [ $result -eq 0 ]
 then
@@ -330,8 +337,9 @@ then
         grep_term="Group: "
         foo=`grep $grep_term /tmp/${script_name}.out`
         search_term=${foo#$grep_term};
-        if [ "${search_term}" != "${DN_UID_GROUP}" ]
-        then
+        # if [ "${search_term}" != "${DN_UID_GROUP}" ]
+        if [ "${search_term}" != "dteam" ]
+         then
             echo "${script_name}: Did not find expected group: ${DN_UID_GROUP}."
             failed="yes"
         fi
@@ -348,7 +356,7 @@ then
         do
             if [ "${groups[$i]}" != "dteam" ]
             then 
-                if [ "${groups[$i]}" != "$DN_UID_GROUP" ]
+                if [ "${groups[$i]}" != "${DN_UID_GROUP}" ]
                 then
                     echo "${script_name}: Secondary groups $search_term found."
                     echo "${script_name}: Expecting dteam and ${DN_UID_GROUP}."
