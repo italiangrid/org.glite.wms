@@ -30,14 +30,14 @@ else
   sleep 5
   echo "${script_name}: Starting PEPd."
   /etc/rc.d/init.d/pepd start > /dev/null
-  sleep 10
+  sleep 15
 fi
 
 /etc/rc.d/init.d/pdp status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PDP is not running. Starting one."
   /etc/rc.d/init.d/pdp start
-  sleep 10
+  sleep 15
 fi
 
 # use a PAP to enter a policy and an obligation?
@@ -46,7 +46,7 @@ fi
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
   /etc/rc.d/init.d/pap-standalone start;
-  sleep 10;
+  sleep 15;
 fi
 
 # Remove all policies defined for the default pap
