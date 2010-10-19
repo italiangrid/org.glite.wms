@@ -30,7 +30,7 @@ else
   sleep 5
   echo "${script_name}: Starting PEPd."
   /etc/rc.d/init.d/pepd start > /dev/null
-  sleep 5
+  sleep 10
 fi
 
 /etc/rc.d/init.d/pdp status > /dev/null
