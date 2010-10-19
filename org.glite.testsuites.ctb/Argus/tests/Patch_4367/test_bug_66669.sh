@@ -52,7 +52,7 @@ fi
 cat <<EOF > $policyfile
 resource "resource_1" {
     action ".*" {
-        rule allow { subject="/DC=ch/DC=cern/OU=Organic Units/OU=Users/slashtest/CN=user/CN=999999/CN=user name" }
+        rule permit { subject="/DC=ch/DC=cern/OU=Organic Units/OU=Users/slashtest/CN=user/CN=999999/CN=user name" }
     }
 }
 EOF
