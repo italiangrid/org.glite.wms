@@ -18,7 +18,7 @@ fi
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   /etc/rc.d/init.d/pap-standalone start
-  sleep 3;
+  sleep 15;
 fi
 
 wget http://localhost:8151/status > /dev/null 2>&1
