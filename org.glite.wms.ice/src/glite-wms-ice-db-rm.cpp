@@ -61,11 +61,6 @@ void remove_job_fromdb( const util::CreamJob& );
 int main(int argc, char*argv[]) 
 {
 
-  for( int i=0; i<100000; ++i) {
-    //string S = glite::wms::ice::util::IceUtils::to_string( 4723453.23F );
-    string S = boost::lexical_cast<string>( 4723453.23424 );
-  }
-  return 0;
   char*   confile = "glite_wms.conf";
   //bool    cancel_all = false;
   string  gridjobid;
