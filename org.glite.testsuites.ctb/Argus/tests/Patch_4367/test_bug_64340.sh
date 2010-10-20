@@ -95,12 +95,12 @@ http://glite.org/xacml/obligation/local-environment-map ${RULE} subject="${subj_
 
 ###############################################################
 
-# $PAP_HOME/bin/pap-admin lp -srai
+$PAP_HOME/bin/pap-admin lp -srai
 /etc/rc.d/init.d/pdp reloadpolicy
 
 ###############################################################
 
-export LD_LIBRARY_PATH=/opt/glite/lib64
+export LD_LIBRARY_PATH=/opt/glite/lib64:${LD_LIBRARY_PATH}
 OPTS=" -v "
 OPTS=" "
 
@@ -112,6 +112,7 @@ OPTS=" "
        -r "resource_1" \
        -a "testwerfer" > /tmp/${script_name}.out
 result=$?
+
 if [ $result -eq 0 ]
 then
     grep -q $RESOURCE /tmp/${script_name}.out;
