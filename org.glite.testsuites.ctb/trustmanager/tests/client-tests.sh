@@ -35,6 +35,7 @@ function myexit() {
    echo "Moving back the tomcat key"
    mv $TOMCAT_KEY.bak $TOMCAT_KEY
    chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
+   service $TOMCAT_SERVICE restart
   fi 
 
 
@@ -240,7 +241,7 @@ fi
 myecho "Tomcat up and running"
 
 myecho "Testing against host certificate not conforming to the namespace" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep namespace
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep "peer not authenticated"
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate does not conform to the namespace"

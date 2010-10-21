@@ -19,3 +19,4 @@ trusted-certs/trusted_host_email
 subsubca-certs/subsubca_client
 subsubca-certs/subsubca_clientbaddn
 slash-certs/slash_clientbaddn
+slash-certs/slash_client_slash

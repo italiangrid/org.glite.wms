@@ -221,6 +221,25 @@ myecho "Testing with a certificates whose subsub ca denies the namespace, and th
 test_cert $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy  $FAIL $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy
 myecho "Test passed"
 
+myecho "Removing a namespace file for bug testing"
+rm /etc/grid-security/certificates/2d0b98c8.namespaces
+
+myecho "Restarting tomcat"
+service $TOMCAT_SERVICE restart
+sleep 15
+
+myecho "Confirming that tomcat came up properly"
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+
+if [ $? -ne 0 ] ; then 
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myexit 1
+fi
+
+myecho "Testing with a certificates whose CA uses slashes in the name (bug ##69795)"
+test_cert $certdir/slash-certs/slash_client_slash_nopass.priv $certdir/slash-certs/slash_client_slash.cert  $SUCCESS
+myecho "Test passed"
+
 myecho "Restoring original namespace files"
 cp -f $certdir/grid-security/certificates/*.namespaces /etc/grid-security/certificates/
 cp -f $certdir/grid-security/certificates/*.signing_policy /etc/grid-security/certificates/

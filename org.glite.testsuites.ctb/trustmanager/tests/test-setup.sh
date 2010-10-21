@@ -83,6 +83,7 @@ cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_cl
 cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_client.proxy_rfc_plen.cert $certdir/trusted-certs/trusted_client.proxy_rfc_plen.proxy_rfc.cert > $certdir/trusted-certs/trusted_client_rfc_proxy_chain
 
 
-
+echo "Copying trustmanager WAR to tomcat"
+cp /opt/glite/share/java/glite-security-trustmanager.war /var/lib/tomcat5/webapps/
 
 echo "Copying done, please restart tomcat"

@@ -80,9 +80,7 @@ bin/generate-test-certificates.sh --all --voms with a destination directory
 where they are created. This might take a few minutes. NB! This script creates
 proxy certs, so you need to recreate the certificates if certification takes
 over 8 ours. This is no problem, you just need to clean the directory, run it
-and the test-setup.sh (mentioned later) again. The Trustmanager RPM contains
-glite-security-trustmanager.war which should be deployed under the tomcat
-webapps dir (copy it to /var/lib/tomcat5/webapps).
+and the test-setup.sh (mentioned later) again. 
 
 Finally, run test-setup.sh --certdir <the place where test-utils put the
 certificates>. This sets up the certificates for the tests. Note! The
