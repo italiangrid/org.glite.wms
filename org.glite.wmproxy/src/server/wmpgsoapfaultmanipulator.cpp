@@ -176,22 +176,20 @@ void
 setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time_stamp,
 	int error_code, const string &description, vector<string> stack)
 {
-	// Logging fault
-	edglog(debug)
-		<<"------------------------------- Fault Description "
-			"--------------------------------"
-		<<endl;
+
+	edglog(debug) <<"------------------------------- Fault Description "
+		"--------------------------------" <<endl;
 	edglog(debug)<<"Method: "<<method_name<<endl;
 	edglog(debug)<<"Code: "<<boost::lexical_cast<std::string>(code)<<endl;
 	edglog(debug)<<"Description: "<<description<<endl;
 	edglog(debug)<<"Stack: "<<endl;
+	std::string error_stack;
 	for (unsigned int i = 0; i < stack.size(); i++) {
-		edglog(debug)<<stack[i]<<endl;
+		error_stack += std::string(stack[i]) + '\n';
 	}
-	edglog(debug)
-			<<"----------------------------------------"
-				"------------------------------------------"
-			<<endl;
+	edglog(debug)<< error_stack << endl;
+	edglog(debug) <<"----------------------------------------"
+		"------------------------------------------" <<endl;
 	
 	if (code == SOAP_TYPE__delegationns__DelegationException) {
 		// Generating a fault
@@ -201,7 +199,7 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 		sp->msg = new string(description);
 		
 		// Sending fault
-		soap_receiver_fault(soap, "Stack dump", NULL);
+		soap_receiver_fault(soap, error_stack.c_str(), NULL);
 		setFaultDetails(soap, SOAP_TYPE__delegationns__DelegationException, sp);
 	} else {
 		// Generating a fault
@@ -215,7 +213,7 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 		sp->FaultCause = *convertStackVector(stack);
 		
 		// Sending fault
-		soap_receiver_fault(soap, "Stack dump", NULL);
+		soap_receiver_fault(soap, error_stack.c_str(), NULL);
 	
 		setFaultDetails(soap, getServiceFaultType(code), sp);
 	}

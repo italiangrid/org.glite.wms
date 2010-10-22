@@ -152,10 +152,12 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 		getVersion(getVersion_response);
 		response.version = getVersion_response.version;
 	} catch (Exception &exc) {
+		edglog(debug)<<"getVersion operation exception: "<<exc.what()<<endl;
 		setSOAPFault(soap, exc.getCode(), "getVersion", time(NULL),
 			exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"getVersion operation exception: "<<ex.what()<<endl;
 		setSOAPFault(soap, WMS_IS_FAILURE, "getVersion", time(NULL),
 			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -201,10 +203,12 @@ ns1__getJDL(struct soap *soap, string job_id, ns1__JdlType type,
 		getJDL(job_id, jdltype, getJDL_response);
 		response._jdl = getJDL_response.jdl;
 	} catch (Exception &exc) {
+		edglog(debug)<<"getJDL operation exception: "<<exc.what()<<endl;
 		setSOAPFault(soap, exc.getCode(), "getJDL", time(NULL),
 			exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"getJDL operation exception: "<<ex.what()<<endl;
 		setSOAPFault(soap, WMS_IS_FAILURE, "getJDL", time(NULL),
 			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -249,10 +253,12 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 		}
 		response._jobIdStruct = job_id_struct;
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobRegister operation exception: "<<exc.what()<<endl;
 		setSOAPFault(soap, exc.getCode(), "jobRegister", time(NULL),
 			exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"jobRegister operation exception: "<<ex.what()<<endl;
 		setSOAPFault(soap, WMS_IS_FAILURE, "jobRegister", time(NULL),
 			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -310,10 +316,12 @@ ns1__jobStart(struct soap *soap, string job_id,
 	try {
 		jobStart(jobStart_response, job_id, soap);
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobStart operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "jobStart", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
+		edglog(debug)<<"jobStart operation exception: "<<ex.what()<<endl;
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobStart", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -338,10 +346,12 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
 	try {
 		jobSubmit(response, jobSubmit_response, jdl, delegation_id, soap);
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobSubmit operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
  	} catch (exception &ex) {
+		edglog(debug)<<"jobSubmit operation exception: "<<ex.what()<<endl;
  		setSOAPFault(soap, WMS_IS_FAILURE, "jobSubmit", time(NULL),
  			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -370,10 +380,12 @@ ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdl__JobDefinition_
 	try {
                 jobSubmitJSDL( response, jobSubmit_response, jdl, delegation_id, soap);
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobSubmitJSDL operation exception: "<<exc.what()<<endl;
                 setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
                         exc.getCode(), (string) exc.what(), exc.getStackTrace());
                 return_value = SOAP_FAULT;
         } catch (exception &ex) {
+		edglog(debug)<<"jobSubmitJSDL operation exception: "<<ex.what()<<endl;
                 setSOAPFault(soap, WMS_IS_FAILURE, "jobSubmit", time(NULL),
                         WMS_IS_FAILURE, (string) ex.what());
                 return_value = SOAP_FAULT;
@@ -399,10 +411,12 @@ ns1__jobCancel(struct soap *soap, string job_id,
 	try {
 		jobCancel(jobCancel_response, job_id);
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobCancel operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "jobCancel", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"jobCancel operation exception: "<<ex.what()<<endl;
 		setSOAPFault(soap, WMS_IS_FAILURE, "jobCancel", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -430,11 +444,13 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 		getMaxInputSandboxSize(getMaxInputSandboxSize_response);
 		response.size = getMaxInputSandboxSize_response.size;
 	} catch (Exception &exc) {
+		edglog(debug)<<"getMaxInputSandboxSize operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "getMaxInputSandboxSize",
 	 		time(NULL), exc.getCode(), (string) exc.what(),
 	 		exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
+		edglog(debug)<<"getMaxInputSandboxSize operation exception: "<<ex.what()<<endl;
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "getMaxInputSandboxSize",
 	 		time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -474,10 +490,12 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol,
 				(*(getSandboxDestURI_response.path->Item))[i]);
 		}
 	} catch (Exception &exc) {
+		edglog(debug)<<"getSandboxDestURI operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "getSandboxDestURI", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"getSandboxDestURI operation exception: "<<ex.what()<<endl;
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "getSandboxDestURI", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -528,10 +546,12 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol,
 		response._DestURIsStructType = new ns1__DestURIsStructType();
 		response._DestURIsStructType->Item = *uris;
 	} catch (Exception &exc) {
+		edglog(debug)<<"getSandboxBulkDestURI operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "getSandboxBulkDestURI", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"getSandboxBulkDestURI operation exception: "<<ex.what()<<endl;
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "getSandboxBulkDestURI", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -716,10 +736,12 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 		}
 
 	} catch (Exception &exc) {
+		edglog(debug)<<"jobListMatch operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "jobListMatch", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"jobListMatch operation exception: "<<ex.what()<<endl;
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobListMatch", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
@@ -1144,17 +1166,17 @@ delegationns__renewProxyReq(struct soap *soap, string delegation_id,
 		renewProxyReq(renewProxyReq_response, delegation_id);
 		response._renewProxyReqReturn = renewProxyReq_response;
 	} catch (Exception &exc) {
+		edglog(debug)<<"renewProxyReq operation exception:"<< exc.what()<< endl;
 	 	setSOAPFault(soap, SOAP_TYPE__delegationns__DelegationException,
 	 		"renewProxyReq", time(NULL), exc.getCode(), (string) exc.what(),
 	 		exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"renewProxyReq operation exception:"<< ex.what()<< endl;
 	 	setSOAPFault(soap, SOAP_TYPE__delegationns__DelegationException,
 	 		"renewProxyReq", time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-
-	edglog(debug)<<"renewProxyReq operation completed\n"<<endl;
 
 	return return_value;
 	GLITE_STACK_CATCH();
@@ -1207,17 +1229,17 @@ delegationns__destroy(struct soap *soap, string delegation_id,
 	try {
 		destroyProxy(delegation_id);
 	} catch (Exception &exc) {
+		edglog(debug)<<"destroy operation exception:"<< exc.what()<< endl;
 	 	setSOAPFault(soap, SOAP_TYPE__delegationns__DelegationException,
 	 		"destroy", time(NULL), exc.getCode(), (string) exc.what(),
 	 		exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
+		edglog(debug)<<"destroy operation exception:"<< ex.what()<< endl;
 	 	setSOAPFault(soap, SOAP_TYPE__delegationns__DelegationException,
 	 	"destroy", time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-
-	edglog(debug)<<"destroy operation completed\n"<<endl;
 
 	return return_value;
 	GLITE_STACK_CATCH();
