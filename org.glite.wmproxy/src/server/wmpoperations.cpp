@@ -268,13 +268,12 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-
-	// Setting user proxy
 	// TODO delegatedproxypath can be returned by checkSecurity
 	wmplogger.setUserProxy(  wmputilities::getJobDelegatedProxyPath(jobid) );
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+
 
 	DestURIsStructType *destURIsStruct = new DestURIsStructType();
 	destURIsStruct->Item = new vector<DestURIStructType*>(0);
@@ -390,9 +389,9 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			WMPEventLogger wmplogger(wmputilities::getEndpoint());
 			std::pair<std::string, int> lbaddress_port
 				= conf.getLBLocalLoggerAddressPort();
+			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 			wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
-			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
 			string userProxyJob =  wmputilities::getJobDelegatedProxyPath(jobid);
 			long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(userProxyJob);	
@@ -922,12 +921,10 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	wmplogger.setUserProxy(delegatedproxy);
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-
-	// Setting user proxy
-	wmplogger.setUserProxy(delegatedproxy);
 
 	string jdlpath;
 	jdlpath = wmputilities::getJobJDLExistingStartPath(*jid);
@@ -935,15 +932,14 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
 	string type;
 	JobAd * jad = NULL;
+	string parent = wmplogger.retrieveRegJobEvent(jid->toString()).parent;
 	if (!wmputilities::fileExists(jdlpath)) {
 		// Checking if the job is a sub-node
-		string parent = wmplogger.retrieveRegJobEvent(jid->toString()).parent;
-		if (parent == "") {
+		if (parent.empty()) {
 			// JDL to start should be present, something went wrong
 			throw JobOperationException(__FILE__, __LINE__,
 		    	"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE,
-				"Unable to check perusal availability"
-				"\n(please contact server administrator)");
+				"couldn't retrieve parent jobid for " + jid->toString());
 		}
 
 		// Job is a sub-node, getting JDL from parent JDL
@@ -951,7 +947,6 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		jdlpath = wmputilities::getJobJDLExistingStartPath(parentjid);
 		WMPExpDagAd *dag = new WMPExpDagAd(wmputilities::readTextFile(jdlpath));
 		jad = new NodeAd(dag->getNode(*jid));
-		delete jid;
 		delete dag;
 		
 		// Supported sub-nodes are standard job, setting type = job
@@ -959,6 +954,10 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		
 	} else {
 		// Job is standard job or a compound job parent
+		if (!parent.empty()) {
+			JobId parentjid(parent);
+			jdlpath = wmputilities::getJobJDLExistingStartPath(parentjid);
+		}
 		Ad *ad = new Ad(wmputilities::readTextFile(jdlpath));
 		if (ad->hasAttribute(JDL::TYPE)) {
 			type = glite_wms_jdl_toLower(ad->getString(JDL::TYPE));
