@@ -27,30 +27,16 @@ END LICENSE */
 #include <csignal>
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/job_statuses.h"
-//#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "ice/IceCore.h"
-//#include "iceCommands/iceAbsCommand.h"
-//#include "iceCommands/iceCommandCancel.h"
-//#include "iceCommands/iceCommandSubmit.h"
-//#include "iceCommands/iceCommandReschedule.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-//#include "iceCommands/iceCommandFatal_ex.h"
-//#include "iceCommands/iceCommandTransient_ex.h"
 #include "iceUtils/IceConfManager.h"
-//#include "iceThreads/iceThreadPool.h"
 #include "iceUtils/DNProxyManager.h"
-//#include "iceUtils/Request.h"
-//#include "iceUtils/IceLBEvent.h"
-//#include "iceUtils/iceLBLogger.h"
-//#include "iceUtils/iceLBEventFactory.h"
-
 #define RUN_ON_LINUX
 #include "segv_handler.h"
 

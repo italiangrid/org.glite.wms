@@ -146,7 +146,7 @@ foreach (@_data_members) {
   chomp;
   if ($_ !~ m/^MEMBER:/) {next;}
   $_ =~ s/^MEMBER://;
-  if ($_ =~ m/#PRIMARYKEY#$/) {
+  if ($_ =~ m/#PRIMARYKEY#/) {
     $line = $_;
     $line =~ s/#PRIMARYKEY#//;
     #print "$line\n";
@@ -161,6 +161,7 @@ foreach (@_data_members) {
 
 
 $num_of_members = scalar @data_members;
+%defaults = {};
 
 foreach (@data_members) {
   chomp;
@@ -168,10 +169,10 @@ foreach (@data_members) {
   @pieces = split(",", $_);
   #print "\t\t  " . $pieces[1] . "  m_" . $pieces[2] . ";\n";
   printf "\t\t  %30s  m_%s;\n", $pieces[1], $pieces[2];
-  #print "\t\t  bool  m_changed_" . $pieces[2] . ";\n";
   printf "\t\t  %30s  m_changed_%s;\n", "bool", $pieces[2];
   push @members, $pieces[2];
   push @sql_types, $pieces[0];
+  $defaults{$pieces[2]} = $pieces[3];
 }
 
 printf "\n\t\t  %30s  m_new;\n", "bool";
@@ -264,6 +265,8 @@ print "\t\t  CreamJob() : ";
 
 @inits = ();
 foreach ( @members ) {
+  
+  push @inits, "m_$_( " . $defaults{$_} . " )";
   push @inits, "m_changed_$_( true )";
 }
 

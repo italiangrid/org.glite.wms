@@ -1,34 +1,34 @@
-MEMBER:text,std::string,grid_jobid#PRIMARYKEY#
-MEMBER:text,std::string,cream_jobid
-MEMBER:text,std::string,complete_cream_jobid
-MEMBER:blob,std::string,jdl
-MEMBER:text,std::string,ceid
-MEMBER:text,std::string,endpoint
-MEMBER:text,std::string,cream_address
-MEMBER:text,std::string,cream_deleg_address
-MEMBER:text,std::string,user_proxyfile
-MEMBER:text,std::string,user_dn
-MEMBER:text,std::string,sequence_code
-MEMBER:text,std::string,delegation_id
-MEMBER:text,std::string,wn_sequence_code
-MEMBER:integer(2),unsigned short int,prev_status
-MEMBER:integer(2),unsigned short int,status
-MEMBER:integer(2),unsigned short int,num_logged_status_changes
-MEMBER:integer(8),time_t,last_seen
-MEMBER:text,std::string,lease_id
-MEMBER:integer(2),unsigned short int,status_poll_retry_count
-MEMBER:integer(2),unsigned short int,exit_code
-MEMBER:blob,std::string,failure_reason
-MEMBER:text,std::string,worker_node
-MEMBER:integer(1),bool,killed_byice
-MEMBER:integer(8),time_t,last_empty_notification_time
-MEMBER:integer(1),bool,proxy_renewable
-MEMBER:text,std::string,myproxy_address
-MEMBER:integer(8),time_t,isbproxy_time_end
-MEMBER:blob,std::string,modified_jdl
-MEMBER:integer(8),time_t,last_poller_visited
-MEMBER:integer(8),unsigned long long int,cream_dbid
-MEMBER:text,std::string,token_file
+MEMBER:text,std::string,grid_jobid#PRIMARYKEY#,""
+MEMBER:text,std::string,cream_jobid,""
+MEMBER:text,std::string,complete_cream_jobid,""
+MEMBER:blob,std::string,jdl,""
+MEMBER:text,std::string,ceid,""
+MEMBER:text,std::string,endpoint,""
+MEMBER:text,std::string,cream_address,""
+MEMBER:text,std::string,cream_deleg_address,""
+MEMBER:text,std::string,user_proxyfile,""
+MEMBER:text,std::string,user_dn,""
+MEMBER:text,std::string,sequence_code,""
+MEMBER:text,std::string,delegation_id,""
+MEMBER:text,std::string,wn_sequence_code,""
+MEMBER:integer(2),unsigned short int,prev_status,11
+MEMBER:integer(2),unsigned short int,status,11
+MEMBER:integer(2),unsigned short int,num_logged_status_changes,0
+MEMBER:integer(8),time_t,last_seen,0
+MEMBER:text,std::string,lease_id,""
+MEMBER:integer(2),unsigned short int,status_poll_retry_count,0
+MEMBER:integer(2),unsigned short int,exit_code,0
+MEMBER:blob,std::string,failure_reason,""
+MEMBER:text,std::string,worker_node,""
+MEMBER:integer(1),bool,killed_byice,0
+MEMBER:integer(8),time_t,last_empty_notification_time,0
+MEMBER:integer(1),bool,proxy_renewable,0
+MEMBER:text,std::string,myproxy_address,""
+MEMBER:integer(8),time_t,isbproxy_time_end,0
+MEMBER:blob,std::string,modified_jdl,""
+MEMBER:integer(8),time_t,last_poller_visited,0
+MEMBER:integer(8),unsigned long long int,cream_dbid,0
+MEMBER:text,std::string,token_file,""
 
 METHOD:void,set_status,( const glite::ce::cream_client_api::job_statuses::job_status& st ) {
   m_changed_status = true;
