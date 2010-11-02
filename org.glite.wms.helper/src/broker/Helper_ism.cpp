@@ -58,6 +58,8 @@
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 
+#include <glite/wms/ism/ism.h>
+
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
@@ -182,14 +184,14 @@ std::auto_ptr<classad::ClassAd>
 f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
 {
   std::auto_ptr<classad::ClassAd> result;
-
-  static boost::regex  expression( "(.+/[^\\-]+-([^\\-]+))-(.+)" );
+  static boost::regex  expression( "(([^\\:]+):[0-9]+/[^\\-]+-([^\\-]+))-(.+)" );
   boost::smatch        pieces;
-  std::string gcrs, type, name;
+  std::string gcrs, host, type, name;
   if (boost::regex_match(ce_id, pieces, expression)) {
     gcrs.assign(pieces[1].first, pieces[1].second);
-    type.assign(pieces[2].first, pieces[2].second);
-    name.assign(pieces[3].first, pieces[3].second);
+    host.assign(pieces[2].first, pieces[2].second);
+    type.assign(pieces[3].first, pieces[3].second);
+    name.assign(pieces[4].first, pieces[4].second);
 
     result.reset(new classad::ClassAd(input_ad));
     requestad::set_globus_resource_contact_string(*result, gcrs);
@@ -201,6 +203,28 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
     }
    
     requestad::set_ce_id(*result, ce_id);
+    
+    ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
+    ism::ism_type::const_iterator const ism_end(
+      ism::get_ism(ism::ce).end()
+    );
+    ism::ism_type::const_iterator ce_it(
+      ism::get_ism(ism::ce).find(ce_id)
+    );
+    
+    if (ce_it != ism_end) {
+
+      classad::ClassAd* ce_ad(boost::tuples::get<2>(ce_it->second).get());
+
+      std::string ceinfohostname(host);
+      ce_ad->EvaluateAttrString("GlueCEInfoHostName", ceinfohostname);
+      requestad::set_ceinfo_host_name(*result, ceinfohostname);
+
+    } 
+    else {
+      requestad::set_ceinfo_host_name(*result, host);
+    }
+
 
     // TODO catch requestad::CannotSetAttribute
   } else {
