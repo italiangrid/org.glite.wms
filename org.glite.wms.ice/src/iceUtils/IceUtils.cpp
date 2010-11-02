@@ -138,7 +138,9 @@ glite::wms::ice::util::IceUtils::ignore_job( const string& CID,
     tnx.execute( &getter );
     if( !getter.found() )
       {
-	reason = "JobID disappeared from ICE database !";		       
+	reason = "CreamJobID [";
+	reason += CID;
+	reason += "] disappeared from ICE database !";		       
 	return true;
       }
     
@@ -164,6 +166,7 @@ glite::wms::ice::util::IceUtils::ignore_job( const string& CID,
     reason += "] does exist; the job could have been just reschedule by WM.";
     return true;
   }
+  return false;
 }
 //______________________________________________________________________
 bool 
