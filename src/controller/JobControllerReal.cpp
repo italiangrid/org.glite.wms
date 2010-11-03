@@ -76,6 +76,8 @@ namespace controller {
 
 namespace {
 
+typedef WriteUserLog UserLog;
+
 GenericEvent *createGenericEvent( int evn )
 {
   GenericEvent    *event = (GenericEvent *) instantiateEvent( ULOG_GENERIC );
