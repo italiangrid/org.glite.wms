@@ -79,7 +79,6 @@ namespace {
   boost::regex const voblah_ce(":[0-9]+/voblah-");
   boost::regex const condor_ce(":[0-9]+/condor-");
   boost::regex const nordugrid_ce(":[0-9]+/nordugrid-");
-
 }
 
 namespace glite {
@@ -219,7 +218,6 @@ try {
   std::string const ce_id(jdl::get_ce_id(*m_ad));
   boost::regex const cream_ce_id(".+/cream-.+");
   bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
-
   if (is_cream_ce) {
     classad::ClassAd* cream_jdl(new classad::ClassAd(*m_ad));
     // let's pass the token on to cream (this one only)
@@ -432,7 +430,7 @@ try {
   ) {
     is_nordugrid_resource = true;
     is_condor_resource = true;
-  }
+  } 
 
   std::string condor_submit_environment;
 
@@ -614,6 +612,9 @@ try {
     jdl::set_site_name(*result, gatekeeper_hostname);
     jdl::set_site_gatekeeper(*result, gatekeeper_fork);
   } /* End of blah || condor case */
+
+  std::string const grid_resource("gt2 " + globusresourcecontactstring);
+  result->InsertAttr("grid_resource", grid_resource);
 
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
   jdl::set_x509_user_proxy(*result, userproxy);
