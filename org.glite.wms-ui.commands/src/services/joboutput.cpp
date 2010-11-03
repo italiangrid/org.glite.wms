@@ -51,6 +51,7 @@ limitations under the License.
 #include <boost/filesystem/exception.hpp> //managing boost errors
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -81,20 +82,20 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
   return joinstring;
 }
 
-void chomp( std::string& str ) {
-
-  if( str.length() > 1 ) {
-    if(str.at(str.length() - 1) == '\n' ) {
-      str = str.substr( 0, str.length() - 2 );
-      return ;  
-    }
-  }
-  
-  if( str.empty() ) return;
-  
-  if (str == "\n" ) str = "";
-
-}
+// void chomp( std::string& str ) {
+// 
+//   if( str.length() > 1 ) {
+//     if(str.at(str.length() - 1) == '\n' ) {
+//       str = str.substr( 0, str.length() - 2 );
+//       return ;  
+//     }
+//   }
+//   
+//   if( str.empty() ) return;
+//   
+//   if (str == "\n" ) str = "";
+// 
+// }
 
 	const int SUCCESS = 0;
 	const int FAILED = -1;
@@ -363,7 +364,8 @@ void chomp( std::string& str ) {
 	      
 	      for (int i=0;i<sizeJ;i++) {
 		string location( locations[ m_jobIds[i] ] );
-		chomp( location );
+		
+		boost::replace_all( location, "\n", "" );
 		
 		string tmpjson("");
 		tmpjson = tab + tab + quote + m_jobIds[i] + quote + ": {" + carriage;//"\n";
