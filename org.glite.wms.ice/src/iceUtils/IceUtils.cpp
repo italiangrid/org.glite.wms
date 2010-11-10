@@ -131,7 +131,9 @@ bool
 glite::wms::ice::util::IceUtils::ignore_job( const string& CID, 
 					     CreamJob& tmp_job, string& reason ) 
 {
-   
+  try {
+    //if(tmp_job.token_file().empty())
+    //  return false;
   
     glite::wms::ice::db::GetJobByCid getter( CID, "iceCommandEventQuery::processEventsForJob" );
     glite::wms::ice::db::Transaction tnx(false, false);
@@ -155,18 +157,28 @@ glite::wms::ice::util::IceUtils::ignore_job( const string& CID,
     }
   
   
-  string new_token;
-  if( !boost::filesystem::exists( boost::filesystem::path( tmp_job.token_file() , boost::filesystem::native ) )
-      && exists_subsequent_token( tmp_job.token_file(), new_token ) ) 
-  {
-    reason = "Token file [";
-    reason += tmp_job.token_file();
-    reason += "] DOES NOT EXISTS but subsequent token [";
-    reason += new_token;
-    reason += "] does exist; the job could have been just reschedule by WM.";
-    return true;
+    string new_token;
+    
+    string token( tmp_job.token_file() );
+    
+    if( !boost::filesystem::exists( boost::filesystem::path( token , boost::filesystem::native ) )
+      && exists_subsequent_token( token, new_token ) ) 
+    {
+      reason = "Token file [";
+      reason += token;
+      reason += "] DOES NOT EXISTS but subsequent token [";
+      reason += new_token;
+      reason += "] does exist; the job could have been just reschedule by WM.";
+      return true;
+    }
+    return false;
+  } catch(std::out_of_range& ex) {
+    CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->warnStream() 
+		   << "IceUtils::ignore_job - CATCHED out_of_range exception. Job will not be ignored caller..."
+		   );
+    return false;
   }
-  return false;
 }
 //______________________________________________________________________
 bool 

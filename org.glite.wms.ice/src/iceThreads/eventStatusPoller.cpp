@@ -108,12 +108,10 @@ void eventStatusPoller::body( void )
       db::Transaction tnx(false, false);
       tnx.execute( &getter ); 
     }
-    
-
 
     set<string>::const_iterator ceit = ces.begin();
     
-    while( ceit != ces.end() ) {
+    for( ceit = ces.begin(); ceit != ces.end(); ++ceit ) {
 
       if(  ceit->empty() ) {
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
@@ -140,7 +138,7 @@ void eventStatusPoller::body( void )
           if( !hasjob.found( ) ) {
             CREAM_SAFE_LOG(m_log_dev->warnStream() << "eventStatusPoller::body - "
 		           << "DN [" 
-		           << *dnit << "] has not job one the CE ["
+		           << *dnit << "] has not job on the CE ["
 			   << *ceit << "] in the ICE's database at the moment. Skipping query..."
 		           );
 	    continue;
@@ -165,8 +163,6 @@ void eventStatusPoller::body( void )
         m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );
       
       }
-    
-      ++ceit;
     }
 
   }

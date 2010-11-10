@@ -72,10 +72,17 @@ METHOD:void,set_jdl,( const std::string& j, const std::string& cmdtype )
   boost::trim_if(m_ceid, boost::is_any_of("\"") );
   
   string shallow;
-
+  m_token_file = "";
   if ( !classad_safe_ptr->EvaluateAttrString( "ReallyRunningToken", m_token_file ) ) {
     throw ClassadSyntax_ex("ReallyRunningToken attribute not found, or is not a string");
   }
+  
+//  string token( m_token_file );
+  
+//  cout << "\n\n***************CreamJob::set_jdl - token=[" << token  << "]" << endl << endl;
+  
+    if(m_token_file.empty())
+      m_token_file = "/nofile";
   
   if( classad_safe_ptr->EvaluateAttrString( "ShallowRetryCount", shallow ) ) {
     if( atoi( shallow.c_str() ) == -1 )
