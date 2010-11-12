@@ -130,7 +130,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
             }
           }
           if (waiting_for_end_tag) {
-            size_t reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
+            size_t const reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
             if (reason_end_tag != std::string::npos) {
               waiting_for_end_tag = false;
               done_reason += jw_stdout_err.substr(
