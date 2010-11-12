@@ -74,12 +74,13 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
   sc.assign("NoToken");
 
   if( is.good() ) {
+    bool waiting_for_end_tag = false;
     do {
       is.getline( buffer, BUFSIZ );
 
       if( !is.eof() ) {
 	if( is.good() ) {
-	  for( errIt = jwErrors; errIt->jwe_error != NULL; ++errIt )
+	  for( errIt = jwErrors; errIt->jwe_error != NULL; ++errIt ) {
 	    if( strstr(buffer, errIt->jwe_error) != NULL ) {
 	      errors.assign( buffer );
 	      stat = errIt->jwe_status;
@@ -87,6 +88,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 
 	      break;
 	    }
+          }
 
           if( strstr(buffer, "job exit status = ") == buffer ) {
             if( sscanf(buffer, "job exit status = %d", &retcode) == 1 ) {
@@ -97,25 +99,48 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
             else retcode = -1;
           }
 
-          std::string jw_stdout_err(buffer);
-          int reason_begin_tag = jw_stdout_err.find("LM_log_done_begin", 0);
-          if (reason_begin_tag > 0) {
-            int reason_begin_tag_len = std::string("LM_log_done_begin").size();
-            done_reason = jw_stdout_err.substr(
-              reason_begin_tag + reason_begin_tag_len,
-              jw_stdout_err.find("LM_log_done_end", 0) - reason_begin_tag - reason_begin_tag_len
-            );
+          if (strstr(buffer, "Take token: ") == buffer) {
+            char s[256];
+            if (sscanf(buffer, "Take token: %255s", s) == 1) {
+              s[255] = '\0';
+              sc.assign(s);
+            } else { // The sequence code is not set... so what can we do?
+              sc.assign("");
+            }
+          }	
 
-            if (strstr(buffer, "Take token: ") == buffer) {
-              char s[256];
-              if (sscanf(buffer, "Take token: %255s", s) == 1) {
-                s[255] = '\0';
-                sc.assign(s);
-              } else { // The sequence code is not set... so what can we do?
-                sc.assign("");
-              }
-            }	
-	  }
+          static const std::string LM_log_done_begin("LM_log_done_begin");
+          std::string const jw_stdout_err(buffer);
+          size_t const reason_begin_tag = jw_stdout_err.find(LM_log_done_begin, 0);
+          static const std::string LM_log_done_end("LM_log_done_end");
+          if (reason_begin_tag != std::string::npos) {
+            size_t const reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
+            int const reason_begin_tag_len = LM_log_done_begin.size();
+            if (reason_end_tag != std::string::npos) {
+              done_reason = jw_stdout_err.substr(
+                reason_begin_tag + reason_begin_tag_len,
+                jw_stdout_err.find(reason_end_tag, 0) - reason_begin_tag - reason_begin_tag_len
+              );
+            } else {
+              waiting_for_end_tag = true;
+              done_reason = jw_stdout_err.substr(
+                reason_begin_tag + reason_begin_tag_len,
+                jw_stdout_err.size()
+              );
+            }
+          }
+          if (waiting_for_end_tag) {
+            size_t reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
+            if (reason_end_tag != std::string::npos) {
+              waiting_for_end_tag = false;
+              done_reason += jw_stdout_err.substr(
+                0,
+                jw_stdout_err.size() - LM_log_done_end.size() -1
+              );
+            } else {
+              done_reason += jw_stdout_err;
+            }
+          }
         } else {
 	  errors.assign( "IO error while reading file: " );
 	  errors.append( strerror(errno) );
