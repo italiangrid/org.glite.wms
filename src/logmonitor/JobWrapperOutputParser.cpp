@@ -111,7 +111,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 
           static const std::string LM_log_done_begin("LM_log_done_begin");
           std::string const jw_stdout_err(buffer);
-          size_t const reason_begin_tag = jw_stdout_err.find(LM_log_done_begin, 0);
+          size_t const reason_begin_tag = jw_stdout_err.find(LM_log_done_begin, reason_begin_tag);
           static const std::string LM_log_done_end("LM_log_done_end");
           if (reason_begin_tag != std::string::npos) {
             size_t const reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
@@ -119,7 +119,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
             if (reason_end_tag != std::string::npos) {
               done_reason = jw_stdout_err.substr(
                 reason_begin_tag + reason_begin_tag_len,
-                jw_stdout_err.find(reason_end_tag, 0) - reason_begin_tag - reason_begin_tag_len
+                reason_end_tag - reason_begin_tag - reason_begin_tag_len
               );
             } else {
               waiting_for_end_tag = true;
