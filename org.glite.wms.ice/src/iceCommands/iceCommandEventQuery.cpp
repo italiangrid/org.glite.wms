@@ -335,7 +335,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     if( !this->checkDatabaseID( m_ce, dbid, olddbid ) ) {
 
       CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
-		     << "*** CREAM HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
+		     << "*** CREAM [" << m_ce << "] HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
 		     << " ALL JOBS RELATED TO OLD DB_ID ["
 		     << olddbid << "] ***"
 		     );
