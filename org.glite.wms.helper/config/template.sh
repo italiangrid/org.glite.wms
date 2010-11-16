@@ -919,13 +919,16 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     result=$?
     if [ $result -eq 0 ]; then
       log_event "Running"
-      jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
+      jw_echo "Taken token ${__shallow_resubmission_token}"
     else
-      fatal_error "Cannot take token for ${GLITE_WMS_JOBID}" "0"
-      jw_echo "Cannot take token for ${GLITE_WMS_JOBID}"
+      local err_msg="Cannot take token ${__shallow_resubmission_token} for ${GLITE_WMS_JOBID}"
+      fatal_error $err_msg "0"
+      jw_echo $err_msg
     fi
   fi
 fi
+
+jw_echo "Sequence code: ${GLITE_WMS_SEQUENCE_CODE}"
 
 if [ ${__job_type} -eq 1 ]; then # MPI LSF
   hostfile="host$$"
