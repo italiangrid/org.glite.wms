@@ -184,7 +184,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
-		     << localProxy << "]."
+		     << localProxy << "]: " << ex.what()
 		     );
       
       return false;
@@ -231,7 +231,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
      		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
-		     << localProxy << "]."
+		     << localProxy << "]: " << ex.what()
      		     );
       return false;
     }
@@ -279,8 +279,9 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
-		     << localProxy << "]."
+		     << localProxy << "]: " << ex.what()
 		     );
+	return false;
     }
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
@@ -330,69 +331,12 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
     throw SourceProxyNotFoundException(string("Couldn't copy [")+source +"] to ["+tmpTargetFilename + "]: " + ex.what());
   }
   
-//   ifstream input( source.c_str() );
-//   ofstream output( tmpTargetFilename.c_str() );
-// 
-//   if(!input) {
-//     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-// 		   << "DNProxyManager::copyProxy() - Cannot open"
-// 		   << " proxy file ["
-// 		   << source << "] for input. ABORTING!!"
-// 		   );
-//     abort();
-//   }
-// 
-//   if(!output) {
-//     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-// 		   << "DNProxyManager::copyProxy() - Cannot open"
-// 		   << " proxy file ["
-// 		   << tmpTargetFilename << "] for output. ABORTING!!"
-// 		   );
-//     abort();
-//   }
-// 
-//   CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 		 << "DNProxyManager::copyProxy() - Copying proxy ["
-// 		 << source <<"] to ["
-// 		 << target << "] ..."
-// 		 );
-// 
-//   char c;
-//   while( input.get(c) ) 
-//     {
-//       if(!input.good()||
-// 	 input.fail() || 
-// 	 input.bad())
-// 	{
-// 	  CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-// 			 << "DNProxyManager::copyProxy - Error copying ["
-// 			 << source << "] to ["
-// 			 << tmpTargetFilename << "]. ABORTING!!"
-// 			 );
-// 	  abort();
-// 	}
-//       output.put(c);
-//     }
   try {
     boost::filesystem::path finalTargetPath( target, boost::filesystem::native );
     boost::filesystem::rename( targetPath, finalTargetPath );
-    //boost::filesystem::remove( targetPath );
   } catch( exception& ex) {
     throw SourceProxyNotFoundException(string("Couldn't rename [")+tmpTargetFilename +"] to ["+target + "]: " + ex.what());
   }
-  //int err = ::rename(tmpTargetFilename.c_str(), target.c_str());
-//   if(err != 0 )
-//     {
-//       string errmex = strerror(errno);
-//       CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-// 		     << "DNProxyManager::copyProxy() - Error moving ["
-// 		     << tmpTargetFilename << "] to ["
-// 		     << target << "]: " << errmex << ". ABORTING!!"
-// 		     );
-//       abort();
-//     }
-
-//  ::unlink(tmpTargetFilename.c_str());
 
   ::chmod( target.c_str(), 00600 );
 }
@@ -461,7 +405,6 @@ iceUtil::DNProxyManager::removeBetterProxy( const string& userdn, const string& 
 		     );
     }
   return true;
-  //::unlink( localProxy.c_str() );
 }
 
 //________________________________________________________________________
@@ -472,7 +415,6 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
   throw()
 {
   boost::recursive_mutex::scoped_lock M( s_mutex );
-  //string mapKey = this->composite( userDN, myproxyname );
   
   string localProxy = this->make_betterproxy_path(userDN, myproxyname );//iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( userDN, myproxyname ) ) + ".betterproxy";
   

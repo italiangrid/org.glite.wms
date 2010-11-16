@@ -233,7 +233,14 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     boost::trim_if(iceid, boost::is_any_of("/"));
     boost::replace_all( iceid, "/", "_" );
     boost::replace_all( iceid, "=", "_" );
-    
+   
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
+                      << "Going to execute EventQuery for user DN ["
+		      << m_dn << "] to CE ["
+		      << m_ce << "] using proxy file ["
+		      << proxyinfo.get<0>() << "]" 
+                      ); 
+ 
     try {
       api_util::scoped_timer Tot( string("iceCommandEventQuery::execute() - SOAP Connection for QueryEvent - ") + "TID=[" + getThreadID() + "]" );
       vector<pair<string, string> > states;
