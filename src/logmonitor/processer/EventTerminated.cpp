@@ -97,6 +97,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
       this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
     }
 
+elog::cedglog << logger::setlevel( logger::info ) << "SEQUENCE CODE____: " << sc << endl;
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 
