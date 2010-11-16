@@ -679,20 +679,11 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   theJob.reset_change_flags( );
   
   /**
-   * The following if is for the feedback
-   */
-//   if( !theJob.is_active( ) ) {
-//     if( util::IceUtils::is_rescheduled_job( theJob ) ) {
-//       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-// 		   << "Job [" << jobdesc
-// 		   << "] is RESCHEDULED. Will not log anything to LB about it..."
-// 		   );
-//       removed = false;
-//       return;
-//     }
-//   }
+    In both cases ABORTED or DONE_FAILED must log to LB just "DONE_FAILED"
+    the second parameter 'true' forces to log a DONE_FAILED event even when an ABORTED status has been detected
+  */
   
-  IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
+  IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob, true );
   if ( ev ) {
     api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
     theJob = m_lb_logger->logEvent( ev, true );

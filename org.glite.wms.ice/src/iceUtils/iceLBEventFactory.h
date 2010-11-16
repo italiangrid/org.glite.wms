@@ -56,7 +56,7 @@ namespace glite {
                      * The caller owns the returned pointer, and is
                      * thus responsible for relinquishing it.
                      */
-                    static IceLBEvent* mkEvent( const CreamJob& j );
+                    static IceLBEvent* mkEvent( const CreamJob& j, const bool force_donefailed = false );
 
                 protected:
                     iceLBEventFactory( ) { };

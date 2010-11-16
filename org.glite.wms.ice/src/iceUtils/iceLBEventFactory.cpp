@@ -28,7 +28,8 @@ using namespace glite::wms::ice::util;
 namespace jobstat = glite::ce::cream_client_api::job_statuses;
 
 //------------------------------------------------------------------------------
-IceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
+IceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob,
+					const bool force_donefailed )
 {
     switch( theJob.status() ) {
     case jobstat::PENDING:
@@ -55,6 +56,9 @@ IceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
     case jobstat::HELD:
         return new job_suspended_event( theJob ); // FIXME??
     case jobstat::ABORTED:
+    	if(force_donefailed)
+	  return new job_done_failed_event( theJob );
+	  
         return new job_aborted_event( theJob );
     case jobstat::DONE_OK:
         return new job_done_ok_event( theJob );
