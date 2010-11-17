@@ -2603,7 +2603,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 			userkey = tempproxy;
 
 			isproxyfile = true;
-		} catch (JobOperationException &ex) {
+		} catch (ProxyOperationException &ex) {
 			if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
 				if (!getenv(GLITE_HOST_CERT) || ! getenv(GLITE_HOST_KEY)) {
 					edglog(severe)<<"Unable to get values for environment variable "
