@@ -30,7 +30,7 @@ namespace glite {
       namespace util {
         
         //! An exception for all errors that relate to BDB operation
-        class SourceProxyNotFoundException : public std::exception {
+        class CopyProxyException : public std::exception {
           
           std::string cause;
           
@@ -40,8 +40,8 @@ namespace glite {
             Creates a SourceProxyNotFoundException object
             \param _cause the cause of the error
           */
-          SourceProxyNotFoundException(const std::string& _cause) throw() : cause(_cause) {};
-          virtual ~SourceProxyNotFoundException() throw() {}
+          CopyProxyException(const std::string& _cause) throw() : cause(_cause) {};
+          virtual ~CopyProxyException() throw() {}
           //! Gets the cause of the error
           const char* what() const throw() { return cause.c_str(); }
           
