@@ -27,7 +27,7 @@ END LICENSE */
 #include <boost/tuple/tuple.hpp>
 #include <cstring>
 #include <string.h>
-#include "SourceProxyNotFoundException.h"
+#include "CopyProxyException.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "IceConfManager.h"
 #include "IceUtils.h"
@@ -74,9 +74,6 @@ namespace util {
         bool setUserProxyIfLonger_Legacy( const std::string& proxy) throw();
         bool setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy) throw();
 	bool setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy, const time_t ) throw();
-       
-/* 	void incrementUserProxyCounter( const std::string& dn,  */
-/* 					const std::string& myproxyname ) throw(); */
 
 	bool incrementUserProxyCounter( const CreamJob& aJob,
 					const time_t proxy_time_end) throw();
@@ -110,7 +107,7 @@ namespace util {
 
 	std::string make_betterproxy_path( const std::string& dn, const std::string& myproxy ) throw();
 	
-        void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
+        void copyProxy( const std::string& source, const std::string& target ) throw(CopyProxyException&);
 
 	std::string composite( const std::string& userDN, const std::string& myproxy_name) const throw()
 	  {

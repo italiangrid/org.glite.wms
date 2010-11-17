@@ -180,7 +180,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
       
       this->copyProxy( prx, localProxy );
       
-    } catch(SourceProxyNotFoundException& ex) {
+    } catch(CopyProxyException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
@@ -227,7 +227,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
   if( !oldT ) { // couldn't get the proxy time for some reason
     try {
       this->copyProxy( prx, localProxy );
-    } catch(SourceProxyNotFoundException& ex) {
+    } catch(CopyProxyException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
      		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
@@ -275,7 +275,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 
       this->copyProxy( prx, localProxy );
 
-    } catch(SourceProxyNotFoundException& ex) {
+    } catch(CopyProxyException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
@@ -314,31 +314,45 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 
 //________________________________________________________________________
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
-  throw(SourceProxyNotFoundException&)
+  throw(CopyProxyException&)
 {
-  string tmpTargetFilename = target + string(".tmp") ;
-
-  boost::filesystem::path sourcePath( source, boost::filesystem::native );
-  if( !boost::filesystem::exists( sourcePath ) ) 
-    {
-      throw SourceProxyNotFoundException(string("Proxy file [")+source+"] is not there. Skipping.");
+  string tmpTarget = target + ".tmp";
+  ::unlink( tmpTarget.c_str( ) );
+  // CASE 1: target file does not exist
+  
+  if( !boost::filesystem::exists( boost::filesystem::path( target, boost::filesystem::native ) ) )
+  {
+  
+    try {
+      boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
+      				    boost::filesystem::path( target, boost::filesystem::native ) );
+      return;
+    } catch(exception& ex) {
+       throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
     }
-    
-  boost::filesystem::path targetPath( tmpTargetFilename, boost::filesystem::native );
-  try { 
-    boost::filesystem::copy_file( sourcePath, targetPath );
+  }
+
+  // CASE 2: target file already exists; them must rename it and then perform the copy; finally remove the renamed one
+  try {
+    boost::filesystem::rename( boost::filesystem::path( target, boost::filesystem::native ) ,
+  			       boost::filesystem::path( tmpTarget, boost::filesystem::native ) );
   } catch(exception& ex) {
-    throw SourceProxyNotFoundException(string("Couldn't copy [")+source +"] to ["+tmpTargetFilename + "]: " + ex.what());
+     throw CopyProxyException(string("Couldn't rename [")+target +"] to ["+tmpTarget + "]: " + ex.what());
   }
   
   try {
-    boost::filesystem::path finalTargetPath( target, boost::filesystem::native );
-    boost::filesystem::rename( targetPath, finalTargetPath );
-  } catch( exception& ex) {
-    throw SourceProxyNotFoundException(string("Couldn't rename [")+tmpTargetFilename +"] to ["+target + "]: " + ex.what());
+    boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
+      				  boost::filesystem::path( target, boost::filesystem::native ) );
+  } catch(exception& ex) {
+     // must restore original proxy file
+     boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
+  			        boost::filesystem::path( target, boost::filesystem::native ) );
+     throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
   }
+  
+  try{ boost::filesystem::remove( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ); }
+  catch(...) {} // can ignore because next time the ::unlink at the start of this func will be invoked.
 
-  ::chmod( target.c_str(), 00600 );
 }
 
 /**********************************************
@@ -424,7 +438,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     
     this->copyProxy( newEntry.get<0>(), localProxy + ".tmp" );
     
-  } catch(SourceProxyNotFoundException& ex) {
+  } catch(CopyProxyException& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::updateBetterProxy() - Error copying proxy ["
 		   << newEntry.get<0>() << "] to ["
@@ -434,13 +448,16 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     return false;
   }
 
-  int rc = ::rename( (localProxy + ".tmp").c_str(), localProxy.c_str() );
-  if( rc < 0 ) {
-    string errmex = strerror(errno);
+  try {
+    boost::filesystem::path pathSrc( localProxy + ".tmp", boost::filesystem::native );
+    boost::filesystem::path pathTrg( localProxy, boost::filesystem::native );
+    boost::filesystem::rename( pathSrc, pathTrg );  
+  } catch(CopyProxyException& ex) {
+  
     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
 		   << "DNProxyManager::updateBetterProxy() - Error renaming ["
 		   << localProxy+".tmp" << "] to ["
-		   << localProxy << "]: " << errmex << ". Skipping Better Proxy update"
+		   << localProxy << "]: " << ex.what( )
 		   );
     return false;
   }
@@ -481,7 +498,7 @@ iceUtil::DNProxyManager::setBetterProxy( const string& dn,
     
     this->copyProxy( proxyfile, localProxy );
     
-  } catch(SourceProxyNotFoundException& ex) {
+  } catch(CopyProxyException& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setBetterProxy() - Error copying proxy ["
 		   << proxyfile<< "] to ["
