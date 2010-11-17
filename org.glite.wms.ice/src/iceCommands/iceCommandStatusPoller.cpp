@@ -468,7 +468,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
   	  }
 	  
 	  // Log to L&B
-	  IceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+	  IceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job, true );
 	  if ( ev ) {
 	    tmp_job = m_lb_logger->logEvent( ev, true );
 	  }

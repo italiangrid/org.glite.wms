@@ -692,7 +692,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   
   IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob, true );
   if ( ev ) {
-    api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
+    //api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
     theJob = m_lb_logger->logEvent( ev, true );
   }
   
