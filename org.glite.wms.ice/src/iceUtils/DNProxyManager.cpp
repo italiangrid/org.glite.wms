@@ -318,6 +318,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 {
   string tmpTarget = target + ".tmp";
   ::unlink( tmpTarget.c_str( ) );
+  
   // CASE 1: target file does not exist
   
   if( !boost::filesystem::exists( boost::filesystem::path( target, boost::filesystem::native ) ) )
@@ -345,9 +346,17 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
       				  boost::filesystem::path( target, boost::filesystem::native ) );
   } catch(exception& ex) {
      // must restore original proxy file
-     // doesn't matter if this rename fails
-     try {boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
-  			        boost::filesystem::path( target, boost::filesystem::native ) );} catch(...){}
+     try {
+       boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
+  			          boost::filesystem::path( target, boost::filesystem::native ) );
+     } catch(exception& ex) {
+       CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+		     << "DNProxyManager::copyProxy() - "
+		     << "Restore of the original proxy ["
+		     << target << "] has failed. Stop!"
+		     );
+       exit(1);
+     }
      throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
   }
   
@@ -437,7 +446,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 
   try {
     
-    this->copyProxy( newEntry.get<0>(), localProxy + ".tmp" );
+    this->copyProxy( newEntry.get<0>(), localProxy );
     
   } catch(CopyProxyException& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -449,19 +458,19 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     return false;
   }
 
-  try {
-    boost::filesystem::path pathSrc( localProxy + ".tmp", boost::filesystem::native );
-    boost::filesystem::path pathTrg( localProxy, boost::filesystem::native );
-    boost::filesystem::rename( pathSrc, pathTrg );  
-  } catch(exception& ex) {
-  
-    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		   << "DNProxyManager::updateBetterProxy() - Error renaming ["
-		   << localProxy+".tmp" << "] to ["
-		   << localProxy << "]: " << ex.what( )
-		   );
-    return false;
-  }
+//   try {
+//     boost::filesystem::path pathSrc( localProxy + ".tmp", boost::filesystem::native );
+//     boost::filesystem::path pathTrg( localProxy, boost::filesystem::native );
+//     boost::filesystem::rename( pathSrc, pathTrg );  
+//   } catch(exception& ex) {
+//   
+//     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 		   << "DNProxyManager::updateBetterProxy() - Error renaming ["
+// 		   << localProxy+".tmp" << "] to ["
+// 		   << localProxy << "]: " << ex.what( )
+// 		   );
+//     return false;
+//   }
 
   try {
     db::UpdateProxyFieldsByDN updater( userDN, myproxyname, localProxy, newEntry.get<1>(), "DNProxyManager::updateBetterProxy" );
