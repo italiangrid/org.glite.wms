@@ -345,8 +345,9 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
       				  boost::filesystem::path( target, boost::filesystem::native ) );
   } catch(exception& ex) {
      // must restore original proxy file
-     boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
-  			        boost::filesystem::path( target, boost::filesystem::native ) );
+     // doesn't matter if this rename fails
+     try {boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
+  			        boost::filesystem::path( target, boost::filesystem::native ) );} catch(...){}
      throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
   }
   
@@ -452,7 +453,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     boost::filesystem::path pathSrc( localProxy + ".tmp", boost::filesystem::native );
     boost::filesystem::path pathTrg( localProxy, boost::filesystem::native );
     boost::filesystem::rename( pathSrc, pathTrg );  
-  } catch(CopyProxyException& ex) {
+  } catch(exception& ex) {
   
     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
 		   << "DNProxyManager::updateBetterProxy() - Error renaming ["
