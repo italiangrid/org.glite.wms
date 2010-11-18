@@ -150,7 +150,8 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << method_name << " TID=[" << getThreadID() << "] "
-                   << "This request is a Submission..."
+                   << "This request is a Submission for job ["
+		   << m_theJob.grid_jobid() << "]"
                    );   
     
     Request_source_purger purger_f( m_request );
