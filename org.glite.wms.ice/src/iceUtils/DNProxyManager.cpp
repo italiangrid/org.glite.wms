@@ -351,11 +351,12 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
   			          boost::filesystem::path( target, boost::filesystem::native ) );
      } catch(exception& ex) {
        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		     << "DNProxyManager::copyProxy() - "
-		     << "Restore of the original proxy ["
-		     << target << "] has failed. Stop!"
+		      << "DNProxyManager::copyProxy() - "
+		      << "Restore of the original proxy ["
+		      << target << "] has failed. It will be impossible to"
+		      << " query events for the current DN..."
 		     );
-       exit(1);
+       //exit(1);
      }
      throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
   }
