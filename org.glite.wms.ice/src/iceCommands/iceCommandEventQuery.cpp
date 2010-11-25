@@ -123,13 +123,13 @@ std::string ice::util::iceCommandEventQuery::get_grid_job_id() const
 void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 {
  m_thread_id = tid;
-  static const char* method_name = "iceCommandEventQuery::execute() - ";
+  static const char* method_name = "iceCommandEventQuery::execute - ";
 
     list<soap_proxy::EventWrapper*> events;
     cleanup cleaner( &events );
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-		   << "Retrieving last EVENT_ID for userdn ["
+		   << "Retrieving last Event ID for user dn ["
 		   << m_dn << "] and ce url ["
 		   << m_ce << "]..."
 		   );
@@ -138,20 +138,20 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     
     if( thisEventID == -1 ) {
       CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
-		     << "Couldn't find any last EVENT_ID for current couple "
+		     << "Couldn't find any last Event ID for current couple "
 		     << "userdn [" 
 		     << m_dn << "] and ce url ["
 		     << m_ce << "]. Inserting 0."
 		     );
       
-      this->setEventID( m_dn, m_ce, 0 );
+      this->set_event_id( m_dn, m_ce, 0 );
       
       thisEventID = 0;
 
     } else {
 
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-		     << "Last EVENT_ID for current couple "
+		     << "Last Event ID for current couple "
 		     << "userdn [" 
 		     << m_dn << "] and ce url ["
 		     << m_ce << "] is ["
@@ -314,7 +314,6 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 	iceCommandStatusPoller( m_iceManager, make_pair( m_dn, m_ce), false ).execute( m_thread_id );
       }
 
-
       return ;
 
     } catch(exception& ex) {
@@ -364,21 +363,17 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       
       list<CreamJob>::iterator jobit = toRemove.begin();
       for(  jobit = toRemove.begin(); jobit != toRemove.end(); ++jobit ) {
-//      while( jobit != toRemove.end() ) {
-	
 	jobit->set_status( cream_api::job_statuses::ABORTED );
 	jobit->set_failure_reason( "CREAM'S database has been scratched and all its jobs have been lost" );
 
-//	++jobit;
       }
-      
       
       while( IceCore::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
 	sleep(2);
       
       IceCore::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
       
-
+      return;
     } // if( !this->checkDatabaseID..... )
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
@@ -389,7 +384,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		   );
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-		   << "Database  ID=[" << sdbid << "]"
+		   << "Database ID=[" << sdbid << "]"
 		   );
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
@@ -403,7 +398,13 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 
       long long last_event_id = this->processEvents( endpoint, events );
       
-      this->setEventID( m_dn, m_ce, last_event_id+1 );
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
+		     << "Setting new Event ID=[" << last_event_id << "] for user dn ["
+		     << m_dn << "] ce url ["
+		     << m_ce << "]"
+		   );
+
+      this->set_event_id( m_dn, m_ce, last_event_id+1 );
     }
 }
 
@@ -422,11 +423,11 @@ ice::util::iceCommandEventQuery::getEventID( const string& dn, const string& ce)
 
 //______________________________________________________________________________
 void 
-ice::util::iceCommandEventQuery::setEventID( const std::string& dn, 
-					     const std::string& ce, 
-					     const long long id)
+ice::util::iceCommandEventQuery::set_event_id( const std::string& dn, 
+					       const std::string& ce, 
+					       const long long id)
 {
-  CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandEventQuery::setEventID() - " 
+  CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandEventQuery::set_event_id - " 
 		 << " TID=[" << getThreadID() << "] "
 		 << "Setting EventID for UserDN ["
 		 << dn <<"] CEUrl ["
@@ -511,28 +512,23 @@ ice::util::iceCommandEventQuery::processEvents( const std::string& endpoint, lis
   
   list<soap_proxy::EventWrapper*>::const_iterator it;// = events.begin();
   for(  it = events.begin();  it != events.end(); ++it ) {
-//  while( it != events.end() ) {
+
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << "iceCommandEventQuery::processEvents - "  << " TID=[" << getThreadID() << "] "
+		    << "Received Event ID=[" << (*it)->id.c_str() << "]"
+		    );
 
     long long tmpid = atoll((*it)->id.c_str() ) ;
     
     if( tmpid > last_id )
       last_id = tmpid;
+    
+    mapped_events[ endpoint + "/" + (*it)->getPropertyValue("jobId") ].push_back( *it );
 
-//    mapped_events[ (*it)->getPropertyValue("gridJobId") ].push_back( *it );
-
-//cout << "jobId=" << (*it)->getPropertyValue("jobId") << endl;
-//cout << "gridjobid=" << (*it)->getPropertyValue("gridJobId") << endl;
-
-      mapped_events[ endpoint + "/" + (*it)->getPropertyValue("jobId") ].push_back( *it );
-
-//    ++it;
   }
 
   map< string, list<soap_proxy::EventWrapper*> >::const_iterator eit;// = mapped_events.begin();
   for( eit = mapped_events.begin(); eit != mapped_events.end();  ++eit ) {
-//  while( eit != mapped_events.end() ) {
     this->processEventsForJob( eit->first, eit->second );
-//    ++eit;
   }
 
   return last_id;
