@@ -81,7 +81,7 @@ namespace glite {
 
 	  //bool ignore_job( const std::string& CID, CreamJob& tmp_job, std::string& reason );
 	   
-	  void setEventID( const std::string&, const std::string&, const long long );
+	  void set_event_id( const std::string&, const std::string&, const long long );
 
 	  void getJobsByDbID( std::list<glite::wms::ice::util::CreamJob>& jobs, const long long db_id );
 
