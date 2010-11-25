@@ -38,6 +38,8 @@ END LICENSE */
 
 #include <iostream>
 #include <fstream>
+#include <istream>
+#include <ostream>
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -316,54 +318,88 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
   throw(CopyProxyException&)
 {
-  string tmpTarget = target + ".tmp";
-  ::unlink( tmpTarget.c_str( ) );
+   string tmpTarget = target + ".tmp";
+   ::unlink( tmpTarget.c_str( ) );
   
-  // CASE 1: target file does not exist
+//   // CASE 1: target file does not exist
   
-  if( !boost::filesystem::exists( boost::filesystem::path( target, boost::filesystem::native ) ) )
-  {
+//   if( !boost::filesystem::exists( boost::filesystem::path( target, boost::filesystem::native ) ) )
+//   {
   
-    try {
-      boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
-      				    boost::filesystem::path( target, boost::filesystem::native ) );
-      return;
-    } catch(exception& ex) {
-       throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
-    }
-  }
+//     try {
+//       boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
+//       				    boost::filesystem::path( target, boost::filesystem::native ) );
+//       return;
+//     } catch(exception& ex) {
+//        throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
+//     }
+//   }
 
-  // CASE 2: target file already exists; them must rename it and then perform the copy; finally remove the renamed one
-  try {
-    boost::filesystem::rename( boost::filesystem::path( target, boost::filesystem::native ) ,
-  			       boost::filesystem::path( tmpTarget, boost::filesystem::native ) );
-  } catch(exception& ex) {
-     throw CopyProxyException(string("Couldn't rename [")+target +"] to ["+tmpTarget + "]: " + ex.what());
-  }
+//   // CASE 2: target file already exists; them must rename it and then perform the copy; finally remove the renamed one
+//   try {
+//     boost::filesystem::rename( boost::filesystem::path( target, boost::filesystem::native ) ,
+//   			       boost::filesystem::path( tmpTarget, boost::filesystem::native ) );
+//   } catch(exception& ex) {
+//      throw CopyProxyException(string("Couldn't rename [")+target +"] to ["+tmpTarget + "]: " + ex.what());
+//   }
   
-  try {
-    boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
-      				  boost::filesystem::path( target, boost::filesystem::native ) );
-  } catch(exception& ex) {
-     // must restore original proxy file
-     try {
-       boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
-  			          boost::filesystem::path( target, boost::filesystem::native ) );
-     } catch(exception& ex) {
-       CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		      << "DNProxyManager::copyProxy() - "
-		      << "Restore of the original proxy ["
-		      << target << "] has failed. It will be impossible to"
-		      << " query events for the current DN..."
-		     );
-       //exit(1);
-     }
-     throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
-  }
+//   try {
+//     boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
+//       				  boost::filesystem::path( target, boost::filesystem::native ) );
+//   } catch(exception& ex) {
+//      // must restore original proxy file
+//      try {
+//        boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
+//   			          boost::filesystem::path( target, boost::filesystem::native ) );
+//      } catch(exception& ex) {
+//        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+// 		      << "DNProxyManager::copyProxy() - "
+// 		      << "Restore of the original proxy ["
+// 		      << target << "] has failed. It will be impossible to"
+// 		      << " query events for the current DN..."
+// 		     );
+//        //exit(1);
+//      }
+//      throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
+//   }
   
-  try{ boost::filesystem::remove( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ); }
-  catch(...) {} // can ignore because next time the ::unlink at the start of this func will be invoked.
+//   try{ boost::filesystem::remove( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ); }
+//   catch(...) {} // can ignore because next time the ::unlink at the start of this func will be invoked.
 
+   try {
+     std::ifstream in (source.c_str());
+     std::ofstream out(tmpTarget.c_str());
+     out << in.rdbuf();
+     out.close();
+     in.close();
+   } catch( exception& ex ) {
+
+     ::unlink( tmpTarget.c_str( ) ); // actually this is redundant (see at the beginning of the func)
+     
+     throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+tmpTarget + "]: " + ex.what());
+   }
+   
+   // copy is ok. Now must rename the tmp to the original proxy file
+   
+   
+   /** 
+       from man page (2) of rename:
+       If newpath already exists it will be atomically 
+       replaced, 
+       so that there is no point
+       at which another process attempting 
+       to access newpath will find it missing.
+       
+       If newpath exists but the operation fails for some 
+       reason rename() guarantees to leave an instance of newpath in place.
+   */
+   int rc = ::rename( tmpTarget.c_str( ), target.c_str( ) );
+   if (rc ) {
+     // if something failed, we're sure that original proxy is still there
+     // and we must just remote the tmpTarget and NOT update the ICE's database
+     ::unlink( tmpTarget.c_str( ) ); // actually this is redundant (see at the beginning of the func)
+     throw CopyProxyException(string("Couldn't rename new proxy [")+tmpTarget +"] to ["+target + "]: " + strerror(errno));
+   }
 }
 
 /**********************************************
