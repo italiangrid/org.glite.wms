@@ -109,24 +109,27 @@ void eventStatusPoller::body( void )
       tnx.execute( &getter ); 
     }
 
-    set<string>::const_iterator ceit = ces.begin();
+    set<string>::const_iterator ceit;// = ces.begin();
     
-    for( ceit = ces.begin(); ceit != ces.end(); ++ceit ) {
-
-      if(  ceit->empty() ) {
+    //for( ceit = ces.begin(); ceit != ces.end(); ++ceit ) {
+    
+    set<string>::const_iterator dnit;// = dns.begin();
+    
+    for( dnit = dns.begin(); dnit != dns.end(); ++dnit ) {
+    
+      if(  dnit->empty() ) {
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
-		       << "Empty CE string! Skipping..."
+		       << "Empty DN string! Skipping..."
 		       );
 	continue;// next CE
       }
-
-      set<string>::const_iterator dnit = dns.begin();
       
-      for( dnit = dns.begin(); dnit != dns.end(); ++dnit ) {
+      for( ceit = ces.begin(); ceit != ces.end(); ++ceit ) {
+      //for( dnit = dns.begin(); dnit != dns.end(); ++dnit ) {
 	
-        if( dnit->empty() ) {
+        if( ceit->empty() ) {
           CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
-			 << "Empty DN string! Skipping... "
+			 << "Empty CE string! Skipping... "
 			 );
 	  continue; // next DN
         }
@@ -162,6 +165,8 @@ void eventStatusPoller::body( void )
       
         m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );
       
+        while( m_threadPool->get_command_count( ) > 0 )
+	  sleep(5);
       }
     }
 
