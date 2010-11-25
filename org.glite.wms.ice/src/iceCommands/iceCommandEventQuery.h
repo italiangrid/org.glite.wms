@@ -30,6 +30,7 @@ END LICENSE */
 
 #include<vector>
 #include<string>
+#include<utility>
 #include<list>
 
 namespace log4cpp {
@@ -70,7 +71,7 @@ namespace glite {
 	  
 	  long long getEventID( const std::string&, const std::string& );
 	  bool checkDatabaseID( const std::string&, const long long, long long& );
-	  long long processEvents( const std::string& endpoint, std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
+	  long long processEvents( const std::string& endpoint, std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>&, const std::pair<std::string, std::string>& );
 	  void processEventsForJob( const std::string&,
 				    const std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
 	  

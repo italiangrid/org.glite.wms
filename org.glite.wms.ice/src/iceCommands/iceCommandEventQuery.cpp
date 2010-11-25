@@ -396,7 +396,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       Url url( m_ce );
       string endpoint( url.get_schema() + "://" + url.get_endpoint() );
 
-      long long last_event_id = this->processEvents( endpoint, events );
+      long long last_event_id = this->processEvents( endpoint, events, make_pair( m_dn, m_ce ) );
       
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Setting new Event ID=[" << last_event_id << "] for user dn ["
@@ -499,7 +499,9 @@ ice::util::iceCommandEventQuery::checkDatabaseID( const string& ceurl,
 
 //______________________________________________________________________________
 long long
-ice::util::iceCommandEventQuery::processEvents( const std::string& endpoint, list<soap_proxy::EventWrapper*>& events )
+ice::util::iceCommandEventQuery::processEvents( const std::string& endpoint, 
+						list<soap_proxy::EventWrapper*>& events,
+						const pair<string, string>& dnce )
 {
 
   api_util::scoped_timer procTimeEvents( string("iceCommandEventQuery::processEvents() - TID=[") + getThreadID() + "] All Events Proc Time" );
@@ -514,7 +516,9 @@ ice::util::iceCommandEventQuery::processEvents( const std::string& endpoint, lis
   for(  it = events.begin();  it != events.end(); ++it ) {
 
     CREAM_SAFE_LOG( m_log_dev->debugStream() << "iceCommandEventQuery::processEvents - "  << " TID=[" << getThreadID() << "] "
-		    << "Received Event ID=[" << (*it)->id.c_str() << "]"
+		    << "Received Event ID=[" << (*it)->id.c_str() << "] for DN ["
+		    << dnce.first << "] and CE URL ["
+		    << dnce.second << "]"
 		    );
 
     long long tmpid = atoll((*it)->id.c_str() ) ;
