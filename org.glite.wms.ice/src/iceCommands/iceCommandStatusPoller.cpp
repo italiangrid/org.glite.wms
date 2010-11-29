@@ -22,15 +22,12 @@ END LICENSE */
 // ICE Headers
 #include "iceCommandStatusPoller.h"
 #include "iceCommandLBLogging.h"
-//#include "iceUtils/IceLBEventFactory.h"
 #include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/CreamProxyMethod.h"
 #include "iceUtils/IceConfManager.h"
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/iceLBLogger.h"
-//#include "iceUtils/iceLBLogger.h"
 #include "iceUtils/IceLBEvent.h"
-//#include "iceUtils/iceLBEvent.h"
 #include "ice/IceCore.h"
 #include "iceUtils/IceUtils.h"
 #include "iceDb/GetJobByGid.h"
@@ -432,22 +429,6 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  }
 	  tmp_job.set_num_logged_status_changes( count );
 	  {
-	    //	    list<pair<string, string> > params;
-	    //	    params.push_back( make_pair("worker_node", info_obj.getWorkerNode()) );
-	    /**
-	       This update of releveat times is done outside, in the check_user_jobs 
-	       method in order to prevent to re-poll always the same jobs 
-	       if something goes wrong...
-	       
-	       params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
-	       params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
-	    */
-	    //params.push_back( make_pair( util::CreamJob::status_field(), utilities::to_string((long int)stNum)));
-	    //params.push_back( make_pair( util::CreamJob::exit_code_field(), utilities::to_string((long int)tmp_job.exit_code())));
-	    //params.push_back( make_pair( util::CreamJob::num_logged_status_changes_field(), utilities::to_string((long int)count)));
-	    //	    params.push_back( make_pair( util::CreamJob::failure_reason_field(), it->getFailureReason()));
-	    
-	    //db::UpdateJobByGid updater( tmp_job.grid_jobid(), params, "iceCommandStatusPoller::update_single_job");
 	    db::UpdateJob updater( tmp_job, "iceCommandStatusPoller::update_single_job");
 	    db::Transaction tnx(false, false);
 	    tnx.execute( &updater );
@@ -470,7 +451,8 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  // Log to L&B
 	  IceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job, true );
 	  if ( ev ) {
-	    tmp_job = m_lb_logger->logEvent( ev, true );
+	    bool log_with_cancel_seqcode = (tmp_job.status( ) == glite::ce::cream_client_api::job_statuses::CANCELLED) && (!tmp_job.cancel_sequence_code( ).empty( ));
+	    tmp_job = m_lb_logger->logEvent( ev, log_with_cancel_seqcode, true );
 	  }
 	  
 	  /**

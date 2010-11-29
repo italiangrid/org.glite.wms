@@ -267,23 +267,11 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
                        << "Error during submission of jdl=" << m_jdl
                        << " Fatal Exception is:" << ex.what()
                        );
-        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ),true );
+        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ), false, true );
 	string reason = boost::str( boost::format( "Transfer to CREAM [%1%] failed due to exception: %2%") % m_theJob.cream_address() % ex.what() );
         m_theJob.set_failure_reason( reason );
 	
-	/**
-	 * The following update on DB is useless because the job will be removed
-	 * from ICE's DB as this branch of code will throw exception
-	 * (thanks to the remove_job_guard)
-	 */
-// 	{
-// 	  db::UpdateJob updater( m_theJob, "iceCommandSubmit::execute" );
-// 	  db::Transaction tnx(false, false);
-// 	  tnx.execute( &updater );
-// 	}
-	
-	
-        m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ), false );
+        m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ), false, false );
 	
 	if( m_theJob.proxy_renewable( ) )
 	  iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.user_dn(), m_theJob.myproxy_address() );
@@ -305,18 +293,9 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	
       string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() );
       m_theJob.set_failure_reason( reason );
-      /**
-       * The following on DB is useless because the job will be remove 
-       * from ICE's DB as this branch of code will throw exception
-       * (thanks to the remove_job_guard)
-       */
-//       {
-// 	db::UpdateJob updater( m_theJob, "iceCommandSubmit::execute" );
-// 	db::Transaction tnx(false, false);
-// 	tnx.execute( &updater );
-//       }
-      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ), false );
-      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ), false );
+
+      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ), false, false );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ), false, false );
       m_theIce->resubmit_job( &m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.cream_address() ) ); // Try to resubmit
       
       if( m_theJob.proxy_renewable( ) )
@@ -357,36 +336,11 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 
   if(!only_start) {    
     
-//     {
-//       db::UpdateJob updater( m_theJob, "iceCommandSubmit::try_to_submit" );
-//       db::Transaction tnx(false, false);
-//       tnx.execute( &updater );
-//     }
-    
-    //proxy_time_end = V.getProxyTimeEnd();
-    
-    m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ), true );
-    m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ), true );
-    
-    /**
-      logEvent modified jdl and "modified_jdl" that need to be saved on the DB
-    */
-//     {
-//       list< pair<string, string> > params;
-//       params.push_back( make_pair( util::CreamJob::jdl_field(), m_theJob.jdl( )) );
-//       params.push_back( make_pair( util::CreamJob::modified_jdl_field(), m_theJob.modified_jdl( )) );
-//       db::UpdateJobByGid updater( m_theJob.grid_jobid( ), params, "iceCommandSubmit::execute" );
-//       db::Transaction tnx(false, false);
-//       tnx.execute( &updater );
-//     }
+    m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ), false, true );
+    m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ), false, true );
     
     
     string _ceurl( m_theJob.cream_address() );
-    
-    // this put the new sequence code, obtained
-    // from the logging to LB, into the JDL that will be sent
-    // to the CE
-    //m_theJob.update_seq_code( );
     
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
@@ -603,7 +557,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   tnx.execute( &updater );
   m_theJob.reset_change_flags( );
  
-  m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ), true );
+  m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ), false, true );
   
   /*
    * here must check if we're subscribed to the CEMon service

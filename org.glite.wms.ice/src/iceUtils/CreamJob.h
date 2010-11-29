@@ -159,13 +159,15 @@ namespace glite {
 		                            bool  m_changed_cream_dbid;
 		                     std::string  m_token_file;
 		                            bool  m_changed_token_file;
+		                     std::string  m_cancel_sequence_code;
+		                            bool  m_changed_cancel_sequence_code;
 
 		                            bool  m_new;
 
 		 public:
 		  static boost::recursive_mutex s_classad_mutex;
 		  static boost::recursive_mutex s_reschedule_mutex;
-		  static int num_of_members( void ) { return 31; }
+		  static int num_of_members( void ) { return 32; }
 
 		public:
 
@@ -200,6 +202,7 @@ namespace glite {
 		  virtual void  set_last_poller_visited( const time_t& _last_poller_visited) { m_last_poller_visited = _last_poller_visited; m_changed_last_poller_visited=true; }
 		  virtual void  set_cream_dbid( const unsigned long long int& _cream_dbid) { m_cream_dbid = _cream_dbid; m_changed_cream_dbid=true; }
 		  virtual void  set_token_file( const std::string& _token_file) { m_token_file = _token_file; m_changed_token_file=true; }
+		  virtual void  set_cancel_sequence_code( const std::string& _cancel_sequence_code) { m_cancel_sequence_code = _cancel_sequence_code; m_changed_cancel_sequence_code=true; }
 
 		 /**
 		  *
@@ -236,6 +239,7 @@ namespace glite {
 		  virtual std::string  modified_jdl( void ) const { return m_modified_jdl; }
 		  virtual time_t  last_poller_visited( void ) const { return m_last_poller_visited; }
 		  virtual unsigned long long int  cream_dbid( void ) const { return m_cream_dbid; }
+		  virtual std::string  cancel_sequence_code( void ) const { return m_cancel_sequence_code; }
 
 		 /**
 		  *
@@ -273,6 +277,7 @@ namespace glite {
 		  static std::string last_poller_visited_field( void ) { return "last_poller_visited"; }
 		  static std::string cream_dbid_field( void ) { return "cream_dbid"; }
 		  static std::string token_file_field( void ) { return "token_file"; }
+		  static std::string cancel_sequence_code_field( void ) { return "cancel_sequence_code"; }
 
 		  CreamJob(
 	  		  const std::string& grid_jobid,
@@ -305,10 +310,11 @@ namespace glite {
 			  const std::string& modified_jdl,
 			  const time_t& last_poller_visited,
 			  const unsigned long long int& cream_dbid,
-			  const std::string& token_file
-			) : m_grid_jobid( grid_jobid ),m_changed_grid_jobid( true ),m_cream_jobid( cream_jobid ),m_changed_cream_jobid( true ),m_complete_cream_jobid( complete_cream_jobid ),m_changed_complete_cream_jobid( true ),m_jdl( jdl ),m_changed_jdl( true ),m_ceid( ceid ),m_changed_ceid( true ),m_endpoint( endpoint ),m_changed_endpoint( true ),m_cream_address( cream_address ),m_changed_cream_address( true ),m_cream_deleg_address( cream_deleg_address ),m_changed_cream_deleg_address( true ),m_user_proxyfile( user_proxyfile ),m_changed_user_proxyfile( true ),m_user_dn( user_dn ),m_changed_user_dn( true ),m_sequence_code( sequence_code ),m_changed_sequence_code( true ),m_delegation_id( delegation_id ),m_changed_delegation_id( true ),m_wn_sequence_code( wn_sequence_code ),m_changed_wn_sequence_code( true ),m_prev_status( prev_status ),m_changed_prev_status( true ),m_status( status ),m_changed_status( true ),m_num_logged_status_changes( num_logged_status_changes ),m_changed_num_logged_status_changes( true ),m_last_seen( last_seen ),m_changed_last_seen( true ),m_lease_id( lease_id ),m_changed_lease_id( true ),m_status_poll_retry_count( status_poll_retry_count ),m_changed_status_poll_retry_count( true ),m_exit_code( exit_code ),m_changed_exit_code( true ),m_failure_reason( failure_reason ),m_changed_failure_reason( true ),m_worker_node( worker_node ),m_changed_worker_node( true ),m_killed_byice( killed_byice ),m_changed_killed_byice( true ),m_last_empty_notification_time( last_empty_notification_time ),m_changed_last_empty_notification_time( true ),m_proxy_renewable( proxy_renewable ),m_changed_proxy_renewable( true ),m_myproxy_address( myproxy_address ),m_changed_myproxy_address( true ),m_isbproxy_time_end( isbproxy_time_end ),m_changed_isbproxy_time_end( true ),m_modified_jdl( modified_jdl ),m_changed_modified_jdl( true ),m_last_poller_visited( last_poller_visited ),m_changed_last_poller_visited( true ),m_cream_dbid( cream_dbid ),m_changed_cream_dbid( true ),m_token_file( token_file ),m_changed_token_file( true ) , m_new(true) { }
+			  const std::string& token_file,
+			  const std::string& cancel_sequence_code
+			) : m_grid_jobid( grid_jobid ),m_changed_grid_jobid( true ),m_cream_jobid( cream_jobid ),m_changed_cream_jobid( true ),m_complete_cream_jobid( complete_cream_jobid ),m_changed_complete_cream_jobid( true ),m_jdl( jdl ),m_changed_jdl( true ),m_ceid( ceid ),m_changed_ceid( true ),m_endpoint( endpoint ),m_changed_endpoint( true ),m_cream_address( cream_address ),m_changed_cream_address( true ),m_cream_deleg_address( cream_deleg_address ),m_changed_cream_deleg_address( true ),m_user_proxyfile( user_proxyfile ),m_changed_user_proxyfile( true ),m_user_dn( user_dn ),m_changed_user_dn( true ),m_sequence_code( sequence_code ),m_changed_sequence_code( true ),m_delegation_id( delegation_id ),m_changed_delegation_id( true ),m_wn_sequence_code( wn_sequence_code ),m_changed_wn_sequence_code( true ),m_prev_status( prev_status ),m_changed_prev_status( true ),m_status( status ),m_changed_status( true ),m_num_logged_status_changes( num_logged_status_changes ),m_changed_num_logged_status_changes( true ),m_last_seen( last_seen ),m_changed_last_seen( true ),m_lease_id( lease_id ),m_changed_lease_id( true ),m_status_poll_retry_count( status_poll_retry_count ),m_changed_status_poll_retry_count( true ),m_exit_code( exit_code ),m_changed_exit_code( true ),m_failure_reason( failure_reason ),m_changed_failure_reason( true ),m_worker_node( worker_node ),m_changed_worker_node( true ),m_killed_byice( killed_byice ),m_changed_killed_byice( true ),m_last_empty_notification_time( last_empty_notification_time ),m_changed_last_empty_notification_time( true ),m_proxy_renewable( proxy_renewable ),m_changed_proxy_renewable( true ),m_myproxy_address( myproxy_address ),m_changed_myproxy_address( true ),m_isbproxy_time_end( isbproxy_time_end ),m_changed_isbproxy_time_end( true ),m_modified_jdl( modified_jdl ),m_changed_modified_jdl( true ),m_last_poller_visited( last_poller_visited ),m_changed_last_poller_visited( true ),m_cream_dbid( cream_dbid ),m_changed_cream_dbid( true ),m_token_file( token_file ),m_changed_token_file( true ),m_cancel_sequence_code( cancel_sequence_code ),m_changed_cancel_sequence_code( true ) , m_new(true) { }
 
-		  CreamJob() : m_grid_jobid( "" ),m_changed_grid_jobid( true ),m_cream_jobid( "" ),m_changed_cream_jobid( true ),m_complete_cream_jobid( "" ),m_changed_complete_cream_jobid( true ),m_jdl( "" ),m_changed_jdl( true ),m_ceid( "" ),m_changed_ceid( true ),m_endpoint( "" ),m_changed_endpoint( true ),m_cream_address( "" ),m_changed_cream_address( true ),m_cream_deleg_address( "" ),m_changed_cream_deleg_address( true ),m_user_proxyfile( "" ),m_changed_user_proxyfile( true ),m_user_dn( "" ),m_changed_user_dn( true ),m_sequence_code( "" ),m_changed_sequence_code( true ),m_delegation_id( "" ),m_changed_delegation_id( true ),m_wn_sequence_code( "" ),m_changed_wn_sequence_code( true ),m_prev_status( 11 ),m_changed_prev_status( true ),m_status( 11 ),m_changed_status( true ),m_num_logged_status_changes( 0 ),m_changed_num_logged_status_changes( true ),m_last_seen( 0 ),m_changed_last_seen( true ),m_lease_id( "" ),m_changed_lease_id( true ),m_status_poll_retry_count( 0 ),m_changed_status_poll_retry_count( true ),m_exit_code( 0 ),m_changed_exit_code( true ),m_failure_reason( "" ),m_changed_failure_reason( true ),m_worker_node( "" ),m_changed_worker_node( true ),m_killed_byice( 0 ),m_changed_killed_byice( true ),m_last_empty_notification_time( 0 ),m_changed_last_empty_notification_time( true ),m_proxy_renewable( 0 ),m_changed_proxy_renewable( true ),m_myproxy_address( "" ),m_changed_myproxy_address( true ),m_isbproxy_time_end( 0 ),m_changed_isbproxy_time_end( true ),m_modified_jdl( "" ),m_changed_modified_jdl( true ),m_last_poller_visited( 0 ),m_changed_last_poller_visited( true ),m_cream_dbid( 0 ),m_changed_cream_dbid( true ),m_token_file( "" ),m_changed_token_file( true ), m_new(true) {}
+		  CreamJob() : m_grid_jobid( "" ),m_changed_grid_jobid( true ),m_cream_jobid( "" ),m_changed_cream_jobid( true ),m_complete_cream_jobid( "" ),m_changed_complete_cream_jobid( true ),m_jdl( "" ),m_changed_jdl( true ),m_ceid( "" ),m_changed_ceid( true ),m_endpoint( "" ),m_changed_endpoint( true ),m_cream_address( "" ),m_changed_cream_address( true ),m_cream_deleg_address( "" ),m_changed_cream_deleg_address( true ),m_user_proxyfile( "" ),m_changed_user_proxyfile( true ),m_user_dn( "" ),m_changed_user_dn( true ),m_sequence_code( "" ),m_changed_sequence_code( true ),m_delegation_id( "" ),m_changed_delegation_id( true ),m_wn_sequence_code( "" ),m_changed_wn_sequence_code( true ),m_prev_status( 11 ),m_changed_prev_status( true ),m_status( 11 ),m_changed_status( true ),m_num_logged_status_changes( 0 ),m_changed_num_logged_status_changes( true ),m_last_seen( 0 ),m_changed_last_seen( true ),m_lease_id( "" ),m_changed_lease_id( true ),m_status_poll_retry_count( 0 ),m_changed_status_poll_retry_count( true ),m_exit_code( 0 ),m_changed_exit_code( true ),m_failure_reason( "" ),m_changed_failure_reason( true ),m_worker_node( "" ),m_changed_worker_node( true ),m_killed_byice( 0 ),m_changed_killed_byice( true ),m_last_empty_notification_time( 0 ),m_changed_last_empty_notification_time( true ),m_proxy_renewable( 0 ),m_changed_proxy_renewable( true ),m_myproxy_address( "" ),m_changed_myproxy_address( true ),m_isbproxy_time_end( 0 ),m_changed_isbproxy_time_end( true ),m_modified_jdl( "" ),m_changed_modified_jdl( true ),m_last_poller_visited( 0 ),m_changed_last_poller_visited( true ),m_cream_dbid( 0 ),m_changed_cream_dbid( true ),m_token_file( "" ),m_changed_token_file( true ),m_cancel_sequence_code( "" ),m_changed_cancel_sequence_code( true ), m_new(true) {}
 
 		  void reset_change_flags( void ) {
 		    m_changed_grid_jobid = false; 
@@ -341,16 +347,17 @@ namespace glite {
 		    m_changed_modified_jdl = false; 
 		    m_changed_last_poller_visited = false; 
 		    m_changed_cream_dbid = false; 
-		    m_changed_token_file = false;
+		    m_changed_token_file = false; 
+		    m_changed_cancel_sequence_code = false;
 		    m_new = false;
 		  }
 
 		  bool is_to_update( void ) const {
-		    return m_changed_grid_jobid || m_changed_cream_jobid || m_changed_complete_cream_jobid || m_changed_jdl || m_changed_ceid || m_changed_endpoint || m_changed_cream_address || m_changed_cream_deleg_address || m_changed_user_proxyfile || m_changed_user_dn || m_changed_sequence_code || m_changed_delegation_id || m_changed_wn_sequence_code || m_changed_prev_status || m_changed_status || m_changed_num_logged_status_changes || m_changed_last_seen || m_changed_lease_id || m_changed_status_poll_retry_count || m_changed_exit_code || m_changed_failure_reason || m_changed_worker_node || m_changed_killed_byice || m_changed_last_empty_notification_time || m_changed_proxy_renewable || m_changed_myproxy_address || m_changed_isbproxy_time_end || m_changed_modified_jdl || m_changed_last_poller_visited || m_changed_cream_dbid || m_changed_token_file;
+		    return m_changed_grid_jobid || m_changed_cream_jobid || m_changed_complete_cream_jobid || m_changed_jdl || m_changed_ceid || m_changed_endpoint || m_changed_cream_address || m_changed_cream_deleg_address || m_changed_user_proxyfile || m_changed_user_dn || m_changed_sequence_code || m_changed_delegation_id || m_changed_wn_sequence_code || m_changed_prev_status || m_changed_status || m_changed_num_logged_status_changes || m_changed_last_seen || m_changed_lease_id || m_changed_status_poll_retry_count || m_changed_exit_code || m_changed_failure_reason || m_changed_worker_node || m_changed_killed_byice || m_changed_last_empty_notification_time || m_changed_proxy_renewable || m_changed_myproxy_address || m_changed_isbproxy_time_end || m_changed_modified_jdl || m_changed_last_poller_visited || m_changed_cream_dbid || m_changed_token_file || m_changed_cancel_sequence_code;
 		  }
 
 		  static std::string get_query_fields( void ) { 
-		  			 return "grid_jobid,cream_jobid,complete_cream_jobid,jdl,ceid,endpoint,cream_address,cream_deleg_address,user_proxyfile,user_dn,sequence_code,delegation_id,wn_sequence_code,prev_status,status,num_logged_status_changes,last_seen,lease_id,status_poll_retry_count,exit_code,failure_reason,worker_node,killed_byice,last_empty_notification_time,proxy_renewable,myproxy_address,isbproxy_time_end,modified_jdl,last_poller_visited,cream_dbid,token_file"; }
+		  			 return "grid_jobid,cream_jobid,complete_cream_jobid,jdl,ceid,endpoint,cream_address,cream_deleg_address,user_proxyfile,user_dn,sequence_code,delegation_id,wn_sequence_code,prev_status,status,num_logged_status_changes,last_seen,lease_id,status_poll_retry_count,exit_code,failure_reason,worker_node,killed_byice,last_empty_notification_time,proxy_renewable,myproxy_address,isbproxy_time_end,modified_jdl,last_poller_visited,cream_dbid,token_file,cancel_sequence_code"; }
 
 
 		  std::string get_query_values( void ) const { 
@@ -418,13 +425,15 @@ namespace glite {
 		    sql += ",";
 		    sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(m_token_file) );
 		    sql += ",";
+		    sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(m_cancel_sequence_code) );
+		    sql += ",";
 		    sql = sql.substr(0, sql.length() -1 );
 		    return sql;
 		  }
 
 
 		  static std::string get_createdb_query( void ) { 
-		  			 return "grid_jobid text primary key not null,cream_jobid text  not null,complete_cream_jobid text  not null,jdl blob  not null,ceid text  not null,endpoint text  not null,cream_address text  not null,cream_deleg_address text  not null,user_proxyfile text  not null,user_dn text  not null,sequence_code text  not null,delegation_id text  not null,wn_sequence_code text  not null,prev_status integer(2)  not null,status integer(2)  not null,num_logged_status_changes integer(2)  not null,last_seen integer(8)  not null,lease_id text  not null,status_poll_retry_count integer(2)  not null,exit_code integer(2)  not null,failure_reason blob  not null,worker_node text  not null,killed_byice integer(1)  not null,last_empty_notification_time integer(8)  not null,proxy_renewable integer(1)  not null,myproxy_address text  not null,isbproxy_time_end integer(8)  not null,modified_jdl blob  not null,last_poller_visited integer(8)  not null,cream_dbid integer(8)  not null,token_file text  not null"; }
+		  			 return "grid_jobid text primary key not null,cream_jobid text  not null,complete_cream_jobid text  not null,jdl blob  not null,ceid text  not null,endpoint text  not null,cream_address text  not null,cream_deleg_address text  not null,user_proxyfile text  not null,user_dn text  not null,sequence_code text  not null,delegation_id text  not null,wn_sequence_code text  not null,prev_status integer(2)  not null,status integer(2)  not null,num_logged_status_changes integer(2)  not null,last_seen integer(8)  not null,lease_id text  not null,status_poll_retry_count integer(2)  not null,exit_code integer(2)  not null,failure_reason blob  not null,worker_node text  not null,killed_byice integer(1)  not null,last_empty_notification_time integer(8)  not null,proxy_renewable integer(1)  not null,myproxy_address text  not null,isbproxy_time_end integer(8)  not null,modified_jdl blob  not null,last_poller_visited integer(8)  not null,cream_dbid integer(8)  not null,token_file text  not null,cancel_sequence_code text  not null"; }
 
 
 		  void update_database( std::string& target ) const {
@@ -643,6 +652,13 @@ namespace glite {
 		      _sql += this->token_file_field( ); 
 		      _sql += "=";
 		      _sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(this->token_file( )) );
+		      _sql += ",";
+
+		    }
+		    if(m_changed_cancel_sequence_code) {
+		      _sql += this->cancel_sequence_code_field( ); 
+		      _sql += "=";
+		      _sql += IceUtils::withSQLDelimiters( boost::lexical_cast<string>(this->cancel_sequence_code( )) );
 		      _sql += ",";
 
 		    }

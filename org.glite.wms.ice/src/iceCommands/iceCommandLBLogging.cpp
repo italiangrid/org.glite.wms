@@ -106,7 +106,7 @@ void util::iceCommandLBLogging::execute( const std::string& tid ) throw()
       
     IceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {
-      m_lb_logger->logEvent( ev, false );
+      m_lb_logger->logEvent( ev, false, false );
     }
     
     if( cream_api::job_statuses::DONE_OK == jobit->status() ||

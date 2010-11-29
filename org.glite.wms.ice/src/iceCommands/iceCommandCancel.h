@@ -55,6 +55,7 @@ namespace ice {
     protected:
         
         std::string m_gridJobId;
+	std::string m_seq_code;
         std::string m_sequence_code;
         log4cpp::Category* m_log_dev;
         util::iceLBLogger *m_lb_logger;

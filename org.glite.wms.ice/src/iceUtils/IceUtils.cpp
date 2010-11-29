@@ -117,7 +117,8 @@ glite::wms::ice::util::IceUtils::fetch_jobs_callback(void *param, int argc, char
                       fields.at(27),
                       (time_t)strtoll(fields.at(28).c_str(), 0, 10),
                       strtoull(fields.at(29).c_str(), 0, 10),
-		      fields.at(30)
+		      fields.at(30),
+		      fields.at(31)
                       );
       tmpJob.reset_change_flags( );      
       jobs->push_back( tmpJob );
@@ -213,12 +214,6 @@ glite::wms::ice::util::IceUtils::exists_subsequent_token( const string& _token_f
   
   try {
     for( boost::filesystem::directory_iterator i( tokPath ); i != end_itr; ++i ) {
-//     CREAM_SAFE_LOG(
-//		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
-//		   << "utilities::exists_subsequent_token - CHECKING [" 
-//		   << i->string() << "] filter=["
-//		   << filter << "]"
-//		   );
       if( boost::regex_match( i->leaf(), my_filter ) ) {
         CREAM_SAFE_LOG(
 		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
@@ -241,52 +236,6 @@ glite::wms::ice::util::IceUtils::exists_subsequent_token( const string& _token_f
   
   
   return false;
-  
-  
-//  return true;
-  
-//   string tmpTok = file;
-//   string::size_type pos = tmpTok.find_last_of("_", tmpTok.length()-1);
-//   if( pos != string::npos ) {
-//     filter = basename((char*)(tmpTok.substr(0, pos) + "_[0-9]+").c_str() );
-//   } else {
-//     filter = basename((char*)(tmpTok + "_[0-9]+").c_str() );
-//   }
-//   
-//   const boost::regex my_filter( filter /*string(basename((char*)aJob.token_file( ).c_str())) +"_.*"*/ );
-//   boost::filesystem::directory_iterator end_itr;
-//   
-//   try {
-//     for( boost::filesystem::directory_iterator i( tokPath )/*IceConfManager::instance()->getConfiguration()->ns()->sandbox_staging_path() ) */; i != end_itr; ++i )
-//     {
-//       //boost::smatch what;
-//       //boost::match_results<std::string::const_iterator> what;
-//       //string leaf( i->leaf( ) );
-//       CREAM_SAFE_LOG(
-// 		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
-// 		   << "utilities::is_rescheduled_job - CHECKING [" 
-// 		   << i->string() << "] filter=["
-// 		   << filter << "]"
-// 		   );
-//       if( boost::regex_match( i->leaf(), my_filter ) ) {
-//         CREAM_SAFE_LOG(
-// 		   api_util::creamApiLogger::instance()->getLogger()->debugStream() 
-// 		   << "utilities::is_rescheduled_job - FOUND TOKEN FILE [" 
-// 		   << i->string() << "]. Job orig token file [" 
-// 		   <<    aJob.token_file( ) << "]"
-// 		   );
-//         return true;//continue;
-//       }
-//     }
-//   } catch( exception& ex ) {
-//         CREAM_SAFE_LOG(
-// 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-// 		   << "utilities::is_rescheduled_job - " << ex.what()   
-// 		   );
-//     return false;
-//   }
-// 
-//   return false; 
 }
 	
 //____________________________________________________________________________

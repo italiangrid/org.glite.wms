@@ -277,7 +277,7 @@ void IceLBContext::testCode( int &code, bool retry )
 
 }
 
-void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( IceLBException& )
+void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src, const bool use_cancel_seq_code ) throw ( IceLBException& )
 {
     static const char* method_name = "IceLBContext::setLoggingJob - ";
     string _gid( theJob.grid_jobid() );
@@ -300,18 +300,22 @@ void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 
     boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.user_dn());
 
-    if ( !theJob.sequence_code().empty() ) {
-      if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
-//#ifdef GLITE_WMS_HAVE_LBPROXY
-        string const user_dn( get_proxy_subject( result.get<0>()) );
-
-        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.sequence_code().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
-      } else 
-//#else
-        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.sequence_code().c_str(), EDG_WLL_SEQ_NORMAL );
-//#endif
+    string seq_code;
+    if( use_cancel_seq_code ) {
+      seq_code = theJob.cancel_sequence_code( );
+    } else {
+      seq_code = theJob.sequence_code( );
     }
+    
+    if ( !theJob.cancel_sequence_code().empty() ) {
+        if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
+          string const user_dn( get_proxy_subject( result.get<0>()) );
 
+          res |= edg_wll_SetLoggingJobProxy( *el_context, id, seq_code.c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
+        } else 
+          res |= edg_wll_SetLoggingJob( *el_context, id, seq_code.c_str(), EDG_WLL_SEQ_NORMAL );
+    }
+    
     edg_wlc_JobIdFree( id );
 
     if( res != 0 ) {

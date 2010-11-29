@@ -29,6 +29,7 @@ MEMBER:blob,std::string,modified_jdl,""
 MEMBER:integer(8),time_t,last_poller_visited,0
 MEMBER:integer(8),unsigned long long int,cream_dbid,0
 MEMBER:text,std::string,token_file,""
+MEMBER:text,std::string,cancel_sequence_code,""
 
 METHOD:void,set_status,( const glite::ce::cream_client_api::job_statuses::job_status& st ) {
   m_changed_status = true;

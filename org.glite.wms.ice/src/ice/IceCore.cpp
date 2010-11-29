@@ -604,7 +604,7 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
 		    );
 
     the_job->set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
-    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ), true );
+    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ), false, true );
 
     return;
   }
@@ -614,9 +614,9 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
       boost::recursive_mutex::scoped_lock M( s_mutex );
         
 	
-        _the_job = m_lb_logger->logEvent( new util::ice_resubmission_event( _the_job, reason ), true );
+        _the_job = m_lb_logger->logEvent( new util::ice_resubmission_event( _the_job, reason ), false, true );
         
-        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_start_event( _the_job, m_wms_input_queue->get_name() ), true );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_start_event( _the_job, m_wms_input_queue->get_name() ), false, true );
         
 	string resub_request;
 
@@ -647,7 +647,7 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
                        );
 
         m_wms_input_queue->put_request( resub_request );
-        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_ok_event( _the_job, m_wms_input_queue->get_name() ), true );
+        _the_job = m_lb_logger->logEvent( new util::ns_enqueued_ok_event( _the_job, m_wms_input_queue->get_name() ), false, true );
 	
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() 
@@ -655,9 +655,9 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
                         << ex.what() 
                          );
 
-        m_lb_logger->logEvent( new util::ns_enqueued_fail_event( _the_job, m_wms_input_queue->get_name(), ex.what() ), true );
+        m_lb_logger->logEvent( new util::ns_enqueued_fail_event( _the_job, m_wms_input_queue->get_name(), ex.what() ), false, true );
 	_the_job.set_failure_reason( string("resubmission failed: ") + ex.what() );
-	m_lb_logger->logEvent( new util::job_aborted_event( _the_job ), true );
+	m_lb_logger->logEvent( new util::job_aborted_event( _the_job ), false, true );
     }
 }
 
@@ -1124,7 +1124,8 @@ int IceCore::main_loop( void ) {
 	      */
 	      glite::wms::ice::util::IceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
 	      if ( ev ) {
-		theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev, false );
+	        bool log_with_cancel_seqcode = (theJob.status( ) == glite::ce::cream_client_api::job_statuses::CANCELLED) && (!theJob.cancel_sequence_code( ).empty( ));
+		theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev, log_with_cancel_seqcode, false );
 	      } else {
 		CREAM_SAFE_LOG( m_log_dev->errorStream()
 				<< method_name

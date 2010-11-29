@@ -76,7 +76,7 @@ iceLBLogger::~iceLBLogger( void )
 
 }
 
-CreamJob iceLBLogger::logEvent( IceLBEvent* ev, const bool updatedb )
+CreamJob iceLBLogger::logEvent( IceLBEvent* ev, const bool use_cancel_sequence_code, const bool updatedb )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
 #ifdef ICE_PROFILE_ENABLE
@@ -100,7 +100,7 @@ CreamJob iceLBLogger::logEvent( IceLBEvent* ev, const bool updatedb )
     std::string new_seq_code;
         
     try {
-        m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
+        m_ctx->setLoggingJob( ev->getJob(), ev->getSrc(), use_cancel_sequence_code );
     } catch( IceLBException& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << method_name
@@ -135,22 +135,14 @@ CreamJob iceLBLogger::logEvent( IceLBEvent* ev, const bool updatedb )
     if ( _tmp_seqcode ) { // update the sequence code only if it is non null
         new_seq_code = _tmp_seqcode;
 	free( _tmp_seqcode );
-        try { // Lock the job cache
-	  //#ifdef ICE_PROFILE_ENABLE
-	  // 	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
-	  //#endif
-	  //	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
-	  
+        try { 
+	
 	  CreamJob theJob( ev->getJob() );
 	  
-	  theJob.set_sequence_code( new_seq_code );
-
-	  //	  list< pair<string, string> > params;
-	  //	  params.push_back( make_pair( "sequence_code", new_seq_code ));
-	  //#ifdef ICE_PROFILE_ENABLE
-	  //	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
-	  //#endif
-	  //glite::wms::ice::db::UpdateJobByGid updater( theJob.grid_jobid(), params, "iceLBLogger::logEvent" );
+	  if(use_cancel_sequence_code)
+	    theJob.set_cancel_sequence_code( new_seq_code );
+	  else
+	    theJob.set_sequence_code( new_seq_code );
 
 	  if(updatedb) {
 	    glite::wms::ice::db::UpdateJob updater( theJob, "iceLBLogger::logEvent" );

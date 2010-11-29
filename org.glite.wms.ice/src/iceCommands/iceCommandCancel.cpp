@@ -79,16 +79,6 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
     
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
     
-    // Parse the "command" attribute
-    //if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-    //  throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
-    //}
-    //boost::trim_if(commandStr, boost::is_any_of("\""));
-    
-    //if ( !boost::algorithm::iequals( commandStr, "cancel" ) ) {
-    //  throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
-    //}
-    
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "protocol", protocolStr ) ) {
       throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
@@ -107,6 +97,10 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
     // Look for "id" attribute inside "Arguments"
     if ( !argumentsAD->EvaluateAttrString( "jobid", m_gridJobId ) ) {
       throw util::JobRequest_ex( "attribute \"jobid\" inside \"arguments\" not found, or is not a string" );
+    }
+    
+    if ( !argumentsAD->EvaluateAttrString( "SequenceCode", m_seq_code ) ) {
+      throw util::JobRequest_ex( "attribute \"SequenceCode\" inside \"arguments\" not found, or is not a string" );
     }
     
     // Look for "lb_sequence_code" attribute inside "Arguments"
@@ -178,11 +172,18 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     // request. Then, ReallyRunning appears to be logically following
     // cancellation. It should not do that.
 
-    util::CreamJob theJob( get.get_job() );
+    util::CreamJob theJob( get.get_job( ) );
 
+    theJob.set_cancel_sequence_code( m_seq_code );
+    {
+      glite::wms::ice::db::UpdateJob updater( theJob, "iceCommandCancel::execute" );
+      glite::wms::ice::db::Transaction tnx(false, false);
+      tnx.execute( &updater );
+    }
+    
     // Log cancel request event
-    theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ), true );    
-
+    theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ), true, true );
+    
     string jobdesc( theJob.describe()  );
 
     CREAM_SAFE_LOG(    
@@ -259,30 +260,29 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
 	  // the list is not empty
 	  pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
 	  
-	  string errMex = "iceCommandCancel::execute() - Cancellation of the [";
-	  errMex += jobdesc + "] went wrong: [";
+	  string errMex = "Cancellation of the Job [";
+	  errMex += jobdesc + "] failed: [";
 	  errMex += errorJob.second + "]";
 	  
 	  CREAM_SAFE_LOG(    
-			 m_log_dev->errorStream()
+			 m_log_dev->errorStream() << "iceCommandCancel::execute - "
 			 << errMex
-			 
 			 );
 	  
-	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ), true );
+	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ), true, true );
 	  throw iceCommandFatal_ex( errMex );
 	}
     } catch(cream_api::auth_ex& ex) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ), true );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ), true, true );
       throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(cream_api::soap_ex& ex) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ), true );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ), true, true );
       throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
     } catch(cream_ex::BaseException& base) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ), true );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ), true, true );
       throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
     } catch(cream_ex::InternalException& intern) {
-      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ), true );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ), true, true );
       throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     } catch( ConnectionTimeoutException& ex) {
       throw iceCommandTransient_ex( boost::str( boost::format( "CREAM Cancel raised a ConnectionTimeoutException %1%") % ex.what() ) ) ;

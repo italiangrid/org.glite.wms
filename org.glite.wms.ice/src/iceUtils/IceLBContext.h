@@ -72,7 +72,7 @@ namespace glite {
 
                     inline void startLogging( void ) { this->m_el_count = 0; this->m_el_hostProxy = false; }
 
-                    void setLoggingJob( const CreamJob& theJob, edg_wll_Source src  ) throw( IceLBException& );
+                    void setLoggingJob( const CreamJob& theJob, edg_wll_Source src, const bool use_cancel_seq_code  ) throw( IceLBException& );
 
                     void testCode( int &code, bool retry = false );
                     std::string getLoggingError( const char *preamble );
