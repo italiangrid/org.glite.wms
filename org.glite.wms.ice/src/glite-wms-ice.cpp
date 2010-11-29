@@ -298,6 +298,7 @@ int main(int argc, char*argv[])
      */
     iceManager->startPoller( );  
     iceManager->startJobKiller( );
+    iceManager->startProxyRenewer( );
 
 
     /*****************************************************************************
