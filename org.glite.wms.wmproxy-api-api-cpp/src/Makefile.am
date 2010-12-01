@@ -25,11 +25,12 @@ wm.h :
 	-I$(GSOAP_LOCATION)/include \
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(top_srcdir)/interface/WMProxy.wsdl
+	sed 's| _NewProxyReq\s+getNewProxyReqReturn | _delegationns__NewProxyReq* delegationns__NewProxyReq|g' wm.h > wm_fixed.h && mv wm_fixed.h wm.h
 
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/bin/soapcpp2  -I$(GSOAP_LOCATION)/include:$(GSOAP_LOCATION)/import wm.h
+	$(GSOAP_LOCATION)/bin/soapcpp2  -I$(GSOAP_LOCATION)/include:$(GSOAP_LOCATION)/import:$(GSOAP_LOCATION)/share/gsoap/import wm.h
 
 soapClient.cpp : soapC.cpp
 
@@ -40,9 +41,7 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	soapC.cpp \
 	soapClient.cpp \
 	wmproxy_api.cpp \
-	wmproxy_api_utilities.cpp \
-	stdsoap2.cpp \
-	dom.cpp
+	wmproxy_api_utilities.cpp
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
