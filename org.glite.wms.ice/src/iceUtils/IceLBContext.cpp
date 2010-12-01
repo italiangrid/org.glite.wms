@@ -289,11 +289,7 @@ void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     char *lbserver;
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
-    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-		   << "Setting log job to jobid=[" << _gid << "] "
-		   << "LB server=[" << lbserver << ":" << lbport << "] "
-		   << "(port is not used, actually...)"
-		   );
+
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_SOURCE, src );        
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
     if ( lbserver ) free( lbserver );
@@ -307,7 +303,14 @@ void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
       seq_code = theJob.sequence_code( );
     }
     
-    if ( !theJob.cancel_sequence_code().empty() ) {
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
+		   << "Setting log job to jobid=[" << _gid << "] "
+		   << "LB server=[" << lbserver << ":" << lbport << "] SEQUENCE CODE ["
+		   << seq_code <<"]"
+		   << "(port is not used, actually...)"
+		   );
+		   
+    if ( !seq_code.empty() ) {
         if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
           string const user_dn( get_proxy_subject( result.get<0>()) );
 
