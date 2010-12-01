@@ -287,12 +287,13 @@ void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     res = edg_wlc_JobIdParse( _gid.c_str(), &id );    
 
     char *lbserver;
+    
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
 
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_SOURCE, src );        
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
-    if ( lbserver ) free( lbserver );
+    //if ( lbserver ) free( lbserver );
 
     boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.user_dn());
 
@@ -309,6 +310,8 @@ void IceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 		   << seq_code <<"]"
 		   << "(port is not used, actually...)"
 		   );
+		   
+    if ( lbserver ) free( lbserver );
 		   
     if ( !seq_code.empty() ) {
         if(IceConfManager::instance()->getConfiguration()->common()->lbproxy()) {
