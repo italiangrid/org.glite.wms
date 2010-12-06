@@ -739,11 +739,11 @@ OSB_transfer()
             if [ $? != 0 ]; then
               error="Could not truncate output sandbox file ${file}, not sending"
               log_user_event "$error"
-              push_in_done_reason $error
+              push_in_done_reason "$error"
             else
               error="Truncated last $trunc_len bytes for file ${file}"
               log_user_event "$error"
-              push_in_done_reason $error
+              push_in_done_reason "$error"
               retry_copy "file://$s.tail" "$d.tail"
             fi
           #fi
@@ -757,7 +757,7 @@ OSB_transfer()
     else
       error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
       log_user_event "$error"
-      push_in_done_reason $error
+      push_in_done_reason "$error"
     fi
     let "++current_file"
   done
@@ -922,7 +922,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
       jw_echo "Taken token ${__shallow_resubmission_token}"
     else
       local err_msg="Cannot take token ${__shallow_resubmission_token} for ${GLITE_WMS_JOBID}"
-      fatal_error $err_msg "0"
+      fatal_error "$err_msg" "0"
       jw_echo $err_msg
     fi
   fi
