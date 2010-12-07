@@ -619,6 +619,18 @@ try {
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
   jdl::set_x509_user_proxy(*result, userproxy);
 
+  bool feedback_nothrow;
+  bool wms_feedback(jdl::get_enable_wms_feedback(*m_ad, feedback_nothrow));
+  if (wms_feedback) {
+    // Will cause the job to pop out of the Condor queue to be then replanned
+    std::string periodic_remove_expr("JobStatus == 1 && Matched =!= TRUE && CurrentTime > QDate + ");
+    int const grace_period(
+      config.wm()->replan_grace_period()
+    );
+    periodic_remove_expr += boost::lexical_cast<std::string>(grace_period);
+    jdl::set_periodic_remove(*result, periodic_remove_expr.c_str());
+  }
+
   /* Mandatory */
   jdl::set_notification(*result, "never");
 
