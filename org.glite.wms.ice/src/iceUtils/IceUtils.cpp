@@ -176,7 +176,7 @@ glite::wms::ice::util::IceUtils::ignore_job( const string& CID,
   } catch(std::out_of_range& ex) {
     CREAM_SAFE_LOG(
 		   api_util::creamApiLogger::instance()->getLogger()->warnStream() 
-		   << "IceUtils::ignore_job - CATCHED out_of_range exception. Job will not be ignored caller..."
+		   << "IceUtils::ignore_job - CATCHED out_of_range exception. Job will not be ignored by caller..."
 		   );
     return false;
   }
