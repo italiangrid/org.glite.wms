@@ -19,7 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "RemoveJobByCid.h"
-#include "CreamJob.h"
+#include "iceUtils/CreamJob.h"
 
 using namespace glite::wms::ice;
 using namespace std;
