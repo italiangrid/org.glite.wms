@@ -23,6 +23,8 @@ END LICENSE */
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/Transaction.h"
 
+#include "iceUtils/DNProxyManager.h"
+
 using namespace glite::wms::ice;
 
 //
@@ -69,6 +71,9 @@ void iceCommandReschedule::execute( const std::string& tid )
     db::Transaction tnx( false, false );
     tnx.execute( &remover );
   }
+  if( m_theJob.proxy_renewable( ) )
+    DNProxyManager::getInstance()->decrementUserProxyCounter( m_theJob.user_dn(), m_theJob.myproxy_address() );
+  
   }
   iceCommandSubmit::execute( tid );
 
