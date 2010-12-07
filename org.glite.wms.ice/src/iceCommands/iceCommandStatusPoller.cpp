@@ -33,6 +33,7 @@ END LICENSE */
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/RemoveJobByGid.h"
+#include "iceDb/RemoveJobByCid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobByUserDN.h"
@@ -436,13 +437,15 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
           tmp_job.reset_change_flags( );
 	  
 	  if( !tmp_job.is_active( ) ) {
+	    boost::recursive_mutex::scoped_lock M_reschedule( glite::wms::ice::util::CreamJob::s_reschedule_mutex );
 	    CreamJob _tmp;
 	    string ignore_reason;
 	    if( util::IceUtils::ignore_job( tmp_job.complete_cream_jobid(), _tmp, ignore_reason ) ) {
 	      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
       		      << "IGNORING CreamJobID ["
-		      << tmp_job.complete_cream_jobid() << "] for reason: " << ignore_reason;
+		      << tmp_job.complete_cream_jobid() << "] for reason: " << ignore_reason
 		      );
+		      	       
 	      return;
 	    }
 	  

@@ -50,6 +50,7 @@ END LICENSE */
 #include "iceDb/Transaction.h"
 #include "iceDb/GetJobsByDbID.h"
 #include "iceDb/RemoveJobByGid.h"
+#include "iceDb/RemoveJobByCid.h"
 #include "iceDb/UpdateJob.h"
 #include "iceDb/RemoveJobsByDbID.h"
 #include "iceDb/RemoveJobByUserDN.h"
@@ -399,7 +400,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       long long last_event_id = this->processEvents( endpoint, events, make_pair( m_dn, m_ce ) );
       
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-		     << "Setting new Event ID=[" << last_event_id << "] for user dn ["
+		     << "Setting new Event ID=[" << (last_event_id+1) << "] for user dn ["
 		     << m_dn << "] ce url ["
 		     << m_ce << "]"
 		   );
@@ -556,8 +557,9 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& CID,
     if( glite::wms::ice::util::IceUtils::ignore_job( CID, tmp_job, ignore_reason ) ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name  << " TID=[" << getThreadID() << "] "
       		      << "IGNORING EVENTS for CreamJobID ["
-		      << CID << "] for reason: " << ignore_reason;
+		      << CID << "] for reason: " << ignore_reason
 		      );
+		            
       return;
     }
   
