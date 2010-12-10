@@ -71,8 +71,6 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
   };
   struct JWErrors    *errIt;
   
-  sc.assign("NoToken");
-
   if( is.good() ) {
     bool waiting_for_end_tag = false;
     do {
@@ -92,6 +90,15 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 
           if( strstr(buffer, "job exit status = ") == buffer ) {
             if( sscanf(buffer, "job exit status = %d", &retcode) == 1 ) {
+              errors.assign( buffer );
+              found = true;
+              stat = good;
+            }
+            else retcode = -1;
+          }
+
+          if( strstr(buffer, "jw exit status = ") == buffer ) {
+            if( sscanf(buffer, "jw exit status = %d", &retcode) == 1 ) {
               errors.assign( buffer );
               found = true;
               stat = good;
@@ -151,8 +158,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 	}
       }
     } while( !is.eof() );
-  }
-  else {
+  } else {
     errors.assign( "File not available." );
     retcode = -1;
     stat = resubmit;
