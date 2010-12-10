@@ -239,13 +239,11 @@ warning()
   fatal_error "Job termination $term_delay seconds after having being warned" "1" $2
 }
 
-fatal_error() # 1 - reason, 2 - toggle logging, 3 - transfer OSB
+fatal_error() # 1 - reason, 2 - transfer OSB
 {
   push_in_done_reason "$1"
-  if [ "$2" != "0" ]; then
-    log_done_failed 1
-  fi
-  if [ "x$3" == "xOSB" ]; then
+  log_done_failed 1
+  if [ "x$2" == "xOSB" ]; then
     OSB_transfer
   fi
   doExit 1
@@ -922,8 +920,8 @@ if [ -n "${__shallow_resubmission_token}" ]; then
       jw_echo "Taken token ${__shallow_resubmission_token}"
     else
       local err_msg="Cannot take token ${__shallow_resubmission_token} for ${GLITE_WMS_JOBID}"
-      fatal_error "$err_msg" "0"
       jw_echo $err_msg
+      fatal_error "$err_msg"
     fi
   fi
 fi
