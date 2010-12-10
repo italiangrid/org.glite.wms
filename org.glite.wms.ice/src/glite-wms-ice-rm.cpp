@@ -95,13 +95,13 @@ int main(int argc, char*argv[])
       {"from-file", 1, 0, 'f'},
       {0, 0, 0, 0}
     };
-    c = getopt_long(argc, argv, "c:al:", long_options, &option_index);
+    c = getopt_long(argc, argv, "c:al:f:", long_options, &option_index);
     if ( c == -1 )
       break;
     
     switch(c) {
     case 'c':
-      confile = optarg;//false;
+      confile = optarg;
       break;
     case 'a':
       cancel_all = true;
