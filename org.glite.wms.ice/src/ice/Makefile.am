@@ -24,6 +24,7 @@ libglite_wms_ice_la_SOURCES = IceCore.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GLITE_CFLAGS) \
+		$(VOMS_CFLAGS) \
 		$(GLITE_JOBID_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \

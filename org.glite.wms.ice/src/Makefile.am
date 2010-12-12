@@ -358,6 +358,7 @@ glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(GSOAP_LOCATION)/include \
 		$(GLITE_CFLAGS) \
+		$(VOMS_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
 		$(CLASSAD_CFLAGS) \

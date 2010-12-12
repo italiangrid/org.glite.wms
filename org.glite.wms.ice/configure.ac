@@ -67,10 +67,11 @@ have_gridsite=no
 have_xml2=no
 have_glite_wms_purger=no
 have_myproxy=no
+have_voms=no
 
 # This is a workaround to enable building ICE against either
 # WMS 3.2 and WMS 3.1
-if test -d $GLITE_LOCATION/include/glite/jobid; then
+if ! test -d $GLITE_LOCATION/include/wmsutils/jobid; then
    AC_MSG_RESULT(["Using glite/jobid"])
    GLITE_JOBID_LIBS="-L$GLITE_LOCATION/lib -lglite_jobid"
    GLITE_JOBID_CFLAGS="-DHAVE_GLITE_JOBID"
@@ -114,6 +115,9 @@ AC_SEC_GSOAP_PLUGIN
 
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
+
+AC_VOMS([], have_voms=yes, have_voms=no)
+AC_MSG_RESULT(["VOMS found $have_voms"])
 
 have_renewalcore=no
 have_myproxy=no
