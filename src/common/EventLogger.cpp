@@ -488,7 +488,7 @@ void EventLogger::execute_event( const char *host )
   return;
 }
 
-void EventLogger::terminated_event(int retcode, std::string const& reason)
+void EventLogger::terminated_event(int retcode)
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::terminated_event(...)" );
 
@@ -499,9 +499,6 @@ void EventLogger::terminated_event(int retcode, std::string const& reason)
     reason_to_log = "Warning: job exit code != 0";
   } else {
     reason_to_log = "Job terminated successfully";
-  }
-  if (!reason.empty()) {
-    reason_to_log += '\n' + reason;
   }
 
   if( this->el_context ) {

@@ -74,7 +74,7 @@ public:
   void globus_submit_event( const std::string &ce, const std::string &rsl, const std::string &logfile );
   void grid_submit_event( const std::string &ce, const std::string &logfile );
   void execute_event( const char *host );
-  void terminated_event( int retcode, std::string const& reason);
+  void terminated_event( int retcode);
   void failed_on_error_event( const std::string &cause );
   void abort_on_error_event( const std::string &cause );
   void aborted_by_system_event( const std::string &cause );

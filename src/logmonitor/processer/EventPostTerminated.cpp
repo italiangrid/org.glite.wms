@@ -111,7 +111,7 @@ void EventPostTerminated::process_event( void )
 	if ( !sc.empty() && ( sc != "NoToken" ) )
           this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 	
-	this->ei_data->md_logger->terminated_event(retcode, done_reason); // This call will also check if the retcode is == 0
+	this->ei_data->md_logger->terminated_event(retcode); // This call will also check if the retcode is == 0
       }
       else { // Node got an error in the JobWrapper
 	elog::cedglog << logger::setlevel( logger::info )

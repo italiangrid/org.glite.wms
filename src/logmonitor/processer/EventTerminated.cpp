@@ -100,7 +100,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 
-    this->ei_data->md_logger->terminated_event(retcode, done_reason); // This call discriminates between 0 and all other codes.
+    this->ei_data->md_logger->terminated_event(retcode); // This call discriminates between 0 and all other codes.
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 
@@ -184,7 +184,7 @@ void EventTerminated::process_event( void )
 	this->ei_data->md_logger->abort_on_error_event( ei_s_dagfailed );
       }
       else
-	this->ei_data->md_logger->terminated_event( this->et_event->returnValue, "");
+	this->ei_data->md_logger->terminated_event( this->et_event->returnValue);
 
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 

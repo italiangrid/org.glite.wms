@@ -59,17 +59,24 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
   bool                found = false;
   char                buffer[BUFSIZ];
   struct JWErrors     jwErrors[] = { { "Working directory not writable", resubmit },
-				     { "GLOBUS_LOCATION undefined",      resubmit },
-				     { "/etc/globus-user-env.sh",        resubmit },
-				     { "not found or unreadable",        abort },
-				     { "Cannot download",                resubmit },
-				     { "Cannot upload",                  resubmit },
-				     { "Cannot take token!",             resubmit },
-				     { "prologue failed with error",     resubmit },    
-				     { "epilogue failed with error",     resubmit },    
-                                     { NULL, unknown },
-  };
+				     { "GLOBUS_LOCATION undefined", resubmit },
+				     { "/etc/globus-user-env.sh", resubmit },
+				     { "not found or unreadable", abort }, // job executable
+				     { "Cannot download", resubmit },
+				     { "Cannot upload", resubmit },
+				     { "Cannot take shallow resubmission token", resubmit },
+				     { "prologue failed", abort},    
+				     { "epilogue failed", abort},    
+                                     { "Cannot create directory", resubmit  }, // .mpi or 'jobid' directory
+                                     { "Job killed", abort }, // proxy expired
+                                     { "Job has been terminated", resubmit }, // signalled by the BS
+                                     { "No *ftp", resubmit },
+                                     { "Cannot find edg-rm", resubmit },
+                                     { NULL, unknown }, };
   struct JWErrors    *errIt;
+  sc = "NoToken"; // unsure if really needed, so better keep it
+  done_reason = "";
+  bool first_error_found = false;
   
   if( is.good() ) {
     bool waiting_for_end_tag = false;
@@ -78,13 +85,14 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 
       if( !is.eof() ) {
 	if( is.good() ) {
-	  for( errIt = jwErrors; errIt->jwe_error != NULL; ++errIt ) {
-	    if( strstr(buffer, errIt->jwe_error) != NULL ) {
-	      errors.assign( buffer );
-	      stat = errIt->jwe_status;
-	      found = true;
-
-	      break;
+          if (!first_error_found) {
+	    for( errIt = jwErrors; errIt->jwe_error != NULL; ++errIt ) {
+	      if( strstr(buffer, errIt->jwe_error) != NULL ) {
+	        errors.assign( buffer );
+	        stat = errIt->jwe_status;
+	        found = true;
+                first_error_found = true; // keep parsing done_reason
+              }
 	    }
           }
 
@@ -92,16 +100,16 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
             if( sscanf(buffer, "job exit status = %d", &retcode) == 1 ) {
               errors.assign( buffer );
               found = true;
-              stat = good;
+              if (!first_error_found) {
+                stat = good;
+              }
             }
             else retcode = -1;
           }
 
           if( strstr(buffer, "jw exit status = ") == buffer ) {
             if( sscanf(buffer, "jw exit status = %d", &retcode) == 1 ) {
-              errors.assign( buffer );
               found = true;
-              stat = good;
             }
             else retcode = -1;
           }
@@ -114,43 +122,28 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
             } else {
               sc.assign("");
             }
-          }	
+          }
 
           static const std::string LM_log_done_begin("LM_log_done_begin");
-          std::string const jw_stdout_err(buffer);
-          size_t const reason_begin_tag = jw_stdout_err.find(LM_log_done_begin, reason_begin_tag);
           static const std::string LM_log_done_end("LM_log_done_end");
-          if (reason_begin_tag != std::string::npos) {
-            size_t const reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
-            int const reason_begin_tag_len = LM_log_done_begin.size();
-            if (reason_end_tag != std::string::npos) {
-              done_reason = jw_stdout_err.substr(
-                reason_begin_tag + reason_begin_tag_len,
-                reason_end_tag - reason_begin_tag - reason_begin_tag_len
-              );
-            } else {
-              waiting_for_end_tag = true;
-              done_reason = jw_stdout_err.substr(
-                reason_begin_tag + reason_begin_tag_len,
-                jw_stdout_err.size()
-              );
-            }
-          }
+          std::string const jw_stdout_err(buffer);
           if (waiting_for_end_tag) {
             size_t const reason_end_tag = jw_stdout_err.find(LM_log_done_end, 0);
             if (reason_end_tag != std::string::npos) {
               waiting_for_end_tag = false;
-              done_reason += jw_stdout_err.substr(
-                0,
-                jw_stdout_err.size() - LM_log_done_end.size() -1
-              );
             } else {
-              done_reason += jw_stdout_err;
+              done_reason += jw_stdout_err + '\n';
+            }
+          } else {
+            size_t const reason_begin_tag = jw_stdout_err.find(LM_log_done_begin, 0);
+            if (reason_begin_tag != std::string::npos) {
+              waiting_for_end_tag = true;
             }
           }
         } else {
 	  errors.assign( "IO error while reading file: " );
 	  errors.append( strerror(errno) );
+          found = true;
 	  retcode = -1;
 	  stat = resubmit;
 
