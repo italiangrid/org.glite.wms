@@ -17,10 +17,10 @@
 
 #!/bin/sh
 
-trap 'fatal_error "Job has been terminated (got SIGXCPU)" "1" "OSB"' XCPU
-trap 'fatal_error "Job has been terminated (got SIGQUIT)" "1" "OSB"' QUIT
-trap 'fatal_error "Job has been terminated (got SIGINT)" "1" "OSB"' INT
-trap 'fatal_error "Job has been terminated (got SIGTERM)" "1" "OSB"' TERM
+trap 'fatal_error "Job has been terminated (got SIGXCPU)" "1" "OSB"' XCPU # parsed 'as is' by LM to cause a resubmit
+trap 'fatal_error "Job has been terminated (got SIGQUIT)" "1" "OSB"' QUIT # parsed 'as is' by LM to cause a resubmit
+trap 'fatal_error "Job has been terminated (got SIGINT)" "1" "OSB"' INT # parsed 'as is' by LM to cause a resubmit
+trap 'fatal_error "Job has been terminated (got SIGTERM)" "1" "OSB"' TERM # parsed 'as is' by LM to cause a resubmit
 #trap 'warning "Job has been signalled (got SIGUSR1)" "OSB"' SIGUSR1
 
 # the bash builtin kill command is sometimes buggy with process groups
@@ -111,7 +111,7 @@ jw_host="`hostname -f`"
 jw_newdir="${__jobid_to_filename}"
 jw_maradona="${jw_newdir}.output"
 jw_workdir="`pwd`"
-done_reason=
+LM_done_failed_reason=
 
 ##
 # functions definitions
@@ -151,7 +151,7 @@ proxy_checker()
     sleep $time_left
   done
 
-  fatal_error "Job killed by the jobwrapper because of user proxy expiration"
+  fatal_error "Job killed by the jobwrapper because of user proxy expiration" # parsed 'as is' by LM to cause an abort
 }
 
 jw_echo() # 1 - msg
@@ -191,29 +191,27 @@ log_done_ok() # 1 - exit code
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
-    --reason="$done_reason"\
     --status_code=OK\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-log_done_failed() # 1 - exit code
+log_done_failed() # 1 - exit code, 2 - reason
 {
   export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
-    --reason="$done_reason"\
+    --reason="$2"\
     --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
-  jw_echo "LM_log_done_begin${done_reason}LM_log_done_end"
 }
 
-push_in_done_reason() #  1 - reason
+push_in_LM_done_reason() #  1 - reason
 {
-  done_reason="$done_reason`date`: $1"$'\n'
+  LM_done_failed_reason="$LM_done_failed_reason`date`: $1"$'\n'
 }
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
@@ -232,16 +230,21 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 warning()
 {
   local term_delay=10
-  push_in_done_reason "job received SIGUSR1 as warning, terminating in $term_delay seconds"
+  push_in_LM_done_reason "job received SIGUSR1 as warning, terminating in $term_delay seconds"
   kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
   sleep $term_delay
-  fatal_error "Job termination $term_delay seconds after having being warned" "1" $2
+  fatal_error "Job has been terminated $term_delay seconds after having being warned" "1" $2 # parsed 'as is' by LM to cause a resubmit
 }
 
 fatal_error() # 1 - reason, 2 - transfer OSB
 {
-  push_in_done_reason "$1"
-  log_done_failed 1
+  if [ "x${LM_done_failed_reason}" != "x" ]; then
+    jw_echo "LM_log_done_begin" # parsed 'as is' by LM
+    jw_echo "${LM_done_failed_reason}"
+    jw_echo "LM_log_done_end" # parsed 'as is' by LM
+  fi
+  jw_echo "$1"
+  log_done_failed 1 "$1"
   if [ "x$2" == "xOSB" ]; then
     OSB_transfer
   fi
@@ -258,7 +261,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
 {
   local tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
   if [ ! -f "$tmp_sort_file" ]; then
-    jw_echo "Cannot generate temporary file"
+    push_in_LM_done_reason "Cannot generate temporary file"
     return $?
   fi
   eval tmpvar="$1[@]"
@@ -338,7 +341,7 @@ retry_copy() # 1 - source, 2 - dest
     __copy_retry_count=${__copy_retry_count_isb}
     __copy_retry_first_wait=${__copy_retry_first_wait_isb}
   else 
-    push_in_done_reason "Expected 'file://' or no scheme in either source or destination"
+    push_in_LM_done_reason "Expected 'file://' or no scheme in either source or destination"
     return 1
   fi    
 
@@ -351,7 +354,7 @@ retry_copy() # 1 - source, 2 - dest
   done 
   # ischeme points to the transport specified in the remote resource (either source or dest)
   if [ ${ischeme} -eq ${#transport[@]} ]; then
-    push_in_done_reason "Specified transport protocol is not available"
+    push_in_LM_done_reason "Specified transport protocol is not available"
     return 1
   fi 
 
@@ -403,16 +406,16 @@ retry_copy() # 1 - source, 2 - dest
       if [ $transfer_timeout -le 0 ]; then
         echo "Killing transfer watchdog (pid=$transfer_watchdog)..."
         kill_with_children $transfer_watchdog
-        push_in_done_reason "Hanging transfer"
+        push_in_LM_done_reason "Hanging transfer"
         succeded=1
       else
         succeded=`cat $transfer_exitcode 2>/dev/null`
         if [ -z $succeded ]; then
-          push_in_done_reason "Cannot retrieve return value for transfer"
+          push_in_LM_done_reason "Cannot retrieve return value for transfer"
           return 1 # will cause a fatal_error
         else
           if [ "$succeded" -ne "0" ]; then
-            push_in_done_reason "Error during transfer"
+            push_in_LM_done_reason "Error during transfer"
           fi
         fi
       fi
@@ -428,18 +431,18 @@ doExit() # 1 - status
 {
   local jw_status=$1
 
-  jw_echo "jw exit status = ${jw_status}"
+  jw_echo "jw exit status = ${jw_status}" # parsed 'as is' by LM
 
   if [ -n "${jw_maradona}" ]; then
     if [ -r "${jw_maradona}" ]; then
       retry_copy "file://${jw_workdir}/${jw_maradona}" "${__maradona_url}"
       globus_copy_status=$?
     else
-      push_in_done_reason "jw_maradona not readable, so not sent"
+      push_in_LM_done_reason "jw_maradona not readable, so not sent"
       globus_copy_status=0
     fi
   else
-    push_in_done_reason "jw_maradona was found unset or empty"
+    push_in_LM_done_reason "jw_maradona was found unset"
     globus_copy_status=0
   fi
 
@@ -449,7 +452,7 @@ doExit() # 1 - status
 
   if [ -n "$proxy_watchdog" ]
   then
-    echo "doExit(): Killing proxy watchdog (pid=$proxy_watchdog)..."
+    push_in_LM_done_reason "Killing proxy watchdog (pid=$proxy_watchdog)..."
     kill_with_children $proxy_watchdog 
   fi
   kill -9 -$user_job_pid 2>/dev/null
@@ -686,6 +689,9 @@ OSB_transfer()
   # uncomment this one below if the order in the osb originally 
   # specified is not of some relevance to the user
   #sort_by_size __output_file ${jw_workdir}
+  # if [ $? != 0 ]; then
+  # handle error
+  # fi
 
   local file_size_acc=0
   local current_file=0
@@ -720,7 +726,7 @@ OSB_transfer()
         else
           error="OSB quota exceeded for $s, truncating needed"
           log_user_event "$error"
-          push_in_done_reason "$error"
+          push_in_LM_done_reason "$error"
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
@@ -729,18 +735,15 @@ OSB_transfer()
             trunc_len=0
           fi
           file_size_acc=`expr $file_size_acc + $trunc_len`
-          #if [ $trunc_len -lt 10 ]; then # non trivial truncation
-            #jw_echo "Not enough room for a significant truncation on file ${file}, not sending"
-          #else
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
               error="Could not truncate output sandbox file ${file}, not sending"
               log_user_event "$error"
-              push_in_done_reason "$error"
+              push_in_LM_done_reason "$error"
             else
               error="Truncated last $trunc_len bytes for file ${file}"
               log_user_event "$error"
-              push_in_done_reason "$error"
+              push_in_LM_done_reason "$error"
               retry_copy "file://$s.tail" "$d.tail"
             fi
           #fi
@@ -749,12 +752,12 @@ OSB_transfer()
         retry_copy "file://$s" "$d"
       fi
       if [ $? != 0 ]; then
-        fatal_error "Cannot upload file://$s into $d"
+        fatal_error "Cannot upload file://$s into $d" # parsed 'as is' by LM to cause a resubmit
       fi
     else
       error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
       log_user_event "$error"
-      push_in_done_reason "$error"
+      push_in_LM_done_reason "$error"
     fi
     let "++current_file"
   done
@@ -777,13 +780,13 @@ if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
   # MPI (LSF or PBS)
   mkdir -p .mpi/${jw_newdir}
   if [ $? != 0 ]; then
-    fatal_error "Cannot create .mpi/${jw_newdir} directory"
+    fatal_error "Cannot create directory .mpi/${jw_newdir}" # parsed 'as is' by LM to cause a resubmit
   fi
   cd .mpi/${jw_newdir}
 else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
   mkdir ${jw_newdir}
   if [ $? != 0 ]; then
-    fatal_error "Cannot create ${jw_newdir} directory"
+    fatal_error "Cannot create directory ${jw_newdir}" # parsed 'as is' by LM to cause a resubmit
   fi
   cd ${jw_newdir}
 fi
@@ -805,10 +808,10 @@ if [ -n "${__ce_application_dir}" ]; then
     elif [ -r "${__ce_application_dir}/${__vo}/${vo_hook}" ]; then
       . "${__ce_application_dir}/${__vo}/${vo_hook}"
     else
-      jw_echo "${vo_hook} not readable or not present"
+      push_in_LM_done_reason "${vo_hook} not readable or not present"
     fi
   else
-    jw_echo "${__ce_application_dir} not found or not a directory"
+    push_in_LM_done_reason "${__ce_application_dir} not found or not a directory"
   fi
 fi
 unset vo_hook
@@ -822,7 +825,7 @@ fi
 # the test -w on work dir is unsuitable on AFS machines
 tmpfile=`mktemp -q tmp.XXXXXXXXXX`
 if [ ! -f "$tmpfile" ]; then
-  fatal_error "Working directory not writable"
+  fatal_error "Working directory not writable" # parsed 'as is' by LM to cause a resubmit
 else
   rm "$tmpfile"
 fi
@@ -831,11 +834,11 @@ unset tmpfile
 touch "${jw_maradona}"
 
 if [ -z "${GLOBUS_LOCATION}" ]; then
-  fatal_error "GLOBUS_LOCATION undefined"
+  fatal_error "GLOBUS_LOCATION undefined" # parsed 'as is' by LM to cause a resubmit
 elif [ -r "${GLOBUS_LOCATION}/etc/globus-user-env.sh" ]; then
   . "${GLOBUS_LOCATION}/etc/globus-user-env.sh"
 else
-  fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
+  fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh unreadable or not found" # parsed 'as is' by LM to cause a resubmit
 fi
 
 umask 022
@@ -850,14 +853,14 @@ do
   fi
   retry_copy "${f}" "file://${jw_workdir}/${file}"
   if [ $? != 0 ]; then
-    fatal_error "Cannot download ${file} from ${f}"
+    fatal_error "Cannot download ${file} from ${f}" # parsed 'as is' by LM to cause a resubmit
   fi
 done
 
 if [ -r "${__job}" ]; then
   chmod +x "${__job}" 2>/dev/null
 else
-  fatal_error "${__job} not found or unreadable"
+  fatal_error "${__job} not found or unreadable" # parsed 'as is' by LM to cause an abort
 fi
 
 # user script (before taking the token, shallow-sensitive)
@@ -874,10 +877,10 @@ if [ -n "${__prologue}" ]; then
     )
     prologue_status=$?
     if [ ${prologue_status} -ne 0 ]; then
-      fatal_error "prologue failed with error ${prologue_status}"
+      fatal_error "prologue failed with error ${prologue_status}" # parsed 'as is' by LM to cause an abort
     fi
   else
-    fatal_error "prologue ${__prologue} not found"
+    fatal_error "prologue failed: ${__prologue} not found" # parsed 'as is' by LM to cause an abort
   fi
 fi
 
@@ -900,7 +903,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
   done
 
   if [ ! -x "${gridftp_rm_command}" ]; then
-    fatal_error "No *ftp for rm command found"
+    fatal_error "No *ftp for rm command found" # parsed 'as is' by LM to cause a resubmit
   else
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
@@ -916,16 +919,14 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     result=$?
     if [ $result -eq 0 ]; then
       log_event "Running"
-      jw_echo "Taken token ${__shallow_resubmission_token}"
+      push_in_LM_done_reason"Taken token ${__shallow_resubmission_token}"
     else
-      local err_msg="Cannot take token ${__shallow_resubmission_token} for ${GLITE_WMS_JOBID}"
-      jw_echo $err_msg
-      fatal_error "$err_msg"
+      fatal_error "Cannot take shallow resubmission token ${__shallow_resubmission_token}" # parsed 'as is' by LM to cause a resubmit
     fi
   fi
 fi
 
-jw_echo "Sequence code: ${GLITE_WMS_SEQUENCE_CODE}"
+jw_echo "Sequence code: ${GLITE_WMS_SEQUENCE_CODE}" # parsed 'as is' by LM
 
 if [ ${__job_type} -eq 1 ]; then # MPI LSF
   hostfile="host$$"
@@ -950,11 +951,11 @@ if [ 1 -eq 1 ]; then # dump variable to be set?
     time_cmd="$time_cmd -p"
     tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
     if [ $? -ne 0 ]; then
-      jw_echo "Cannot generate temporary file"
+      push_in_LM_done_reason "Cannot generate temporary file"
       unset tmp_time_file 
     fi
   else
-    jw_echo "Cannot find 'time' command"
+    push_in_LM_done_reason "Cannot find 'time' command"
   fi
 fi
 
@@ -1021,8 +1022,8 @@ log_event "ReallyRunning"
   kill_with_children $proxy_watchdog
   exit $user_job_status
 )
-status=$?
-jw_echo "job exit status = ${status}"
+user_job_status=$?
+jw_echo "job exit status = ${user_job_status}" # parsed 'as is' by LM
 
 # reports the time usage
 if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
@@ -1046,7 +1047,7 @@ fi
 
 if [ ${__output_data} -eq 1 ]; then
   return_value=0
-  if [ $status -eq 0 ]; then
+  if [ $user_job_status -eq 0 ]; then
     local=`doDSUploadTmp`
     status=$?
     return_value=$status
@@ -1064,7 +1065,7 @@ if [ ${__output_data} -eq 1 ]; then
       fi
     done
     if [ ! -x "${edg_rm_command}" ]; then
-      fatal_error "Cannot find edg-rm command"
+      fatal_error "Cannot find edg-rm command" # parsed 'as is' by LM to cause a resubmit
     else
       for outputfile in ${__output_file[@]}
       do
@@ -1105,34 +1106,34 @@ if [ -n "${__epilogue}" ]; then
     )
     epilogue_status=$?
     if [ ${epilogue_status} -ne 0 ]; then
-      fatal_error "epilogue failed with error ${epilogue_status}"
+      fatal_error "epilogue failed with error ${epilogue_status}" # parsed 'as is' by LM to cause an abort
     fi
   else
-    fatal_error "epilogue ${__epilogue} not found"
+    fatal_error "epilogue failed: ${__epilogue} not found" # parsed 'as is' by LM to cause an abort
   fi
 fi
 
 OSB_transfer
 
-log_done_ok "${status}"
+log_done_ok "${user_job_status}"
 
 # DGAS specific stuff: do it only if DGAS client is installed (thanks to Michel Jouvin)
 if [ -x ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ]; then
   if [ -n "${LSB_JOBID}" ]; then
     cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
     if [ $? != 0 ]; then
-      jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    push_in_LM_done_reason "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
     fi
   fi
 
   if [ -n "${PBS_JOBID}" ]; then
     cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
     if [ $? != 0 ]; then
-      jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+      push_in_LM_done_reason "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
     fi
   fi
 else
-  jw_echo "${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient not installed: ignoring gianduia transfer."
+  push_in_LM_done_reason "${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient not installed: ignoring gianduia transfer"
 fi
 
 doExit 0
