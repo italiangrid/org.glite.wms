@@ -73,6 +73,7 @@ have_fcgi=no
 have_gridsite=no
 have_libtar=no
 have_zlib=no
+have_voms=no
  
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_MSG_RESULT(["BOOST found $have_boost"])
@@ -165,6 +166,11 @@ fi
 if test "$have_zlib" = "no"; then 
   AC_MSG_ERROR([Cannot continue building]) 
 fi 
+
+AC_VOMS([], have_voms=yes, have_voms=no)
+if test "$have_voms" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
 
 
 have_glite_wms_common=no
