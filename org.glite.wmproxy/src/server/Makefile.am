@@ -51,7 +51,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	wmpdelegation.cpp \
 	wmp2wm.cpp \
 	wmpstructconverter.cpp \
-	wmpsignalhandler.cpp
+	wmpsignalhandler.cpp stdsoap2.cpp
 
 
 bin_PROGRAMS = glite_wms_wmproxy_server
@@ -100,7 +100,6 @@ glite_wms_wmproxy_server_LDADD = \
 	$(FCGI_CPP_LIBS) -lfcgi \
 	$(XSLT_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
-	$(GSOAP_LIBS) \
 	-lglite_lbu_trio
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
