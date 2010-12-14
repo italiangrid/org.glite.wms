@@ -51,7 +51,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	wmpdelegation.cpp \
 	wmp2wm.cpp \
 	wmpstructconverter.cpp \
-	wmpsignalhandler.cpp stdsoap2.cpp
+	wmpsignalhandler.cpp
 
 
 bin_PROGRAMS = glite_wms_wmproxy_server
@@ -108,6 +108,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(GSOAP_CFLAGS) \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	$(GLITE_CFLAGS) \
+	$(VOMS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GRIDSITE_GLOBUS_CFLAGS) \
@@ -119,5 +120,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-DWANT_NAMESPACES \
 	-DWITH_FASTCGI \
 	-DWITH_IPV6
+
+AM_LDFLAGS = $(GSOAP_LIBS)
 
 MAINTAINERCLEANFILES = Makefile.in
