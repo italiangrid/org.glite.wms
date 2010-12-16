@@ -870,6 +870,14 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     
     // (delegationProxy, leaseID) last asrgument is irrelevant
     // now, because we register jobs one by one
+
+    /**
+	Autostart is FALSE, why ?
+	If the JobRegister with autostart=true timed out, we cannot know if the job has been registered or not.
+	If only JobRegister is performed and it fails the CREAM JobID is not returned and we know the job must be registered again.
+        If only JobRegister is performed and it times out, if we perform it again in any case a CREAM JobID is returned (that one of the previous registration or that one of the latter).
+    */
+
     cream_api::JobDescriptionWrapper jd(modified_jdl, 
 					delegation,
 					"" /* delegPRoxy */, 
