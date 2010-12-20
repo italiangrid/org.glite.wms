@@ -16,6 +16,12 @@ trusted-certs/trusted_host_exp
 trusted-certs/trusted_host_rev
 trusted-certs/trusted_host_baddn
 trusted-certs/trusted_host_email
+trusted-certs/trusted_altname
+trusted-certs/trusted_altname_2
+trusted-certs/trusted_altname2
+trusted-certs/trusted_altname2_2
+trusted-certs/trusted_altname3
+trusted-certs/trusted_altname3_2
 subsubca-certs/subsubca_client
 subsubca-certs/subsubca_clientbaddn
 slash-certs/slash_clientbaddn
