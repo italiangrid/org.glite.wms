@@ -55,12 +55,11 @@ axis.location		      =${axis.location}
         </fileset>
         <fileset dir="${glite.location}/share/java">
             <include name="glite-security-trustmanager.jar"/>
-        </fileset>
-        <fileset dir="${glite.location}/share/java">
             <include name="glite-security-delegation-java.jar"/>
-        </fileset>
-	<fileset dir="${glite.location}/share/java">
             <include name="glite-security-util-java.jar"/>
+            <include name="trustmanager.jar"/>
+            <include name="trustmanager-axis.jar"/>
+            <include name="delegation-java.jar"/>
         </fileset>
     </path>
 
