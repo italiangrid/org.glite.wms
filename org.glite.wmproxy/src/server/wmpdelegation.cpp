@@ -118,12 +118,13 @@ WMPDelegation::getProxyRequest(const string &original_delegation_id)
 
 	char * user_dn = wmputilities::getUserDN();
 	char * request = NULL;
-	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
-			(char*) delegation_id.c_str(), user_dn) != 0) {
+	if (int ret = GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
+			(char*) delegation_id.c_str(), user_dn)) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to complete Proxy request");
+			"Unable to complete Proxy request"
+			", GRSTx509MakeProxyRequest returned " + boost::lexical_cast<std::string>(ret));
 	}
 	
 	string proxy_req = "";
