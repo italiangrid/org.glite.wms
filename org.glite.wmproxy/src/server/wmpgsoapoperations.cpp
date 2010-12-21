@@ -1131,10 +1131,10 @@ delegationns__getNewProxyReq(struct soap *soap,
 	int return_value = SOAP_OK;
 	pair<string, string> retpair;
 	try {
-		response.delegationns__NewProxyReq = new _delegationns__NewProxyReq;
+		response.getNewProxyReqReturn = new delegationns__NewProxyReq;
 		getNewProxyReq(retpair);
-		response.delegationns__NewProxyReq->proxyRequest = new string(retpair.second);
-		response.delegationns__NewProxyReq->delegationID = new string(retpair.first);
+		response.getNewProxyReqReturn->proxyRequest = new string(retpair.second);
+		response.getNewProxyReqReturn->delegationID = new string(retpair.first);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, SOAP_TYPE__delegationns__DelegationException,
 	 		"getNewProxyReq", time(NULL), exc.getCode(), (string) exc.what(),
