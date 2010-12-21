@@ -25,7 +25,6 @@ wm.h :
 	-I$(GSOAP_LOCATION)/include \
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(top_srcdir)/interface/WMProxy.wsdl
-	sed 's| _NewProxyReq | _delegationns__NewProxyReq* |g;s|getNewProxyReqReturn|delegationns__NewProxyReq|g' wm.h > wm_fixed.h && mv wm_fixed.h wm.h
 
 soapC.cpp : wm.h
 	@#Create the files
