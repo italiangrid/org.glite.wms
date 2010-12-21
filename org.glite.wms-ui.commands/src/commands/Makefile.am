@@ -56,7 +56,7 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-	$(GSOAP_LIBS)
+	$(GSOAPXX_LIBS)
 
 glite_wms_job_info_SOURCES = \
 	wmp-job-info.cpp
@@ -84,7 +84,7 @@ glite_wms_job_info_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 glite_wms_job_list_match_SOURCES = \
 	wmp-job-list-match.cpp
@@ -108,7 +108,7 @@ glite_wms_job_list_match_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 glite_wms_job_submit_SOURCES = \
 	wmp-job-submit.cpp
@@ -139,7 +139,7 @@ glite_wms_job_submit_LDADD = \
 	$(LIBTAR_LIBS) \
 	$(WSSE_LIBS) \
 	$(ZLIB_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 
 
@@ -169,7 +169,7 @@ glite_wms_job_cancel_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 glite_wms_job_output_SOURCES = \
 	wmp-job-output.cpp
@@ -198,7 +198,7 @@ glite_wms_job_output_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 glite_wms_job_perusal_SOURCES = \
 	wmp-job-perusal.cpp
@@ -227,7 +227,7 @@ glite_wms_job_perusal_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
-        $(GSOAP_LIBS)
+        $(GSOAPXX_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
