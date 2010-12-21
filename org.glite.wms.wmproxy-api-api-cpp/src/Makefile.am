@@ -40,7 +40,7 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	soapC.cpp \
 	soapClient.cpp \
 	wmproxy_api.cpp \
-	wmproxy_api_utilities.cpp
+	wmproxy_api_utilities.cpp dom.cpp
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \

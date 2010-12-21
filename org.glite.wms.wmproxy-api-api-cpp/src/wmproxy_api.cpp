@@ -1255,16 +1255,16 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	struct delegationns__getNewProxyReqResponse response;
 	grstSoapAuthentication(grst, cfs);
 	if (grst.delegationns__getNewProxyReq(response) == SOAP_OK) {
-		if (response.delegationns__NewProxyReq){
+		if (response.getNewProxyReqReturn){
 			// Proxy
-			if (response.delegationns__NewProxyReq->proxyRequest) {
-				request.proxy = *(response.delegationns__NewProxyReq->proxyRequest);
+			if (response.getNewProxyReqReturn->proxyRequest) {
+				request.proxy = *(response.getNewProxyReqReturn->proxyRequest);
  			} else {
 				request.proxy =  "";
 			}
 			// Delegation-Id
-			if (response.delegationns__NewProxyReq->delegationID) {
-				request.delegationId = *(response.delegationns__NewProxyReq->delegationID);
+			if (response.getNewProxyReqReturn->delegationID) {
+				request.delegationId = *(response.getNewProxyReqReturn->delegationID);
 			} else {
 				request.delegationId =  "";
 			}
