@@ -35,10 +35,6 @@ if [ -r "${OSG_GRID}/setup.sh" ]; then
   source "${OSG_GRID}/setup.sh" &>/dev/null
 fi
 
-if [ -n "${__gatekeeper_hostname}" ]; then
-  export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
-fi
-
 if [ -n "${__jobid}" ]; then
   export GLITE_WMS_JOBID="${__jobid}"
 fi
@@ -58,6 +54,8 @@ lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
 if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
+
+#lb_register_sandbox=
 
 if [ "X${__input_base_url##*/}" != "X" ]; then
   __input_base_url="${__input_base_url}/"
@@ -160,53 +158,107 @@ jw_echo() # 1 - msg
   echo "$1" >> "${jw_maradona}"
 }
 
-log_event() # 1 - event
+do_log_event() # 1 - event, 2 - tmplogfile
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
+  export TMP_SEQUENCE_CODE='`$lb_logevent $1 2>/dev/null`'
+  echo $? >$2
+}
+
+log_event() # 1 - event, 2 - sequence code variable
+{
+  if [ -n "${__gatekeeper_hostname}" ]; then
+    export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
+  fi
+  export tmp_log_file=`mktemp -q tmp.XXXXXXXXXX`
+  do_log_event "$1" "$tmp_log_file" &
+  log_watchdog=$!
+  log_timeout=60
+  while [ $log_timeout -gt 0 ];
+  do
+    if [ -z `ps -p $log_watchdog -o pid=` ]; then
+      break;
+    fi
+    sleep 1
+    let "log_timeout--"
+  done
+  if [ $log_timeout -le 0 ]; then
+    jw_echo "Killing log watchdog (pid=$log_watchdog)..."
+    kill_with_children $log_watchdog
+    push_in_LM_done_reason "Hanging log"
+  fi    
+  log_result=`cat $tmp_log_file 2>/dev/null`
+  if [ "$log_result" == "0" ]; then
+    eval "export $2=\"$TMP_SEQUENCE_CODE\""
+  else
+    # Try with the locallogger on the LB responsible for the job
+    local match_index=`expr match "$GLITE_WMS_JOBID" '[[:alpha:]][[:alnum:]+.-]*://'`
+    local scheme=${GLITE_WMS_JOBID:0:${match_index}}
+    local remaining=${GLITE_WMS_JOBID:${#scheme}:${#GLITE_WMS_JOBID}-${#scheme}}
+    local lb_hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
+    export GLITE_WMS_LOG_DESTINATION="lb_hostname"
+    do_log_event "$1" "$tmp_log_file" &
+    log_watchdog=$!
+    log_timeout=60
+    while [ $log_timeout -gt 0 ];
+    do
+      if [ -z `ps -p $log_watchdog -o pid=` ]; then
+        break;
+      fi
+      sleep 1
+      let "log_timeout--"
+    done
+    if [ $log_timeout -le 0 ]; then
+      jw_echo "Killing log watchdog (pid=$log_watchdog)..."
+      kill_with_children $log_watchdog
+      push_in_LM_done_reason "Hanging log"
+    fi
+    log_result=`cat $tmp_log_file 2>/dev/null`
+    if [ "$log_result" == "0" ]; then
+      eval "export $2=\"$TMP_SEQUENCE_CODE\""
+    fi  
+  fi
+}
+
+log_bare_event() # 1 - event
+{
+  log_event "--jobid=\"$GLITE_WMS_JOBID\"\
     --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="$1"\
-    --node="$jw_host"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+    --sequence=\"$GLITE_WMS_SEQUENCE_CODE\"\
+    --event=\"$1\"\
+    --node=\"$jw_host\"" "GLITE_WMS_SEQUENCE_CODE"
 }
 
 log_user_event() # 1 - reason
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
+  log_event "--jobid=\"$GLITE_WMS_JOBID\"\
     --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="UserTag"\
-    --name="notice"\
-    --value="$1"\
-    --node="$jw_host"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+    --sequence=\"$GLITE_WMS_SEQUENCE_CODE\"\
+    --event=\"UserTag\"\
+    --name=\"notice\"\
+    --value=\"$1\"\
+    --node=\"$jw_host\"" "GLITE_WMS_SEQUENCE_CODE"
 }
 
 log_done_ok() # 1 - exit code
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
+  log_event "--jobid=\"$GLITE_WMS_JOBID\"\
     --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="Done"\
+    --sequence=\"$GLITE_WMS_SEQUENCE_CODE\"\
+    --event=\"Done\"\
+    --reason=\"$done_reason\"\
     --status_code=OK\
-    --exit_code="$1"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+    --exit_code=\"$1\"" "GLITE_WMS_SEQUENCE_CODE"
 }
 
-log_done_failed() # 1 - exit code, 2 - reason
+log_done_failed() # 1 - exit code
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
+  log_event "--jobid=\"$GLITE_WMS_JOBID\"\
     --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="Done"\
-    --reason="$2"\
+    --sequence=\"$GLITE_WMS_SEQUENCE_CODE\"\
+    --event=\"Done\"\
+    --reason=\"$done_reason\"\
     --status_code=FAILED\
-    --exit_code="$1"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+    --exit_code=\"$1\"" "GLITE_WMS_SEQUENCE_CODE"
 }
 
 push_in_LM_done_reason() #  1 - reason
@@ -216,15 +268,43 @@ push_in_LM_done_reason() #  1 - reason
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
+  log_event '--jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event=ResourceUsage\
     --resource="$1"\
     --quantity="$2"\
-    --unit="$3"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+    --unit="$3"' "GLITE_WMS_SEQUENCE_CODE"
+}
+
+register_sandbox() # 1 - input/output, 2 - from, 3 - to
+{
+  eval `$lb_register_sandbox \
+        --jobid i"$GLITE_WMS_JOBID" \
+        --"$1" \
+        --from "$2" \
+        --to "$3" \
+        --sequence "$GLITE_WMS_SEQUENCE_CODE"`
+}
+
+log_ISB() # 1 result, 2 # reason(optional)
+{
+  log_event "--source LRMS \
+        --jobid \"$GLITE_LB_ISB_JOBID\" \
+        --sequence \"$GLITE_LB_ISB_SEQUENCE\" \
+        --event FileTransfer \
+        --result \"$1\"
+        --reason \"$2\"" "GLITE_LB_ISB_SEQUENCE"
+}
+
+log_OSB() # 1 result 2 # reason(optional)
+{
+  log_event "--source LRMS \
+        --jobid \"$GLITE_LB_OSB_JOBID\" \
+        --sequence \"$GLITE_LB_OSB_SEQUENCE\" \
+        --event FileTransfer \
+        --result \"$1\"
+        --reason \"$2\"" "GLITE_LB_ISB_SEQUENCE"
 }
 
 warning()
@@ -918,7 +998,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     fi
     result=$?
     if [ $result -eq 0 ]; then
-      log_event "Running"
+      log_bare_event "Running"
       push_in_LM_done_reason"Taken token ${__shallow_resubmission_token}"
     else
       fatal_error "Cannot take shallow resubmission token ${__shallow_resubmission_token}" # parsed 'as is' by LM to cause a resubmit
@@ -982,7 +1062,7 @@ if [ ${__job_type} -ne 3 ]; then # all but interactive
   fi
 fi
 
-log_event "ReallyRunning"
+log_bare_event "ReallyRunning"
 (
   for env in "${__environment[@]}"
   do
