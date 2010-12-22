@@ -49,8 +49,13 @@ limitations under the License.
 
 extern "C" {
 	// LCMAPS C libraries headers
+#ifdef LCMAPSWITHOUTGSI
+        #include "lcmaps_without_gsi/lcmaps.h"
+        #include "lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
+#else
 	#include "lcmaps/lcmaps.h"
 	#include "lcmaps/lcmaps_return_poolindex_without_gsi.h"
+#endif
 }
 
 #include <dlfcn.h>
