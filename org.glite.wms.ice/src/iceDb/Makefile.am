@@ -73,6 +73,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 
 AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \
+		-I$(top_srcdir)/src/iceDb/sqlite \
 		$(GLITE_CFLAGS) \
                 $(VOMS_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
