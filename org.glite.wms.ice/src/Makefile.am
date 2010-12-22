@@ -45,7 +45,7 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -81,7 +81,7 @@ queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -117,7 +117,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -155,7 +155,7 @@ $(XML2_LIBS) \
 -lglite_ce_cream_client_util \
 -lglite_ce_monitor_client \
 -lglite_ce_monitor_consumer \
-$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 $(LOG4CPP_LIBS) \
 $(GLOBUS_THR_LIBS) \
 ../src/iceUtils/libglite_wms_iceUtils.la \
@@ -210,7 +210,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -246,7 +246,7 @@ glite_wms_ice_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -282,7 +282,7 @@ glite_wms_ice_db_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -318,7 +318,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
+		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -351,7 +351,7 @@ glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLOBUS_NOTHR_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
 		$(MYPROXY_NOTHR_LIBS) \
-		-lglite_security_proxyrenewal_core_gcc64dbg
+		$(RENEWAL_NOTHR_LIBS)
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
