@@ -268,13 +268,13 @@ push_in_LM_done_reason() #  1 - reason
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 {
-  log_event '--jobid="$GLITE_WMS_JOBID"\
+  log_event "--jobid=\"$GLITE_WMS_JOBID\"\
     --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --sequence=\"$GLITE_WMS_SEQUENCE_CODE\"\
     --event=ResourceUsage\
-    --resource="$1"\
-    --quantity="$2"\
-    --unit="$3"' "GLITE_WMS_SEQUENCE_CODE"
+    --resource=\"$1\"\
+    --quantity=\"$2\"\
+    --unit=\"$3\"" "GLITE_WMS_SEQUENCE_CODE"
 }
 
 register_sandbox() # 1 - input/output, 2 - from, 3 - to
