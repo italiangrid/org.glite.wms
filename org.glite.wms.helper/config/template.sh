@@ -195,7 +195,7 @@ log_event() # 1 - event, 2 - sequence code variable
     local scheme=${GLITE_WMS_JOBID:0:${match_index}}
     local remaining=${GLITE_WMS_JOBID:${#scheme}:${#GLITE_WMS_JOBID}-${#scheme}}
     local lb_hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
-    export GLITE_WMS_LOG_DESTINATION="lb_hostname"
+    export GLITE_WMS_LOG_DESTINATION="$lb_hostname"
     do_log_event "$1" "$tmp_log_file" &
     log_watchdog=$!
     log_timeout=60
