@@ -28,10 +28,12 @@ libglite_wms_ism_file_purchaser_la_SOURCES = \
         ism-file-purchaser.cpp 
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
-  -I$(top_srcdir)/src \
-  $(GLITE_CFLAGS) \
-  $(BOOST_CFLAGS) \
-  $(CLASSAD_CFLAGS) \
-  $(LDAP_CPPFLAGS)
+		-I$(top_srcdir)/src \
+		$(GLITE_CFLAGS) \
+		$(GLITE_WMSUTILS_CLASSADS_CFLAGS) \
+		$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
+		$(BOOST_CFLAGS) \
+		$(CLASSAD_CFLAGS) \
+		$(LDAP_CPPFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *.*~

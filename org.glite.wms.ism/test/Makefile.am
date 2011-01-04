@@ -32,7 +32,6 @@ ii_purchaserTest_LDADD = \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMS_COMMON_UTIL_LIBS) \
         $(CLASSAD_LIBS) \
         $(BOOST_LIBS)
 

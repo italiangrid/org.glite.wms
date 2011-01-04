@@ -17,6 +17,8 @@ libglite_wms_ism_la_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
+	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) 
