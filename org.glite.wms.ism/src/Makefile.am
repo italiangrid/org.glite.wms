@@ -23,4 +23,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) 
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wms-ism.pc wms-ism-ii-purchaser.pc
+
 MAINTAINERCLEANFILES = Makefile.in *.*~
