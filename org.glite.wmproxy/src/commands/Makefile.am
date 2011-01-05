@@ -27,9 +27,10 @@ libglite_wms_wmproxy_pipe_la_SOURCES = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLITE_CFLAGS) \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	-DSHOW_EXECUTION
 

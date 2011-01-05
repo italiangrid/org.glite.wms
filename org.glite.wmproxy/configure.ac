@@ -181,8 +181,6 @@ have_glite_security=no
 have_glite_wms_purger=no
 
 AC_GLITE
-AC_GLITE_SERVICE_DISCOVERY
-AC_GSOAP
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
@@ -201,6 +199,9 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
+
+AC_GLITE_SERVICE_DISCOVERY
+AC_GSOAP
 
 AC_SEC_LCAS
 AC_SEC_LCMAPS

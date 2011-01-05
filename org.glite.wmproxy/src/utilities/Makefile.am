@@ -29,10 +29,10 @@ libglite_wms_wmproxy_utilities_la_SOURCES = \
 #libglite_wms_wmproxy_utilities_la_LIBADD = \
 #        $(GLITE_WMS_COMMON_QUOTA_LIBS)
 
-AM_CPPFLAGS = \
-  -I$(top_srcdir)/src/ \
-  $(CLASSAD_CFLAGS) \
+AM_CPPFLAGS = -I$(top_srcdir)/src/ \
+	$(CLASSAD_CFLAGS) \
 	$(GLITE_CFLAGS) \
+	$(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(LIBTAR_CFLAGS) \
 	-DHAVE_STRINGSTREAM
