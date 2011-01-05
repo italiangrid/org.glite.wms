@@ -196,7 +196,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-                $(GLITE_WMS_COMMON_LOGGER_LIBSA) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
