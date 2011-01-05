@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.2  2011/01/05 11:10:57  pandreet
+#       Pkg-config support for jss
+#
 #       Revision 1.22.2.16.6.1  2010/09/03 10:11:46  pandreet
 #       Ares AC definitions in build files
 #
@@ -244,6 +247,11 @@ AC_CONFIG_FILES([config/glite-wms-jc])
 AC_CONFIG_FILES([config/glite-wms-lm])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/common/Makefile])
+AC_CONFIG_FILES([src/wms-jss-controller-adapter.pc])
+AC_CONFIG_FILES([src/wms-jss-controller-wrapper.pc])
+AC_CONFIG_FILES([src/wms-jss-common.pc])
+AC_CONFIG_FILES([src/wms-jss-controller.pc])
+AC_CONFIG_FILES([src/wms-jss-logmonitor.pc])
 AC_CONFIG_FILES([src/controller/Makefile])
 AC_CONFIG_FILES([src/logmonitor/Makefile])
 AC_CONFIG_FILES([src/logmonitor/processer/Makefile])

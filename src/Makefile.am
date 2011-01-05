@@ -17,10 +17,20 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.1.34.1  2011/01/05 11:10:57  pandreet
+#       Pkg-config support for jss
+#
 #       Revision 1.1  2004/07/06 10:09:03  pandreet
 #       Insert jobcontrol_namespace and Makefile
 #
 
 SUBDIRS = common controller logmonitor daemons
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wms-jss-controller-adapter.pc \
+		wms-jss-controller-wrapper.pc \
+		wms-jss-common.pc \
+		wms-jss-controller.pc \
+		wms-jss-logmonitor.pc
 
 MAINTAINERCLEANFILES = Makefile.in
