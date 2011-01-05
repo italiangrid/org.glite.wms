@@ -34,5 +34,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(GLITE_JDL_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
- 
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wms-helper.pc \
+		wms-helper-jobadapter.pc \
+		wms-helper-broker-ism.pc
+
 MAINTAINERCLEANFILES = Makefile.in

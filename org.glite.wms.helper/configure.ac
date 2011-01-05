@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.3.4.1  2011/01/05 10:36:50  pandreet
+#       Pkg-config support for helper
+#
 #       Revision 1.22.2.22.4.1.2.3  2009/12/23 12:54:48  fcapanni
 #       revert to previous revision
 #
@@ -353,6 +356,9 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([src/wms-helper.pc])
+AC_CONFIG_FILES([src/wms-helper-jobadapter.pc])
+AC_CONFIG_FILES([src/wms-helper-broker-ism.pc])
 AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
 
