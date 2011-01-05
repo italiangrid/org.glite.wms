@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.1  2011/01/05 08:50:58  pandreet
+#       New build definitions for jobsubmission
+#
 #       Revision 1.2.28.2  2007/01/22 15:46:05  gianelle
 #       Add support for JobDir (for the moment only the read part)
 #
@@ -78,6 +81,7 @@ libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(CONDORG_CFLAGS)

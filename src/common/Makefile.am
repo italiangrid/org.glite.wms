@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3.2.2  2011/01/05 08:50:58  pandreet
+#       New build definitions for jobsubmission
+#
 #       Revision 1.11.2.1.4.3.2.1  2010/02/08 08:58:07  mcecchi
 #       fixing some nightly builds
 #
@@ -105,6 +108,7 @@ libglite_wms_jss_common_la_SOURCES = IdContainer.cpp \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
 

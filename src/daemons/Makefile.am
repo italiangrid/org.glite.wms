@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.4  2011/01/05 08:50:58  pandreet
+#       New build definitions for jobsubmission
+#
 #       Revision 1.17.2.3.4.1.2.3  2010/09/03 10:11:46  pandreet
 #       Ares AC definitions in build files
 #
@@ -167,6 +170,8 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
+	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLOBUS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
