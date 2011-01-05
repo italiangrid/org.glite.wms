@@ -31,6 +31,7 @@ libglite_wms_helper_la_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	$(GLITE_JDL_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
  

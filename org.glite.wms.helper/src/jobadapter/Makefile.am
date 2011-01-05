@@ -30,7 +30,9 @@ libglite_wms_helper_jobadapter_la_LIBADD = \
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-  $(BOOST_CFLAGS) \
-  $(CLASSAD_CFLAGS)
+	$(GLITE_JDL_CFLAGS) \
+	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
