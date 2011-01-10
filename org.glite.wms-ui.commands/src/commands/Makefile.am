@@ -41,11 +41,11 @@ glite_wms_job_delegate_proxy_SOURCES = \
 glite_wms_job_delegate_proxy_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_delegate_proxy_LDADD = \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
         $(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLITE_JDL_LIBS) \
+	$(GLITE_JOBID_LIBS) \
 	$(WMPROXY_DELEGATE) \
 	$(WMPROXY_UTILS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
@@ -66,7 +66,6 @@ glite_wms_job_info_LDADD = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-        -lglite_jobid \
 	$(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -91,8 +90,7 @@ glite_wms_job_list_match_SOURCES = \
 glite_wms_job_list_match_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_list_match_LDADD = \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
-        $(GLITE_JOBID_LIBS) \	
+        $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
         $(GLOBUS_GSS_NOTHR_LIBS) \
@@ -118,7 +116,6 @@ glite_wms_job_submit_LDADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -151,7 +148,6 @@ glite_wms_job_cancel_LDADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	${GLITE_WMSUTILS_CLASSADS_LIBS} \
@@ -179,7 +175,6 @@ glite_wms_job_output_LDADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	${GLITE_WMSUTILS_CLASSADS_LIBS} \
@@ -208,7 +203,6 @@ glite_wms_job_perusal_LDADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
-	-lglite_jobid \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	${GLITE_WMSUTILS_CLASSADS_LIBS} \
@@ -232,6 +226,9 @@ glite_wms_job_perusal_LDADD = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
 	$(GLITE_CFLAGS) \
+        $(GLITE_JDL_CFLAGS) \
+        $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
+        $(GLITE_WMS_WMPROXY) \
 	$(BOOST_CFLAGS) \
 	$(GRIDSITE_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \

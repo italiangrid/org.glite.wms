@@ -37,6 +37,9 @@ libglite_wmsui_commands_utilities_la_SOURCES = \
 
 AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
+	$(GLITE_JDL_CFLAGS) \
+	$(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
+        $(GLITE_WMS_WMPROXY) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(VOMS_CFLAGS) \
