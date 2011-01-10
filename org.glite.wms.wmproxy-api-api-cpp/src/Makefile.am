@@ -54,7 +54,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-UHAVE_CONFIG_H
 	
 	
-
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wmproxy-api-cpp.pc
 
 MAINTAINERCLEANFILES = Makefile.in
 
