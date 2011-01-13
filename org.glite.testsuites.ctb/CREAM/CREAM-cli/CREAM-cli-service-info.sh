@@ -2,15 +2,12 @@
 
 ###############################################################################
 #
-# Test glite-ce-job-status command:
+# Test glite-ce-service-info command:
 #
-# TEST 1: submit a job and then retrieve its status
-# TEST 2: submit a job which surely failed. Check if the final status is the ones expected
-# TEST 3: check the status of a job setting log level to 1 (option --level 1):
-# TEST 4: check the status of a job setting log level to 2 (option --level 2)
-# TEST 5: check if the option --input works
-# TEST 6: check if the --conf option works
-# TEST 7: save info into a logfile to check if --debug and --logfile options work
+# TEST 1: check option --version
+# TEST 2: check the service info using various log level
+# TEST 3: check if the --conf option works
+# TEST 4: save info into a logfile to check if --debug and --logfile options work
 #
 # Author: Alessio Gianelle <sa3-italia@mi.infn.it>
 # Version: $Id:
