@@ -722,12 +722,8 @@ namespace glite {
 		      throw ClassadSyntax_ex("ReallyRunningToken attribute not found, or is not a string");
 		    }
 		    
-		  //  string token( m_token_file );
-		    
-		  //  cout << "\n\n***************CreamJob::set_jdl - token=[" << token  << "]" << endl << endl;
-		    
-		      if(m_token_file.empty())
-		        m_token_file = "/nofile";
+		    if(m_token_file.empty())
+		      m_token_file = "/nofile";
 		    
 		    if( classad_safe_ptr->EvaluateAttrString( "ShallowRetryCount", shallow ) ) {
 		      if( atoi( shallow.c_str() ) == -1 )
@@ -742,12 +738,19 @@ namespace glite {
 		    }
 		    
 		    string tmp;
+		    
+		    m_proxy_renewable = false;
+		    
 		    if ( classad_safe_ptr->EvaluateAttrString( "MYPROXYSERVER", tmp ) ) {
-		      m_proxy_renewable = true;
-		      m_myproxy_address = tmp;
-		    } else {
-		      m_proxy_renewable = false;
-		    }
+		    
+		      boost::trim_if(tmp, boost::is_any_of(" ") );
+		      
+		      if( !tmp.empty() ) {
+		        m_proxy_renewable = true;
+		        m_myproxy_address = tmp;
+		      }
+		      
+		    } 
 		    
 		    boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
 		    
