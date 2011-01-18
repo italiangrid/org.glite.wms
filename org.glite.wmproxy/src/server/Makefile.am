@@ -34,6 +34,12 @@ soapC.cpp soapServer.cpp soapH.h soapStub.h: wm.h
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
 
+##
+# rebuild of gsoap with fast-cgi support
+##
+gsoap-core.cpp: $(GSOAP_LOCATION)/src/stdsoap2.cpp
+	cp $(GSOAP_LOCATION)/src/stdsoap2.cpp gsoap-core.cpp
+
 JSDL_CFLAGS= -I/usr/include/libxml2
 
 glite_wms_wmproxy_server_SOURCES = \
@@ -51,7 +57,8 @@ glite_wms_wmproxy_server_SOURCES = \
 	wmpdelegation.cpp \
 	wmp2wm.cpp \
 	wmpstructconverter.cpp \
-	wmpsignalhandler.cpp
+	wmpsignalhandler.cpp \
+	gsoap-core.cpp
 
 
 bin_PROGRAMS = glite_wms_wmproxy_server
@@ -120,7 +127,5 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-DWANT_NAMESPACES \
 	-DWITH_FASTCGI \
 	-DWITH_IPV6
-
-AM_LDFLAGS = $(GSOAP_LIBS)
 
 MAINTAINERCLEANFILES = Makefile.in
