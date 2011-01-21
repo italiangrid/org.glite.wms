@@ -65,9 +65,9 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 				     { "Cannot download", resubmit },
 				     { "Cannot upload", resubmit },
 				     { "Cannot take shallow resubmission token", resubmit },
-				     { "prologue failed", abort},    
-				     { "epilogue failed", abort},    
-                                     { "Cannot create directory", resubmit  }, // .mpi or 'jobid' directory
+				     { "prologue failed", resubmit},
+				     { "epilogue failed", resubmit},
+                                     { "Cannot create directory", resubmit }, // .mpi or 'jobid' directory
                                      { "Job killed", abort }, // proxy expired
                                      { "Job has been terminated", resubmit }, // signalled by the BS
                                      { "No *ftp", resubmit },
