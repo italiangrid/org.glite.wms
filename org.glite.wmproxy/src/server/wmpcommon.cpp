@@ -101,7 +101,6 @@ namespace jobid		= glite::jobid;
 **/
 void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gaclAuthorizing)
 {
-	GLITE_STACK_TRY("checkSecurity()");
 	edglog_fn("wmpcommon::checkSecurity");
 	edglog(info)<<"Performing Security cheks"<<endl;
 	authorizer::WMPAuthorizer auth;
@@ -149,8 +148,6 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 			edglog(debug)<<"No drain"<<endl;
 		}
 	}
-
-	GLITE_STACK_CATCH();
 }
 
 

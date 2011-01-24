@@ -36,7 +36,7 @@ limitations under the License.
 
 // API VOMS
 extern "C" {
-	#include "voms/voms_apic.h"
+	#include "glite/security/voms/voms_apic.h"
 }
 
 namespace glite {

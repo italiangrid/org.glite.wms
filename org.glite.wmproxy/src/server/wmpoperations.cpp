@@ -373,7 +373,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		JobId jobid(jid);
 		checkSecurity(&jobid);
 
-		int fd = wmputilities::operationLock(
+		fd = wmputilities::operationLock(
 			wmputilities::getGetOutputFileListLockFilePath(jobid),
 			"getOutputFileList");
 
@@ -468,10 +468,15 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog(debug)<<"Successfully retrieved files: "<<found.size()<<endl;
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
+	} catch (glite::wmsutils::exception::Exception const& e) {
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		wmputilities::operationUnlock(fd);
+		edglog(debug) << "wmsutils::Exception: " << e.what() << std::endl;
+		throw e;
 	} catch (exception &ex) {
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-		edglog(debug)<<"JobId Exception: "<<ex.what()<<std::endl;
+		edglog(debug)<<"std::exception: "<<ex.what()<<std::endl;
 		throw ex;
 	}
 }
