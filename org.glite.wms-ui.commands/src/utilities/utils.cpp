@@ -802,14 +802,14 @@ std::string Utils::getOutputStorage( ){
 	    string env( what[2] );
 	    char* expand = getenv( env.c_str() );
 	    
-	    cout << "expand="<< expand<< endl;
+	    //cout << "expand="<< expand<< endl;
 	    
 	    if( expand )
 	      storage = what[1] + "/" + expand + "/" + what[3];
 	    else
 	      storage = what[1] + "/" + what[3];
 	      
-	    cout << "Storage=[" << storage << "]" << endl;
+	    //cout << "Storage=[" << storage << "]" << endl;
 	  }
 	
 	while ( boost::regex_match( storage, what2,  tilde_name) )
@@ -821,7 +821,7 @@ std::string Utils::getOutputStorage( ){
 	    storage = what2[1] + "/" + expand + "/" + what2[3];
 	  else
 	    storage = what2[1] + "/" + what2[3];
-	  cout << "Storage=[" << storage << "]" << endl;
+	  //cout << "Storage=[" << storage << "]" << endl;
 	}
 
 	//cout << "\n\n\n ALVISE ************ New Storage=[" << storage << "]" << endl;
