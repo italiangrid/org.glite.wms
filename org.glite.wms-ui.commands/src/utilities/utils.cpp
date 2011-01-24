@@ -38,6 +38,8 @@ limitations under the License.
 #include "boost/filesystem/exception.hpp" //managing boost errors
 #include <boost/lexical_cast.hpp> // string->int conversion
 #include "boost/regex.hpp"
+#include <boost/algorithm/string.hpp>
+
 // JobId
 #include "glite/jobid/JobId.h"
 // WMProxy API's
@@ -65,7 +67,7 @@ limitations under the License.
 
 // Voms implementation
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
-#include "voms/voms_api.h"  // voms parsing
+#include "glite/security/voms/voms_api.h"  // voms parsing
 
 
 namespace glite {
@@ -780,6 +782,49 @@ std::string Utils::getOutputStorage( ){
 	}
 
 	// Check if the storage is a directory
+	
+	// ALVISE FIX: ENV VAR and "~" RECOGNITION AND EXPANSION
+	
+	//cout << "\n\n\n ALVISE ************ Storage=[" << storage << "]" << endl;
+	
+	if( boost::ends_with( storage, "/" ) )
+	  storage = storage.substr(0, storage.length()-1 );
+	  
+	
+	
+	const boost::regex envvar_name( "(.*)\\$([^/]+)(/(.+))*" );
+	const boost::regex tilde_name( "(.*)(~)(.*)" );
+	boost::match_results<std::string::const_iterator> what, what2;
+	
+	while( boost::regex_match( storage, what,  envvar_name) )
+	  {
+	    cout << what[0] << " - " << what[1] << " - " << what[2] << " - " << what[3]<< endl;
+	    string env( what[2] );
+	    char* expand = getenv( env.c_str() );
+	    
+	    cout << "expand="<< expand<< endl;
+	    
+	    if( expand )
+	      storage = what[1] + "/" + expand + "/" + what[3];
+	    else
+	      storage = what[1] + "/" + what[3];
+	      
+	    cout << "Storage=[" << storage << "]" << endl;
+	  }
+	
+	while ( boost::regex_match( storage, what2,  tilde_name) )
+	{
+	  //cout << what2[0] << " - " << what2[1] << " - " << what2[2] << " - " << what2[3]<< endl;
+	  string env( what2[2] );
+	  char* expand = getenv( "HOME" );
+	  if( expand )
+	    storage = what2[1] + "/" + expand + "/" + what2[3];
+	  else
+	    storage = what2[1] + "/" + what2[3];
+	  cout << "Storage=[" << storage << "]" << endl;
+	}
+
+	//cout << "\n\n\n ALVISE ************ New Storage=[" << storage << "]" << endl;
 	if(!this->isDirectory(storage)){
 		throw WmsClientException(__FILE__,__LINE__,"getOutputStorage",DEFAULT_ERR_CODE,
 				"Configuration Error",
