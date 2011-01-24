@@ -106,6 +106,7 @@ class JobSubmit : public Job {
 		*/
 		void submission ( ) ;
 	private:
+		void checkOutputData( void );
 		/*
 		* Returns the type of job is being submitted
 		*/

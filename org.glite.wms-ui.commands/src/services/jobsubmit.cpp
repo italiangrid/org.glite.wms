@@ -57,6 +57,9 @@ limitations under the License.
 // TAR
 #include "libtar.h"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
+
 using namespace std ;
 using namespace glite::wms::client::utilities ;
 
@@ -419,6 +422,9 @@ void JobSubmit::submission ( ){
 		// and initialize internal JobId:
 		submitPerformStep(STEP_REGISTER);
 		logInfo->print(WMS_DEBUG, "The JobId is: ", this->getJobId() ) ;
+		
+		this->checkOutputData( );
+		
 		// Perform File Transfer when:
 		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some files are to be transferred)
 		if (toBretrieved){
@@ -987,6 +993,59 @@ void JobSubmit::checkJSDL(){
 	}
 }
 
+void JobSubmit::checkOutputData( void ) {
+
+	
+
+  	if( adObj->hasAttribute( JDL::OUTPUTDATA ) )
+	{
+	  //cerr <<" ********* OUTPUT DATA PRESENT !! " << endl;
+	  string id( this->getJobId( ) );
+	  //string::size_type pos = id.find_last_of( '/', 0 );
+	  
+	  //cout << "************** pos=" << pos << endl;
+	  
+	  //id.erase( 0, pos );
+	  
+	  
+	  const boost::regex rgx( "https*://[^/]+/(.+)$" );
+          boost::match_results<std::string::const_iterator> what;
+        
+          boost::regex_match( id, what,  rgx ) ;	  
+	  
+	  string DS = string("DSUpload_") + what[1] + ".out";
+	  
+	  
+	  
+	  classad::ExprTree* osb( adObj->lookUp( "OutputSandbox" ) );
+	  if( !osb ) {
+	    adObj->setAttributeExpr( "OutputSandbox",  "{ \"" + DS  + "\"}" );
+	  } else {
+	    vector<string> OSBs( adObj->getStringValue("OutputSandbox") );
+	    OSBs.push_back( DS );
+	    
+	    string newOSB( "{" );
+	    
+	    for(vector<string>::const_iterator it = OSBs.begin();
+	    	it != OSBs.end();
+		++it )
+		{
+		  newOSB +=  "\"" + *it + "\",";
+		}
+	    boost::trim_if( newOSB, boost::is_any_of(",") );
+  	    newOSB += "}";
+	    
+	    //cout << "************** newOSB=[" << newOSB << "]" << endl;
+	    
+	    adObj->delAttribute( "OutputSandbox" );
+	    adObj->setAttributeExpr( "OutputSandbox", newOSB );
+	  }
+	  
+	}
+	
+	//cout << endl << "************** NEW AD = " << adObj->toString() << endl;
+}
+
 /**
 *  Checks the user JDL
 */
@@ -1108,6 +1167,9 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			}
 		}
 	}
+	
+
+	
 	switch ( jobType ) {
 
 		case WMS_COLLECTION:
@@ -1242,6 +1304,8 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::NODESRES),
 			"cannot be used for jobs");
 	}
+	
+	
 }
 /**
 *Performs:
