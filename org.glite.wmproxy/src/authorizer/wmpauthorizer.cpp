@@ -53,8 +53,8 @@ extern "C" {
         #include "lcmaps_without_gsi/lcmaps.h"
         #include "lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
 #else
-	#include "glite/security/lcmaps/lcmaps.h"
-	#include "glite/security/lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
+	#include "lcmaps/lcmaps.h"
+	#include "lcmaps/lcmaps_return_poolindex_without_gsi.h"
 #endif
 }
 
