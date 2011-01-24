@@ -38,10 +38,12 @@
     <!-- dumping the most important locations for later use -->
     <target  name="configure">
         <echo message="glite.location                =${glite.location}"/>
+        <echo message="util-java.location            =${util-java.location}"/>
         <echo message="axis.location                =${axis.location}"/>    
         <echo file="location.properties">
 glite.location                =${glite.location}
 axis.location		      =${axis.location}
+util-java.location            =${util-java.location}
         </echo>
     </target>
 
@@ -57,6 +59,9 @@ axis.location		      =${axis.location}
             <include name="glite-security-trustmanager.jar"/>
             <include name="glite-security-delegation-java.jar"/>
             <include name="glite-security-util-java.jar"/>
+            <include name="delegation-java.jar"/>
+        </fileset>
+        <fileset dir="${util-java.location}/share/java">
             <include name="trustmanager.jar"/>
             <include name="trustmanager-axis.jar"/>
             <include name="delegation-java.jar"/>
@@ -86,10 +91,10 @@ axis.location		      =${axis.location}
          output="${basedir}/src"
          deployscope="application"
          serverSide="no"
-	 debug="yes"
+	 debug="no"
          skeletonDeploy="false"
          noimports="false"
-         verbose="true"
+         verbose="false"
          typeMappingVersion="1.2"
          testcase="no"
 	 namespacemappingfile="project/NStoPkg.properties"/>
