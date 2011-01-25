@@ -793,7 +793,7 @@ std::string Utils::getOutputStorage( ){
 	
 	
 	const boost::regex envvar_name( "(.*)\\$([^/]+)(/(.+))*" );
-	const boost::regex tilde_name( "(.*)(~)(.*)" );
+	//const boost::regex tilde_name( "(.*)(~)(.*)" );
 	boost::match_results<std::string::const_iterator> what, what2;
 	
 	while( boost::regex_match( storage, what,  envvar_name) )
@@ -812,17 +812,15 @@ std::string Utils::getOutputStorage( ){
 	    //cout << "Storage=[" << storage << "]" << endl;
 	  }
 	
-	while ( boost::regex_match( storage, what2,  tilde_name) )
+	/* while ( boost::regex_match( storage, what2,  tilde_name) )
 	{
-	  //cout << what2[0] << " - " << what2[1] << " - " << what2[2] << " - " << what2[3]<< endl;
 	  string env( what2[2] );
 	  char* expand = getenv( "HOME" );
 	  if( expand )
 	    storage = what2[1] + "/" + expand + "/" + what2[3];
 	  else
 	    storage = what2[1] + "/" + what2[3];
-	  //cout << "Storage=[" << storage << "]" << endl;
-	}
+	} */
 
 	//cout << "\n\n\n ALVISE ************ New Storage=[" << storage << "]" << endl;
 	if(!this->isDirectory(storage)){
@@ -965,7 +963,8 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 						unsigned int DEFAULT_PORT){
 	pair<string, unsigned int> ad;
 	// Look for protocol
-	unsigned int protInd=adFullAddress.find(PROTOCOL);
+	//unsigned int protInd=adFullAddress.find(PROTOCOL);
+	string::size_type protInd = adFullAddress.find(PROTOCOL);
 	if (protInd==string::npos){
 		// protocol not found
 		ad.first=DEFAULT_PROTOCOL;
@@ -975,7 +974,8 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 				"Wrong Value","Wrong Protocol Specified for: "+adFullAddress);
 	}
 	// Look for port
-	unsigned int portInd=adFullAddress.find(":",protInd+1);
+	//unsigned int portInd=adFullAddress.find(":",protInd+1);
+	string::size_type portInd=adFullAddress.find(":",protInd+1);
 	if (portInd==string::npos){
 		// port not found
 		ad.second=DEFAULT_PORT;
@@ -1858,7 +1858,9 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
  */
  const std::string Utils::normalizeFile( const std::string &fpath ) {
 	string file = "";
-	unsigned int pos = fpath.find(FILE_PROTOCOL) ;
+	//unsigned int pos = fpath.find(FILE_PROTOCOL) ;
+	string::size_type pos = fpath.find(FILE_PROTOCOL) ;
+	
 	if ( pos != string::npos){
 		// removes the file protocol at the beginning of the path
 		file = fpath.substr(pos+FILE_PROTOCOL.size( ), fpath.size());
@@ -1877,8 +1879,10 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 	string tmp = "";
 	// looks for the end of the protocol string
-	unsigned int p =uri.find(PROTOCOL_SEPARATOR);
- 	if (p!=string::npos) { tmp = uri.substr(p+PROTOCOL_SEPARATOR.size(), uri.size());}
+	//unsigned int p =uri.find(PROTOCOL_SEPARATOR);
+ 	string::size_type p =uri.find(PROTOCOL_SEPARATOR);
+ 	
+	if (p!=string::npos) { tmp = uri.substr(p+PROTOCOL_SEPARATOR.size(), uri.size());}
 	// looks for the end of the host:port string
 	 p = tmp.find("/");
 	if (p!=string::npos){ tmp = tmp.substr(p+1, uri.size());}
@@ -1892,7 +1896,9 @@ std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 std::string  Utils::getProtocol (const std::string& uri) {
 	string proto = "";
 	string list = "";
-	unsigned int p =uri.find("//");
+	//unsigned int p =uri.find("//");
+	string::size_type p =uri.find("//");
+	
 	if (p!=string::npos) {
 		proto = uri.substr(0, p-1);
 	} else {
@@ -1909,7 +1915,9 @@ std::string  Utils::getProtocol (const std::string& uri) {
 std::string  Utils::getFileName (const std::string& path) {
 	string tmp = "";
 	int size = path.size( );
-	unsigned int p =path.rfind("/", size);
+	//unsigned int p =path.rfind("/", size);
+	string::size_type p =path.rfind("/", size);
+	
  	if (p!=string::npos) { tmp = path.substr(p+1, size);}
 	return tmp;
 }
