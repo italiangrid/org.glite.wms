@@ -595,18 +595,15 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
   }
 
   cream_api::soap_proxy::VOMSWrapper V( the_job->user_proxyfile(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
-  if( !V.IsValid( ) ) {
+  
+  if ( V.getProxyTimeEnd( ) <= time(0)+300) {
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
 		    << "IceCore::resubmit_job() - Will NOT resubmit job ["
 		    << the_job->describe() << "] " 
-		    << "because it's Input Sandbox proxy file is not valid: "
+		    << "because it's Input Sandbox proxy file is expired: "
 		    << V.getErrorMessage()
 		    );
-
-    the_job->set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
-    m_lb_logger->logEvent( new util::job_aborted_event( *the_job ), false, true );
-
-    return;
+     return;
   }
   
     util::CreamJob _the_job(*the_job);
