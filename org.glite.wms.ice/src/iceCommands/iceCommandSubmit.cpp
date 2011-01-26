@@ -442,7 +442,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
       tnx.execute( &updater );
     }
     m_theJob.reset_change_flags( );
-    
+    jobdesc = m_theJob.describe();
   } // if(!only_start)
   else {
     
