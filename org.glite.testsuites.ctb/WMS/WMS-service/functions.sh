@@ -15,13 +15,16 @@
 ###############################################################################
 
 # Special echo; if required (LOG=1) save texts on a log file
+# NAGIOS mode means no output!
 function myecho()
 {
-  if [ $LOG -eq 1 ]; then
-    echo " ===> $@" >> $TESTLOGFILE
-  else
-    echo " ===> $@" 
-  fi
+	if [ $NAGIOS -ne 1 ]; then
+		if [ $LOG -eq 1 ]; then
+    	echo " ===> $@" >> $TESTLOGFILE
+ 	 	else
+    	echo " ===> $@" 
+  	fi
+	fi
 }
 
 # Basic messages, verbose = 1 
@@ -63,17 +66,20 @@ function remove()
   return 0
 }
 
-# ... "bad" exit: $1 is the failure reason
+# FAILURE exit: arg is the failure reason
+# Exit code: 2 (as required by NAGIOS)
 function exit_failure()
 {
-  #cleanup
+	# No cleanup for debug
+	#cleanup
  
   myecho ""
+	myecho "Test: $NAME"
   myecho "Started: $START_TIME"
   myecho "Ended  :" $(date +%H:%M:%S)
   myecho ""
   myecho "    >>> TEST FAILED <<<"
-  myecho " >>> failure reason: $1 <<< "
+  myecho " >>> failure reason: $@ <<< "
   myecho ""
   myecho " Test directory $MYTMPDIR" 
   myecho " has not been cleaned for debug purpose"
@@ -85,17 +91,23 @@ function exit_failure()
     echo " Test directory $MYTMPDIR has not been cleaned for debug purpose"
     echo ""
     echo "    >>> TEST FAILED <<<"
+  	echo " >>> failure reason: $@ <<< "
   fi
 
-  exit 1
+	if [ $NAGIOS -eq 1 ] ; then
+		echo "$NAME CRITICAL: $@"
+	fi
+  exit 2
 }
 
-# ... "good" exit
+# GOOD exit
+# Exit code: 0
 function exit_success()
 {
   cleanup
 
   myecho ""
+	myecho "Test: $NAME"
   myecho "Started: $START_TIME"
   myecho "Ended  :" $(date +%H:%M:%S)
   myecho ""
@@ -107,14 +119,45 @@ function exit_success()
     echo "    === TEST PASSED === "
   fi
 
-  exit 0
+	if [ $NAGIOS -eq 1 ] ; then
+  	echo "$NAME OK: Test Passed"
+	fi
+				
+	exit 0
+}
+
+# Warning exit: arg is the warning message
+# Exit code: 1 (as required by NAGIOS)
+function exit_warning()
+{
+	cleanup
+
+  myecho ""
+	myecho "Test: $NAME"
+  myecho "Started: $START_TIME"
+  myecho "Ended  :" $(date +%H:%M:%S)
+  myecho ""
+ 	myecho "  *** Warning: $@ *** "
+	myecho ""		
+	
+  if [ $LOG -eq 1 ] ; then
+    echo "Test log file is $TESTLOGFILE"
+    echo ""
+    echo "  *** Warning: $@ *** "	
+	  echo ""	
+  fi
+
+  if [ $NAGIOS -eq 1 ] ; then
+    echo "$NAME WARNING: $@"
+	fi
+	
+  exit 1
 }
 
 # ... exit on timeout: try cancel job and exit
 # $1 must be the JOBID
 function exit_timeout()
 {
-  myecho '   *** Timeout reached ***'
   verbose "Try to remove job..."
   run_command glite-wms-job-cancel --noint $1
   sleep 60
@@ -124,16 +167,16 @@ function exit_timeout()
   else
     message 'WARNING: Job has NOT been cancelled'
   fi
-  exit_success
+  exit_warning "Timeout reached"
 }
 
 # ... exit on Ctrl^C
 function exit_interrupt()
 {
-  myecho ' *** Interrupted by user ***'
   trap - SIGINT
-  cleanup
-  exit 1
+
+	exit_warning "Interrupted by user"
+	
 }
 
 # ... cleanup temporary files
@@ -196,7 +239,7 @@ function run_command_fail()
 
   if [ $? -eq 0 ]; then
     debug "${OUTPUT}"
-    exit_failure "$1 failed"
+    exit_failure "$1 not failed as required"
   fi
 
   debug "${OUTPUT}"
@@ -210,13 +253,19 @@ function usage()
 {
   echo "Usage: "
   echo ""
-  echo $(basename $0) "[-h] [-l] [-v <level>] [-n]"
+  echo "$NAME [-h] [-l] [-d <level>] [-c <conf>] [-i] [-n] [-W] [-L] [-C] [-v]"
   echo ""
   echo " -h          this help"
   echo " -l          save output in a file"
-  echo " -v <level > print verbose messages (level = (1|2|3)"
-  echo " -n          no interactive mode (user proxy must exists)" 
-  echo ""
+  echo " -d <level > print verbose messages (level = (1|2|3)"
+  echo " -i          interactive mode (it asks for proxy pwd)" 
+	echo " -n          nagios mode"			
+	echo " -c <conf>   configuration file"
+	echo " -W <wms>    WMS host (required if conf file is not used)"
+	echo " -L <lb>     LB host (required if conf file is not used)"
+	echo " -C <ce>     CE host"
+	echo " -v <vo>     User VO (required if conf file is not used)"
+	echo ""
   exit 0
 }
 
@@ -250,6 +299,8 @@ function set_proxy()
   fi
   return 0
 }
+
+### JDL definitions
 
 # define a simple jdl and save it in $1
 function set_jdl()
@@ -288,6 +339,7 @@ function set_isbjdl()
   return 0  
 }
 
+
 # add given requirements ($1) to jdl
 # require: JDLFILE
 function set_requirements()
@@ -295,6 +347,9 @@ function set_requirements()
   set_jdl $JDLFILE
   echo "Requirements = $1;" >> $JDLFILE
 }
+
+
+############################################3
 
 # define configuration file and save it in $1
 # --> require: WMS
@@ -327,25 +382,50 @@ function prepare()
   DESC="$1"
   shift 
 
+  # Test id
+  ID=`date +%Y%m%d%H%M%S`
+  NAME=$(basename $0 .sh)
+	
   # Default values
   VERBOSE=0
   LOG=0
-  NOPROXY=0
-  
-  while getopts "hlv:n" arg;
+  NOPROXY=1
+	NAGIOS=0
+	CE=""
+	
+  # ... define default values for optional parameters
+  NUM_STATUS_RETRIEVALS=60
+  SLEEP_TIME=30
+  DELEGATION_OPTIONS="-a"
+  DEFAULTREQ="other.GlueCEStateStatus == \"Production\""
+	CONF="wms-command.conf"
+	
+  while getopts "hld:ic:nW:v:L:C:" arg;
     do
     case "$arg" in
       h) usage ;;
       l) LOG=1 ;;
-      v) VERBOSE=$OPTARG ;;
-      n) NOPROXY=1 ;;
-      *) echo "Not recognized argument"; exit -1 ;;
+      d) VERBOSE=$OPTARG ;;
+      i) NOPROXY=0 ;;
+			c) CONF=$OPTARG ;;
+			n) NAGIOS=1 ;;
+			W) WMS=$OPTARG ;;
+			v) VO=$OPTARG ;;
+			L) LB=$OPTARG ;;
+			C) CE=$OPTARG ;;
+      *) echo "Illegal option '${OPTARG}'"; exit 3 ;;
     esac
   done
-
-  # Test id
-  ID=`date +%Y%m%d%H%M%S`
-
+	
+  # source configuration values
+	if [ -f $CONF ] ; then
+		source $CONF
+	fi
+	
+	if [ -z $WMS ] || [ -z $LB ] || [ -z $VO ] ; then
+		exit_failure "Required argument is not set"
+	fi
+	
   # ... create temporary directory
   MYTMPDIR=`pwd`/wms-cli-test_${ID}
   mkdir $MYTMPDIR || exit_failure "Fail to create temporary directory"
@@ -373,19 +453,6 @@ function prepare()
   JDLFILE=$MYTMPDIR/example.jdl
   CONFIG_FILE=$MYTMPDIR/wms.conf
 
-  # ... define default values for optional parameters
-  NUM_STATUS_RETRIEVALS=60
-  SLEEP_TIME=30
-  DELEGATION_OPTIONS="-a"
-  DEFAULTREQ="other.GlueCEStateStatus == \"Production\""
-
-  # source configuration values
-  if [ -f "wms-command.conf" ] ; then
-    source wms-command.conf
-  else
-    exit_failure "Cannot find wms-command.conf file"
-  fi 
-
   # Create default jdl and config file
   set_jdl $JDLFILE
   set_conf $CONFIG_FILE
@@ -397,8 +464,12 @@ function prepare()
   else
     tmp=`voms-proxy-info -timeleft`
     if [[ $tmp -eq 0 ]] ; then
-      exit_failure "Your proxy is expired"
-    fi
+			set_proxy "$PROXY" # try to create a proxy without pwd
+		fi
+	fi
+	tmp=`voms-proxy-info -timeleft`	
+	if [[ $tmp -eq 0 ]] ; then
+		exit_failure "I don't find neither create any valid proxy"
   fi
 
   # ... set a trap for Ctrl^C
@@ -423,11 +494,23 @@ function get_CE()
   CENAME="Destination not available"
 
   verbose "Look for the destination..."
-  run_command glite-wms-job-status $1
+
+	# Waiting until job is matched
+	run_command glite-wms-job-status $1
+	while [[ "$JOBSTATUS" == *Submitted* ]] 
+	do
+		sleep 3
+		run_command glite-wms-job-status $1
+	done
 
   tmp=`grep -m 1 Destination <<< "$OUTPUT" | sed -e "s/Destination://"`
-
-  CENAME=$(trim "$tmp")
+	if [[ $? -eq 1 ]] ; then
+		exit_failure "Job $1 doesn't match"
+	fi
+	
+	if [[ x${tmp} != "x" ]] ; then
+  	CENAME=$(trim "$tmp")
+	fi
 
   verbose "CE id is: $CENAME"
 

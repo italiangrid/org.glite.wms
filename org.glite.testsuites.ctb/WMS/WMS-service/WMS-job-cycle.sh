@@ -2,10 +2,11 @@
 
 ###############################################################################
 #
-# Test a complete job cycle: submission -> get-output
+# Test a complete job cycle: from submission to get-output
 #
 # Test submission of a normal job to an LCG-CE
 # Test submission of a normal job to a CREAM CE
+# or if $CE is defined submit to the given $CE
 #
 # We need to test submission of various type of jobs (TBD)
 #
@@ -18,86 +19,95 @@
 
 . $(dirname $0)/functions.sh
 
-function checkstatus()
+
+## $1 = jobid
+function joboutput()
 {
-  sleep 5
-  verbose "Check if the status is correct"
-  grep "\"Warning - JobPurging not allowed\"" $TMPFILE
+	get_STATUS $1
+	if [[ "$JOBSTATUS" == "Done (Success)" ]]; then
+		verbose "Retrieve the output"
+		run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR $1 
+  	verbose "Check if the status is correct"
+  	grep "\"Warning - JobPurging not allowed\"" <<< $OUTPUT
     if [[ $? -eq 1 ]] ; then
+			sleep 5
       get_STATUS $1
       if [[ "$JOBSTATUS" != *Cleared* ]]; then
         message "WARNING Job $1 not cleared!"
-        return 1
+				exit_message="Final status of job is not 'CLEARED'"
+        return 2
       fi
     else
       verbose "Warning: WMS is not recognized by the LB, JobPurging not allowed!"
     fi
+		verbose "Check if the output files are correctly retrieved"
+		if [ -f ${JOB_OUTPUT_DIR}/std.out ] && [ -f ${JOB_OUTPUT_DIR}/std.err ] ; then
+			return 0
+		else
+			exit_message="Output files are not correctly retrieved"
+			return 1
+		fi
+	else
+		message "WARNING Job finishes with status: $JOBSTATUS; cannot retrieve output"
+		exit_message="Job finishes with status: $JOBSTATUS; cannot retrieve output"
+		return 1
+	fi
+
+	return 0
 }
 
-function checkoutput()
+# $1 is the required CE expression
+function submitTO ()
 {
-  verbose "Check if the output files are correctly retrieved"
-  run_command "grep -A 1 'have been successfully retrieved' $TMPFILE | grep -v 'have been successfully retrieved'"
-  dir=$OUTPUT
-  verbose "Look if in $dir there are the output files std.out and std.err"
-  run_command ls ${dir}/std.out
-  run_command ls ${dir}/std.err
-}
-
-function check()
-{
-  echo "$OUTPUT" > $TMPFILE
-  checkstatus $1
-  if [[ $? -eq 0 ]] ; then
-    checkoutput
-  fi
+	set_isbjdl $JDLFILE
+	set_requirements "RegExp(\"$1\",other.GlueCEUniqueID)"
+	run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --nomsg $JDLFILE
+	JOBID=$OUTPUT
+	sleep 10
+	get_CE $JOBID
+	verbose "Check if it match a correct CE"
+	grep $1 <<< "$CENAME" > /dev/null
+	if [ $? -eq 0 ] ; then
+		wait_until_job_finishes $JOBID
+		joboutput $JOBID
+		return $?
+	else
+		exit_message="Matchmaking fails"
+		message "Matching CE is $CENAME"
+		return 1
+	fi
 }
 
 prepare "test submission cycle" $@
 
-message ""
-message "Submit a normal job to an LCG-CE"
-set_isbjdl $JDLFILE
-set_requirements "!RegExp(\"8443/cream-\",other.GlueCEUniqueID)"
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --nomsg $JDLFILE
-JOBID=$OUTPUT
-sleep 10
-get_CE $JOBID
-verbose "Check if it match a correct CE"
-run_command grep "2119/jobmanager" <<< "$CENAME"
-wait_until_job_finishes $JOBID
-get_STATUS $JOBID
-if [[ "$JOBSTATUS" == "Done (Success)" ]]; then
-  verbose "Retrieve the output"
-  run_command glite-wms-job-output $JOBID
-  check $JOBID
-else
-  message "WARNING Job finishes $JOBSTATUS, cannot retrieve output"
+if [[ x$CE != "x" ]] ; then
+	message ""
+	message "Submit a normal job to $CE"
+	submitTO $CE
+	if [ $? -eq 1 ] ; then
+		exit_failure ${exit_message}
+	fi
+else	
+	message ""
+	message "Submit a normal job to an LCG-CE"
+	submitTO "2119/jobmanager"
+	if [ $? -eq 1 ] ; then
+		exit_failure ${exit_message}
+	fi
+	rm -rf ${JOB_OUTPUT_DIR}
+	message ""
+	message "Submit a normal job to a CREAM CE"
+	submitTO "8443/cream"
+	if [ $? -eq 1 ] ; then
+		exit_failure ${exit_message}
+	fi
 fi
 
-
-message ""
-message "Submit a normal job to a CREAM-CE"
-set_isbjdl $JDLFILE
-set_requirements "RegExp(\"8443/cream-\",other.GlueCEUniqueID)"
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --nomsg $JDLFILE
-JOBID=$OUTPUT
-sleep 10
-get_CE $JOBID
-verbose "Check if it match a correct CE"
-run_command grep "8443/cream" <<< "$CENAME"
-wait_until_job_finishes $JOBID
-get_STATUS $JOBID
-if [[ "$JOBSTATUS" == "Done (Success)" ]]; then
-  verbose "Retrieve the output"
-  run_command glite-wms-job-output $JOBID
-  check $JOBID
-else
-  message "WARNING Job finishes $JOBSTATUS, cannot retrieve output"
-fi
-	
 
 
 # ... terminate
-
-exit_success
+if [ $? -eq 2 ] ; then
+	exit_warning ${exit_message}
+else
+	exit_success
+fi
