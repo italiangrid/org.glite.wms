@@ -67,7 +67,7 @@ limitations under the License.
 
 // Voms implementation
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
-#include "glite/security/voms/voms_api.h"  // voms parsing
+#include "voms/voms_api.h"  // voms parsing
 
 
 namespace glite {
