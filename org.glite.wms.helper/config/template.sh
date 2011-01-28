@@ -158,10 +158,11 @@ jw_echo() # 1 - msg
   echo "$1" >> "${jw_maradona}"
 }
 
-do_log_event() # 1 - event, 2 - tmplogfile
+do_log_event() # 1 - event, 2 - resultfile, 3 - sequencefile
 {
-  export TMP_SEQUENCE_CODE='`$lb_logevent $1 2>/dev/null`'
+  export TMP_SEQUENCE_CODE=`eval "$lb_logevent $1 2>/dev/null"`
   echo $? >$2
+  echo "$TMP_SEQUENCE_CODE" >$3
 }
 
 log_event() # 1 - event, 2 - sequence code variable
@@ -169,8 +170,9 @@ log_event() # 1 - event, 2 - sequence code variable
   if [ -n "${__gatekeeper_hostname}" ]; then
     export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
   fi
-  export tmp_log_file=`mktemp -q tmp.XXXXXXXXXX`
-  do_log_event "$1" "$tmp_log_file" &
+  export tmp_result_file=`mktemp -q tmp.XXXXXXXXXX`
+  export tmp_sequence_file=`mktemp -q tmp.XXXXXXXXXX`
+  do_log_event "$1" "$tmp_result_file" "$tmp_sequence_file" &
   log_watchdog=$!
   log_timeout=60
   while [ $log_timeout -gt 0 ];
@@ -186,9 +188,9 @@ log_event() # 1 - event, 2 - sequence code variable
     kill_with_children $log_watchdog
     push_in_LM_done_reason "Hanging log"
   fi    
-  log_result=`cat $tmp_log_file 2>/dev/null`
+  log_result=`cat $tmp_result_file 2>/dev/null`
   if [ "$log_result" == "0" ]; then
-    eval "export $2=\"$TMP_SEQUENCE_CODE\""
+    eval "export $2=`cat $tmp_sequence_file`"
   else
     # Try with the locallogger on the LB responsible for the job
     local match_index=`expr match "$GLITE_WMS_JOBID" '[[:alpha:]][[:alnum:]+.-]*://'`
@@ -196,7 +198,7 @@ log_event() # 1 - event, 2 - sequence code variable
     local remaining=${GLITE_WMS_JOBID:${#scheme}:${#GLITE_WMS_JOBID}-${#scheme}}
     local lb_hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
     export GLITE_WMS_LOG_DESTINATION="$lb_hostname"
-    do_log_event "$1" "$tmp_log_file" &
+    do_log_event "$1" "$tmp_result_file" "$tmp_sequence_file" &
     log_watchdog=$!
     log_timeout=60
     while [ $log_timeout -gt 0 ];
@@ -212,9 +214,9 @@ log_event() # 1 - event, 2 - sequence code variable
       kill_with_children $log_watchdog
       push_in_LM_done_reason "Hanging log"
     fi
-    log_result=`cat $tmp_log_file 2>/dev/null`
+    log_result=`cat $tmp_result_file 2>/dev/null`
     if [ "$log_result" == "0" ]; then
-      eval "export $2=\"$TMP_SEQUENCE_CODE\""
+      eval "export $2=`cat $tmp_sequence_file`"
     fi  
   fi
 }
