@@ -2630,7 +2630,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 		setenv(X509_USER_CERT, usercert.c_str(), 1);
 		setenv(X509_USER_KEY, userkey.c_str(), 1);
 
-		if (!wmputilities::doPurge(jobid->toString(), forcePurge)) {
+		if (!wmputilities::doPurge(jobid->toString(), forcePurge, wmputilities::hasParent(status))) {
 			edglog(severe)<<"Unable to complete job purge"<<endl;
 			if (checkstate) {
 				throw JobOperationException(__FILE__, __LINE__,

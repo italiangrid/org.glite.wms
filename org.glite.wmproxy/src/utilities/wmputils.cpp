@@ -827,7 +827,7 @@ resolveIPv4_IPv6(string host_tbr) {
 }
 
 bool
-doPurge(string dg_jobid, bool force)
+doPurge(string dg_jobid, bool force, bool is_parent)
 {
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
@@ -840,8 +840,12 @@ doPurge(string dg_jobid, bool force)
 		if (force){
 			// Forcing purge (needed for dag nodes)
 			return ThePurger.force_dag_node_removal()(jobid::JobId(dg_jobid));
-		}else{
-			return ThePurger(jobid::JobId(dg_jobid));
+		} else {
+			if (is_parent) {
+				return ThePurger.skip_status_checking(true).threshold(0)(jobid::JobId(dg_jobid));
+			} else {
+				return ThePurger(jobid::JobId(dg_jobid));
+			}
 		}
 	} else {
 		edglog(critical)

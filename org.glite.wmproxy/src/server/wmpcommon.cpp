@@ -102,7 +102,7 @@ namespace jobid		= glite::jobid;
 void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gaclAuthorizing)
 {
 	edglog_fn("wmpcommon::checkSecurity");
-	edglog(info)<<"Performing Security cheks"<<endl;
+	edglog(info)<<"Performing Security checks"<<endl;
 	authorizer::WMPAuthorizer auth;
 	string delegatedproxy;
 	if (jid && delegation_id){

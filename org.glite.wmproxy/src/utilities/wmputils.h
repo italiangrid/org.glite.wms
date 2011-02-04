@@ -350,7 +350,7 @@ glite::jobid::JobId getParent(glite::lb::JobStatus status);
  * @param dg_jobid the job identifier representing the job
  * @return true if the method was successfully, false otherwise
  */
-bool doPurge(std::string dg_jobid, bool force);
+bool doPurge(std::string dg_jobid, bool force, bool is_parent = false);
 
 /**
  * Gets the user total available disk quota
