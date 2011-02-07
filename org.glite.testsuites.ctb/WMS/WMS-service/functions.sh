@@ -602,5 +602,6 @@ function wait_until_job_finishes()
 
   done
 
+	return $?
 }
 
