@@ -33,11 +33,17 @@ fi
 
 my_echo "Waiting for suspended job (10s)"
 sleep 10
+i=0
 extract_status $JOBID
-if [ ! "$JOBSTATUS" == "HELD" ]; then
-  COM_OUTPUT="The job is not suspended, status is $JOBSTATUS"
-  return 1
-fi
+while [ "$JOBSTATUS" != "HELD" ] ; do
+	if [ $i -ge $NUM_STATUS_RETRIEVALS ]; then
+  	COM_OUTPUT="TIMEOUT reached! The job is not suspended, status is $JOBSTATUS"
+		return 1
+  fi
+	sleep 5
+	extract_status $JOBID
+	((i++))
+done	
 
 return 0;
 }

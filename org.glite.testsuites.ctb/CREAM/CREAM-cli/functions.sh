@@ -116,6 +116,14 @@ function cleanup()
 	return 0
 }
 
+
+#### remove unwanted spaces before and after $1
+function trim()
+{
+  echo $1 | sed 's/ *$//g' | sed 's/^ *//g'
+}
+
+
 # Execute the given command 
 # Parameter: the command ($@) 
 # Set: COM_OUTPUT with the command output
@@ -180,11 +188,12 @@ function prepare()
   fi
   
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
-  my_echo "+ Test of CREAM-CE  command line interface +"
+  my_echo "+ Test of CREAM-CE command line interface  +"
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
 
   START_TIME=$(date +%H:%M:%S)
   my_echo "Test starts at: $START_TIME"
+	my_echo "CE used: $CREAM"
 
 	# The JDLFILE is required!
   [[ -f "$JDLFILE" ]] || exit_failure "Internal ERROR! Could not find example jdl file $JDLFILE"
@@ -271,18 +280,21 @@ function is_finished()
 # Return: 0 if job finishes successfully; 1 otherwise
 function wait_until_job_finishes()
 {
-# define a short jdl
+
+if [ -z $1 ] ; then
+	# define a jdl
   printf "[
 JobType = \"Normal\";
 Executable = \"/bin/hostname\";
-StdOuput=\"out.txt\";
-StdError=\"err.txt\";
 ]
-" > ${MYTMPDIR}/short.jdl
-
+" > ${MYTMPDIR}/test.jdl
+	JDL=${MYTMPDIR}/test.jdl
+else
+	JDL=$1
+fi
 	i=1
 
-  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/short.jdl
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM $JDL
   if [ $? -ne 0 ]; then
     exit_failure ${COM_OUTPUT}
   fi

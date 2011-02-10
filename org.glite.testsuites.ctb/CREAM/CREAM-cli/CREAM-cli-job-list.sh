@@ -57,7 +57,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check how many jobs are in the output of the status command
-sj=`cat $MYTMPDIR/status_output | grep JobID | wc -l`
+sj=`grep -c JobID $MYTMPDIR/status_output`
 debug "Command returns the status of $sj jobs"
 
 run_command "${TESTCOMMAND} $ENDPOINT > $MYTMPDIR/joblist_output"
@@ -66,7 +66,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check how many jobs are in the output of the job-list command
-lj=`cat $MYTMPDIR/joblist_output | grep http | wc -l`
+lj=`grep -c http $MYTMPDIR/joblist_output`
 debug "Command returns the status of $lj jobs"
 
 if [ $sj -ne $lj ] ; then
@@ -86,7 +86,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check how many jobs are in the output file of the job-list command
-fj=`cat $MYTMPDIR/joblist_file_output | grep http | wc -l`
+fj=`grep -c http $MYTMPDIR/joblist_file_output`
 debug "Command returns the status of $fj jobs"
 
 if [ $sj -ne $fj ] ; then

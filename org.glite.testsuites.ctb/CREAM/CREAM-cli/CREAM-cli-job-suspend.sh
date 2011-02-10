@@ -47,14 +47,20 @@ else
     failure ${COM_OUTPUT}
     ((FAILED++)) # continue
   else
-    sleep 10
-    extract_status $JOBID
-    if [ "$JOBSTATUS" == "HELD" ]; then
-      success
-    else
-      failure "The job is not suspended, status is $JOBSTATUS"
-      ((FAILED++)) # continue
-    fi
+		sleep 10
+		i=0
+		extract_status $JOBID
+		while [ "$JOBSTATUS" != "HELD" ] ; do
+  		if [ $i -ge $NUM_STATUS_RETRIEVALS ]; then
+    		failure "TIMEOUT reached! The job is not suspended, status is $JOBSTATUS"
+    		((FAILED++)) # continue
+				JOBSTATUS="HELD" # force exit
+  		else
+  			sleep 5
+  			extract_status $JOBID
+  			((i++))
+			fi
+		done
   fi
 fi
 
@@ -74,13 +80,19 @@ else
     ((FAILED++)) # continue
   else
     sleep 10
+    i=0
     extract_status $JOBID
-    if [ "$JOBSTATUS" == "HELD" ]; then
-      success
-    else
-      failure "The job is not suspended, status is $JOBSTATUS"
-      ((FAILED++)) # continue
-    fi
+    while [ "$JOBSTATUS" != "HELD" ] ; do
+      if [ $i -ge $NUM_STATUS_RETRIEVALS ]; then
+        failure "TIMEOUT reached! The job is not suspended, status is $JOBSTATUS"
+        ((FAILED++)) # continue
+        JOBSTATUS="HELD" # force exit
+      else
+        sleep 5
+        extract_status $JOBID
+        ((i++))
+      fi
+    done
   fi
 fi
 

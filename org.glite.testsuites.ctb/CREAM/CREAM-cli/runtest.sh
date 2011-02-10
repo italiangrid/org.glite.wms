@@ -15,7 +15,14 @@
 
 prepare $@
 
-TESTLIST="./CREAM-cli-delegation.sh ./CREAM-cli-delegation-renew.sh ./CREAM-cli-job-submit.sh ./CREAM-cli-job-status-simple.sh ./CREAM-cli-job-cancel.sh ./CREAM-cli-job-suspend.sh ./CREAM-cli-job-resume.sh ./CREAM-cli-job-purge.sh ./CREAM-cli-job-list.sh ./CREAM-cli-submission-management.sh ./CREAM-cli-event-query.sh ./CREAM-cli-service-info.sh"
+BS=`echo $CREAM | awk -F"/" '{print $2}' | awk -F"-" '{print $2}'`
+
+
+if [[ $BS == *pbs* ]] || [ $BS == *torque* ] ; then
+	TESTLIST="./CREAM-cli-delegation.sh ./CREAM-cli-delegation-renew.sh ./CREAM-cli-job-submit.sh ./CREAM-cli-job-status-simple.sh ./CREAM-cli-job-status-filtered.sh ./CREAM-cli-job-output.sh ./CREAM-cli-job-cancel.sh ./CREAM-cli-job-purge.sh ./CREAM-cli-job-list.sh ./CREAM-cli-submission-management.sh ./CREAM-cli-event-query.sh ./CREAM-cli-service-info.sh"
+else
+	TESTLIST="./CREAM-cli-delegation.sh ./CREAM-cli-delegation-renew.sh ./CREAM-cli-job-submit.sh ./CREAM-cli-job-status-simple.sh ./CREAM-cli-job-status-filtered.sh ./CREAM-cli-job-output.sh ./CREAM-cli-job-cancel.sh ./CREAM-cli-job-suspend.sh ./CREAM-cli-job-resume.sh ./CREAM-cli-job-purge.sh ./CREAM-cli-job-list.sh ./CREAM-cli-submission-management.sh ./CREAM-cli-event-query.sh ./CREAM-cli-service-info.sh"
+fi 
 
 FAILED=0
 
