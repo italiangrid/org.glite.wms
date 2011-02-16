@@ -126,6 +126,10 @@ AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
 AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
 AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
 
+#Workaround for SL5-EPEL
+AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
+AC_SUBST([initdir], [${RCINITDIR:-init.d}])
+
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])

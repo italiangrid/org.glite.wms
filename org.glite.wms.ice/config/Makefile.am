@@ -8,7 +8,7 @@
 
 EXTRA_DIST = glite-wms-ice.in
 
-icedir = $(sysconfdir)/init.d
+icedir = $(sysconfdir)/$(initdir)
 ice_SCRIPTS = glite-wms-ice
 
 CLEANFILES =
