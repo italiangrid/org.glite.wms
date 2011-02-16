@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.3  2011/02/16 15:52:04  pandreet
+#       Path for init-script is relocatable
+#
 #       Revision 1.22.2.16.6.2  2011/01/05 11:10:57  pandreet
 #       Pkg-config support for jss
 #
@@ -236,6 +239,10 @@ AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 AC_ARES
+
+#Workaround for SL5-EPEL
+AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
+AC_SUBST([initdir], [${RCINITDIR:-init.d}])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
