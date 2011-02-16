@@ -18,7 +18,7 @@ wletcwm_DATA = glite_wms_wmproxy_httpd.conf glite_wms_wmproxy.gacl wmproxy_logro
 wletcwmsdir = $(sysconfdir)/lcmaps
 wletcwms_DATA = lcmaps.db 
 
-wlinidir = $(sysconfdir)/init.d
+wlinidir = $(sysconfdir)/$(initdir)
 wlini_SCRIPTS = glite-wms-wmproxy
 
 install-data-hook:

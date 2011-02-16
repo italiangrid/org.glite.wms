@@ -207,6 +207,10 @@ AC_SEC_LCAS
 AC_SEC_LCMAPS
 AC_SEC_LCMAPS_WITHOUT_GSI
 
+#Workaround for SL5-EPEL
+AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
+AC_SUBST([initdir], [${RCINITDIR:-init.d}])
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
