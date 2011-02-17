@@ -144,8 +144,9 @@ fi
 myecho "Did nor receive mapping, which is correct behaviour."
 
 myecho "Testing against a fake host"
-CMD="$JAVACLI --capath /etc/grid-security/certificates/ --certchain $PROXY --cert $CERT --key $KEY --keypasswd "test" --pepd https://fakehost.cern.ch:8154/authz --resourceid test --actionid test"
-$CMD 2>&1 | grep "No PEP daemon(s) \[[^]]*\] was able to process the request" > /dev/null; result=$?
+CMD="$JAVACLI -v --capath /etc/grid-security/certificates/ --certchain $PROXY --cert $CERT --key $KEY --keypasswd "test" --pepd https://fakehost.cern.ch:8154/authz --resourceid test --actionid test"
+# echo $CMD; $CMD
+$CMD 2>&1 | grep "couldn't resolve host name" > /dev/null; result=$?
 
 if [ $result -ne 0 ]
 then
@@ -155,7 +156,7 @@ fi
 myecho "Reported error for nonexisting Host"
 
 myecho "Testing without a certificate"
-CMD="$JAVACLI --capath /etc/grid-security/certificates/ --certchain $PROXY --cert ~/.globus/nosuchcert.pem --key $KEY --keypasswd "test" --pepd https://$server:8154/authz --resourceid test --actionid test"
+CMD="$JAVACLI -v --capath /etc/grid-security/certificates/ --certchain $PROXY --cert ~/.globus/nosuchcert.pem --key $KEY --keypasswd "test" --pepd https://$server:8154/authz --resourceid test --actionid test"
 
 $CMD 2>&1 | grep 'No such file' > /dev/null; result=$?
 
