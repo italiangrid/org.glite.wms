@@ -970,8 +970,9 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	vector<string> jobids(wmplogger.generateSubjobsIds(jid.get(), dag->size()));
 	ExpDagAd dg(*dag);
 	unsigned int size = dg.getNodes().size();
+	vector<string> dag_nodes(dg.getNodes());
 	for (unsigned int i = 0; i < size; ++i) {
-		NodeAd nodead = dg.getNode(dg.getNodes()[i]);
+		NodeAd nodead = dg.getNode(dag_nodes[i]);
 		if (nodead.ad()) {
 			if (!nodead.hasAttribute(JDL::JOBID)){
 				nodead.setAttribute(JDL::JOBID, jobids[i]);
@@ -981,7 +982,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
                         		"jobid attribute already exists");
 			}
 		}
-		dag->replaceNode(dg.getNodes()[i], nodead);
+		dag->replaceNode(dag_nodes[i], nodead);
 	} 
 
 	wmplogger.registerDag(jid.get(), dag, wmputilities::getJobJDLToStartPath(*jid, true));
@@ -1580,9 +1581,11 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			string document_root = getenv(DOCUMENT_ROOT);
 			edglog(debug)<<"Creating sub job directories for job " <<parentjobid.toString()<<endl;
 			vector<string> jobids;
-			unsigned int size = dag.getNodes().size();
+			ExpDagAd dg(dag);
+			unsigned int size = dg.getNodes().size();
+			vector<string> dag_nodes(dg.getNodes());
 			for (unsigned int i = 0; i < size; ++i) {
-				string jobidstring = dag.getNodeAttribute(dag.getNodes()[i], JDL::JOBID);
+				string jobidstring = dag.getNodeAttribute(dag_nodes[i], JDL::JOBID);
 				jobids.push_back(jobidstring);
 			}
 			wmputilities::managedir(document_root, userid, jobdiruserid, jobids, wmputilities::DIRECTORY_OUTPUT);
@@ -1607,10 +1610,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                 		parentIsbSize = inputsburi.size();
             		}
 
-			ExpDagAd dg(dag);
 			for (unsigned int i = 0; i < size; ++i) {
 
-				NodeAd nodead = dg.getNode(dg.getNodes()[i]);
+				NodeAd nodead = dg.getNode(dag_nodes[i]);
 				jobidstring = nodead.getString(JDL::JOBID);
 
 				dest_uri = getDestURI(jobidstring, conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -1762,7 +1764,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					throw JobOperationException(__FILE__, __LINE__,
 						"submit()", wmputilities::WMS_JDL_PARSING,msg);
 				}
-				dag.replaceNode(dg.getNodes()[i], nodead);
+				dag.replaceNode(dag_nodes[i], nodead);
 			}
 // END Iterate over DAG children
 
