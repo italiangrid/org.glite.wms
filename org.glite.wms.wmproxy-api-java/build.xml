@@ -55,7 +55,7 @@ util-java.location            =${util-java.location}
         <fileset dir="${axis.location}/lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="${glite.location}/share/java">
+        <fileset dir="${glite.location}/usr/share/java">
             <include name="glite-security-trustmanager.jar"/>
             <include name="glite-security-delegation-java.jar"/>
             <include name="glite-security-util-java.jar"/>
