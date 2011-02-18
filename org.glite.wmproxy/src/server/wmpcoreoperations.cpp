@@ -184,7 +184,7 @@ const string &jdl, JobAd *jad);
 pair<string, string> regist(jobRegisterResponse &jobRegister_response,
 authorizer::WMPAuthorizer *auth, const string &delegation_id,
 const string &delegatedproxy, const string &delegatedproxyfqan,
-const string &jdl, WMPExpDagAd *dag, JobAd *jad = NULL);
+const string &jdl, WMPExpDagAd *dag);
 
 void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 eventlogger::WMPEventLogger &wmplogger, bool issubmit = false);
@@ -359,13 +359,14 @@ void
 jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 string &delegation_id)
 {
-GLITE_STACK_TRY("jobRegister()");
-edglog_fn("wmpcoreoperations::jobRegister");
-// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
-initWMProxyOperation("jobRegister");
+	GLITE_STACK_TRY("jobRegister()");
+	edglog_fn("wmpcoreoperations::jobRegister");
 
-// Checking delegation id
-edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("jobRegister");
+
+	// Checking delegation id
+	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
 
 if (delegation_id == "") {
 #ifndef GRST_VERSION
@@ -714,10 +715,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 const string &delegation_id, const string &delegatedproxy,
 const string &delegatedproxyfqan, const string &jdl, JobAd *jad)
 {
-GLITE_STACK_TRY("regist()");
-edglog_fn("wmpcoreoperations::regist JOB");
+	GLITE_STACK_TRY("regist()");
+	edglog_fn("wmpcoreoperations::regist JOB");
 
-if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
+	if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
 	if (!jad->hasAttribute(JDL::SHHOST)) {
 		string msg = "Mandatory attribute " + JDL::SHHOST + " not set";
 		edglog(error)<<msg<<endl;
@@ -748,44 +749,39 @@ if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
 		+ pipepath + ".in");
 	jad->addAttribute(JDL::ENVIRONMENT, string(GRID_CONSOLE_STDOUT) + "="
 		+ pipepath + ".out");
-} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)) {
-	// CHECKPOINTABLE Jobs ARE DEPRECATED!!!
-	string msg = "Checkpointable Jobs are Deprecated";
-	edglog(error)<< msg << endl;
-	throw JobOperationException(__FILE__, __LINE__,
-		"regist()", wmputilities::WMS_JDL_PARSING,msg);
-}
+	} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)) {
+		// CHECKPOINTABLE Jobs ARE DEPRECATED!!!
+		string msg = "Checkpointable Jobs are Deprecated";
+		edglog(error)<< msg << endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"regist()", wmputilities::WMS_JDL_PARSING,msg);
+	}
 
-// Creating unique identifier
-JobId *jid = NULL;
+	std::pair<std::string, int> lbaddress_port;
 
-std::pair<std::string, int> lbaddress_port;
+	// Checking for attribute JDL::LB_ADDRESS
+	if (jad->hasAttribute(JDL::LB_ADDRESS)) {
+		string lbaddressport = jad->getString(JDL::LB_ADDRESS);
+		wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
+	} else {
+		//lbaddress_port = conf.getLBServerAddressPort();
+		lbaddress_port = lbselector.selectLBServer();
+	}
+	std::auto_ptr<JobId> jid;
+	if (lbaddress_port.second == 0) {
+		jid.reset(new JobId(lbaddress_port.first));
+	} else {
+		jid.reset(new JobId(lbaddress_port.first, lbaddress_port.second));
+	}
+	string stringjid = jid->toString();
+	edglog(info)<<"Registering id: "<<stringjid<<endl;
 
-// Checking for attribute JDL::LB_ADDRESS
-if (jad->hasAttribute(JDL::LB_ADDRESS)) {
-	string lbaddressport = jad->getString(JDL::LB_ADDRESS);
-	wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
-} else {
-	//lbaddress_port = conf.getLBServerAddressPort();
-	lbaddress_port = lbselector.selectLBServer();
-}
-edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
-edglog(debug)<<"LB Port: "
-	<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
-if (lbaddress_port.second == 0) {
-	jid = new JobId(lbaddress_port.first);
-} else {
-	jid = new JobId(lbaddress_port.first, lbaddress_port.second);
-}
-string stringjid = jid->toString();
-edglog(info)<<"Registering id: "<<stringjid<<endl;
-
-// Getting Input Sandbox Destination URI
-string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
+	// Getting Input Sandbox Destination URI
+	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 	conf.getDefaultPort());
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 
-	setAttributes(jad, jid, dest_uri, delegatedproxyfqan);
+	setAttributes(jad, jid.get(), dest_uri, delegatedproxyfqan);
 
 	edglog(debug)<<"Endpoint: "<<wmputilities::getEndpoint()<<endl;
 	// Initializing logger
@@ -795,8 +791,13 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
-	wmplogger.registerJob(jad, jid, wmputilities::getJobJDLToStartPath(*jid, true));
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.registerJob(jad, jid.get(), wmputilities::getJobJDLToStartPath(*jid, true));
+	wmplogger.init(
+		lbaddress_port.first,
+		lbaddress_port.second,
+		jid.get(),
+		conf.getDefaultProtocol(),
+		conf.getDefaultPort());
         char* seqcode = wmplogger.getSequence();
         if (seqcode) {
                 jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
@@ -826,8 +827,6 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		jad->toLines());
 
-	delete jid;
-
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
 	job_id_struct->id = stringjid;
@@ -842,10 +841,6 @@ string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 
 	GLITE_STACK_CATCH();
 }
-
-
-
-
 
 void
 setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
@@ -925,42 +920,31 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 pair<string, string>
 regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *auth,
 	const string &delegation_id, const string &delegatedproxy,
-	const string &delegatedproxyfqan, const string &jdl, WMPExpDagAd *dag,
-	JobAd *jad)
+	const string &delegatedproxyfqan, const string &jdl, WMPExpDagAd *dag)
 {
 	GLITE_STACK_TRY("regist()");
 	edglog_fn("wmpcoreoperations::regist DAG");
 
-	// Creating unique identifier
-	JobId *jid = new JobId();
-
 	std::pair<std::string, int> lbaddress_port;
 
-	// Checking for attribute JDL::LB_ADDRESS
-	if (jad) {
-		if (jad->hasAttribute(JDL::LB_ADDRESS)) {
-			string lbaddressport = jad->getString(JDL::LB_ADDRESS);
-			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
-		} else {
-		 	//lbaddress_port = conf.getLBServerAddressPort();
-		 	lbaddress_port = lbselector.selectLBServer();
-		}
+	if (dag->hasAttribute(JDL::LB_ADDRESS)) {
+		string lbaddressport = dag->getString(JDL::LB_ADDRESS);
+		wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 	} else {
-		if (dag->hasAttribute(JDL::LB_ADDRESS)) {
-			string lbaddressport = dag->getString(JDL::LB_ADDRESS);
-			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
-		} else {
-		 	//lbaddress_port = conf.getLBServerAddressPort();
-		 	lbaddress_port = lbselector.selectLBServer();
-		}
+	 	//lbaddress_port = conf.getLBServerAddressPort();
+	 	lbaddress_port = lbselector.selectLBServer();
 	}
+
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
 	edglog(debug)<<"LB Port: "
 		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
+	// Creating unique identifier
+	std::auto_ptr<JobId> jid; 
+
 	if (lbaddress_port.second == 0) {
-		jid = new JobId(lbaddress_port.first);
+		jid.reset(new JobId(lbaddress_port.first));
 	} else {
-		jid = new JobId(lbaddress_port.first, lbaddress_port.second);
+		jid.reset(new JobId(lbaddress_port.first, lbaddress_port.second));
 	}
 	string stringjid = jid->toString();
 	edglog(info)<<"Registering job id: "<<stringjid<<endl;
@@ -970,34 +954,39 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	wmplogger.setUserProxy(delegatedproxy);
 	wmplogger.setBulkMM(configuration::Configuration::instance()->wm()->enable_bulk_mm());
 
-	vector<string> jobids;
-	if (jad) {
-		// PArtitionable jobs registration......
-		// PARTITIONABLE Jobs ARE DEPRECATED!!!
-		string msg = "Partitionable Jobs are Deprecated";
-		edglog(error)<< msg << endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobregister()", wmputilities::WMS_JDL_PARSING,msg);
-	} else {
-		// Setting job identifier
-		edglog(debug)<<"Setting attribute WMPExpDagAd::EDG_JOBID"<<endl;
-		if (dag->hasAttribute(JDL::JOBID)) {
-			//dag->removeAttribute(JDL::JOBID);
-		}
-		dag->setAttribute(WMPExpDagAd::EDG_JOBID, stringjid);
-
-		// Inserting Proxy VO if not present in original jdl file
-		edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
-		if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
-			dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
-		}
-        	jobids = wmplogger.generateSubjobsIds(jid, dag->size());
+	// Setting job identifier
+	edglog(debug)<<"Setting attribute WMPExpDagAd::EDG_JOBID "<< stringjid << endl;
+	if (dag->hasAttribute(JDL::JOBID)) {
+		//dag->delAttribute(JDL::JOBID);
 	}
-       	dag->setJobIds(jobids);
+	dag->setAttribute(WMPExpDagAd::EDG_JOBID, stringjid);
 
-	wmplogger.registerDag(jid, dag, wmputilities::getJobJDLToStartPath(*jid, true));
+	// Inserting Proxy VO if not present in original jdl file
+	edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
+	if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
+		dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
+	}
+
+	vector<string> jobids(wmplogger.generateSubjobsIds(jid.get(), dag->size()));
+	ExpDagAd dg(*dag);
+	unsigned int size = dg.getNodes().size();
+	for (unsigned int i = 0; i < size; ++i) {
+		NodeAd nodead = dg.getNode(dg.getNodes()[i]);
+		if (nodead.ad()) {
+			if (!nodead.hasAttribute(JDL::JOBID)){
+				nodead.setAttribute(JDL::JOBID, jobids[i]);
+			} else {
+                		throw JobOperationException(__FILE__, __LINE__,
+                        		"regist()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+                        		"jobid attribute already exists");
+			}
+		}
+		dag->replaceNode(dg.getNodes()[i], nodead);
+	} 
+
+	wmplogger.registerDag(jid.get(), dag, wmputilities::getJobJDLToStartPath(*jid, true));
 	lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	char* seqcode = wmplogger.getSequence();
         if (seqcode) {
@@ -1008,7 +997,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 		conf.getDefaultPort());
 	edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
-	setAttributes(dag, jid, dest_uri, delegatedproxyfqan);
+	setAttributes(dag, jid.get(), dest_uri, delegatedproxyfqan);
 
 	// It is used also for attribute inheritance
 	//dag->toString(ExpDagAd::SUBMISSION);
@@ -1022,29 +1011,17 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 
 	// Creating private job directory with delegated Proxy
-	/***if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
-		// Creating job directories only for the parent. -> empty vector.
-		vector<string> emptyvector;
-		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector,
-			jdl, renewalproxy);
-	} else {***/
-		// Sub jobs directory MUST be created now
-		setJobFileSystem(auth, delegatedproxy, stringjid, jobids,
-			jdl, renewalproxy);
-	/***}***/
+	// Sub jobs directory MUST be created now
+	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
 
 	string dagjdl = dag->toString(ExpDagAd::MULTI_LINES);
-	pair<string, string> returnpair;
-	returnpair.first = stringjid;
-	returnpair.second = dagjdl;
+	pair<string, string> returnpair(pair<string, string>(stringjid,  dagjdl));
 
 	// Writing registered JDL (to start)
 	edglog(debug)<<"Writing jdl to start file: "
 		<<wmputilities::getJobJDLToStartPath(*jid)<<endl;
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		dagjdl);
-
-	delete jid;
 
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
@@ -1108,9 +1085,9 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 {
 	GLITE_STACK_TRY("jobStart()");
 	edglog_fn("wmpcoreoperations::jobStart");
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobStart");
-	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 
 	JobId *jid = new JobId(job_id);
 	// checkSecurity(jid, NULL, true);  delegated proxy and auth needed TODO
@@ -1224,7 +1201,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	// File descriptor to control mutual exclusion in start operation
 	int fd = -1;
 
-	try {
 		edglog_fn("wmpcoreoperations::submit");
 
 		if (issubmit) {
@@ -1258,7 +1234,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			fromclient = getenv("REMOTE_ADDR");
 		}
 
-		// SYNCH log
+		// SYNC log
 		int error = wmplogger.logAcceptEventSync(fromclient);
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
@@ -1274,7 +1250,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				"unable to complete operation");
 		}
 
-		// ASYNCH log TODO
+		// ASYNC log TODO
 		/*try {
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
 				fromclient, true, true);
@@ -1313,6 +1289,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		int type = getType(jdl);
 		if (type == TYPE_JOB) {
 // ==========   TYPE is a JOB   ==========
+			try {
 			JobAd jad(jdl);
 			jad.setLocalAccess(false);
 			// Getting Input Sandbox Destination URI
@@ -1507,20 +1484,71 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			jad.setAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			// jdltostart MUST contain last seqcode
 			jdltostart = jad.toString();
-			// /_
+			} catch (RequestAdException &exc) {
+				// Something has gone bad!
+				edglog(error)<< exc.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+				exc.what(), true, true, filelist_global.c_str(),
+				wmputilities::getJobJDLToStartPath(*jid).c_str());
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
+					exc.what(), true, true);
+		
+			if (!issubmit) {
+				edglog(debug)<<"Removing lock..."<<std::endl;
+				wmputilities::operationUnlock(fd);
+			}
+			if (!conf.getAsyncJobStart()) {
+				exc.push_back(__FILE__, __LINE__, "submit()");
+				throw exc;
+			}
+			} catch (JobOperationException &exc) {
+				edglog(error)<<"Logging LOG_ENQUEUE_FAIL, exception JobOperationException "<< exc.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+					exc.what(), true, true, filelist_global.c_str(),
+					wmputilities::getJobJDLToStartPath(*jid).c_str());
+
+				if (!issubmit) {
+					edglog(debug)<<"Removing lock..."<<std::endl;
+					wmputilities::operationUnlock(fd);
+				}
+
+				if (!conf.getAsyncJobStart()) {
+					exc.push_back(__FILE__, __LINE__, "submit()");
+					throw exc;
+				}
+				return;
+			} catch (exception &ex) {
+				edglog(error)<<"Logging LOG_ENQUEUE_FAIL, std::exception "<< ex.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+					ex.what(), true, true, filelist_global.c_str(),
+					wmputilities::getJobJDLToStartPath(*jid).c_str());
+
+				if (!issubmit) {
+					edglog(debug)<<"Removing lock..."<<std::endl;
+					wmputilities::operationUnlock(fd);
+				}
+
+				if (!conf.getAsyncJobStart()) {
+					JobOperationException exc(__FILE__, __LINE__, "submit()", 0,
+						"Standard exception: " + std::string(ex.what()));
+					throw exc;
+			}
+			return;
+			}
 // ==========   END TYPE is a JOB ==========
 		} else {
 // ==========   TYPE is a DAG   ==========
 
 			WMPExpDagAd dag (jdl);
 			dag.setLocalAccess(false);
+
 			JobIdStruct jobidstruct;
 			dag.getJobIdStruct(jobidstruct);
 			JobId parentjobid = jobidstruct.jobid;
-			vector<JobIdStruct*> children = jobidstruct.children;
 
 			// [ Creating 'output' and 'peek' sub job directories
-			vector<string> jobids = wmplogger.generateSubjobsIds(jid, dag.size()); //Filling wmplogger subjobs
+			string jobidstring;
+			try {
 			// Getting LCMAPS mapped User ID
 			uid_t jobdiruserid = auth->getUserId();
 			edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
@@ -1528,7 +1556,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			uid_t userid = getuid();
 
 	        	// Logging Server User ID on syslog
-
        			char time_string[80];
         		struct timeval tv;
         		struct tm* ptm;
@@ -1542,23 +1569,29 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
         		userid_log += " : ";
         		userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
 		        userid_log += " ";
+
+			JobIdStruct jobidstruct;
+			dag.getJobIdStruct(jobidstruct);
+			JobId parentjobid = jobidstruct.jobid;
+
 			userid_log += "jobid="+parentjobid.toString();
 
         		syslog(LOG_NOTICE,"%s",userid_log.c_str());
-
-
 			string document_root = getenv(DOCUMENT_ROOT);
-			edglog(debug)<<"Creating sub job directories for job:\n"
-				<<parentjobid.toString()<<endl;
-			// N.B. jobids vector is generated by generateSubjobsIds!!
-			wmputilities::managedir(document_root, userid, jobdiruserid, jobids,wmputilities::DIRECTORY_OUTPUT);
+			edglog(debug)<<"Creating sub job directories for job " <<parentjobid.toString()<<endl;
+			vector<string> jobids;
+			unsigned int size = dag.getNodes().size();
+			for (unsigned int i = 0; i < size; ++i) {
+				string jobidstring = dag.getNodeAttribute(dag.getNodes()[i], JDL::JOBID);
+				jobids.push_back(jobidstring);
+			}
+			wmputilities::managedir(document_root, userid, jobdiruserid, jobids, wmputilities::DIRECTORY_OUTPUT);
 
 			char * seqcode = wmplogger.getSequence();
 			edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
 			// force SDJ required inheritance rules #bug 39217
 			dag.inherit(JDL::REQUIREMENTS);
 
-			string jobidstring;
 			string dest_uri;
 			string peekdir;
 			// Storing parent OSB_BASE_DEST_URI
@@ -1574,26 +1607,26 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                 		parentIsbSize = inputsburi.size();
             		}
 
-			vector<JobIdStruct*>::iterator iter = children.begin();
-			vector<JobIdStruct*>::iterator const end = children.end();
-// Iterate over DAG children
-			for (; iter != end; ++iter) {
-				JobId subjobid = (*iter)->jobid;
-				jobidstring = subjobid.toString();
-				dest_uri = getDestURI(jobidstring, conf.getDefaultProtocol(),
-					conf.getDefaultPort());
+			ExpDagAd dg(dag);
+			for (unsigned int i = 0; i < size; ++i) {
+
+				NodeAd nodead = dg.getNode(dg.getNodes()[i]);
+				jobidstring = nodead.getString(JDL::JOBID);
+
+				dest_uri = getDestURI(jobidstring, conf.getDefaultProtocol(), conf.getDefaultPort());
 				edglog(debug)<<"Setting internal attributes for sub job: "
 					<<jobidstring<<endl;
 				edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 
-				NodeAd nodead = dag.getNode(subjobid);
-				// Adding WMPISB_BASE_URI, INPUT_SANDBOX_PATH, OUTPUT_SANDBOX_PATH  & USERPROXY
 				edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
 				nodead.setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
+
 			        edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
 				nodead.setAttribute(JDLPrivate::INPUT_SANDBOX_PATH,getInputSBDirectoryPath(jobidstring));
+
 		        	edglog(debug)<<"Setting attribute JDLPrivate::OUTPUT_SANDBOX_PATH"<<endl;
 				nodead.setAttribute(JDLPrivate::OUTPUT_SANDBOX_PATH,getOutputSBDirectoryPath(jobidstring));
+
 		        	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 		        	nodead.setAttribute(JDLPrivate::USERPROXY,getJobDelegatedProxyPath(jobidstring));
 
@@ -1622,9 +1655,11 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                                                       wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of input sandbox files is reached");
                                         }
                                 }
+
   		                classad::ExprTree* wms_requirements = 
     		                  (*configuration::Configuration::instance()->wm()).wms_requirements();
                                 append_requirements(&nodead, wms_requirements);
+
 				// Adding OutputSandboxDestURI attribute
 		        	if (nodead.hasAttribute(JDL::OUTPUTSB)) {
 					vector<string> osbdesturi;
@@ -1680,11 +1715,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						}
 					}
 				}
+
                                 if (wms_requirements) {
-                                  nodead.setDefaultReq(wms_requirements);
+					nodead.setDefaultReq(wms_requirements);
                                 }
+
 				// Adding attributes for perusal functionalities
-				peekdir = wmputilities::getPeekDirectoryPath(subjobid);
+				peekdir = wmputilities::getPeekDirectoryPath(JobId(jobidstring));
 				if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
 					if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
 						string protocol = conf.getDefaultProtocol();
@@ -1725,21 +1762,16 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					throw JobOperationException(__FILE__, __LINE__,
 						"submit()", wmputilities::WMS_JDL_PARSING,msg);
 				}
-				dag.replaceNode(subjobid, nodead);
+				dag.replaceNode(dg.getNodes()[i], nodead);
 			}
 // END Iterate over DAG children
 
 			//TBD Change getSubmissionStrings() with a better method when coded??
 			//Done here, Not done during register any more.
 			dag.getSubmissionStrings();
-
- 			iter = children.begin();
-
 			if (maxInputSandboxFiles > 0) {
-                        	for (; iter != end; ++iter) {
-                                	JobId subjobid = (*iter)->jobid;
-					NodeAd nodead = dag.getNode(subjobid);
-
+				for (unsigned int i = 0; i < size; ++i) {
+					NodeAd nodead = dag.getNode(dag.getNodes()[i]);
 					if (nodead.hasAttribute(JDL::INPUTSB)) {
 
 						vector<string> inputsburi = nodead.getStringValue(JDL::INPUTSB);
@@ -1773,9 +1805,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			}
 
 			wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
-			// TODO moved after operation request written to FL
-			//Registering subjobs
-			//vector<string> jobids = wmplogger.generateSubjobsIds(dag.size()); //Filling wmplogger subjobs
 			string flagfile = wmputilities::getJobDirectoryPath(*jid)
 				+ FILE_SEPARATOR + FLAG_FILE_REGISTER_SUBJOBS;
 			if (!wmputilities::fileExists(flagfile)) {
@@ -1820,11 +1849,66 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			if (dag.hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 				dag.removeAttribute(JDL::LB_SEQUENCE_CODE);
 			}
+
 			dag.setReserved(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			// jdltostart MUST contain last seqcode
 			jdltostart = dag.toString();
 			jdlpath = wmputilities::getJobJDLToStartPath(*jid);
-			// /_
+			} catch (RequestAdException &exc) {
+
+				// Something has gone bad!
+				edglog(error)<< exc.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+				exc.what(), true, true, filelist_global.c_str(),
+				wmputilities::getJobJDLToStartPath(*jid).c_str());
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
+					exc.what(), true, true);
+		
+				// Forcing Abort log for each node of the DAG/Collection bug 40982
+				// TODO: what if the exception is raised before the subjobids have been registered?
+				std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+				unsigned int size = dag.getNodes().size();
+				for (unsigned int i = 0; i < size; ++i) {
+					JobId subjobid(dag.getNodeAttribute(dag.getNodes()[i], JDL::JOBID));
+					wmplogger.init(lbaddress_port.first, lbaddress_port.second,
+						&subjobid, conf.getDefaultProtocol(), conf.getDefaultPort());
+					wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT, exc.what(), true, true);
+				}
+
+				if (!issubmit) {
+					edglog(debug)<<"Removing lock..."<<std::endl;
+					wmputilities::operationUnlock(fd);
+				}
+				exc.push_back(__FILE__, __LINE__, "submit()");
+				throw exc;
+			} catch (JobOperationException &exc) {
+				edglog(error)<<"Logging LOG_ENQUEUE_FAIL, exception JobOperationException "<< exc.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+					exc.what(), true, true, filelist_global.c_str(),
+					wmputilities::getJobJDLToStartPath(*jid).c_str());
+
+				if (!issubmit) {
+					edglog(debug)<<"Removing lock..."<<std::endl;
+					wmputilities::operationUnlock(fd);
+				}
+
+				exc.push_back(__FILE__, __LINE__, "submit()");
+				throw exc;
+			} catch (exception &ex) {
+				edglog(error)<<"Logging LOG_ENQUEUE_FAIL, std::exception "<< ex.what() <<std::endl;
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+					ex.what(), true, true, filelist_global.c_str(),
+					wmputilities::getJobJDLToStartPath(*jid).c_str());
+
+				if (!issubmit) {
+					edglog(debug)<<"Removing lock..."<<std::endl;
+					wmputilities::operationUnlock(fd);
+				}
+
+				JobOperationException exc(__FILE__, __LINE__, "submit()", 0,
+					"Standard exception: " + std::string(ex.what()));
+				throw exc;
+			}
 		}
 // ==========   END TYPE is a DAG   ==========
 		// Perform ADDITIONAL chekcs
@@ -1856,77 +1940,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		wmputilities::operationUnlock(fd);
 		}
 
-	} catch (RequestAdException &exc) {
-		// Something has gone bad!
-		edglog(error)<<"Error while checking JDL: "<< exc.what() <<std::endl;
-		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			exc.what(), true, true, filelist_global.c_str(),
-			wmputilities::getJobJDLToStartPath(*jid).c_str());
-		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
-				exc.what(), true, true);
-		
-		// Forcing Abort log for each node of the DAG/Collection bug 40982
-		int type = getType(jdl);
-		if (type != TYPE_JOB) {
-			
-			WMPExpDagAd dag (jdl);
-                        dag.setLocalAccess(false);
-                        JobIdStruct jobidstruct;
-                        dag.getJobIdStruct(jobidstruct);
-                        vector<JobIdStruct*> children = jobidstruct.children;
-			vector<JobIdStruct*>::iterator iter = children.begin();
-                        vector<JobIdStruct*>::iterator const end = children.end();
-
-		        std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-
-			for (; iter != end; ++iter) {
-				JobId * subjobid = new JobId ((*iter)->jobid);
-				wmplogger.init(lbaddress_port.first, lbaddress_port.second, subjobid, conf.getDefaultProtocol(), conf.getDefaultPort());
-				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT, exc.what(), true, true);
-				free(subjobid);
-			}
-		}
-
-		if (!issubmit) {
-			edglog(debug)<<"Removing lock..."<<std::endl;
-			wmputilities::operationUnlock(fd);
-		}
-		if (!conf.getAsyncJobStart()) {
-			exc.push_back(__FILE__, __LINE__, "submit()");
-			throw exc;
-		}
-	} catch (JobOperationException &exc) {
-		edglog(error)<<"Logging LOG_ENQUEUE_FAIL, exception JobOperationException "<< exc.what() <<std::endl;
-		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			exc.what(), true, true, filelist_global.c_str(),
-			wmputilities::getJobJDLToStartPath(*jid).c_str());
-
-		if (!issubmit) {
-			edglog(debug)<<"Removing lock..."<<std::endl;
-			wmputilities::operationUnlock(fd);
-		}
-
-		if (!conf.getAsyncJobStart()) {
-			exc.push_back(__FILE__, __LINE__, "submit()");
-			throw exc;
-		}
-	} catch (exception &ex) {
-		edglog(error)<<"Logging LOG_ENQUEUE_FAIL, std::exception "<< ex.what() <<std::endl;
-		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			ex.what(), true, true, filelist_global.c_str(),
-			wmputilities::getJobJDLToStartPath(*jid).c_str());
-
-		if (!issubmit) {
-			edglog(debug)<<"Removing lock..."<<std::endl;
-			wmputilities::operationUnlock(fd);
-		}
-
-		if (!conf.getAsyncJobStart()) {
-			JobOperationException exc(__FILE__, __LINE__, "submit()", 0,
-				"Standard exception: " + std::string(ex.what()));
-			throw exc;
-		}
-	}
 }
 
 
@@ -2007,6 +2020,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpcoreoperations::jobSubmit");
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobSubmit");
 
@@ -2032,7 +2046,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	// - delegatedproxy, delegatedproxyfqan, auth  needed/reused
 	//** Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
+	boost::scoped_ptr<authorizer::WMPAuthorizer> auth(new authorizer::WMPAuthorizer());
 
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
@@ -2060,23 +2074,23 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	// Checking proxy validity
 	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+
 	// Registering the job for submission
 	jobRegisterResponse jobRegister_response;
 	pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
-		delegation_id, delegatedproxy, delegatedproxyfqan, auth);
-
+		delegation_id, delegatedproxy, delegatedproxyfqan, auth.get());
 
 	// Getting job identifier from register response
 	string jobid = reginfo.first;
 	edglog(debug)<<"Starting registered job: "<<jobid<<endl;
 
 	// Starting job submission
-	JobId *jid = new JobId(jobid);
+	boost::scoped_ptr<JobId> jid(new JobId(jobid));
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 
 	// Getting delegated proxy inside job directory
@@ -2112,13 +2126,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		}
 	}
 
-	submit(reginfo.second, jid, auth, wmplogger, true);
-
-	if (auth) {
-		delete auth;
-	}
-	delete jid;
-
+	submit(reginfo.second, jid.get(), auth.get(), wmplogger, true);
 	GLITE_STACK_CATCH();
 }
 
@@ -2129,6 +2137,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
 {
         GLITE_STACK_TRY("jobSubmit()");
         edglog_fn("wmpcoreoperations::jobSubmit");
+
         // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
         initWMProxyOperation("jobSubmit");
 
@@ -2250,9 +2259,9 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 {
 	GLITE_STACK_TRY("jobCancel()");
 	edglog_fn("wmpcoreoperations::jobCancel");
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobCancel");
-	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 
 	JobId *jid = new JobId(job_id);
 	// wmpcommon perform all security checks
@@ -2486,6 +2495,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, "
 		"const string &jdl, const string &delegation_id)");
 	edglog_fn("wmpcoreoperations::jobListMatch");
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobListMatch");
 
@@ -2662,9 +2672,9 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 {
 	GLITE_STACK_TRY("jobPurge()");
 	edglog_fn("wmpcoreoperations::jobPurge");
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobPurge");
-	edglog(debug)<<"Operation requested for job: "<<jid<<endl;
 
 	JobId *jobid = new JobId(jid);
 

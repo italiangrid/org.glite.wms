@@ -65,12 +65,6 @@ extern long servedrequestcount_global;
 extern std::string sandboxdir_global;
 extern std::string dispatcher_type_global;
 
-// duplicated info (wmsutils&wmscommon)
-const int SUCCESS = 0;
-const int FAILURE = 1;
-const int FORK_FAILURE = -1;
-const int COREDUMP_FAILURE = -2;
-
 // Document root variable
 const char * DOC_ROOT = "DOCUMENT_ROOT";
 
@@ -270,9 +264,9 @@ initWMProxyOperation(const std::string &operation)
 	servedrequestcount_global++;
 	edglog(info)<<"WMProxy instance serving core request N.: " <<servedrequestcount_global<<endl;
 	// Checking Configuration
-	checkConfiguration();
+	checkConfiguration(); // throws
 	// Chekcing global Sandbox Dir
-	setGlobalSandboxDir();
+	setGlobalSandboxDir(); // throws
 	// Checking system load for desired operation
 	callLoadScriptFile(operation);
 	GLITE_STACK_CATCH();
@@ -394,12 +388,18 @@ callLoadScriptFile(const string &operation)
 			if (int outcome = wmputilities::doExecv(command, params, errormsg)) {
 				// EXIT CODE !=0
 				switch (outcome) {
+ 						// otherwise the caller is forked anyway!!!
+					case EXEC_FAILURE:
 					case FORK_FAILURE:
 					case COREDUMP_FAILURE:
-						// either Unable to fork process or coredump
-	   					edglog(critical)<<"Load script call skipped"  << endl;
+						// and then? we continue with two instances of the same forked function??
+						// ... better raise something
+               					throw FileSystemException( __FILE__, __LINE__,
+				                	wmputilities::readTextFile(errorfile),
+							wmputilities::WMS_FILE_SYSTEM_ERROR,
+                        				"Load script failed");
 	   					break;
-					case 1:{
+					case SCRIPT_FAILURE: {
 						// Exit Code is 1 => throw ServerOverLoaded exc
 						string stderrormsg= wmputilities::readTextFile(errorfile);
 						// If error message is consistent => append information
@@ -415,8 +415,7 @@ callLoadScriptFile(const string &operation)
 	   					break;
 	   				default:
 						// Exit Code > 1 => Error executing script
-	   					edglog(error)<<"Unable to execute load script file:\n"
-	   						<<errormsg<<endl;
+	   					edglog(error)<<"Unable to execute load script file:\n";
 	   					edglog(error)<<"Error code: "<<outcome<<endl;
 	   					break;
 				}

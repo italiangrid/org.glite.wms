@@ -101,12 +101,6 @@ namespace utilities {
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-// duplicated info (wmsutils&wmscommon)
-const int SUCCESS = 0;
-const int FAILURE = 1;
-const int FORK_FAILURE = -1;
-const int COREDUMP_FAILURE = -2;
-
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
@@ -1097,10 +1091,15 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 			if (execv(command.c_str(), argvs)) {
 				// execv failed
 				errormsg = strerror(errno);
-				edglog(severe)<<"execv error, errno: "<<errno
-					<<" - Error message: "<<errormsg<<endl;
+				edglog(severe) << "execv error, errno: " << errno
+					<< " - Error message: " << errormsg <<endl;
+				if (errno) {
+					return EXEC_FAILURE;
+				} else {
+					return SCRIPT_FAILURE;
+				}
 			} else {
-				edglog(debug)<<"execv/command succesfully"<<endl;
+				edglog(debug)<<"execv successful"<<endl;
 			}
 			// the child does not return
 			break;
@@ -1185,13 +1184,13 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 					case -1:
 						// Unable to fork
                         edglog(critical)<<"Unable to fork process"<<endl;
-                        return FAILURE;
+                        return FORK_FAILURE;
                         break;
 					case 0:
 						edglog(debug)<<"Calling from index "<<startIndex
 							<<" to "<<middle<<endl;
 						if (doExecvSplit(command, params, dirs, startIndex, middle)) {
-							return FAILURE;
+							return EXEC_FAILURE;
 						}
 						break;
 					default:
@@ -1219,13 +1218,13 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 
 						if (status) {
 							edglog(severe)<<"Child failure, exit code: "<<status<<endl;
-							return FAILURE;
+							return EXEC_FAILURE;
 						}
 
 						edglog(debug)<<"Calling from index "<<middle + 1
 							<<" to "<<endIndex<<endl;
 						if (doExecvSplit(command, params, dirs, middle + 1, endIndex)) {
-							return FAILURE;
+							return EXEC_FAILURE;
 						}
 						break;
 					}

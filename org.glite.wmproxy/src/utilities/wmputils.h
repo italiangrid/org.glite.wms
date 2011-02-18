@@ -37,6 +37,12 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
+const int SUCCESS = 0;
+const int SCRIPT_FAILURE = 1;
+const int EXEC_FAILURE = 2;
+const int FORK_FAILURE = -1;
+const int COREDUMP_FAILURE = -2;
+
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 enum FQANFields {
 	FQAN_VO,
