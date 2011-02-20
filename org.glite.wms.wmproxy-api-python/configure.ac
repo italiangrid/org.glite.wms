@@ -58,6 +58,10 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 AC_GLITE
 
+
+AC_PYTHON([2.2.3], have_python=yes, have_python=no)
+AC_MSG_RESULT(["PYTHON found $have_python"])
+
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
