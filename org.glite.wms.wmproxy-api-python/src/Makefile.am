@@ -7,7 +7,7 @@
 ## *********************************************************************
 
 
-wmppyapilibdir = $(libdir)/python$(PYTHON_MAJOR).$(PYTHON_MINOR)
+wmppyapilibdir = $(libdir)/python$(PYTHON_MAJOR).$(PYTHON_MINOR)/site-packages
 wmppyapilib_SCRIPTS=WMPClient.py \
 	wmproxymethods.py \
 	WMPConnection.py 
