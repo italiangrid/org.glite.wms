@@ -433,7 +433,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     
     m_theJob.set_status( glite::ce::cream_client_api::job_statuses::REGISTERED );
     m_theJob.set_cream_dbid( strtoull(dbid.c_str(), 0, 10) );
-    m_theJob.set_cream_address( __creamURL );
+    //m_theJob.set_cream_address( __creamURL );
     m_theJob.set_complete_cream_jobid( completeid );
     m_theJob.set_cream_jobid( jobId );
     {
