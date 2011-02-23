@@ -695,6 +695,7 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_AUTODG << "\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
+	cerr << "\t" << USG_VERSION << "\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
