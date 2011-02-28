@@ -64,7 +64,7 @@ const std::string WMP_CLT_POINT_VERSION = ".";
  * Help Info messages
 */
 const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2008 by ElsagDatamat SpA";
-const std::string Options::HELP_EMAIL = "egee@elsagdatamat.com";
+const std::string Options::HELP_EMAIL = "alvise.dorigo@pd.infn.it";
 const std::string Options::HELP_UI = "WMS User Interface" ;
 const std::string Options::HELP_VERSION = "version  "+  boost::lexical_cast<string>(WMP_CLT_MAJOR_VERSION)
         + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_MINOR_VERSION)
@@ -312,7 +312,7 @@ const struct option Options::lsmatchLongOpts[] = {
 const struct option Options::outputLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,	Options::UIVERSION	},
 	{	Options::LONG_HELP,		no_argument,			0,	Options::HELP	},
-	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
+//	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
 	{	Options::LONG_LISTONLY,	no_argument,			0,	Options::LISTONLY},
 	{	Options::LONG_PROTO	,	required_argument,		0,	Options::PROTO},
@@ -612,7 +612,8 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
-    cerr << "\t" << USG_JSON << "\n" ;
+    	cerr << "\t" << USG_JSON << "\n" ;
+        cerr << "\t" << USG_PRETTYPRINT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -666,7 +667,6 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
 	cerr << "\t" << USG_INPUT << "\n";
-	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
@@ -675,7 +675,8 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOSUBDIR << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_NOPURG << "\n";
-    cerr << "\t" << USG_JSON << "\n" ;
+    	cerr << "\t" << USG_JSON << "\n" ;
+	cerr << "\t" << USG_PRETTYPRINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;
