@@ -644,6 +644,8 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
+        cerr << "\t" << USG_JSON << "\n" ;
+        cerr << "\t" << USG_PRETTYPRINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;

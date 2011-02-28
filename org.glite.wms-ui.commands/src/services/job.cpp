@@ -417,7 +417,8 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 * This method is called by retrieveWmpVersion
 */
 void Job::setVersionNumbers(const string& version) {
-	unsigned int p = 0;
+	//unsigned int p = 0;
+	string::size_type p = 0;
 	ostringstream info;
 	string v = version;
 	 // Major version number
