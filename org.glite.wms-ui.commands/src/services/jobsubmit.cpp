@@ -214,6 +214,18 @@ void JobSubmit::readOptions (int argc,char **argv){
 	nomsgOpt = wmcOpts->getBoolAttribute (Options::NOMSG);
 	json = wmcOpts->getBoolAttribute (Options::JSON);
 	prettyprint = wmcOpts->getBoolAttribute (Options::PRETTYPRINT);
+
+	if (!m_outOpt.empty() && json) {
+	  ostringstream info ;
+	  info << "The following options cannot be specified together:\n" ;
+	  info << wmcOpts->getAttributeUsage(Options::OUTPUT) << "\n";
+	  info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";
+	  
+	  throw WmsClientException(__FILE__,__LINE__,
+				   "readOptions",DEFAULT_ERR_CODE,
+				   "Input Option Error", info.str());
+	}
+
 	if (json && nomsgOpt) {
 		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";

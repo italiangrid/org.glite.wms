@@ -137,6 +137,17 @@ void JobListMatch::readOptions (int argc,char **argv) {
 		getLogFileMsg ( );
 		Utils::ending(ECONNABORTED);
 	}
+
+	if (!m_outOpt.empty() && m_json) {
+	  ostringstream info ;
+	  info << "The following options cannot be specified together:\n" ;
+	  info << wmcOpts->getAttributeUsage(Options::OUTPUT) << "\n";
+	  info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";
+	  
+	  throw WmsClientException(__FILE__,__LINE__,
+				   "readOptions",DEFAULT_ERR_CODE,
+				   "Input Option Error", info.str());
+	}
 };
 /*
 * performs the main operations
