@@ -385,7 +385,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
 	{	Options::LONG_NODISPLAY,	no_argument,			0,	Options::NODISPLAY	},
-	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
+//	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
 	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
 	{	Options::LONG_INPUTFILE,    	required_argument,		0,	Options::INPUTFILE},
@@ -768,7 +768,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
         cerr << "\t" << USG_NODISPLAY << "\n";
-	cerr << "\t" << USG_NOINT << "\n";
+//	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "\t" << "(*) With " <<  USG_SET << " multiple files can be specified by repeating the option several times\n";
