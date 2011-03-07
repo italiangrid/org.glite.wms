@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.4  2011/03/07 09:23:23  pandreet
+#       Incremented version number
+#
 #       Revision 1.22.2.16.6.3  2011/02/16 15:52:04  pandreet
 #       Path for init-script is relocatable
 #
@@ -153,7 +156,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobsubmission], [3.1.11])
+AC_INIT([GLite WMS jobsubmission], [3.3.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/constants.h])
