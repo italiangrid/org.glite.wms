@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.3.4.2  2011/03/07 09:41:37  pandreet
+#       Incremented version number
+#
 #       Revision 1.22.2.22.4.1.2.3.4.1  2011/01/05 10:36:50  pandreet
 #       Pkg-config support for helper
 #
@@ -215,7 +218,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [3.1.20])
+AC_INIT([GLite WMS Helper], [3.3.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
