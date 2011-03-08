@@ -345,6 +345,7 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
 	jobSubmitResponse jobSubmit_response;
 	try {
 		jobSubmit(response, jobSubmit_response, jdl, delegation_id, soap);
+		edglog(debug)<<"jobSubmit operation completed\n"<<endl;
 	} catch (Exception &exc) {
 		edglog(debug)<<"jobSubmit operation exception: "<<exc.what()<<endl;
 	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
@@ -356,8 +357,6 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
  			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-
-	edglog(debug)<<"jobSubmit operation completed\n"<<endl;
 
 	return return_value;
 	GLITE_STACK_CATCH();

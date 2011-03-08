@@ -1581,6 +1581,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			string document_root = getenv(DOCUMENT_ROOT);
 			edglog(debug)<<"Creating sub job directories for job " <<parentjobid.toString()<<endl;
 			vector<string> jobids;
+			// requirements must be inherited by nodes #bug 39217
+			dag.inherit(JDL::REQUIREMENTS);
 			ExpDagAd dg(dag);
 			unsigned int size = dg.getNodes().size();
 			vector<string> dag_nodes(dg.getNodes());
@@ -1592,9 +1594,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
 			char * seqcode = wmplogger.getSequence();
 			edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
-			// force SDJ required inheritance rules #bug 39217
-			dag.inherit(JDL::REQUIREMENTS);
-
 			string dest_uri;
 			string peekdir;
 			// Storing parent OSB_BASE_DEST_URI
