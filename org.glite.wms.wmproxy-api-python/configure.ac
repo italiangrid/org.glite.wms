@@ -56,8 +56,8 @@ AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
-AC_GLITE
 
+GLITE_CHECK_LIBDIR
 
 AC_PYTHON([2.2.3], have_python=yes, have_python=no)
 AC_MSG_RESULT(["PYTHON found $have_python"])
