@@ -1,213 +1,147 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+
 <!--
-    Copyright (c) Members of the EGEE Collaboration. 2004-2008.
-    See http://public.eu-egee.org/partners/ for details on 
-    the copyright holders.
-    For license conditions see the license file or
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
 
-    Build file for the gLite WMProxy API Java
-
-    Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 <project name="wmproxy-api-java" >
-    
-    <!-- locations -->
-    
-    <property environment="env"/>
-    <!-- optional property file for non-default locations -->
-    <property file="location.properties"/>
-    <!-- using defaults, if no specific location is set -->
-    <condition property="glite.location" value="/opt/glite">
-        <not>
-            <isset property="env.GLITE_LOCATION"/>
-        </not>
-    </condition>
-    <condition property="glite.location" value="${env.GLITE_LOCATION}">
-        <isset property="env.GLITE_LOCATION"/>
-    </condition>
-    <condition property="util-java.location" value="${glite.location}">
-        <not>
-            <isset property="util-java.location"/>
-        </not>
-    </condition>
-    <property name="builddir" value="${basedir}/build"/>
-    <property name="stagedir" value="${stageDir}"/>
 
-    <!-- dumping the most important locations for later use -->
-    <target  name="configure">
-        <echo message="glite.location                =${glite.location}"/>
-        <echo message="util-java.location            =${util-java.location}"/>
-        <echo message="axis.location                =${axis.location}"/>    
-        <echo file="location.properties">
-glite.location                =${glite.location}
-axis.location		      =${axis.location}
-util-java.location            =${util-java.location}
-        </echo>
-    </target>
+  <property file=".configuration.properties"/>
+  <available file=".configuration.properties" property="isConfigured"/>
 
-    <!-- version numbers -->
-    <property file="${basedir}/VERSION"/>
-    <property name="NAME" value="glite-wms-wmproxy-api-java"/>
+  <property name="pkg-name" value="glite-wms-wmproxy-api-java"/>
+  <property name="docs-installdir" value="${dist.location}/share/doc/${pkg-name}"/>
+  <property name="pkg-jarname" value="${pkg-name}.jar"/>
 
-    <path id="compile.classpath">
-        <fileset dir="${axis.location}/lib">
-            <include name="*.jar"/>
-        </fileset>
-        <fileset dir="${glite.location}/usr/share/java">
-            <include name="glite-security-trustmanager.jar"/>
-            <include name="glite-security-delegation-java.jar"/>
-            <include name="glite-security-util-java.jar"/>
-            <include name="delegation-java.jar"/>
-        </fileset>
-        <fileset dir="${util-java.location}/share/java">
-            <include name="trustmanager.jar"/>
-            <include name="trustmanager-axis.jar"/>
-            <include name="delegation-java.jar"/>
-        </fileset>
-    </path>
+  <path id="compile.classpath">
+    <fileset dir="${axis.location}/lib">
+        <include name="*.jar"/>
+    </fileset>
+    <!-- fileset dir="${glite.location}/usr/share/java">
+        <include name="glite-security-trustmanager.jar"/>
+        <include name="glite-security-delegation-java.jar"/>
+        <include name="glite-security-util-java.jar"/>
+        <include name="delegation-java.jar"/>
+    </fileset -->
+    <fileset dir="${util-java.location}/share/java">
+        <include name="trustmanager.jar"/>
+        <include name="trustmanager-axis.jar"/>
+        <include name="delegation-java.jar"/>
+    </fileset>
+  </path>
 
-    <taskdef name="wsdl2java" classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
-         loaderref="axis" >
-        <classpath>
-            <fileset dir="${axis.location}/lib" includes="**/*.jar" />
-        </classpath>
+  <target name="init">
+    <mkdir dir="lib" />
+    <mkdir dir="bin/classes" />
+    <mkdir dir="src/autogen" />
+  </target>
+
+  <target name="check" depends="init">
+    <fail message="The module is not configured" unless="isConfigured"/>
+    <uptodate property="alreadyCompiled" targetfile="lib/${pkg-jarname}">
+      <srcfiles dir= "${org.glite.wms.wsdl.location}/interface"
+                includes="**/WMProxy.wsdl"/>
+      <srcfiles dir= "src"
+                includes="**/*.java"/>
+    </uptodate>
+  </target>
+  
+  <target name="compile" depends="check" unless="alreadyCompiled">
+    <taskdef name="wsdl2java" 
+             classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
+             loaderref="axis" >
+      <classpath>
+        <fileset dir="${axis.location}/lib" includes="**/*.jar" />
+      </classpath>
     </taskdef>
 
-    <target name="init">
-        <mkdir dir="${builddir}"/>
-        <mkdir dir="${builddir}/src/classes"/>
-    </target>
+    <wsdl2java url="${org.glite.wms.wsdl.location}/interface/WMProxy.wsdl"
+               output="src/autogen"
+               deployscope="application"
+               serverSide="no"
+	           debug="no"
+               skeletonDeploy="false"
+               noimports="false"
+               verbose="false"
+               typeMappingVersion="1.2"
+               testcase="no"
+	           namespacemappingfile="project/NStoPkg.properties"/>
 
-    <target name="clean">
-        <delete dir="${builddir}"/>
-    </target>
+    <javac srcdir="src" destdir="bin/classes" source="1.5" 
+           target="1.5" debug="true" debuglevel="lines,vars,source">
+      <classpath refid="compile.classpath" />
+    </javac>
 
-    <target name="src.compile" depends="init">
-        <mkdir dir="${builddir}/src/classes"/>
+    <jar destfile="lib/${pkg-jarname}"
+         basedir="bin/classes">
+    	<manifest>
+        	<attribute name="Package-Title" value="${pkg-name}"/>
+        	<attribute name="Package-Version" value="${module.version}"/>
+        	<attribute name="Package-Vendor" value="glite.org"/>
+    	</manifest>
+    </jar>
 
-        <wsdl2java url="${glite.location}/interface/WMProxy.wsdl"
-         output="${basedir}/src"
-         deployscope="application"
-         serverSide="no"
-	 debug="no"
-         skeletonDeploy="false"
-         noimports="false"
-         verbose="false"
-         typeMappingVersion="1.2"
-         testcase="no"
-	 namespacemappingfile="project/NStoPkg.properties"/>
-
-        <javac srcdir="${basedir}/src" 
-               destdir="${builddir}/src/classes"
-               debug="true"
-               deprecation="false">
-            <!--
-            <compilerarg value="-Xlint:unchecked"/>
-            <compilerarg value="-Xlint:deprecation"/>
-            -->
-            <classpath refid="compile.classpath"/>
-        </javac>
-    </target>
-
-    <target name="compile" depends="init, src.compile"/>
-
-    <target name="makejars" depends="">
-        <mkdir dir="${builddir}/share/java"/>
-        <jar destfile="${builddir}/share/java/${NAME}.jar"
-             basedir="${builddir}/src/classes">
-    		<manifest>
-        		<attribute name="Package-Title" value="${NAME}"/>
-        		<attribute name="Package-Version" value="${VERSION}"/>
-        		<attribute name="Package-Vendor" value="glite.org"/>
-    		</manifest>
-        </jar>
-		
-    </target>
-
-    <target name="doc.check" depends="init">
-        <uptodate  property="doc.skip"
-            targetfile="${builddir}/doc/index.html">
-            <srcfiles dir="src" includes="**/*.java, **/*.html"/>
-        </uptodate>
-    </target>
-    <target name="doc" depends="init,doc.check" unless="doc.skip">
-        <mkdir dir="${builddir}/doc"/>
-        <javadoc
+  </target>
+  
+  
+  <target name="doc.check" depends="init">
+    <uptodate  property="doc.skip"
+               targetfile="${docs-installdir}/html/index.html">
+        <srcfiles dir="src" includes="**/*.java, **/*.html"/>
+    </uptodate>
+  </target>
+  
+  <target name="doc" depends="doc.check" unless="doc.skip">
+    <mkdir dir="${docs-installdir}/html" />		    
+    <javadoc
             packagenames="org.glite.wms.wmproxy*"
-            sourcepath="${basedir}/src"
-            destdir="${builddir}/doc"
-            windowtitle="${NAME}"
+            destdir="${docs-installdir}/html"
+            windowtitle="${pkg-name}"
             breakiterator="yes">
             <bottom><![CDATA[<i>Copyright &#169; 2004-2008. <A href="http://public.eu-egee.org/">EU-EGEE</A></i>]]></bottom>
             <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
             <classpath refid="compile.classpath"/>
-        </javadoc>
-    </target>
-
-
-    <target name="install" depends="init,doc,makejars">
-        
-        <mkdir dir="${prefix}"/>
-
-		<mkdir dir="${prefix}/share/java" />
-
-		<copy toDir="${prefix}/share/java">
-			<fileset dir="${builddir}/share/java">
-				<include name="${NAME}.jar" />
-			</fileset>
-		</copy>
-	
-		<mkdir dir="${prefix}/share/doc/${NAME}" />
-		<copy toDir="${prefix}/share/doc/${NAME}">
-			<fileset dir="${basedir}">
-				<include name="LICENSE" />
-				<include name="RELEASE-NOTES" />
-				<include name="VERSION" />
-			</fileset>
-		</copy>
-
-		<mkdir dir="${prefix}/share/doc/${NAME}/html" />
-		<copy toDir="${prefix}/share/doc/${NAME}/html">
-            <fileset dir="${builddir}/doc"/>
-		</copy>
-
-    </target>
-
-    <target name="tar">
-        <antcall target="install">
-			<param name="prefix" value="${builddir}/tar"/>
-		</antcall>
-        <mkdir dir="${basedir}/tgz"/>
-        <exec executable="tar" dir="${builddir}/tar">
-            <arg line="-czf ${basedir}/tgz/${NAME}-${VERSION}.tar.gz ." />
-        </exec>
-    </target>
+        <sourcepath>
+            <pathelement path="src"/>
+            <pathelement path="src/autogen"/>
+        </sourcepath>
+    </javadoc>
+  </target>
 
 
 
-    <!-- ================================================================= -->
-    <!-- Testing Targets                                                   -->
-    <!-- These are normall not used in the builds and require extra        -->
-    <!-- dependencies, like org.glite.data.test-utils and voms-clients     -->
-    <!-- ================================================================= -->
 
-    <available property="certs.available" file="${builddir}/certs/grid-security"/>
-    <target name="certs.generate" depends="init" unless="certs.available">
-        <mkdir dir="${builddir}/certs"/>
-        <exec dir="${builddir}/certs"
-            executable="${glite.location}/share/test/utils/glite-test-certs">
-        	<env key="PATH" path="${env.PATH}:${glite.location}/bin"/>
-        	<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${glite.location}/lib"/>
-            <arg value="--verbose"/>
-            <arg value="--some"/>
-            <arg value="--env"/>
-            <arg value="--system"/>
-        </exec>
-    </target>
-    <target name="certs.remove" if="certs.available">
-        <delete dir="${builddir}/certs"/>
-    </target>
+  <target name="install" depends="compile, doc">
+    <mkdir dir="${dist.location}/share/java"/>
+    <copy toDir="${dist.location}/share/java">
+      <fileset dir="lib">
+        <include name="*.jar" /> 
+      </fileset>
+    </copy>
 
+    <copy file="LICENSE" todir="${docs-installdir}"/>
+
+  </target>
+
+  <target name="clean">
+    <delete dir="lib" />
+    <delete dir="bin" />
+    <delete dir="src/autogen" />
+    <delete dir="doc/autogen" />		
+  </target>
+  
 </project>
