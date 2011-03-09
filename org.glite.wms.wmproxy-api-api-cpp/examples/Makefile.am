@@ -144,7 +144,6 @@ glite_wmp_job_output_LDADD = \
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
-	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GRIDSITE_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \

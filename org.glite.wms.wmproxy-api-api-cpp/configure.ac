@@ -92,7 +92,8 @@ if test "$have_gridsite" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
-AC_GLITE
+GLITE_CHECK_LIBDIR
+AC_GLITE_WMS_WSDL
 AC_GSOAP
 
 # Configuration items
