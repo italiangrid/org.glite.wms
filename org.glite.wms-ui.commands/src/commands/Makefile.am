@@ -225,7 +225,6 @@ glite_wms_job_perusal_LDADD = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
-	$(GLITE_CFLAGS) \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
         $(GLITE_WMS_WMPROXY) \

@@ -60,7 +60,6 @@ libglite_wmsui_commands_jobperusal_la_SOURCES = \
 	job.cpp
 
 AM_CPPFLAGS = \
-	$(GLITE_CFLAGS) \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
         $(GLITE_WMS_WMPROXY) \

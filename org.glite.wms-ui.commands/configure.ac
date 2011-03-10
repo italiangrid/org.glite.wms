@@ -144,7 +144,7 @@ have_glite_wms_wmproxy=no
 have_glite_security=no
 have_glite_jobid=no
 
-AC_GLITE
+GLITE_CHECK_LIBDIR
 AC_GLITE_SERVICE_DISCOVERY
 AC_OPTIMIZE
 
