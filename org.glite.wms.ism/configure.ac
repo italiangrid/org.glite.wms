@@ -113,7 +113,7 @@ have_glite_wms_ism=no
 have_glite_wmsutils=no
 have_glite_ce=no
 
-AC_GLITE
+GLITE_CHECK_LIBDIR
 
 GLITE_CHECK_LDAP
 
