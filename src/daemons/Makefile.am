@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5  2011/03/11 15:00:04  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.17.2.3.4.1.2.4  2011/01/05 08:50:58  pandreet
 #       New build definitions for jobsubmission
 #
@@ -126,7 +129,8 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
@@ -134,10 +138,10 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
-	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+	$(RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
-  -lglite_jobid  \
-  -lglite_lbu_trio
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
 	MonitorLoop.cpp \
@@ -154,7 +158,8 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
@@ -162,14 +167,14 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
-        $(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+        $(RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
-  -lglite_jobid  \
-  -lglite_lbu_trio
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
+	$(GLITE_JOBID_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLOBUS_CFLAGS) \

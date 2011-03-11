@@ -17,13 +17,15 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.1.34.1  2011/03/11 15:00:04  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.1  2004/07/06 12:14:42  pandreet
 #       Makefile for testsuite
 #
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
-        $(GLITE_CFLAGS) \
         $(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

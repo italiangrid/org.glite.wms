@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7  2011/03/11 15:00:04  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.20.2.2.4.1.2.6  2011/01/05 08:50:58  pandreet
 #       New build definitions for jobsubmission
 #
@@ -147,7 +150,8 @@ SUBDIRS = processer
 libexec_PROGRAMS = glite-wms-lm-job_status
 
 glite_wms_lm_job_status_SOURCES = jobstatus.cpp \
-	JobStatusExtractor.cpp
+				JobStatusExtractor.cpp
+
 glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	../controller/libglite_wms_jss_controller.la \
 	../controller/libglite_wms_jss_controller_adapter.la \
@@ -165,12 +169,14 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
 	$(ARES_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) $(GLITE_WMS_PURGER_LIBS) \
+	$(RENEWAL_NOTHR_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS) \
         $(RENEWAL_NOTHR_LIBS) \
-  -lglite_jobid	\
-  -lglite_lbu_trio
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
 libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
@@ -204,7 +210,7 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 libglite_wms_jss_logmonitor_la_LIBADD = $(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
+	$(GLITE_JOBID_CFLAGS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(GLOBUS_NOTHR_CFLAGS) \

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.2  2011/03/11 15:00:04  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.2.28.2.6.1  2011/01/05 08:50:58  pandreet
 #       New build definitions for jobsubmission
 #
@@ -80,7 +83,6 @@ libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
-	$(GLITE_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \

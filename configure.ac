@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.5  2011/03/11 15:00:04  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.22.2.16.6.4  2011/03/07 09:23:23  pandreet
 #       Incremented version number
 #
@@ -218,11 +221,13 @@ have_glite_wmsutils=no
 have_glite_jdl=no
 have_glite_wms_purger=no
 have_glite_lb=no
-have_glite_security=no                                                       
+have_glite_renewal=no                                                      
 have_glite_jp=no
                       
-AC_GLITE
-                                                                                
+GLITE_CHECK_LIBDIR
+
+GLITE_CHECK_JOBID
+                                                                               
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
@@ -238,8 +243,8 @@ AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
-AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+AC_PROXYRENEWAL([], have_glite_renewal=yes, have_glite_renewal=no)
+AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_renewal"])
 
 AC_ARES
 
