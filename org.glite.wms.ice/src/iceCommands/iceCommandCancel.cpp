@@ -189,8 +189,8 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - Sending cancellation request to ["
-                   << theJob.cream_address() << "]"
-                   
+                   << theJob.cream_address() << "] for GridJobID ["
+	 	   << theJob.grid_jobid( ) << "]"
                    );
 
     /**
