@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.3.4.3  2011/03/11 13:51:10  pandreet
+#       Removed with-glite-location
+#
 #       Revision 1.22.2.22.4.1.2.3.4.2  2011/03/07 09:41:37  pandreet
 #       Incremented version number
 #
@@ -323,7 +326,7 @@ have_glite_wms_brokerinfo=no
 have_glite_wms_matchmaking=no
 have_glite_wms_ism=no
 
-AC_GLITE
+GLITE_CHECK_LIBDIR
 AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)

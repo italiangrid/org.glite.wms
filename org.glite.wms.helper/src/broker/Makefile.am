@@ -24,7 +24,6 @@ libglite_wms_helper_broker_ism_la_LIBADD = \
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
-	$(GLITE_CFLAGS) \
 	$(GLITE_JDL_CFLAGS) \
 	$(GLITE_WMS_BROKER_CFLAGS) \
 	$(GLITE_WMS_BROKERINFO_CFLAGS) \
