@@ -41,7 +41,6 @@ libglite_wms_iceUtils_la_SOURCES = \
 
 AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \
-		$(GLITE_CFLAGS) \
                 $(VOMS_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \

@@ -23,7 +23,6 @@ lib_LTLIBRARIES = libglite_wms_ice.la
 libglite_wms_ice_la_SOURCES = IceCore.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		$(GLITE_CFLAGS) \
 		$(VOMS_CFLAGS) \
 		$(GLITE_JOBID_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
@@ -33,6 +32,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
+		-DHAVE_GLITE_JOBID \
 		-pipe 
 
 MAINTAINERCLEANFILES = Makefile.in

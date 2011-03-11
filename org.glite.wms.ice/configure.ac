@@ -61,7 +61,7 @@ have_boost=no
 have_glite_wmsutils=no
 have_globus=no
 have_glite_lb=no
-have_glite_security=no
+have_glite_prxrenewal=no
 have_glite_wms_common=no
 have_gridsite=no
 have_xml2=no
@@ -69,24 +69,12 @@ have_glite_wms_purger=no
 have_myproxy=no
 have_voms=no
 
-# This is a workaround to enable building ICE against either
-# WMS 3.2 and WMS 3.1
-if ! test -d $GLITE_LOCATION/include/wmsutils/jobid; then
-   AC_MSG_RESULT(["Using glite/jobid"])
-   GLITE_JOBID_LIBS="-L$GLITE_LOCATION/lib -lglite_jobid"
-   GLITE_JOBID_CFLAGS="-DHAVE_GLITE_JOBID"
-else
-   AC_MSG_RESULT(["Using wmsutils/jobid"])
-   GLITE_JOBID_LIBS="$GLITE_WMSUTILS_JOBID_LIBS"
-   GLITE_JOBID_CFLAGS=""
-fi
-AC_SUBST(GLITE_JOBID_LIBS)
-AC_SUBST(GLITE_JOBID_CFLAGS)
-
 AC_OPTIMIZE
-AC_GLITE
+GLITE_CHECK_LIBDIR
 AC_ARES
-#AC_SQLITE3()
+GLITE_CHECK_JOBID
+AC_GLITE_CEMONITOR_API
+AC_GLITE_CREAM_API
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
@@ -108,8 +96,8 @@ AC_MSG_RESULT(["XML2 found $have_xml2"])
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
-AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+AC_PROXYRENEWAL([], have_glite_prxrenewal=yes, have_glite_prxrenewal=no)
+AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_prxrenewal"])
 
 AC_SEC_GSOAP_PLUGIN
 
@@ -119,10 +107,10 @@ AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 AC_VOMS([], have_voms=yes, have_voms=no)
 AC_MSG_RESULT(["VOMS found $have_voms"])
 
-have_renewalcore=no
+#have_renewalcore=no
 have_myproxy=no
-AC_PROXYRENEWALCORE([], have_renewalcore=yes, have_renewalcore=no)
-AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
+#AC_PROXYRENEWALCORE([], have_renewalcore=yes, have_renewalcore=no)
+#AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
 AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
 AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
 

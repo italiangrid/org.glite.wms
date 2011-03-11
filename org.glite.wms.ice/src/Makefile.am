@@ -14,7 +14,15 @@
 
 SUBDIRS = iceCommands ice iceThreads iceUtils iceDb iceDb/sqlite
 
-bin_PROGRAMS = putFL putFL_cancel putFL_reschedule glite-wms-ice glite-wms-ice-safe queryDb queryStats glite-wms-ice-proxy-renew glite-wms-ice-rm glite-wms-ice-db-rm
+bin_PROGRAMS =  putFL \
+		putFL_cancel \
+		putFL_reschedule \
+		glite-wms-ice \
+		glite-wms-ice-safe \
+		queryDb queryStats \
+		glite-wms-ice-proxy-renew \
+		glite-wms-ice-rm \
+		glite-wms-ice-db-rm
 
 glite_wms_ice_db_rm_SOURCES = glite-wms-ice-db-rm.cpp
 
@@ -36,15 +44,11 @@ glite_wms_ice_SOURCES = glite-wms-ice.cpp
 
 glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
 
-###dumpICECache_SOURCES = dumpICECache.cpp
-
-queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
+queryDb_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+		$(GLITE_CEMONITOR_LIBS)\
+		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -60,9 +64,10 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -71,16 +76,14 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
+queryStats_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -96,9 +99,10 @@ queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -107,16 +111,14 @@ queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
+putFL_LDADD =  \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -132,9 +134,10 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -143,46 +146,43 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
-
-putFL_reschedule_LDADD =  -L$(GLITE_LOCATION)/lib \
-$(GRIDSITE_GLOBUS_LIBS) \
-$(XML2_LIBS) \
--lglite_ce_cream_client_soap \
--lglite_ce_cream_client_util \
--lglite_ce_monitor_client \
--lglite_ce_monitor_consumer \
-$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-$(LOG4CPP_LIBS) \
-$(GLOBUS_THR_LIBS) \
-../src/iceUtils/libglite_wms_iceUtils.la \
-../src/iceThreads/libglite_wms_iceThreads.la \
-../src/iceCommands/libglite_wms_iceCommands.la \
-../src/ice/libglite_wms_ice.la \
-../src/iceDb/libglite_wms_iceDb.la \
-$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-$(CLASSAD_LIBS) \
-$(ARES_LIBS) \
-$(GLITE_JOBID_LIBS) \
-$(GLITE_WMS_COMMON_CONF_LIBS) \
-$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
-$(GLITE_LB_THR_COMMON_LIBS) \
-$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-$(GLITE_WMS_PURGER_LIBS) \
-$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-$(BOOST_FS_LIBS) \
-$(BOOST_THREAD_LIBS) \
-$(BOOST_REGEX_LIBS) \
-$(BOOST_PO_LIBS) \
--lboost_date_time \
--lboost_serialization \
-$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
-iceDb/sqlite/libsqlite3.a
+putFL_reschedule_LDADD = \
+			$(GRIDSITE_GLOBUS_LIBS) \
+			$(XML2_LIBS) \
+        	        $(GLITE_CEMONITOR_LIBS)\
+	                $(GLITE_CREAM_LIBS) \
+			$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+			$(LOG4CPP_LIBS) \
+			$(GLOBUS_THR_LIBS) \
+			../src/iceUtils/libglite_wms_iceUtils.la \
+			../src/iceThreads/libglite_wms_iceThreads.la \
+			../src/iceCommands/libglite_wms_iceCommands.la \
+			../src/ice/libglite_wms_ice.la \
+			../src/iceDb/libglite_wms_iceDb.la \
+			$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+			$(CLASSAD_LIBS) \
+			$(ARES_LIBS) \
+			$(GLITE_JOBID_LIBS) \
+			$(GLITE_WMS_COMMON_CONF_LIBS) \
+			$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+			$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+			$(GLITE_LB_THR_CLIENT_LIBS) \
+			$(GLITE_LB_THR_CLIENTPP_LIBS) \
+			$(GLITE_LB_THR_COMMON_LIBS) \
+			$(RENEWAL_THR_LIBS) \
+			$(GLITE_WMS_PURGER_LIBS) \
+			$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+			$(BOOST_FS_LIBS) \
+			$(BOOST_THREAD_LIBS) \
+			$(BOOST_REGEX_LIBS) \
+			$(BOOST_PO_LIBS) \
+			-lboost_date_time \
+			-lboost_serialization \
+			$(VOMS_CPP_THR_LIBS) \
+			iceDb/sqlite/libsqlite3.a
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -194,22 +194,20 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 		$(GLITE_JOBID_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
-		-L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -225,9 +223,10 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -236,16 +235,14 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_rm_LDADD = -L$(GLITE_LOCATION)/lib \
+glite_wms_ice_rm_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -261,9 +258,10 @@ glite_wms_ice_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -272,16 +270,14 @@ glite_wms_ice_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-glite_wms_ice_db_rm_LDADD = -L$(GLITE_LOCATION)/lib \
+glite_wms_ice_db_rm_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -297,9 +293,10 @@ glite_wms_ice_db_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -308,16 +305,14 @@ glite_wms_ice_db_rm_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
+glite_wms_ice_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_client \
-		-lglite_ce_monitor_consumer \
+                $(GLITE_CEMONITOR_LIBS)\
+                $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -333,9 +328,10 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) \
+		$(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+		$(RENEWAL_THR_LIBS) \
                 $(GLITE_WMS_PURGER_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -344,20 +340,18 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
+glite_wms_ice_proxy_renew_LDADD = \
 		$(GLOBUS_NOTHR_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
 		$(MYPROXY_NOTHR_LIBS) \
 		$(RENEWAL_NOTHR_LIBS)
 
-### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
-
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		-I$(GSOAP_LOCATION)/include \
-		$(GLITE_CFLAGS) \
+		$(GLITE_CREAM_CFLAGS) \
+		$(GLITE_CEMONITOR_CFLAGS) \
 		$(VOMS_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
