@@ -18,13 +18,13 @@
 #vpath stdsoap2.cpp $(GSOAP_LOCATION)
 
 
-wm.h : $(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
+wm.h : $(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include \
-	-t $(GLITE_WMS_WSDL_PATH)/interface/wmptypemap.dat \
-	$(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
+	-t $(GLITE_WMS_WSDL_PATH)/wmptypemap.dat \
+	$(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
