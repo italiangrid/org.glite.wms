@@ -17,10 +17,13 @@
 noinst_HEADERS = converter.h  log.h proxy_cleaner.h
 
 bin_PROGRAMS = glite-wms-wmproxy-purge-proxycache-binary \
- glite-wms-wmproxy-gacladmin \
- glite-wms-wmproxy-gridmapfile2gacl
+		glite-wms-wmproxy-gacladmin \
+		glite-wms-wmproxy-gridmapfile2gacl
 
-glite_wms_wmproxy_purge_proxycache_binary_SOURCES = wmpcleanproxies.cpp wmputils.cpp utils.cpp log.cpp
+glite_wms_wmproxy_purge_proxycache_binary_SOURCES = wmpcleanproxies.cpp \
+							wmputils.cpp utils.cpp \
+							log.cpp
+
 glite_wms_wmproxy_purge_proxycache_binary_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
 glite_wms_wmproxy_purge_proxycache_binary_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
@@ -30,12 +33,15 @@ glite_wms_wmproxy_purge_proxycache_binary_LDADD = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(BOOST_FS_LIBS) \
-  $(GLITE_JOBID_LIBS) \
-  -lglite_lbu_trio \
-  -lglite_jobid
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
+glite_wms_wmproxy_gacladmin_SOURCES = wmpgacladmin.cpp \
+					wmpgaclmanager.cpp \
+					wmpauthorizer.cpp \
+					wmputils.cpp \
+					utils.cpp
 
-glite_wms_wmproxy_gacladmin_SOURCES = wmpgacladmin.cpp wmpgaclmanager.cpp wmpauthorizer.cpp wmputils.cpp utils.cpp
 glite_wms_wmproxy_gacladmin_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
 glite_wms_wmproxy_gacladmin_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
@@ -44,11 +50,16 @@ glite_wms_wmproxy_gacladmin_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(GRIDSITE_LIBS) \
         $(ARES_LIBS) \
-  -lglite_lbu_trio \
-  -lglite_jobid
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
+glite_wms_wmproxy_gridmapfile2gacl_SOURCES = wmpgridmap2gacl.cpp \
+						wmpgaclmanager.cpp \
+						wmpauthorizer.cpp \
+						wmputils.cpp \
+						log.cpp \
+						utils.cpp
 
-glite_wms_wmproxy_gridmapfile2gacl_SOURCES = wmpgridmap2gacl.cpp wmpgaclmanager.cpp wmpauthorizer.cpp wmputils.cpp log.cpp utils.cpp
 glite_wms_wmproxy_gridmapfile2gacl_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
 glite_wms_wmproxy_gridmapfile2gacl_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
@@ -58,9 +69,8 @@ glite_wms_wmproxy_gridmapfile2gacl_LDADD = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(BOOST_FS_LIBS) \
-  -lglite_lbu_trio \
-  -lglite_jobid
-
+	$(GLITE_JOBID_LIBS) \
+	-lglite_lbu_trio
 
 wmputils.cpp:
 	/bin/cp $(top_srcdir)/src/utilities/wmputils.cpp wmputils.cpp
@@ -82,9 +92,9 @@ AM_CPPFLAGS = \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(GRIDSITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(GLITE_CFLAGS) \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLITE_JDL_CFLAGS) \
+	$(GLITE_JOBID_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	-DHAVE_STRINGSTREAM
 

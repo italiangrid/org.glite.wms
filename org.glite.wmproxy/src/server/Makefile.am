@@ -21,13 +21,13 @@ WMPROXY_AUTHZ = $(top_builddir)/src/authorizer/libglite_wms_wmproxy_authorizer.l
 WMPROXY_COMMANDS = $(top_builddir)/src/commands/libglite_wms_wmproxy_commands.la \
 $(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 
-wm.h :
+wm.h : $(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include \
-	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
-	$(GLITE_LOCATION)/interface/WMProxy.wsdl
+	-t $(GLITE_WMS_WSDL_PATH)/interface/wmptypemap.dat \
+	$(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
 
 soapC.cpp soapServer.cpp soapH.h soapStub.h: wm.h
 	@#Create the files
@@ -82,7 +82,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+	$(RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	-lglite_jobid \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -114,7 +114,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/build/src/server \
 	$(GSOAP_CFLAGS) \
 	$(GLOBUS_NOTHR_CFLAGS) \
-	$(GLITE_CFLAGS) \
 	$(VOMS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(BOOST_CFLAGS) \

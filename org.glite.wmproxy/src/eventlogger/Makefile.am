@@ -31,7 +31,6 @@ libglite_wms_wmproxy_eventlogger_la_SOURCES = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
 	$(GLITE_JDL_CFLAGS) \
 	$(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \

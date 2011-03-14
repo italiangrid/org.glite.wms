@@ -62,8 +62,9 @@ AC_CHECK_FUNCS([memset])
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
-
+GLITE_CHECK_LIBDIR
 AC_OPTIMIZE
+AC_GLITE_WMS_WSDL
 
 have_boost=no
 have_classads=no
@@ -177,10 +178,9 @@ have_glite_wms_common=no
 have_glite_wmsutils=no
 have_glite_jdl=no
 have_glite_lb=no
-have_glite_security=no                                                                                
+have_glite_voms=no
+have_glite_renewal=no                                                                                
 have_glite_wms_purger=no
-
-AC_GLITE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
@@ -194,8 +194,11 @@ AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
-AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+AC_VOMS([], have_glite_voms=yes, have_glite_voms=no)
+AC_MSG_RESULT(["VOMS found $have_glite_voms"])
+
+AC_PROXYRENEWAL([], have_glite_renewal=yes, have_glite_renewal=no)
+AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_renewal"])
 
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
