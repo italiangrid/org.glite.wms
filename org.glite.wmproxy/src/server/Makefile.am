@@ -21,13 +21,13 @@ WMPROXY_AUTHZ = $(top_builddir)/src/authorizer/libglite_wms_wmproxy_authorizer.l
 WMPROXY_COMMANDS = $(top_builddir)/src/commands/libglite_wms_wmproxy_commands.la \
 $(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 
-wm.h : $(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
+wm.h : $(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include \
-	-t $(GLITE_WMS_WSDL_PATH)/interface/wmptypemap.dat \
-	$(GLITE_WMS_WSDL_PATH)/interface/WMProxy.wsdl
+	-t $(GLITE_WMS_WSDL_PATH)/wmptypemap.dat \
+	$(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 
 soapC.cpp soapServer.cpp soapH.h soapStub.h: wm.h
 	@#Create the files
