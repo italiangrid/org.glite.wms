@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.3.4.4  2011/03/15 09:11:00  pandreet
+#       Removed old macros
+#
 #       Revision 1.22.2.22.4.1.2.3.4.3  2011/03/11 13:51:10  pandreet
 #       Removed with-glite-location
 #
@@ -345,14 +348,6 @@ AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
 AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
 AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
-
-#have_security=no
-#have_gpbox=no
-#AC_GLITE_SECURITY([], have_security=yes, have_security=no)
-#AC_MSG_RESULT(["GLITE_GLITE_SECURITY found $have_security"])
-
-#AC_GLITE_GPBOX([], have_gpbox=yes, have_gpbox=no)
-#AC_MSG_RESULT(["GLITE_GLITE_GPBOX found $have_gpbox"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
