@@ -62,7 +62,6 @@ libglite_wmsui_commands_jobperusal_la_SOURCES = \
 AM_CPPFLAGS = \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
-        $(GLITE_WMS_WMPROXY) \
         -I$(top_srcdir)/src \
         -I$(top_srcdir)/build/src \
 	$(GLOBUS_NOTHR_CFLAGS) \

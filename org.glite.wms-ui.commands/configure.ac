@@ -141,7 +141,7 @@ have_glite_wmsutils=no
 have_glite_jdl=no
 have_glite_lb=no
 have_glite_wms_wmproxy=no
-have_glite_security=no
+have_glite_voms=no
 have_glite_jobid=no
 
 GLITE_CHECK_LIBDIR
@@ -163,8 +163,8 @@ AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 AC_GLITE_WMS_WMPROXY([], have_glite_wms_wmproxy=yes, have_glite_wms_wmproxy=no)
 AC_MSG_RESULT(["GLITE_WMS_WMPROXY found $have_glite_wms_wmproxy"])
 
-AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+AC_VOMS([], have_glite_voms=yes, have_glite_voms=no)
+AC_MSG_RESULT(["VOMS found $have_glite_voms"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
