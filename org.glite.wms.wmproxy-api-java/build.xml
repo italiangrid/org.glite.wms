@@ -69,7 +69,7 @@ limitations under the License.
       </classpath>
     </taskdef>
 
-    <wsdl2java url="${org.glite.wms.wsdl.location}/interface/WMProxy.wsdl"
+    <wsdl2java url="${org.glite.wms.wsdl.location}/share/wsdl/WMProxy.wsdl"
                output="src/autogen"
                deployscope="application"
                serverSide="no"
