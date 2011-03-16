@@ -81,23 +81,24 @@ submit $JDLFILE
 run_command "glite-wms-job-info --jdl --noint -o $TMPFILE $JOBID" 1 "I'm not able to retrieve jdl info for $JOBID"
 for ((i=0; i < 5 ; i++)) ; do
 	run_command "grep Node_$i $TMPFILE" 0 
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="Node name not found." ; fi 
+	if [[ $? -eq 1 ]] ; then err="Node name not found." ; fi 
 	run_command "grep 'Environment = { \"ParameterValue=$i\" };' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Environment attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err Environment attribute not set." ; fi
 	run_command "grep 'Arguments = \"$i\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Arguments attribute not set."; fi
+	if [[ $? -eq 1 ]] ; then err="$err Arguments attribute not set."; fi
 	run_command "grep 'StdOutput  = \"Std-$i.out\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdOutput attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdOutput attribute not set." ; fi
 	run_command "grep 'StdError  = \"std-$i.err\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdError attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdError attribute not set." ; fi
 	run_command "grep 'OutputSandbox = { \"Std-$i.out\",\"std-$i.err\" }' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err OutputSandbox attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err OutputSandbox attribute not set." ; fi
 	run_command "grep 'regexp(\"$i\",other.GlueCEUniqueID)' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Requirements attribute not set." ;  fi
+	if [[ $? -eq 1 ]] ; then err="$err Requirements attribute not set." ;  fi
 done
 
 if [[ $err != "" ]] ; then
 	message "Test 01 FAILS. $err"
+	fail=$(($fail+1))
 else
 	message "Test success!"
 fi
@@ -117,23 +118,24 @@ submit $JDLFILE
 run_command "glite-wms-job-info --jdl --noint -o $TMPFILE $JOBID" 1 "I'm not able to retrieve jdl info for $JOBID"
 for i in 2 5 8 11; do
 	run_command "grep Node_$i $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="Node name not found." ; fi  
+	if [[ $? -eq 1 ]] ; then err="Node name not found." ; fi  
   run_command "grep 'Environment = { \"ParameterValue=$i\" };' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Environment attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err Environment attribute not set." ; fi
   run_command "grep 'Arguments = \"$i\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Arguments attribute not set."; fi
+	if [[ $? -eq 1 ]] ; then err="$err Arguments attribute not set."; fi
   run_command "grep 'StdOutput  = \"Std-$i.out\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdOutput attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdOutput attribute not set." ; fi
   run_command "grep 'StdError  = \"std-$i.err\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdError attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdError attribute not set." ; fi
   run_command "grep 'OutputSandbox = { \"Std-$i.out\",\"std-$i.err\" }' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err OutputSandbox attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err OutputSandbox attribute not set." ; fi
   run_command "grep 'regexp(\"$i\",other.GlueCEUniqueID)' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Requirements attribute not set." ;  fi
+	if [[ $? -eq 1 ]] ; then err="$err Requirements attribute not set." ;  fi
 done
 
 if [[ $err != "" ]] ; then
   message "Test 02 FAILS. $err"
+	fail=$(($fail+1))
 else
   message "Test success!"
 fi
@@ -153,23 +155,24 @@ submit $JDLFILE
 run_command "glite-wms-job-info --jdl --noint -o $TMPFILE $JOBID" 1 "I'm not able to retrieve jdl info for $JOBID"
 for i in Alfa beta 42 delta_3; do
 	run_command "grep Node_$i $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="Node name not found." ; fi
+	if [[ $? -eq 1 ]] ; then err="Node name not found." ; fi
   run_command "grep 'Environment = { \"ParameterValue=$i\" };' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Environment attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err Environment attribute not set." ; fi
   run_command "grep 'Arguments = \"$i\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Arguments attribute not set."; fi
+	if [[ $? -eq 1 ]] ; then err="$err Arguments attribute not set."; fi
   run_command "grep 'StdOutput  = \"Std-$i.out\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdOutput attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdOutput attribute not set." ; fi
   run_command "grep 'StdError  = \"std-$i.err\"' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err StdError attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err StdError attribute not set." ; fi
   run_command "grep 'OutputSandbox = { \"Std-$i.out\",\"std-$i.err\" }' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err OutputSandbox attribute not set." ; fi
+	if [[ $? -eq 1 ]] ; then err="$err OutputSandbox attribute not set." ; fi
   run_command "grep 'regexp(\"$i\",other.GlueCEUniqueID)' $TMPFILE" 0
-	if [[ $? -eq 1 ]] ; then fail=1 ; err="$err Requirements attribute not set." ;  fi
+	if [[ $? -eq 1 ]] ; then err="$err Requirements attribute not set." ;  fi
 done
 
 if [[ $err != "" ]] ; then
   message "Test 03 FAILS. $err"
+	fail=$(($fail+1))
 else
   message "Test success!"
 fi
@@ -228,7 +231,7 @@ if [ $ret -eq 1 ] ; then
   verbose ${err}
 elif [ $ret -eq 2 ] ; then
 	message "Test 04 FAILS. ${err}"
-	fail=1
+	fail=$(($fail+1))
 else
 	message "Test success!"
 fi
@@ -297,7 +300,7 @@ if [ $ret -eq 1 ] ; then
   message ${err}
 elif [ $ret -eq 2 ] ; then
   message "Test 05 FAILS. ${err}"
-  fail=1
+  fail=$(($fail+1))
 else
   message "Test success!"
 fi
@@ -306,8 +309,10 @@ fi
 rm -rf $MYTMPDIR/In-*
 rm -rf ${JOB_OUTPUT_DIR}
 
-if [ $fail -eq 1 ] ; then
-  exit_failure "At least one test fails"
+# ... terminate
+
+if [ $fail -ne 0 ] ; then
+  exit_failure "$fail test(s) fail(s)"
 else
   exit_success
 fi

@@ -75,6 +75,7 @@ function exit_failure()
  
   myecho ""
 	myecho "Test: $NAME"
+	myecho "WMS: $WMS"
   myecho "Started: $START_TIME"
   myecho "Ended  :" $(date +%H:%M:%S)
   myecho ""
@@ -108,6 +109,7 @@ function exit_success()
 
   myecho ""
 	myecho "Test: $NAME"
+	myecho "WMS: $WMS"
   myecho "Started: $START_TIME"
   myecho "Ended  :" $(date +%H:%M:%S)
   myecho ""
@@ -134,6 +136,7 @@ function exit_warning()
 
   myecho ""
 	myecho "Test: $NAME"
+	myecho "WMS: $WMS"
   myecho "Started: $START_TIME"
   myecho "Ended  :" $(date +%H:%M:%S)
   myecho ""
@@ -159,7 +162,7 @@ function exit_warning()
 function exit_timeout()
 {
   verbose "Try to remove job..."
-  run_command glite-wms-job-cancel --noint $1
+  run_command "glite-wms-job-cancel --noint $1" 0
   sleep 60
   get_STATUS $1
   if [[ $JOBSTATUS == "Cancelled" ]]; then
@@ -191,6 +194,7 @@ function cleanup()
   remove $JDLFILE
   remove $CONFIG_FILE
   remove $TMPFILE
+	remove $CMDOUT
 
   remove ${JOB_OUTPUT_DIR}/std.out
   remove ${JOB_OUTPUT_DIR}/std.err
@@ -208,18 +212,29 @@ function cleanup()
 
 }
 
-# ... run command successfuly or exit with cleanup
+# Exec command "$1" and store the output in $OUTPUT
+# If command fails and $2 is set to 1 
+# exit with message $3 else return 1 
 # --> set OUTPUT with command's output
+# --> store command's output in file $CMDOUT
 function run_command()
 {
   verbose ""
-  verbose "[" $(date +%H:%M:%S) "] $" $@
+  verbose "[" $(date +%H:%M:%S) "] $" $1
 
-  OUTPUT=$(eval $@ 2>&1)
+ 	OUTPUT=$(eval $1 2>&1)
 
-  if [ $? -ne 0 ]; then
+	ret=$?
+
+	echo "$OUTPUT" > $CMDOUT
+
+  if [ $ret -ne 0 ]; then
     verbose "${OUTPUT}"
-    exit_failure "$1 failed"
+		if [ $2 -eq 1 ]; then
+    	exit_failure "Command fail: $3"
+		else
+			return 1
+		fi
   fi
 
   debug "${OUTPUT}"
@@ -228,18 +243,30 @@ function run_command()
   return 0
 }
 
-# ... run "fail" command (success if return value != 0) or exit with cleanup
+
+# Exec command "$1" and store the output in $OUTPUT
+# If command not fails and $2 is set to 1 
+# exit with message $3 else return 1 
 # --> set OUTPUT with command's output
+# --> store command's output in file $CMDOUT
 function run_command_fail()
 {
   verbose ""
-  verbose "[" $(date +%H:%M:%S) "] $" $@
+  verbose "[" $(date +%H:%M:%S) "] $" $1
 
-  OUTPUT=$(eval $@ 2>&1)
+  OUTPUT=$(eval $1 2>&1)
 
-  if [ $? -eq 0 ]; then
-    debug "${OUTPUT}"
-    exit_failure "$1 not failed as required"
+	ret=$?
+
+	echo "$OUTPUT" > $CMDOUT
+
+  if [ $ret -eq 0 ]; then
+    verbose "${OUTPUT}"
+		if [ $2 -eq 1 ]; then
+    	exit_failure "Command not failed as required: $3"
+		else
+			return 1
+		fi
   fi
 
   debug "${OUTPUT}"
@@ -291,10 +318,10 @@ function set_proxy()
   verbose "Initializing proxy file ..."
   OUTPUT=$(eval "echo $PASS | voms-proxy-init -voms ${VO} -verify -valid $VALID -bits 1024 -pwstdin -out $1" 2>&1)
   if [ $? -eq 0 ] ; then
-    debug $OUTPUT
+    debug "$OUTPUT"
     export X509_USER_PROXY=$1
   else
-    echo $OUTPUT
+    echo "$OUTPUT"
     exit_failure "Failed to create user proxy"
   fi
   return 0
@@ -315,12 +342,12 @@ function set_jdl()
   return 0
 }
 
-# define a 5 minutes long jdl and save it in $1
+# define a 10 minutes long jdl and save it in $1
 function set_longjdl()
 {
   remove $1
   echo "Executable = \"/bin/sleep\";" >> $1
-  echo "Arguments = \"300\";" >> $1
+  echo "Arguments = \"600\";" >> $1
 
   return 0
 }
@@ -399,7 +426,7 @@ function prepare()
   DELEGATION_OPTIONS="-a"
   DEFAULTREQ="other.GlueCEStateStatus == \"Production\""
 	CONF="wms-command.conf"
-	
+
   while getopts "hld:ic:nW:v:L:C:" arg;
     do
     case "$arg" in
@@ -452,6 +479,7 @@ function prepare()
   TMPFILE=$MYTMPDIR/file.tmp
   JDLFILE=$MYTMPDIR/example.jdl
   CONFIG_FILE=$MYTMPDIR/wms.conf
+	CMDOUT=$MYTMPDIR/cmd.out
 
   # Create default jdl and config file
   set_jdl $JDLFILE
@@ -482,7 +510,7 @@ function define_delegation()
 {
   DELEGATION_OPTIONS="-d del_${ID}"
   verbose "Delegating proxy ..."
-  run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS -c $CONFIG_FILE  
+  run_command "glite-wms-job-delegate-proxy $DELEGATION_OPTIONS -c $CONFIG_FILE" 1 "Delegation fails"
 
   return 0
 }
@@ -496,20 +524,20 @@ function get_CE()
   verbose "Look for the destination..."
 
 	# Waiting until job is matched
-	run_command glite-wms-job-status $1
+	run_command "glite-wms-job-status $1" 1 "I'm not able to retrieve the status for $1"
 	while [[ "$JOBSTATUS" == *Submitted* ]] 
 	do
 		sleep 3
-		run_command glite-wms-job-status $1
+		run_command "glite-wms-job-status $1" 1 "I'm not able to retrieve the status for $1"
 	done
 
-  tmp=`grep -m 1 Destination <<< "$OUTPUT" | sed -e "s/Destination://"`
+  run_command "grep -m 1 Destination $CMDOUT | sed -e \"s/Destination://\"" 0
 	if [[ $? -eq 1 ]] ; then
 		exit_failure "Job $1 doesn't match"
 	fi
 	
-	if [[ x${tmp} != "x" ]] ; then
-  	CENAME=$(trim "$tmp")
+	if [[ x${OUTPUT} != "x" ]] ; then
+  	CENAME=$(trim "${OUTPUT}")
 	fi
 
   verbose "CE id is: $CENAME"
@@ -525,11 +553,13 @@ function get_STATUS()
   JOBSTATUS="Unknown" 
  
   verbose "Check job's status..." 
-  run_command glite-wms-job-status $1
+  run_command "glite-wms-job-status $1" 1 "I'm not able to retrieve the status for $1"
 
-  tmp=`grep -m 1 'Current Status' <<< "$OUTPUT" | awk -F: '{print $2}'`
-
-  JOBSTATUS=$(trim "$tmp")
+  run_command "grep -m 1 'Current Status' $CMDOUT | awk -F: '{print \$2}'" 0
+	
+	if [[ $? -eq 0 ]] ; then
+  	JOBSTATUS=$(trim "${OUTPUT}")
+	fi
 
   verbose "Job status is: $JOBSTATUS"
 
@@ -538,7 +568,7 @@ function get_STATUS()
 
 
 # Check if job given as input is finished ($1 must be a valid JOBID)
-# returns if job is not finished 
+# returns 0 if job is not finished 
 # returns 1 if job is DoneOK, 2 if Aborted 
 # returns 3 if jobs is Cancelled and 4 if DoneFailed
 # returns 5 if jobs is Cleared
