@@ -20,7 +20,7 @@
 ***************************************************************************
     filename  : glite-wms-job-status
     author    : Alessandro Maraschini
-    email     : egee@datamat.it
+    email     : alvise.dorigo@pd.infn.it
     copyright : (C) 2004 by DATAMAT
 ***************************************************************************
 //
@@ -353,7 +353,7 @@ if not st:
 	exit(1)
 else:
 	if outFile:
-		message='======================== glite-job-status success ========================\n'
+		message='======================== glite-wms-job-status success ========================\n'
 		message=message + " Bookkeeping information has been found and stored in the file:\n"
 		message=message+ " "+ outFile
 		message=message+'\n==========================================================================\n'

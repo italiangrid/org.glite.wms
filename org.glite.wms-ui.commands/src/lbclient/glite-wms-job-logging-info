@@ -18,9 +18,9 @@
 
 """
 ***************************************************************************
-    filename  : glite-job-logging-info
+    filename  : glite-wms-job-logging-info
     author    : Alessandro Maraschini
-    email     : egee@datamat.it
+    email     : alvise.dorigo@pd.infn.it
     copyright : (C) 2004 by DATAMAT
 ***************************************************************************
 //
@@ -88,7 +88,7 @@ def checkExclude(includes, excludes):
 		OPT= "--exclude"
 	return 0 , includes ,excludes
 
-sepStart ="===================== glite-job-logging-info Success =====================\n"
+sepStart ="===================== glite-wms-job-logging-info Success =====================\n"
 sepEnd = "==========================================================================\n"
 
 ######################
@@ -334,7 +334,7 @@ if message:
 	wmsui_utils.print_message(outFile, message)
 
 	if outFile:
-		message='===================== glite-job-logging-info Success =====================\n'
+		message='===================== glite-wms-job-logging-info Success =====================\n'
 		message=message + " Logging Information has been found and stored in the file:\n"
 		message=message + " "+ outFile +"\n"
 		message=message +'==========================================================================\n'
