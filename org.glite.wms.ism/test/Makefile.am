@@ -44,8 +44,6 @@ ii_purchaserTest_LDADD = \
         $(top_srcdir)/src/libglite_wms_ism.la \
         $(top_srcdir)/src/purchaser/libglite_wms_ism_ii_purchaser.la \
         -lldap \
-        $(GLITE_WMSUTILS_JOBID_LIBS) \
-        $(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
         $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
