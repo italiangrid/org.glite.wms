@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.16.6.6  2011/03/22 14:20:04  pandreet
+#       Removed workaround
+#
 #       Revision 1.22.2.16.6.5  2011/03/11 15:00:04  pandreet
 #       Removed with-glite-location
 #
@@ -201,6 +204,9 @@ AC_FUNC_MKTIME
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
+GLITE_CHECK_LIBDIR
+GLITE_CHECK_INITDIR
+
 have_boost=no
 have_classads=no
 have_condorg=no
@@ -224,8 +230,6 @@ have_glite_lb=no
 have_glite_renewal=no                                                      
 have_glite_jp=no
                       
-GLITE_CHECK_LIBDIR
-
 GLITE_CHECK_JOBID
                                                                                
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
@@ -247,10 +251,6 @@ AC_PROXYRENEWAL([], have_glite_renewal=yes, have_glite_renewal=no)
 AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_renewal"])
 
 AC_ARES
-
-#Workaround for SL5-EPEL
-AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
-AC_SUBST([initdir], [${RCINITDIR:-init.d}])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
