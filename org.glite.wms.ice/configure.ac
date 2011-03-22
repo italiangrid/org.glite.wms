@@ -71,6 +71,8 @@ have_voms=no
 
 AC_OPTIMIZE
 GLITE_CHECK_LIBDIR
+GLITE_CHECK_INITDIR
+
 AC_ARES
 GLITE_CHECK_JOBID
 AC_GLITE_CEMONITOR_API
@@ -107,16 +109,9 @@ AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 AC_VOMS([], have_voms=yes, have_voms=no)
 AC_MSG_RESULT(["VOMS found $have_voms"])
 
-#have_renewalcore=no
 have_myproxy=no
-#AC_PROXYRENEWALCORE([], have_renewalcore=yes, have_renewalcore=no)
-#AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
 AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
 AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
-
-#Workaround for SL5-EPEL
-AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
-AC_SUBST([initdir], [${RCINITDIR:-init.d}])
 
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
