@@ -63,6 +63,8 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
 GLITE_CHECK_LIBDIR
+GLITE_CHECK_INITDIR
+
 AC_OPTIMIZE
 AC_GLITE_WMS_WSDL
 
@@ -209,10 +211,6 @@ AC_GSOAP
 AC_SEC_LCAS
 AC_SEC_LCMAPS
 AC_SEC_LCMAPS_WITHOUT_GSI
-
-#Workaround for SL5-EPEL
-AC_ARG_VAR(RCINITDIR, Location of the init.d directory)
-AC_SUBST([initdir], [${RCINITDIR:-init.d}])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
