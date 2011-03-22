@@ -198,6 +198,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    /*
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS userdn_busy ( "	\
@@ -216,6 +217,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    */
             try {
 	      string sqlcmd = 
 		string("CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (") + util::CreamJob::grid_jobid_field() + ")"; 
