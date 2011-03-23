@@ -146,7 +146,14 @@ int main( int argc, char *argv[]) {
     
     system( tmp.c_str() );
   }
-  
+ 
+  string BASEPATH = "/usr/bin";
+
+  const char* pathenv = ::getenv("LOCATION_BIN");
+
+  if( pathenv )
+    BASEPATH = pathenv;
+ 
   if( argc>=3 ) {
   
     string tmp;
@@ -154,11 +161,11 @@ int main( int argc, char *argv[]) {
     if(mem) {
         
       tmp = "MAX_ICE_MEM=\"";
-      tmp += boost::lexical_cast<string>(mem) + "\" /opt/glite/bin/glite-wms-ice --conf " + opt_conf_file;
+      tmp += boost::lexical_cast<string>(mem) + "\" " + BASEPATH + "/glite-wms-ice --conf " + opt_conf_file;
     
     }
     else {
-      tmp += "/opt/glite/bin/glite-wms-ice --conf " + opt_conf_file + " " + consolelog + " 2>&1";
+      tmp += BASEPATH + "/glite-wms-ice --conf " + opt_conf_file + " " + consolelog + " 2>&1";
     }
     
     
