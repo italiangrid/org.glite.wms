@@ -12,8 +12,10 @@ EXTRA_DIST = \
 	glite-wms-wmproxy \
 	wmproxy_logrotate.conf
 
-wletcwmdir = $(sysconfdir)
-wletcwm_DATA = glite_wms_wmproxy_httpd.conf glite_wms_wmproxy.gacl wmproxy_logrotate.conf
+wletcwmdir = $(sysconfdir)/glite-wms
+wletcwm_DATA = glite_wms_wmproxy_httpd.conf \
+		glite_wms_wmproxy.gacl \
+		wmproxy_logrotate.conf
 
 wletcwmsdir = $(sysconfdir)/lcmaps
 wletcwms_DATA = lcmaps.db 
@@ -22,10 +24,10 @@ wlinidir = $(sysconfdir)/$(initdir)
 wlini_SCRIPTS = glite-wms-wmproxy
 
 install-data-hook:
-	/bin/mv $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf.template
-	/bin/mv $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl.template
-	/bin/mv $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db.template
-	/bin/mv $(DESTDIR)$(sysconfdir)/wmproxy_logrotate.conf $(DESTDIR)$(sysconfdir)/wmproxy_logrotate.conf.template
+	/bin/mv $(DESTDIR)$(wletcwmdir)/glite_wms_wmproxy_httpd.conf $(DESTDIR)$(wletcwmdir)/wmproxy_httpd.conf.template
+	/bin/mv $(DESTDIR)$(wletcwmdir)/glite_wms_wmproxy.gacl $(DESTDIR)$(wletcwmdir)/wmproxy.gacl.template
+	/bin/mv $(DESTDIR)$(wletcwmsdir)/lcmaps.db $(DESTDIR)$(wletcwmsdir)/lcmaps.db.template
+	/bin/mv $(DESTDIR)$(wletcwmdir)/wmproxy_logrotate.conf $(DESTDIR)$(wletcwmdir)/wmproxy_logrotate.conf.template
 
 CLEANFILES =
 
