@@ -64,7 +64,7 @@ echo "Generating short crl"
 cd $certdir/trusted-ca
 export CA_DIR=.
 export CASROOT=$certdir
-export CATYPE=trusted
+export DNS_HOSTNAME=fake.host.name
 
 openssl ca -gencrl -crlhours 1 -out $CA_DIR/trusted.crl -config $CA_DIR/req_conf.cnf
 
