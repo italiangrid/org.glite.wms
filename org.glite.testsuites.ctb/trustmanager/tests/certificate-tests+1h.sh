@@ -118,7 +118,7 @@ myecho "Moving CRL"
 mv /etc/grid-security/certificates/$ca_hash.r0 /etc/grid-security/certificates/$ca_hash.r0.bak
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 
 sleep 15
 
@@ -129,6 +129,6 @@ myecho "Moving CRL back"
 mv /etc/grid-security/certificates/$ca_hash.r0.bak /etc/grid-security/certificates/$ca_hash.r0
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 
 myexit 0

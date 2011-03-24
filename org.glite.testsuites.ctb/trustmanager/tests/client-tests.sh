@@ -35,7 +35,7 @@ function myexit() {
    echo "Moving back the tomcat key"
    mv $TOMCAT_KEY.bak $TOMCAT_KEY
    chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
-   service $TOMCAT_SERVICE restart
+   /sbin/service $TOMCAT_SERVICE restart
   fi 
 
 
@@ -163,7 +163,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -196,7 +196,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -229,7 +229,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -261,7 +261,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -296,7 +296,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -331,7 +331,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -365,7 +365,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -400,7 +400,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -435,7 +435,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
@@ -470,7 +470,7 @@ chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
 
 myecho "Restarting tomcat"
-service $TOMCAT_SERVICE restart
+/sbin/service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
