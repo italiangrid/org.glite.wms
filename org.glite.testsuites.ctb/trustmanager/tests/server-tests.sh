@@ -2,7 +2,7 @@
 
 # These test test that the server webintegration part gets
 # the correct information from the certificates.
-# The test requires that the glite-security-trustmanager webapp
+# The test requires that the trustmanager-test webapp
 # has been deployed on tomcat. 
 # This assumes that the certificates were created with
 # org.glite.security.test-utils
@@ -10,6 +10,7 @@
 #config variables
 #tomcat host and port
 export HOST=$HOSTNAME:8443
+export WEBAPPNAME=trustmanager-test
 #end of config variables
 
 SUCCESS=1
@@ -86,7 +87,7 @@ rm $getfile
 
 myecho "Checking that the server reports the correct information for a normal certificate"
 
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv  https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O  $getfile
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv  https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
 
 if [ $? -ne 0 ] ; then
  myecho "Error getting certificate information from server"
@@ -137,7 +138,7 @@ rm $getfile
 
 myecho "Checking that the server reports the correct information for a proxy certificate"
 
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.proxy.cert --private-key $certdir/trusted-certs/trusted_client.proxy_nopass.priv --ca-certificate $certdir/trusted-certs/trusted_client.cert https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O  $getfile
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.proxy.cert --private-key $certdir/trusted-certs/trusted_client.proxy_nopass.priv --ca-certificate $certdir/trusted-certs/trusted_client.cert https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
 
 if [ $? -ne 0 ] ; then
  myecho "Error getting proxy certificate information from server"

@@ -38,7 +38,7 @@ function myecho()
 
 usage() {
  echo
- echo "Test different certifcates against trustmanager"
+ echo "Test different certificates against trustmanager"
  echo "This test assumes that you're using certificates"
  echo "by org.glite.security.test-utils"
  echo "Usage:"

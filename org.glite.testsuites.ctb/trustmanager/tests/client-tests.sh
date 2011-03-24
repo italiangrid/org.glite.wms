@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# These test test that the server webintegration part gets
+# These test test that the server web integration part gets
 # the correct information from the certificates.
-# The test requires that the glite-security-trustmanager webapp
+# The test requires that the trustmanager-test webapp
 # has been deployed on tomcat. 
 # This assumes that the certificates were created with
 # org.glite.security.test-utils
@@ -95,15 +95,15 @@ certdir=$(readlink -f $certdir)
 TOMCAT_CERT_OWN=`stat -c %U $TOMCAT_CERT`
 TOMCAT_CERT_GRP=`stat -c %G $TOMCAT_CERT`
 
-if [ ! -d "$TOMCAT_WEBAPP/glite-security-trustmanager" ] ; then
- my_echo "Could not find the trustmanager webapp in $TOMCAT_WEBAPP/glite-security-trustmanager"
+if [ ! -d "$TOMCAT_WEBAPP/trustmanager-test" ] ; then
+ my_echo "Could not find the trustmanager webapp in $TOMCAT_WEBAPP/trustmanager-test"
  my_exit 1
 fi
 
-CLASSPATH=$TOMCAT_WEBAPP/glite-security-trustmanager/WEB-INF/classes
+CLASSPATH=$TOMCAT_WEBAPP/trustmanager-test/WEB-INF/classes
 
 
-for f in $TOMCAT_WEBAPP/glite-security-trustmanager/WEB-INF/lib/*.jar  ; do 
+for f in $TOMCAT_WEBAPP/trustmanager-test/WEB-INF/lib/*.jar  ; do 
  CLASSPATH=$CLASSPATH:$f
 done
 
@@ -112,34 +112,36 @@ CLASSPATH=/opt/glite/share/java/glite-security-util-java.jar:$CLASSPATH
 export CLASSPATH
 
 pushd .
-cd $TOMCAT_WEBAPP/glite-security-trustmanager/WEB-INF/classes
+cd $TOMCAT_WEBAPP/trustmanager-test/WEB-INF/classes
 
 myecho "Testing client with normal certificate" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService
-
+CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService"
+$CMD |grep EchoSecurityService
 if [ $? -ne 0 ] ; then 
  myecho "Error connecting to service with a normal client certificate. Please change to $clidir and run the following to see the specific errors:"  
- echo "java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService"
+ echo $CMD 
  myexit 1
 fi
 
 myecho "Test with normal certificate successful"
 
 myecho "Testing client with proxy certificate"
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates  -DgridProxyFile=$certdir/trusted-certs/trusted_client.proxy.grid_proxy org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep EchoSecurityService
+CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates  -DgridProxyFile=$certdir/trusted-certs/trusted_client.proxy.grid_proxy org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService"
+$CMD |grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Error connecting to service with a proxy client certificate. Please change to $clidir and run the following to see the specific errors:"  
- echo "java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates  -DgridProxyFile=$certdir/trusted-certs/trusted_client.proxy.grid_proxy org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService"
+ echo $CMD
  myexit 1
 fi
 
 myecho "Testing client with pkcs8 key (bug #69163)"
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client.priv.pkcs8 org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService
+CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client.priv.pkcs8 org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService"
+$CMD |grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Error connecting to service with a pkcs8 key. Please change to $clidir and run the following to see the specific errors:"  
- echo "java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client.priv.pkcs8 org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService"
+ echo $CMD
  myexit 1
 fi
 
@@ -165,7 +167,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -176,7 +178,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against expired host certificate" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep expired 
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService | grep expired 
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate has expired"
@@ -198,7 +200,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -208,7 +210,7 @@ fi
 myecho "Tomcat up and running"
 
 myecho "Testing against revoked host certificate" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep revoked
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService | grep revoked
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate has been revoked"
@@ -231,7 +233,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -241,7 +243,7 @@ fi
 myecho "Tomcat up and running"
 
 myecho "Testing against host certificate not conforming to the namespace" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep "peer not authenticated"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService | grep "peer not authenticated"
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate does not conform to the namespace"
@@ -263,7 +265,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -273,7 +275,7 @@ fi
 myecho "Tomcat up and running"
 
 myecho "Testing against host certificate with an emailAddress field (bug#69449)" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService | grep EchoSecurityService
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService | grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server failed, when it should have succeeded"
@@ -298,7 +300,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -309,7 +311,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against bad CN (trusted/ prefix) and altname" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep "not allowed with certificate for DN"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService  |grep "not allowed with certificate for DN"
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate has bad CN and altname"
@@ -333,7 +335,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -343,7 +345,7 @@ fi
 myecho "Tomcat up and running"
 
 myecho "Testing against bad CN and altname" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep "not allowed with certificate for DN"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService |grep "not allowed with certificate for DN"
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if server certificate has bad CN and altname"
@@ -367,7 +369,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -378,7 +380,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against certificate with hostname only in the altname" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep EchoSecurityService
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService |grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server failed even if altname had a correct hostname"
@@ -402,7 +404,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -413,7 +415,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against certificate with hostname in the CN and altname" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep EchoSecurityService
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService |grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server failed even if CN and altname had a correct hostname"
@@ -437,7 +439,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -448,7 +450,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against certificate with email address in altname and no hostnames" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep "not allowed with certificate for DN"
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService |grep "not allowed with certificate for DN"
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server succesful even if there were no hostnames anywhere"
@@ -472,7 +474,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/trustmanager-test/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623, or did you just forget to add internalOverrideExpirationCheck=\"true\" in tomcat's server.xml?"
@@ -483,7 +485,7 @@ myecho "Tomcat up and running"
 
 
 myecho "Testing against certificate with email address in altname and hostnames in CN" 
-java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService |grep EchoSecurityService
+java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/trustmanager-test/services/EchoService |grep EchoSecurityService
 
 if [ $? -ne 0 ] ; then 
  myecho "Connection to server failed even if the hostname was in the CN"

@@ -43,12 +43,20 @@ fi
 echo "Copying host certificates"
 
 cp $certdir/grid-security/hostcert.pem /etc/grid-security/tomcat-cert.pem
+if [ $? -ne 0 ] ; then
+ echo "Error copying host certificate"
+ exit 1
+fi
 cp $certdir/grid-security/hostkey.pem /etc/grid-security/tomcat-key.pem
+if [ $? -ne 0 ] ; then
+ echo "Error copying host key"
+ exit 1
+fi
 
 chown tomcat:tomcat /etc/grid-security/tomcat*
 
 if [ $? -ne 0 ] ; then
- echo "Error copying certificates"
+ echo "Error changing host credential permissions"
  exit 1
 fi
 
@@ -84,6 +92,6 @@ cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_cl
 
 
 echo "Copying trustmanager WAR to tomcat"
-cp /opt/glite/share/java/glite-security-trustmanager.war /var/lib/tomcat5/webapps/
+cp /usr/share/java/trustmanager-test.war /var/lib/tomcat5/webapps/
 
 echo "Copying done, please restart tomcat"

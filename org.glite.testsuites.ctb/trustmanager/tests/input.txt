@@ -1,4 +1,4 @@
-GET /glite-security-trustmanager/services/EchoService?method=getAttributes HTTP/1.1
+GET /trustmanager-test/services/EchoService?method=getAttributes HTTP/1.1
 Host: localhost
 
 

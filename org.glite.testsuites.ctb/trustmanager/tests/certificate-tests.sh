@@ -8,6 +8,7 @@
 #tomcat host and port
 export HOST=$HOSTNAME:8443
 export TOMCAT_SERVICE=tomcat5
+export WEBAPPNAME=trustmanager-test
 #end of config variables
 
 SUCCESS=1
@@ -38,7 +39,7 @@ function myecho()
 
 usage() {
  echo
- echo "Test different certifcates against trustmanager"
+ echo "Test different certificates against trustmanager"
  echo "This test assumes that you're using certificates"
  echo "by org.glite.security.test-utils"
  echo "Usage:"
@@ -176,7 +177,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -203,7 +204,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -229,7 +230,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
@@ -249,7 +250,7 @@ service $TOMCAT_SERVICE restart
 sleep 15
 
 myecho "Confirming that tomcat came up properly"
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
  myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
