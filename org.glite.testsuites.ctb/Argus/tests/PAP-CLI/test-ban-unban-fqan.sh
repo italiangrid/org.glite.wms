@@ -18,7 +18,7 @@ fi
 
 PAP_CTRL=argus-pap
 
-if [ ! -f /etc/rc.d/init.d/pap-standalone ]
+if [ -f /etc/rc.d/init.d/pap-standalone ]
 then
     PAP_CTRL=pap-standalone
 fi
