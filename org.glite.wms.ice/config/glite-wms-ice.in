@@ -13,14 +13,14 @@ export GLITE_WMS_CONFIG_DIR
 this_script_name=$0
 
 program_name=glite-wms-ice-safe
-binpath=${LOCATION_BIN}/${program_name}
+binpath=${WMS_LOCATION_BIN}/${program_name}
 pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
 running()
 {
-    pidsafe=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`  
+    pidsafe=`/bin/ps -efu glite|grep ${WMS_LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`  
 #    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
-    pid=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+    pid=`/bin/ps -efu glite|grep ${WMS_LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
 #    pid=`/bin/ps h -o pid -C glite-wms-ice`
     
     
@@ -78,8 +78,8 @@ stop()
 {
   if running; then
    echo -n "stopping ICE... "
-   pidsafe=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
-   pid=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+   pidsafe=`/bin/ps -efu glite|grep ${WMS_LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
+   pid=`/bin/ps -efu glite|grep ${WMS_LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
 #    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
 #    pid=`/bin/ps h -o pid -C glite-wms-ice`
 
