@@ -239,10 +239,7 @@ string displayENV(const string& title, char* envNAME){
 
 
 /**
-* Dysplay information on Request
-* call checkConfiguration();
-* call setGlobalSandboxDir();
-* call callLoadScriptFile(operation)
+* Display information on Request
 **/
 void
 initWMProxyOperation(const std::string &operation)
@@ -263,12 +260,11 @@ initWMProxyOperation(const std::string &operation)
 	// Manage static WMProxy  instance serving request number
 	servedrequestcount_global++;
 	edglog(info)<<"WMProxy instance serving core request N.: " <<servedrequestcount_global<<endl;
-	// Checking Configuration
+
 	checkConfiguration(); // throws
-	// Chekcing global Sandbox Dir
 	setGlobalSandboxDir(); // throws
-	// Checking system load for desired operation
 	callLoadScriptFile(operation);
+
 	GLITE_STACK_CATCH();
 }
 
