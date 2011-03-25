@@ -107,7 +107,7 @@ for f in $TOMCAT_WEBAPP/trustmanager-test/WEB-INF/lib/*.jar  ; do
  CLASSPATH=$CLASSPATH:$f
 done
 
-CLASSPATH=/usr/share/java/commons-logging.jar:$CLASSPATH
+CLASSPATH=/usr/share/java/commons-logging.jar:/usr/share/java/commons-discovery.jar:$CLASSPATH
 
 export CLASSPATH
 echo classpath is: $CLASSPATH

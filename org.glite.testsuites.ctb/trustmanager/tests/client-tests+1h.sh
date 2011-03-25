@@ -102,7 +102,7 @@ fi
 
 CLASSPATH=$TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/classes
 
-CLASSPATH=/usr/share/java/commons-logging.jar:$CLASSPATH
+CLASSPATH=/usr/share/java/commons-logging.jar:/usr/share/java/commons-discovery.jar:$CLASSPATH
 
 for f in $TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/lib/*.jar  ; do 
  CLASSPATH=$CLASSPATH:$f
