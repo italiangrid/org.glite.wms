@@ -1,33 +1,26 @@
 #!/bin/sh
 
 
-GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
 
-#########################################################
-#
-#				Integration changes
-#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
-#. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
-#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
-#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
-
-. /etc/glite/profile.d/glite_setenv.sh 
+########################################
+. /opt/glite/yaim/etc/grid-env-funcs.sh
+. /etc/profile.d/grid-env.sh 
 ########################################
 
  
-GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
+GLITE_WMS_CONFIG_DIR=${WMS_LOCATION_ETC}
 export GLITE_WMS_CONFIG_DIR
 this_script_name=$0
 
 program_name=glite-wms-ice-safe
-binpath=${GLITE_LOCATION}/bin/${program_name}
+binpath=${LOCATION_BIN}/${program_name}
 pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
 running()
 {
-    pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`  
+    pidsafe=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`  
 #    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
-    pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+    pid=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
 #    pid=`/bin/ps h -o pid -C glite-wms-ice`
     
     
@@ -85,8 +78,8 @@ stop()
 {
   if running; then
    echo -n "stopping ICE... "
-   pidsafe=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
-   pid=`/bin/ps -efu glite|grep ${GLITE_LOCATION}/bin/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
+   pidsafe=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice-safe|grep -v grep|awk '{print $2}'`
+   pid=`/bin/ps -efu glite|grep ${LOCATION_BIN}/glite-wms-ice|grep -v grep|grep -v glite-wms-ice-safe|grep -v "sh -c"|awk '{print $2}'`
 #    pidsafe=`/bin/ps h -o pid -C glite-wms-ice-safe`
 #    pid=`/bin/ps h -o pid -C glite-wms-ice`
 
