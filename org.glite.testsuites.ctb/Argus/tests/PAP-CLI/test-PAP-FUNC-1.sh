@@ -1,14 +1,12 @@
 #!/bin/bash
 
-#Assumtpions: The PAP is running with a correct configuration file
+#Assumptions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
-
 
 if [ -z $PAP_HOME ]; then
   echo "Please set PAP_HOME variable"
   exit 1
 fi
-
 
 echo `date`
 echo "---Test-PAP-FUNC-1---"
@@ -19,10 +17,29 @@ argusconffile=$PAP_HOME/conf/pap_authorization.ini
 argusbkpfile=$PAP_HOME/conf/pap_authorization.bkp
 failed="no"
 
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+PAP_CTRL=argus-pap
+
+if [ ! -f /etc/rc.d/init.d/pap-standalone ]
+then
+    PAP_CTRL=pap-standalone    
+fi
+
+echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
+
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
-  exit 1
+  /etc/rc.d/init.d/$PAP_CTRL start; result=$?
+  sleep 5;
+  if [ $result -ne 0 ]
+  then 
+      echo "PAP is not running: A start was attempted."
+      echo "Failed"
+      exit 1
+  else
+      echo "PAP started. Proceeding."
+  fi
 fi
 
 #################################################################
@@ -39,7 +56,7 @@ ordering = default
 
 [repository]
 
-location = /opt/argus/pap/repository
+location = $PAP_HOME/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -55,17 +72,25 @@ shutdown_port = 8151
 #private_key = /etc/grid-security/hostkey.pem
 
 EOF
-
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+#
+# What should happen here?
+# The re-start of the PAP should fail as there are no
+# credentials present! At least they have been commented
+# out of the configuration file.
+#
+/etc/rc.d/init.d/$PAP_CTRL restart
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+# cat $conffile
+# /etc/rc.d/init.d/$PAP_CTRL status
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
+  echo "The PAP is running... should NOT be running."
   failed="yes"
   mv -f $bkpfile $conffile
   echo "FAILED"
 else
   mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -84,7 +109,7 @@ ordering = default
 
 [repository]
 
-location = /opt/argus/pap/repository
+location = $PAP_HOME/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -101,16 +126,16 @@ private_key = /etc/grid-security/hostkey.pem
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $bkpfile $conffile
 else
   mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -129,7 +154,7 @@ ordering = default
 
 [repository]
 
-location = /opt/argus/pap/repository
+location = $PAP_HOME/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -146,16 +171,16 @@ private_key = /etc/grid-security/hostkey.pem
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $bkpfile $conffile
 else
   mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -174,7 +199,7 @@ ordering  default
 
 [repository]
 
-location = /opt/argus/pap/repository
+location = $PAP_HOME/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -191,16 +216,16 @@ private_key = /etc/grid-security/hostkey.pem
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $bkpfile $conffile
 else
   mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -220,16 +245,16 @@ cat <<EOF > $argusconffile
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $argusbkpfile $argusconffile
 else
   mv -f $argusbkpfile $argusconffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -249,16 +274,16 @@ cat <<EOF > $argusconffile
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $argusbkpfile $argusconffile
 else
   mv -f $argusbkpfile $argusconffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
@@ -278,27 +303,29 @@ cat <<EOF > $argusconffile
 
 EOF
 
-/etc/rc.d/init.d/pap-standalone restart >>/dev/null
+cat $argusconffile
+
+/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
 sleep 10
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
   mv -f $argusbkpfile $argusconffile
 else
   mv -f $argusbkpfile $argusconffile
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
   sleep 10
   echo "OK"
 fi
 
 #################################################################
 #start/restart the server
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP not running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP not running'
 if [ $? -eq 0 ]; then
-  /etc/rc.d/init.d/pap-standalone start >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 else
-  /etc/rc.d/init.d/pap-standalone restart >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
 fi
 sleep 10
 
