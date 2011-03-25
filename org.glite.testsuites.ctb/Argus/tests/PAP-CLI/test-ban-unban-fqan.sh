@@ -28,7 +28,8 @@ echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
 /etc/rc.d/init.d/argus-pap status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
-  exit 1
+  /etc/rc.d/init.d/$PAP_CTRL start
+  sleep 10
 fi
 
 echo `date`
