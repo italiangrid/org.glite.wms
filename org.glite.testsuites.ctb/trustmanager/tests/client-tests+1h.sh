@@ -102,12 +102,14 @@ fi
 
 CLASSPATH=$TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/classes
 
+CLASSPATH=/usr/share/java/commons-logging.jar:$CLASSPATH
 
 for f in $TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/lib/*.jar  ; do 
  CLASSPATH=$CLASSPATH:$f
 done
 
 export CLASSPATH
+echo classpath is: $CLASSPATH
 
 cd $TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/classes
 

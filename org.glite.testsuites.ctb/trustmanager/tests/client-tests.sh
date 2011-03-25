@@ -107,9 +107,10 @@ for f in $TOMCAT_WEBAPP/trustmanager-test/WEB-INF/lib/*.jar  ; do
  CLASSPATH=$CLASSPATH:$f
 done
 
-CLASSPATH=/opt/glite/share/java/glite-security-util-java.jar:$CLASSPATH
+CLASSPATH=/usr/share/java/commons-logging.jar:$CLASSPATH
 
 export CLASSPATH
+echo classpath is: $CLASSPATH
 
 pushd .
 cd $TOMCAT_WEBAPP/trustmanager-test/WEB-INF/classes
