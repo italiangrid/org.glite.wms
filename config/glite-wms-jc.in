@@ -13,19 +13,15 @@
 # config: /opt/glite/etc/glite_wms.conf
 # hide: false
 
-# Source function library
-. /etc/rc.d/init.d/functions
-
-GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
-
-. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+#########################################################
+. /opt/glite/yaim/etc/grid-env-funcs.sh
+. /etc/profile.d/grid-env.sh
+########################################
 
 INIT=/var/lock/subsys/`basename $0 | \
 sed -e 's/^[SK][0-9][0-9]//'`
 
-GLITE_WMS_BIN_DIR=${GLITE_LOCATION}/bin
+. /etc/rc.d/init.d/functions
 CONFIGURATION_FILE=glite_wms.conf
 CONTROLLERBASE=glite-wms-job_controller
 MASTERBASE=condor_master
@@ -35,8 +31,8 @@ export CONDOR_IDS="$gliteuid.$glitegid"
 CONDOR_MASTER=${CONDORG_INSTALL_PATH}/sbin/${MASTERBASE}
 CONDOR_OFF=${CONDORG_INSTALL_PATH}/sbin/condor_off
 CONDOR_SCHEDD=${CONDORG_INSTALL_PATH}/sbin/condor_schedd
-JOBCONTROLLER=${GLITE_WMS_BIN_DIR}/${CONTROLLERBASE}
-LOCKFILE=`${GLITE_WMS_BIN_DIR}/glite-wms-get-configuration JobController.LockFile`
+JOBCONTROLLER=${WMS_LOCATION_BIN}/${CONTROLLERBASE}
+LOCKFILE=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.LockFile`
 SCRIPT_UID=`/usr/bin/id -u`
 GLITEUSER_HOME=`eval echo ~${GLITE_WMS_USER}`
 [ -d ${GLITEUSER_HOME} ] || do_failure "Missing user directory ${GLITEUSER_HOME}"
@@ -101,11 +97,11 @@ remove_lockfile()
 
 start()
 {
-  input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.input`
+  input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.input`
     if [ -z ${input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - JC section"
     fi 
-  type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.InputType | tr "[:upper:]" "[:lower:]"`
+  type=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.InputType | tr "[:upper:]" "[:lower:]"`
     if [ -z ${type} ]; then
       do_failure "Please set InputType parameter in ${CONFIGURATION_FILE} - JC section"
     fi 

@@ -12,14 +12,12 @@
 # config: /opt/glite/etc/glite_wms.conf
 # hide: false
 
-# Source function library
+#########################################################
+. /opt/glite/yaim/etc/grid-env-funcs.sh
+. /etc/profile.d/grid-env.sh 
+
 . /etc/rc.d/init.d/functions
-
-GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
-
-. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+########################################
 
 INIT=/var/lock/subsys/`basename $0 | \
 sed -e 's/^[SK][0-9][0-9]//'`
@@ -27,15 +25,15 @@ sed -e 's/^[SK][0-9][0-9]//'`
 init_variables()
 {
     # All these things must go in some centralized place...
-    GLITE_WMS_BIN_DIR=${GLITE_LOCATION}/bin
+    GLITE_WMS_BIN_DIR=${WMS_LOCATION_BIN}
 
     # All these things should stay there
-    CONFIGURATION_FILE=glite_wms.conf
+    CONFIGURATION_FILE="glite_wms.conf"
 
     MONITORBASE=glite-wms-log_monitor
-    LOGMONITOR=${GLITE_WMS_BIN_DIR}/${MONITORBASE}
+    LOGMONITOR=${WMS_LOCATION_BIN}/${MONITORBASE}
 
-    LOCKFILE=`${GLITE_WMS_BIN_DIR}/glite-wms-get-configuration LogMonitor.LockFile`
+    LOCKFILE=`${WMS_LOCATION_BIN}/glite-wms-get-configuration LogMonitor.LockFile`
     SCRIPT_UID=`/usr/bin/id -u`
 
     GLITEUSER_HOME=`eval echo ~${GLITE_WMS_USER}`
@@ -76,11 +74,11 @@ do_failure()
 
 start()
 {   
-    wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
+    wm_input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.input`
     if [ -z ${wm_input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - WM section"
     fi 
-    wm_input_type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
+    wm_input_type=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
     if [ -z ${wm_input_type} ]; then
       do_failure "Please set DispatcherType parameter in ${CONFIGURATION_FILE} - WM section"
     fi 
