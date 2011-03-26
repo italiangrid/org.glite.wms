@@ -132,7 +132,7 @@ CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISS
 $CMD  |grep "no CRL was found"
 
 if [ $? -ne 0 ] ; then 
- myecho "Succesfully connected to service even if the CRL was missing."  
+ myecho "Succesfully connected to service even if the CRL of CA $ca_hash was missing."  
  myecho "command was:"
  echo $CMD
  myexit 1
