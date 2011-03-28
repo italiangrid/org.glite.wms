@@ -333,11 +333,12 @@ function set_proxy()
 function set_jdl()
 {
   remove $1
-  echo "Executable = \"/bin/hostname\";" >> $1
-  echo "StdOutput  = \"std.out\";" >> $1
-  echo "StdError   = \"std.err\";" >> $1
-  echo "OutputSandbox = {\"std.out\",\"std.err\"};" >> $1
-  echo "ShallowRewtryCount = 3; " >> $1
+  echo "
+	Executable = \"/bin/hostname\";
+  StdOutput  = \"std.out\";
+  StdError   = \"std.err\";
+  OutputSandbox = {\"std.out\",\"std.err\"};
+  ShallowRewtryCount = 3; " >> $1
 
   return 0
 }
@@ -346,8 +347,9 @@ function set_jdl()
 function set_longjdl()
 {
   remove $1
-  echo "Executable = \"/bin/sleep\";" >> $1
-  echo "Arguments = \"600\";" >> $1
+  echo "
+	Executable = \"/bin/sleep\";
+  Arguments = \"600\";" >> $1
 
   return 0
 }
@@ -356,12 +358,13 @@ function set_longjdl()
 function set_isbjdl()
 {
   remove $1
-  echo "Executable = \"/bin/ls\";" >> $1
-  echo "Arguments = \"-la\";" >> $1
-  echo "StdOutput  = \"std.out\";" >> $1
-  echo "StdError   = \"std.err\";" >> $1
-  echo "OutputSandbox = {\"std.out\",\"std.err\"};" >> $1
-  echo "InputSandbox = {\"$1\"};" >> $1
+  echo "
+	Executable = \"/bin/ls\";
+  Arguments = \"-la\";
+  StdOutput  = \"std.out\";
+  StdError   = \"std.err\";
+  OutputSandbox = {\"std.out\",\"std.err\"};
+  InputSandbox = {\"$1\"};" >> $1
 
   return 0  
 }
@@ -386,16 +389,16 @@ function set_requirements()
 function set_conf()
 {
   remove $1
-  echo "[" >> $1
-  echo "  WMProxyEndPoints = {\"https://${WMS}:7443/glite_wms_wmproxy_server\"};" >> $1
-  echo "  LBAddresses= {\"${LB}\"};" >> $1
-  echo "  jdlDefaultAttributes = [" >> $1 
-  echo "    VirtualOrganisation = \"${VO}\";" >> $1
-  echo "    Requirements = ${DEFAULTREQ} ;" >> $1
-  echo "    Rank =  -other.GlueCEStateEstimatedResponseTime;" >> $1
-  echo "    SignificantAttributes = { \"Requirements\",\"Rank\" };" >> $1
-  echo "  ]" >> $1
-  echo "]" >> $1
+  echo "[
+  WMProxyEndPoints = {\"https://${WMS}:7443/glite_wms_wmproxy_server\"};
+  LBAddresses= {\"${LB}\"};
+  jdlDefaultAttributes = [ 
+  	VirtualOrganisation = \"${VO}\";
+  	Requirements = ${DEFAULTREQ} ;
+  	Rank =  -other.GlueCEStateEstimatedResponseTime;
+  	SignificantAttributes = { \"Requirements\",\"Rank\" };
+  	]
+	]" >> $1
 
   return 0
 }

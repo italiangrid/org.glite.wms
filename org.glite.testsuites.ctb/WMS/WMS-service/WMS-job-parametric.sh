@@ -31,16 +31,17 @@ err=""
 function set_paramjdlbase()
 {
 	remove $JDLFILE
-  echo "JobType = \"parametric\";" >> $JDLFILE
-  echo "Executable = \"/bin/echo\";" >> $JDLFILE
-  echo "Arguments = \"_PARAM_\";" >> $JDLFILE
-  echo "StdOutput  = \"Std-_PARAM_.out\";" >> $JDLFILE
-  echo "StdError   = \"std-_PARAM_.err\";" >> $JDLFILE
-  echo "OutputSandbox = {\"Std-_PARAM_.out\",\"std-_PARAM_.err\"};" >> $JDLFILE
-  echo "InputSandbox = {\"$JDLFILE\", \"$MYTMPDIR/In-_PARAM_.txt\"};" >> $JDLFILE
-	echo "Requirements = regexp(\"_PARAM_\" , other.GlueCEUniqueID);" >> $JDLFILE
-	echo "ShallowRetryCount = 3;" >> $JDLFILE
-	echo "RetryCount = 3;" >> $JDLFILE
+	echo "
+  JobType = \"parametric\";
+  Executable = \"/bin/echo\"
+  Arguments = \"_PARAM_\";
+  StdOutput  = \"Std-_PARAM_.out\";
+  StdError   = \"std-_PARAM_.err\";
+  OutputSandbox = {\"Std-_PARAM_.out\",\"std-_PARAM_.err\"};
+  InputSandbox = {\"$JDLFILE\", \"$MYTMPDIR/In-_PARAM_.txt\"};
+	Requirements = regexp(\"_PARAM_\" , other.GlueCEUniqueID);
+	ShallowRetryCount = 3;
+	RetryCount = 3;" >> $JDLFILE
   return 0
 }
 
