@@ -1,5 +1,6 @@
 #!/bin/sh
 
+## This is the needed bit to make EGEE/EMI compatible tests
 if [ -z $PAP_HOME ]
 then
     if [ -d /usr/share/argus/pap ]
@@ -10,16 +11,26 @@ then
         then
             PAP_HOME=/opt/argus/pap
         else
-            echo "PAP_HOME not defined"
-            echo "/usr/share/argus/pap not found."
-            echo "/opt/argus/pap not found"
-            echo "Sort this out..."
+            echo "PAP_HOME not set, not found at standard locations. Exiting."
             exit 2;
         fi
     fi
 fi
+PAP_CTRL=argus-pap
+if [ -f /etc/rc.d/init.d/pap-standalone ]
+then
+    PAP_CTRL=pap-standalone
+fi
+echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
+/etc/rc.d/init.d/argus-pap status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  echo "PAP is not running"
+  /etc/rc.d/init.d/$PAP_CTRL start
+  sleep 10
+fi
+## To here for EGEE/EMI compatible tests
 
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
   exit 1

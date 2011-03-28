@@ -1,5 +1,7 @@
 #!/bin/sh
 
+## This is the needed bit to make EGEE/EMI compatible tests
+
 if [ -z $PAP_HOME ]
 then
     if [ -d /usr/share/argus/pap ]
@@ -17,12 +19,10 @@ then
 fi
 
 PAP_CTRL=argus-pap
-
 if [ -f /etc/rc.d/init.d/pap-standalone ]
 then
     PAP_CTRL=pap-standalone
 fi
-
 echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
 
 /etc/rc.d/init.d/argus-pap status | grep -q 'PAP running'
@@ -31,6 +31,8 @@ if [ $? -ne 0 ]; then
   /etc/rc.d/init.d/$PAP_CTRL start
   sleep 10
 fi
+
+## To here for EGEE/EMI compatible tests
 
 echo `date`
 echo "---Test-BAN/UNBAN-FQAN---"

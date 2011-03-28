@@ -3,6 +3,13 @@
 #Assumptions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
 
+HOSTNAME=127.0.0.1
+hostname -f > /dev/null 2>&1
+if [ $? -eq 0 ]
+then
+    HOSTNAME=`hostname -f`
+fi
+
 if [ -z $PAP_HOME ]; then
   echo "Please set PAP_HOME variable"
   exit 1
@@ -62,7 +69,7 @@ consistency_check.repair = false
 
 [standalone-service]
 
-hostname = 127.0.0.1
+hostname = $HOSTNAME
 port = 8150
 shutdown_port = 8151
 
