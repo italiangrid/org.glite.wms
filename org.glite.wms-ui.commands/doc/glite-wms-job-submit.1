@@ -103,27 +103,35 @@ displays command usage
 .B --config, -c <configfile>
 
 .IP
-if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used together with --vo option
+if the command is launched with this option, the configuration file pointed by <configfile> is used. This option is meaningless when used together with --vo option
 .PP
 .B --vo <voname>
 
 .IP
-this option allows the user to specify the Virtual Organisation she/he is currently working for.If the user proxy contains VOMS extensions then the VO specified through this option is overridden by thedefault VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).This option is meaningless when used together with --config-vo option.
+this option allows the user to specify the Virtual Organization she/he is currently working for.If the user proxy contains VOMS extensions then the VO specified through this option is overridden by thedefault VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).This option is meaningless when used together with --config-vo option.
 .PP
 .B --debug
 
 .IP
-when this option is specified, debugging information is displayed on the standard output and written also either into the default log file:glite-wms-job-<command_name>_<uid>_<pid>_<time>.loglocated under the /var/tmp  directory or in the log file specified with --logfile option.
+when this option is specified, debugging information is displayed on the standard output and written also either into the default log file:
+
+
+.SP
+glite-wms-job-<command_name>_<uid>_<pid>_<time>.log
+
+
+.SP
+located under the /var/tmp  directory or in the log file specified with --logfile option.
 .PP
 .B --logfile <filepath>
 
 .IP
-When this option is specified, a command log file (whose pathname is filepath) is created.
+When this option is specified, a command log file (whose pathname is <filepath> ) is created.
 .PP
 .B --endpoint, -e <serviceURL>
 
 .IP
-when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If none of these options is specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
+when this option is specified, the operations are performed contacting the WMProxy service represented by the given <serviceURL>. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If none of these options is specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
 .PP
 .B --noint
 
@@ -143,7 +151,7 @@ This option is specified to make automatic generation of the identifier string (
 .B --input, -i <filepath>
 
 .IP
-If this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the filepath. Once a CEId has been selected the command behaves as explained for the resource option. If this option is used together with the --noint one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
+If this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the <filepath>. Once a CEId has been selected the command behaves as explained for the resource option. If this option is used together with the --noint one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
 .PP
 .B --resource, -r <ceid>
 
@@ -193,7 +201,7 @@ This option must be only used with the --register-only option. It enables transf
 .B --proto <protocol>
 
 .IP
-This option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
+This option specifies the protocol to be used for file transferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
 .PP
 .B --start <jobid>
 
@@ -203,17 +211,17 @@ This option allows starting a job (specified by JobId) previously registered and
 .B --output, -o <filepath>
 
 .IP
-Writes the generated jobId assigned to the submitted job in the file specified by filepath, which can be either a simple name or an absolute path (on the submitting machine). In the former case the file is created in the current working directory.
+Writes the generated jobId assigned to the submitted job in the file specified by <filepath>, which can be either a simple name or an absolute path (on the submitting machine). In the former case the file is created in the current working directory.
 .PP
 .B --collection, -c <dirpath>
 
 .IP
-This option allows specifying  the directory pointed by dirpath containing all the single JDL files of the jobs that the collection will be made of. The corresponding collection JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified. Please note that the directory specified through the --collection option MUST only contain JDL files describing simple jobs (i.e. no DAGs, no collections). All job types are admitted but "partitionable" and "parametric".
+This option allows specifying  the directory pointed by <dirpath> containing all the single JDL files of the jobs that the collection will be made of. The corresponding collection JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified. Please note that the directory specified through the --collection option MUST only contain JDL files describing simple jobs (i.e. no DAGs, no collections). All job types are admitted but "partitionable" and "parametric".
 .PP
 .B --dag <dirpath>
 
 .IP
-This option allows specifying  the directory pointed by dirpath containing all the single JDL files of the jobs that the DAG will be made of. The corresponding DAG JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.This option is only available from glite version >= 3.1.
+This option allows specifying  the directory pointed by <dirpath> containing all the single JDL files of the jobs that the DAG will be made of. The corresponding DAG JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.This option is only available from glite version >= 3.1.
 .PP
 .B --default-jdl <filepath>
 
@@ -355,4 +363,4 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 
 .SP
 .B -
-GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable cbe used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"
+GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable can be used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"
