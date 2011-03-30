@@ -142,7 +142,7 @@ if [ $? -ne 0 ] ; then
  myexit 1
 fi
 
-myecho "Connection correctly failed when testing against an expired CRL"
+myecho "Connection correctly failed when testing against a CA without CRL"
 
 myecho "Removing the CA file"
 
