@@ -34,7 +34,7 @@
 
 httpdpath=${GLITE_WMS_WMPROXY_HTTPD-/usr/sbin/httpd}
 httpd=`basename $httpdpath`
-config=${WMS_LOCATION_ETC}/glite_wms_wmproxy_httpd.conf
+config=${WMS_WM_TEMPLATE_DIR}/glite_wms_wmproxy_httpd.conf
 port=${GLITE_WMS_WMPROXY_PORT-7443}
 RETVAL=0
 
