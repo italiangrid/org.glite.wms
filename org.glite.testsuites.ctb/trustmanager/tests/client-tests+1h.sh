@@ -126,6 +126,10 @@ myecho "Connection correctly failed when testing against an expired CRL"
 myecho "Removing the CRL file"
 
 mv /etc/grid-security/certificates/$ca_hash.r0 /etc/grid-security/certificates/$ca_hash.r0.bak 
+if [ $? -ne 0 ] ; then 
+    myecho "deleting of the CRL of CA $ca_hash failed."
+    myexit 1
+fi
 
 myecho "Testing client against CA without CRL" 
 CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/$WEBAPPNAME/services/EchoService"
