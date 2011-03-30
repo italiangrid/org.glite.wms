@@ -133,7 +133,7 @@ fi
 
 myecho "Testing client against CA without CRL" 
 CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/$WEBAPPNAME/services/EchoService"
-$CMD  |grep "no CRL was found"
+$CMD  |grep "CRL checking failed, CRL loading had failed"
 
 if [ $? -ne 0 ] ; then 
  myecho "Succesfully connected to service even if the CRL of CA $ca_hash was missing."  
