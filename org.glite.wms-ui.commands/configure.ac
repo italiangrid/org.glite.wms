@@ -16,7 +16,6 @@
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS UI Commands], [3.3.3])
-AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 
 # Notices.
