@@ -294,16 +294,20 @@ try {
 
 	// Gacl-Mgr
 	string gaclfile;
-	if (getenv("WMS_LOCATION")) {
+	if (getenv("GLITE_WMS_CONFIG_DIR")) {
+		gaclfile = string(getenv("GLITE_WMS_CONFIG_DIR"))
+			+ '/' + WMPAuthorizer::VOMS_GACL_FILE;
+	} else if (getenv("GLITE_LOCATION")) {
+		gaclfile = string(getenv("GLITE_LOCATION")) + "/etc/"
+			+ WMPAuthorizer::VOMS_GACL_FILE;
+	} else if (getenv("WMS_LOCATION_ETC")) {
+		gaclfile = string(getenv("WMS_LOCATION_ETC")) + '/'
+			+ WMPAuthorizer::VOMS_GACL_FILE;
+	} else if (getenv("WMS_LOCATION")) {
 		gaclfile = string(getenv("WMS_LOCATION")) + "/etc/"
 			+ WMPAuthorizer::VOMS_GACL_FILE;
 	} else {
-		if (getenv("GLITE_LOCATION")) {
-			gaclfile = string(getenv("GLITE_LOCATION")) + "/etc/"
-				+ WMPAuthorizer::VOMS_GACL_FILE;
-		} else {
-			gaclfile = "/etc/" + WMPAuthorizer::VOMS_GACL_FILE;
-		}
+		gaclfile = "/etc/glite-wms/" + WMPAuthorizer::VOMS_GACL_FILE;
 	}
 	GaclManager gacl(gaclfile);
 
