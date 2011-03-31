@@ -175,6 +175,7 @@ if test "$have_voms" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
+GLITE_CHECK_JOBID
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
