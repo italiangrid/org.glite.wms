@@ -70,17 +70,17 @@ sed -i 's/\${searchstring}/# Ignore/g' /etc/grid-security/voms-grid-mapfile
 echo "${script_name}: This script needs more work. Bug tested though."
 exit 0
 
-/etc/rc.d/init.d/pepd status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
-  /etc/rc.d/init.d/pepd start
+  /etc/rc.d/init.d/$PEP_CTRL start
   sleep 5
 else
   echo "${script_name}: Stopping PEPd."
-  /etc/rc.d/init.d/pepd stop > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
   sleep 5
   echo "${script_name}: Starting PEPd."
-  /etc/rc.d/init.d/pepd start > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL start > /dev/null
   sleep 5
 fi
 

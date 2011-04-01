@@ -7,12 +7,12 @@ configfile="/opt/argus/pepd/conf/pepd.ini"
 echo "Running: ${script_name}"
 echo `date`
 
-/etc/rc.d/init.d/pepd status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
     echo "${script_name}: PEPd is not running. Good."
 else
     echo "${script_name}: Stopping PEPd."
-    /etc/rc.d/init.d/pepd stop > /dev/null
+    /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
     sleep 5
 fi
 
@@ -25,13 +25,13 @@ grep pips $configfile
 # Now try to start pepd.
 
 echo "${script_name}: Starting PEPd."
-/etc/rc.d/init.d/pepd start > /dev/null; result=$?;
+/etc/rc.d/init.d/$PEP_CTRL start > /dev/null; result=$?;
 sleep 5
 # echo $result
 if [ $result -eq 0 ]
 then
     echo "${script_name}: Stopping PEPd."
-    /etc/rc.d/init.d/pepd stop > /dev/null
+    /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
     sleep 5
 else
     echo "${script_name}: PEPd failed to start."
@@ -45,7 +45,7 @@ sed -i 's/# pips =/pips =/g' $configfile
 # Now try to start pepd.
 
 echo "${script_name}: Starting PEPd."
-/etc/rc.d/init.d/pepd start > /dev/null; result=$?;
+/etc/rc.d/init.d/$PEP_CTRL start > /dev/null; result=$?;
 sleep 5
 # echo $result
 

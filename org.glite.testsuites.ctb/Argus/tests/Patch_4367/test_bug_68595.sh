@@ -45,10 +45,10 @@ fi
 echo "Running: ${script_name}"
 echo `date`
 
-/etc/rc.d/init.d/pepd status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
-  /etc/rc.d/init.d/pepd start
+  /etc/rc.d/init.d/$PEP_CTRL start
   sleep 10
 fi
 

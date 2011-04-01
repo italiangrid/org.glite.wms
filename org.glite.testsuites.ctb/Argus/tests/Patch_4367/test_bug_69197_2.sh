@@ -183,17 +183,17 @@ echo $preferDNForPrimaryGroupName >> ${pep_config}; echo $preferDNForPrimaryGrou
 # Now probably should start the services and test whether I can get an account.
 
 function pep_start {
-/etc/rc.d/init.d/pepd status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
-  /etc/rc.d/init.d/pepd start
+  /etc/rc.d/init.d/$PEP_CTRL start
   sleep 10
 else
   echo "${script_name}: Stopping PEPd."
-  /etc/rc.d/init.d/pepd stop > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
   sleep 5
   echo "${script_name}: Starting PEPd."
-  /etc/rc.d/init.d/pepd start > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL start > /dev/null
   sleep 15
 fi
 }

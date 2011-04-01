@@ -104,17 +104,17 @@ rm /etc/grid-security/gridmapdir/*`hostname`*
 # exit 0
 
 function pep_start {
-/etc/rc.d/init.d/pepd status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
-  /etc/rc.d/init.d/pepd start
+  /etc/rc.d/init.d/$PEP_CTRL start
   sleep 10
 else
   echo "${script_name}: Stopping PEPd."
-  /etc/rc.d/init.d/pepd stop > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
   sleep 6
   echo "${script_name}: Starting PEPd."
-  /etc/rc.d/init.d/pepd start > /dev/null
+  /etc/rc.d/init.d/$PEP_CTRL start > /dev/null
   sleep 10
 fi
 }
@@ -284,7 +284,7 @@ pdp_start
 # In the case of testing... this does actually go at the 
 # end of the pepd.ini file but may not be guaranteed.
 #
-pep_config="/opt/argus/pepd/conf/pepd.ini"
+# pep_config="/opt/argus/pepd/conf/pepd.ini"
 grep -q 'org.glite.authz.pep.obligation.dfpmap.DFPMObligationHandlerConfigurationParser' ${pep_config}
 if [ $? -ne 0 ]
 then
