@@ -53,6 +53,32 @@ then
 fi
 pep_config_saved="/tmp/pepd.ini.saved"
 
+which pepcli
+if [ $? -ne 0 ] # pepcli was not found in standard path
+then
+    locate pepcli | grep bin | grep argus; result=?$
+    if [ $result -eq 0 ]
+    then
+        PEPCLI=`locate pepcli | grep bin | grep argus`
+        $PEPCLI; result=?$
+        if [ $result -eq 127 ] # command not found
+        then
+            echo "PEPCLI set to $PEPCLI. Not found. Exiting."
+            exit 2;
+        fi
+    else
+        PEPCLI=`locate pepcli | grep bin`
+        $PEPCLI; result=?$
+        if [ $result -eq 127 ] # command not found
+        then
+            echo "PEPCLI set to $PEPCLI. Not found. Exiting."
+            exit 2;
+        fi
+    fi
+else
+    PEPCLI=`which pepcli`
+fi
+
 ## To here for EGEE/EMI compatible tests
 
 
