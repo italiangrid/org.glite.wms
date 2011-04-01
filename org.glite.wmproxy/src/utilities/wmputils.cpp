@@ -1030,7 +1030,7 @@ searchForDirmanager()
 {
 	GLITE_STACK_TRY("searchForDirmanager()");
 
-        string dirmanager_path(getenv(WMS_LOCATION_LIBEXEC));
+        string dirmanager_path(getenv("WMS_LOCATION_LIBEXEC"));
         if (dirmanager_path.empty()) {
                 dirmanager_path = string(getenv(GLITE_LOCATION));
         	if (dirmanager_path.empty()) {
