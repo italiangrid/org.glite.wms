@@ -225,14 +225,14 @@ function pep_start {
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
   /etc/rc.d/init.d/$PEP_CTRL start
-  sleep 10
+  sleep 5
 else
   echo "${script_name}: Stopping PEPd."
   /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
   sleep 5
   echo "${script_name}: Starting PEPd."
   /etc/rc.d/init.d/$PEP_CTRL start > /dev/null
-  sleep 15
+  sleep 5
 fi
 }
 
@@ -284,7 +284,7 @@ $PAP_HOME/bin/pap-admin $OPTS ap --resource resource_1 \
              --action testwerfer \
              --obligation $OBLIGATION ${RULE} subject="${obligation_dn}"
 
-# $PAP_HOME/bin/pap-admin lp -srai
+$PAP_HOME/bin/pap-admin lp -srai
 
 ###############################################################
 
