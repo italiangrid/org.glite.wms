@@ -334,6 +334,9 @@ then
         failed="yes"
     fi
 fi
+
+exit 0;
+
 #
 # OK. Now we gotta test with a proxy!
 #
