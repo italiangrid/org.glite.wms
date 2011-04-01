@@ -46,7 +46,7 @@ then
   sleep 10
 fi
 
-pep_config="/etc/argus/pepd/conf/pepd.ini"
+pep_config="/etc/argus/pepd/pepd.ini"
 if [ -f /opt/argus/pepd/conf/pepd.ini ]
 then
     pep_config=/opt/argus/pepd/conf/pepd.ini
