@@ -1040,7 +1040,7 @@ searchForDirmanager()
 		}
 	}
 	dirmanager_path += "/glite_wms_wmproxy_dirmanager";
-	return gliteDirmanExe;
+	return dirmanager_path;
 	GLITE_STACK_CATCH();
 }
 
