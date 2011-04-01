@@ -101,10 +101,6 @@ namespace utilities {
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-// gLite environment variables
-const char* GLITE_LOCATION = "GLITE_LOCATION";
-const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
-
 // Environment variable name to get User Distinguished Name
 const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
 
@@ -1030,9 +1026,11 @@ searchForDirmanager()
 {
 	GLITE_STACK_TRY("searchForDirmanager()");
 
-        string dirmanager_path(getenv("WMS_LOCATION_LIBEXEC"));
+	char* p = getenv("WMS_LOCATION_LIBEXEC");
+        string dirmanager_path(p ? p : "");
         if (dirmanager_path.empty()) {
-                dirmanager_path = string(getenv(GLITE_LOCATION));
+		p = getenv("GLITE_LOCATION");
+                dirmanager_path = string(p ? p : "");
         	if (dirmanager_path.empty()) {
 			dirmanager_path = "/usr/libexec";
 		} else {
