@@ -81,7 +81,10 @@ then
 fi
  
 USERPROXY=/tmp/x509up_u0
-rm $USERPROXY
+if [ -f $USERPROXY ]
+then
+   rm -f $USERPROXY
+fi
 
 if [ ! -f $USERPROXY ]
 then
