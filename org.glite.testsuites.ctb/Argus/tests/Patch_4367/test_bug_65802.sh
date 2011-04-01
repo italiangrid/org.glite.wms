@@ -4,20 +4,39 @@ script_name=`basename $0`
 failed="no"
 host=`hostname`
 
+## This is the needed bit to make EGEE/EMI compatible tests
 if [ -z $PAP_HOME ]
 then
-    if [ -d /opt/argus/pap ]
+    if [ -d /usr/share/argus/pap ]
     then
-        export PAP_HOME=/opt/argus/pap
+        PAP_HOME=/usr/share/argus/pap
     else
-        echo "${script_name}: PAP_HOME cannot be found. Exiting"
-        exit 0;
+        if [ -d /opt/argus/pap ]
+        then
+            PAP_HOME=/opt/argus/pap
+        else
+            echo "PAP_HOME not set, not found at standard locations. Exiting."
+            exit 2;
+        fi
     fi
 fi
-
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+PAP_CTRL=argus-pap
+if [ -f /etc/rc.d/init.d/pap-standalone ]
+then
+    PAP_CTRL=pap-standalone
+fi
+echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
-  /etc/rc.d/init.d/pap-standalone start
+  echo "PAP is not running"
+  /etc/rc.d/init.d/$PAP_CTRL start
+  sleep 10
+fi
+## To here for EGEE/EMI compatible tests
+
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  /etc/rc.d/init.d/$PAP_CTRL start
   sleep 15;
 fi
 

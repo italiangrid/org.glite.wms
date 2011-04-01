@@ -5,10 +5,49 @@ failed="no"
 policyfile=policyfile.txt
 obligationfile=obligationfile.txt
 
+## This is the needed bit to make EGEE/EMI compatible tests
 if [ -z $PAP_HOME ]
 then
-    export PAP_HOME="/opt/argus/pap/"
+    if [ -d /usr/share/argus/pap ]
+    then
+        PAP_HOME=/usr/share/argus/pap
+    else
+        if [ -d /opt/argus/pap ]
+        then
+            PAP_HOME=/opt/argus/pap
+        else
+            echo "PAP_HOME not set, not found at standard locations. Exiting."
+            exit 2;
+        fi
+    fi
 fi
+PEP_CTRL=argus-pepd
+if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
+echo "PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
+PDP_CTRL=argus-pdp
+if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
+PAP_CTRL=argus-pap
+if [ -f /etc/rc.d/init.d/pap-standalone ];then
+    PAP_CTRL=pap-standalone
+fi
+echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  echo "PAP is not running"
+  /etc/rc.d/init.d/$PAP_CTRL start
+  sleep 10
+fi
+
+pep_config="/etc/argus/pepd/conf/pepd.ini"
+if [ -f /opt/argus/pepd/conf/pepd.ini ]
+then
+    pep_config=/opt/argus/pepd/conf/pepd.ini
+fi
+pep_config_saved="/tmp/pepd.ini.saved"
+
+## To here for EGEE/EMI compatible tests
+
 
 is_proxy=""
 is_proxy="yes"
@@ -123,8 +162,8 @@ echo ${target_file};cat ${target_file}
 
 # Now sort out the pepd.ini file
 #
-pep_config="/opt/argus/pepd/conf/pepd.ini"
-pep_config_saved="/tmp/pepd.ini.saved"
+# pep_config="/opt/argus/pepd/conf/pepd.ini"
+# pep_config_saved="/tmp/pepd.ini.saved"
 cp ${pep_config} ${pep_config_saved}
 
 grep -q 'org.glite.authz.pep.obligation.dfpmap.DFPMObligationHandlerConfigurationParser' ${pep_config}
@@ -163,10 +202,10 @@ fi
 pep_start
 
 function pdp_start {
-/etc/rc.d/init.d/pdp status > /dev/null
+/etc/rc.d/init.d/$PDP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PDP is not running. Starting one."
-  /etc/rc.d/init.d/pdp start
+  /etc/rc.d/init.d/$PDP_CTRL start
   sleep 10
 fi
 }
@@ -176,10 +215,10 @@ pdp_start
 # use a PAP to enter a policy and an obligation?
 
 function pap_start {
-/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
-  /etc/rc.d/init.d/pap-standalone start;
+  /etc/rc.d/init.d/$PAP_CTRL start;
   sleep 10;
 fi 
 }
@@ -212,7 +251,7 @@ $PAP_HOME/bin/pap-admin $OPTS ap --resource resource_1 \
 
 ###############################################################
 
-/etc/rc.d/init.d/pdp reloadpolicy
+/etc/rc.d/init.d/$PDP_CTRL reloadpolicy
 
 ###############################################################
 
@@ -221,7 +260,7 @@ OPTS=" -d "
 OPTS=" -v "
 OPTS=" "
 
-/opt/glite/bin/pepcli $OPTS -p https://`hostname`:8154/authz \
+$PEPCLI $OPTS -p https://`hostname`:8154/authz \
        -c $USERCERT \
        --capath /etc/grid-security/certificates/ \
        --key $USERKEY \
@@ -260,7 +299,7 @@ fi
 #
 # OK. Now we gotta test with a proxy!
 #
-/opt/glite/bin/pepcli $OPTS -p https://`hostname`:8154/authz \
+$PEPCLI $OPTS -p https://`hostname`:8154/authz \
        -c /tmp/x509up_u0 \
        --capath /etc/grid-security/certificates/ \
        --key $USERKEY \
