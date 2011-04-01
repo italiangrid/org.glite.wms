@@ -79,7 +79,6 @@ limitations under the License.
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "versions.h"
 #include "authorizer/wmpvomsauthz.h"
 
 //namespace glite {
@@ -94,13 +93,7 @@ extern WMProxyConfiguration conf;
 extern std::string sandboxdir_global;
 
 // WMProxy software version
-const unsigned int WMP_MAJOR_VERSION = WMP_FIRST_VERSION;
-const unsigned int WMP_MINOR_VERSION = WMP_SECOND_VERSION;
-const unsigned int WMP_RELEASE_VERSION = WMP_THIRD_VERSION;
-const std::string WMP_POINT_VERSION = ".";
-const std::string WMP_VERSION = boost::lexical_cast<std::string>(WMP_MAJOR_VERSION)
-	+ WMP_POINT_VERSION + boost::lexical_cast<std::string>(WMP_MINOR_VERSION)
-	+ WMP_POINT_VERSION + boost::lexical_cast<std::string>(WMP_RELEASE_VERSION);
+const std::string WMP_VERSION = WMP_SOFTWARE_VERSION;
 
 // DONE job output file
 const std::string MARADONA_FILE = "Maradona.output";
