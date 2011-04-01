@@ -295,7 +295,7 @@ $PAP_HOME/bin/pap-admin lp -srai
 export LD_LIBRARY_PATH=/opt/glite/lib64
 OPTS=" -d "
 OPTS=" -v "
-OPTS=" "
+# OPTS=" "
 
 $PEPCLI $OPTS -p https://`hostname`:8154/authz \
        -c $USERCERT \
