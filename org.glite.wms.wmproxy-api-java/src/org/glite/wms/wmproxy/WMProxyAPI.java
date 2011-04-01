@@ -1738,6 +1738,10 @@ public class WMProxyAPI{
 		long lifetime = 0;
 		try {
 			// generator object
+                        /*
+                         * TODO investigate the usage of org.glite.security.delegation.DelegationHandler
+                         *      instead of GrDProxyGenerator
+                         */
 			GrDProxyGenerator generator = new GrDProxyGenerator ( );
 			// user proxy file
 			String proxyStream = System.getProperty("gridProxyStream");
