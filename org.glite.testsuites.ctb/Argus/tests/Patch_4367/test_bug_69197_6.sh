@@ -22,10 +22,16 @@ then
     fi
 fi
 PEP_CTRL=argus-pepd
-if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
+if [ -f /etc/rc.d/init.d/pep ]
+then
+    PEP_CTRL=pep
+fi
 echo "PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
 PDP_CTRL=argus-pdp
-if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+if [ -f /etc/rc.d/init.d/pdp ]
+then
+    PDP_CTRL=pdp
+fi
 echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then
@@ -33,7 +39,8 @@ if [ -f /etc/rc.d/init.d/pap-standalone ];then
 fi
 echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]
+then
   echo "PAP is not running"
   /etc/rc.d/init.d/$PAP_CTRL start
   sleep 10
