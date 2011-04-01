@@ -1030,15 +1030,16 @@ searchForDirmanager()
 {
 	GLITE_STACK_TRY("searchForDirmanager()");
 
-	// Try to find managedirexecutable
-	char * glite_path = getenv(GLITE_WMS_LOCATION);
-	if (!glite_path) {
-		glite_path = getenv(GLITE_LOCATION);
+        string dirmanager_path(getenv(WMS_LOCATION_LIBEXEC));
+        if (dirmanager_path.empty()) {
+                dirmanager_path = string(getenv(GLITE_LOCATION));
+        	if (dirmanager_path.empty()) {
+			dirmanager_path = "/usr/libexec";
+		} else {
+			dirmanager_path += "/bin";
+		}
 	}
-	string gliteDirmanExe = (glite_path == NULL)
-		? ("/opt/glite")
-		:(string(glite_path));
-	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+	dirmanager_path += "/glite_wms_wmproxy_dirmanager";
 	return gliteDirmanExe;
 	GLITE_STACK_CATCH();
 }
