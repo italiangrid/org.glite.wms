@@ -16,7 +16,7 @@ then
         then
             PAP_HOME=/opt/argus/pap
         else
-            echo "PAP_HOME not set, not found at standard locations. Exiting."
+            echo "${script_name}: PAP_HOME not set, not found at standard locations. Exiting."
             exit 2;
         fi
     fi
@@ -26,22 +26,22 @@ if [ -f /etc/rc.d/init.d/pep ]
 then
     PEP_CTRL=pep
 fi
-echo "PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
+echo "${script_name}: PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
 PDP_CTRL=argus-pdp
 if [ -f /etc/rc.d/init.d/pdp ]
 then
     PDP_CTRL=pdp
 fi
-echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
+echo "${script_name}:PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then
     PAP_CTRL=pap-standalone
 fi
-echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
+echo "${script_name}:PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -ne 0 ]
 then
-  echo "PAP is not running"
+  echo "${script_name}: PAP is not running"
   /etc/rc.d/init.d/$PAP_CTRL start
   sleep 10
 fi
@@ -63,21 +63,22 @@ then
         $PEPCLI; result=?$
         if [ $result -eq 127 ] # command not found
         then
-            echo "PEPCLI set to $PEPCLI. Not found. Exiting."
-            exit 2;
-        fi
-    else
-        PEPCLI=`locate pepcli | grep bin`
-        $PEPCLI; result=?$
-        if [ $result -eq 127 ] # command not found
-        then
-            echo "PEPCLI set to $PEPCLI. Not found. Exiting."
+            echo "${script_name}: PEPCLI set to $PEPCLI. Not found. Exiting."
             exit 2;
         fi
     fi
 else
     PEPCLI=`which pepcli`
 fi
+
+sec_dirs="vomsdir gridmapdir"
+for sec_dir in $sec_dirs
+do
+if [ ! -d $sec_dir ]
+then
+    mkdir $sec_dir
+fi
+done
 
 ## To here for EGEE/EMI compatible tests
 
