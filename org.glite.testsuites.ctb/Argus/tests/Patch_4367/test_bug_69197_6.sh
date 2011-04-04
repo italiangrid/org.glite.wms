@@ -119,7 +119,7 @@ then
                     -cert ~/user_certificates/test_user_1_cert.pem \
                     -key ~/user_certificates/test_user_1_key.pem \
                     -pwstdin < ~/user_certificates/password \
-                    > /dev/null 2>&1
+                    # > /dev/null 2>&1
     # CMD="voms-proxy-info -fqan"; echo $CMD; $CMD
 fi
 
