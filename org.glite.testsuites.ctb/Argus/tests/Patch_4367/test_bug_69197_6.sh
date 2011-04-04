@@ -102,9 +102,7 @@ fi
 
 if [ ! -f /opt/glite/etc/vomses/dteam-voms.cern.ch ]
 then
-    echo \
-    '"dteam" "lxbra2309.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch" "dteam"'\
-     > /opt/glite/etc/vomses/dteam-voms.cern.ch
+    echo '"dteam" "lxbra2309.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch" "dteam"' > /opt/glite/etc/vomses/dteam-voms.cern.ch
 fi
  
 USERPROXY=/tmp/x509up_u0
@@ -298,12 +296,9 @@ OPTS=" -v "
 # OPTS=" "
 
 $PEPCLI $OPTS -p https://`hostname`:8154/authz \
-       -c $USERCERT \
+       -c $USERPROXY \
        --capath /etc/grid-security/certificates/ \
-       --key $USERKEY \
-       --cert $USERCERT \
        -r "resource_1" \
-       --keypasswd "test" \
        -a "testwerfer" > /tmp/${script_name}.out
 result=$?; # echo $result
 
