@@ -219,6 +219,7 @@ then
     failed="yes"
     exit 1;
 fi
+echo; echo ${pep_config}; echo;
 preferDNForLoginName="preferDNForLoginName = false"
 preferDNForPrimaryGroupName="preferDNForPrimaryGroupName = true"
 noPrimaryGroupNameIsError="noPrimaryGroupNameIsError = true"
