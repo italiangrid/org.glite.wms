@@ -43,7 +43,7 @@ if [ $? -ne 0 ]
 then
   echo "${script_name}: PAP is not running"
   /etc/rc.d/init.d/$PAP_CTRL start
-  sleep 10
+  sleep 5;
 fi
 
 pep_config="/etc/argus/pepd/pepd.ini"
@@ -94,8 +94,6 @@ else
     USERCERT=/etc/grid-security/hostcert.pem
     USERKEY=/etc/grid-security/hostkey.pem
 fi
-
-# gLite style...
 
 # does /opt/glite/etc/vomses exist? 
 # If yes... then use it
@@ -200,13 +198,13 @@ DTEAM=".dteam"
 DN_UID="glite"
 echo \"/dteam\" ${DTEAM} > ${target_file}
 echo \"${xxx_tmp}\" ${DN_UID} >> ${target_file}
-echo ${target_file};cat ${target_file}
+echo; echo ${target_file};cat ${target_file}
 
 target_file=/etc/grid-security/groupmapfile
 DTEAM="dteam"
 DN_UID_GROUP="testing"
 echo \"/dteam\" ${DTEAM} > ${target_file}
-echo ${target_file};cat ${target_file}
+echo; echo ${target_file};cat ${target_file}
 
 # Now sort out the pepd.ini file
 #
@@ -236,14 +234,14 @@ function pep_start {
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
   /etc/rc.d/init.d/$PEP_CTRL start
-  sleep 5
+  sleep 3
 else
   echo "${script_name}: Stopping PEPd."
   /etc/rc.d/init.d/$PEP_CTRL stop > /dev/null
-  sleep 5
+  sleep 3
   echo "${script_name}: Starting PEPd."
   /etc/rc.d/init.d/$PEP_CTRL start > /dev/null
-  sleep 5
+  sleep 3
 fi
 }
 
@@ -254,7 +252,7 @@ function pdp_start {
 if [ $? -ne 0 ]; then
   echo "PDP is not running. Starting one."
   /etc/rc.d/init.d/$PDP_CTRL start
-  sleep 10
+  sleep 5
 fi
 }
 
@@ -267,7 +265,7 @@ function pap_start {
 if [ $? -ne 0 ]; then
   echo "PAP is not running"
   /etc/rc.d/init.d/$PAP_CTRL start;
-  sleep 10;
+  sleep 5;
 fi 
 }
 
