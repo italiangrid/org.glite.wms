@@ -309,7 +309,6 @@ OPTS=" -v "
 # OPTS=" "
 
 $PEPCLI $OPTS -p https://`hostname`:8154/authz \
-       -c $USERPROXY \
        --cert $USERCERT --key $USERKEY --keypasswd "test" \
        --capath /etc/grid-security/certificates/ \
        -r "resource_1" \
