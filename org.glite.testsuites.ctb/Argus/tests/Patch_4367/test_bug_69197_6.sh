@@ -95,10 +95,22 @@ else
     USERKEY=/etc/grid-security/hostkey.pem
 fi
 
-if [ ! -d /opt/glite/etc/vomses ]
+# gLite style...
+
+# does /opt/glite/etc/vomses exist? 
+# If yes... then use it
+# otherwise use /etc/vomses
+
+VOMSES_DIR=/opt/glite/etc/vomses
+if [ -d $VOMSES_DIR ]
 then
-    mkdir -p /opt/glite/etc/vomses
+    echo '"dteam" "lxbra2309.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch" "dteam"' > $VOMSES_DIR/dteam-voms.cern.ch
+else
+     VOMSES_DIR=/etc/vomses
+     echo '"dteam" "lxbra2309.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch" "dteam"' > $VOMSES_DIR/dteam-voms.cern.ch
 fi
+
+# EMI style...
 
 if [ ! -f /opt/glite/etc/vomses/dteam-voms.cern.ch ]
 then
@@ -119,6 +131,7 @@ then
                     -cert ~/user_certificates/test_user_1_cert.pem \
                     -key ~/user_certificates/test_user_1_key.pem \
                     -pwstdin < ~/user_certificates/password \
+                    -vomses $VOMSES_DIR/dteam-voms.cern.ch \
                     # > /dev/null 2>&1
     # CMD="voms-proxy-info -fqan"; echo $CMD; $CMD
 fi
