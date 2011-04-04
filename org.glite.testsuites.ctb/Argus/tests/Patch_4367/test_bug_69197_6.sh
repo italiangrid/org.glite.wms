@@ -198,13 +198,13 @@ DTEAM=".dteam"
 DN_UID="glite"
 echo \"/dteam\" ${DTEAM} > ${target_file}
 echo \"${xxx_tmp}\" ${DN_UID} >> ${target_file}
-echo; echo ${target_file};cat ${target_file}
+echo; echo ${target_file};echo;cat ${target_file}
 
 target_file=/etc/grid-security/groupmapfile
 DTEAM="dteam"
 DN_UID_GROUP="testing"
 echo \"/dteam\" ${DTEAM} > ${target_file}
-echo; echo ${target_file};cat ${target_file}
+echo; echo ${target_file};echo;cat ${target_file}
 
 # Now sort out the pepd.ini file
 #
