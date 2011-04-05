@@ -19,7 +19,7 @@
 glite_wms_wmproxy_dirmanager_SOURCES = \
 	glite-wms-wmproxy-dirmanager.c
 
-bin_PROGRAMS = glite_wms_wmproxy_dirmanager
+libexec_PROGRAMS = glite_wms_wmproxy_dirmanager
 
 glite_wms_wmproxy_dirmanager_LDADD = \
 	$(LIBTAR_LIBS) \
