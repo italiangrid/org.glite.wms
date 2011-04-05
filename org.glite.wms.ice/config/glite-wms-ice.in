@@ -14,7 +14,7 @@ this_script_name=$0
 
 program_name=glite-wms-ice-safe
 binpath=${WMS_LOCATION_BIN}/${program_name}
-pid_file=${GLITE_WMS_TMP}/${program_name}.pid
+pid_file=${WMS_LOCATION_TMP}/${program_name}.pid
 
 running()
 {
@@ -36,7 +36,7 @@ ret_code=0
 start()
 {
     conf_file=glite_wms.conf
-    GET_CONF=${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration
+    GET_CONF=${WMS_LOCATION_BIN}/glite-wms-get-configuration
     if [ -f ${GET_CONF} ]; then
        err_logfile=`${GET_CONF} ICE.logfile`;
        su_dguser=`${GET_CONF} Common.DGUser`;
