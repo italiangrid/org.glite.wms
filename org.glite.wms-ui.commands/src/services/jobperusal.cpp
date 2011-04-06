@@ -489,8 +489,8 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 	string globusUrlCopy = "globus-url-copy";
 	if (getenv("GLOBUS_LOCATION") && Utils::isFile(string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy)) {
 		globusUrlCopy=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy;
-	}else if (Utils::isFile ("/opt/globus/bin/"+globusUrlCopy)){
-		globusUrlCopy="/opt/globus/bin/"+globusUrlCopy;
+	}else if (Utils::isFile ("/usr/bin/"+globusUrlCopy)){
+		globusUrlCopy="/usr/bin/"+globusUrlCopy;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"gsiFtpGetFiles", ECONNABORTED,
@@ -569,8 +569,8 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 		htcp="/usr/bin/"+htcp;
 	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
 		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isFile ("/opt/glite/bin/"+htcp)){
-		htcp="/opt/glite/bin/"+htcp;
+	}else if (Utils::isFile ("/usr/bin/"+htcp)){
+		htcp="/usr/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"htcpGetFiles", ECONNABORTED,

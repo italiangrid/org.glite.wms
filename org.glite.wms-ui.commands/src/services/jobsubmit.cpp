@@ -1905,8 +1905,8 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		"using globus-url-copy to transfer the local InputSandBox file(s) to the submission endpoint");
 	if (getenv("GLOBUS_LOCATION") && Utils::isFile(string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy)) {
 		globusUrlCopy=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy;
-	}else if (Utils::isFile ("/opt/globus/bin/"+globusUrlCopy)){
-		globusUrlCopy="/opt/globus/bin/"+globusUrlCopy;
+	}else if (Utils::isFile ("/usr/bin/"+globusUrlCopy)){
+		globusUrlCopy="/usr/bin/"+globusUrlCopy;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"gsiFtpGetFiles", ECONNABORTED,
@@ -1998,8 +1998,8 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		htcp="/usr/bin/"+htcp;
 	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
 		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isFile ("/opt/glite/bin/"+htcp)){
-		htcp="/opt/glite/bin/"+htcp;
+	}else if (Utils::isFile ("/usr/bin/"+htcp)){
+		htcp="/usr/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"htcpGetFiles", ECONNABORTED,
