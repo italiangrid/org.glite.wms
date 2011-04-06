@@ -1111,7 +1111,7 @@ std::string Utils::checkConf(){
 	logInfo->print(WMS_DEBUG, "VirtualOrganisation value :", voName,true,true);
 	// check the Installation path
 	checkPrefix( );
-	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
+	string cfDefault = this->getPrefix( ) +  "/etc/glite-wms/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
 
 	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault, voName);
 
@@ -1123,8 +1123,8 @@ void Utils::checkPrefix( ){
 	vector<string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
 	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
-	paths.push_back("/opt/glite");
-	paths.push_back("/usr/local");
+	//paths.push_back("/opt/glite");
+	//paths.push_back("/usr/local");
 	// Look for conf-file:
 	string defpath = "";
 	unsigned int size = paths.size();
@@ -1144,6 +1144,7 @@ void Utils::checkPrefix( ){
 		"no installation in /opt/glite or in /usr/local ; neither GLITE_WMS_LOCATION nor GLITE_LOCATION are set", true,true);
 	}
 	prefix=defpath;
+	if( prefix.empty( ) ) prefix = "/";
 }
 std::string Utils::getPrefix(){return prefix;}
 
