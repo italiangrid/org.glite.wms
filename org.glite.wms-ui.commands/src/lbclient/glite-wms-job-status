@@ -32,14 +32,17 @@ import sys
 import os.path
 import os
 
-try:
-     path=os.environ['GLITE_WMS_LOCATION']
-except:
-   try:
-      path=os.environ['GLITE_LOCATION']
-   except:
-      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
-      sys.exit(1)
+
+#try:
+#     path=os.environ['GLITE_WMS_LOCATION']
+#except:
+#   try:
+#      path=os.environ['GLITE_LOCATION']
+#   except:
+#      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+#      sys.exit(1)
+
+path="/usr"
 
 # append lib/lib64 directories to search path
 for app in ["lib","lib64"]:
