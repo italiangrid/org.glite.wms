@@ -32,15 +32,9 @@ foreach my $env(@envir){
         $ENV{$key}=$value;
 }
 
-$glitedir=`/usr/bin/printenv GLITE_LOCATION|head -n 1`;
-chomp $glitedir;
-$glitedir='/opt/glite' unless($glitedir);
-
 $glitewmsdir=`printenv GLITE_WMS_LOCATION|head -n 1`;
 chomp $glitewmsdir;
-$glitewmsdir='/opt/glite' unless($glitewmsdir);
-
-$wmsconffile="${glitedir}/etc/glite_wms.conf";
+$glitewmsdir='/usr' unless($glitewmsdir);
 
 #valid keys for %mems:
 #MemTotal:MemFree:MemShared:Buffers:Cached
@@ -142,7 +136,7 @@ $oper='Default' if(!defined $operations{$oper});
 &print_help() if($help);
 &print_list() if($listoper);
 
-&read_conf($wmsconffile);
+&read_conf();
 
 &get_loadaverage();
 &get_mem_usage();
