@@ -1996,10 +1996,6 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		"using htcp to transfer the local InputSandBox file(s) to the submission endpoint");
       	if (Utils::isFile("/usr/bin/"+htcp)){
 		htcp="/usr/bin/"+htcp;
-	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
-		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isFile ("/usr/bin/"+htcp)){
-		htcp="/usr/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"htcpGetFiles", ECONNABORTED,

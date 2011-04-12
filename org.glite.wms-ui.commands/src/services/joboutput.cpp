@@ -827,10 +827,6 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	  char* reason = NULL ;
 	  if (Utils::isFile("/usr/bin/"+htcp)){
 	    htcp="/usr/bin/"+htcp;
-	  } else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
-	    htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	  }else if (Utils::isFile ("/usr/bin/"+htcp)){
-	    htcp="/usr/bin/"+htcp;
 	  }else {
 	    throw WmsClientException(__FILE__,__LINE__,
 				     "htcpGetFiles", ECONNABORTED,

@@ -102,8 +102,8 @@ const char * CERT_DIR = "/etc/grid-security/certificates";
 const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
 // gLite environment variables
-const char* GLITE_LOCATION = "GLITE_LOCATION";
-const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
+//const char* GLITE_LOCATION = "GLITE_LOCATION";
+//const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_COMMANDS_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
@@ -1119,17 +1119,25 @@ std::string Utils::checkConf(){
 }
 
 void Utils::checkPrefix( ){
+
+        prefix="/";
+	return;
+/*
 	// Look for GLITE installation path
 	vector<string> paths ;
-	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
-	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
+	//if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
+	//if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
 	//paths.push_back("/opt/glite");
 	//paths.push_back("/usr/local");
 	// Look for conf-file:
 	string defpath = "";
 	unsigned int size = paths.size();
 	for (unsigned int i=0;i < size;i++){
+
 		defpath =paths[i];
+
+		cout << "defpath=" << defpath << endl;
+
 		if ( isFile((defpath + "/bin/" + wmcOpts->getApplicationName()))){
 			break;
 		}else{
@@ -1145,6 +1153,7 @@ void Utils::checkPrefix( ){
 	}
 	prefix=defpath;
 	if( prefix.empty( ) ) prefix = "/";
+*/
 }
 std::string Utils::getPrefix(){return prefix;}
 

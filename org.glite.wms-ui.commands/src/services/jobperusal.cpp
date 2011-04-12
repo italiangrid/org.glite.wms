@@ -567,10 +567,6 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 		"using htcp to retrieve the file(s)");
 	if (Utils::isFile("/usr/bin/"+htcp)){
 		htcp="/usr/bin/"+htcp;
-	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
-		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isFile ("/usr/bin/"+htcp)){
-		htcp="/usr/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"htcpGetFiles", ECONNABORTED,
