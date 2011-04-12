@@ -30,7 +30,8 @@ failed="no"
 
 PAP_CTRL=argus-pap
 
-if [ ! -f /etc/rc.d/init.d/pap-standalone ]
+# gLite case
+if [ -f /etc/rc.d/init.d/pap-standalone ]
 then
     PAP_CTRL=pap-standalone
 fi
