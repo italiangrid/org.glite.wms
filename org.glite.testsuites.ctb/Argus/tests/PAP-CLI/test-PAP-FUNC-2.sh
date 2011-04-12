@@ -1,10 +1,26 @@
 #!/bin/bash
 
-#Assumtpions: The PAP is running with a correct configuration file
+#Assumptions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
 
 echo `date`
 echo "---Test-PAP-FUNC-2---"
+
+if [ -z $PAP_HOME ]
+then
+    if [ -d /usr/share/argus/pap ]
+    then
+        PAP_HOME=/usr/share/argus/pap
+    else
+        if [ -d /opt/argus/pap ]
+        then
+            PAP_HOME=/opt/argus/pap
+        else
+            echo "PAP_HOME not set, not found at standard locations. Exiting."
+            exit 2;
+        fi
+    fi
+fi
 
 conffile=$PAP_HOME/conf/pap_configuration.ini
 bkpfile=$PAP_HOME/conf/pap_configuration.bkp
