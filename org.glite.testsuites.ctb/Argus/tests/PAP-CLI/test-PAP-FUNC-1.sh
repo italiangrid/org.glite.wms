@@ -10,9 +10,20 @@ then
     HOSTNAME=`hostname -f`
 fi
 
-if [ -z $PAP_HOME ]; then
-  echo "Please set PAP_HOME variable"
-  exit 1
+if [ -z $PAP_HOME ]
+then
+    if [ -d /usr/share/argus/pap ]
+    then
+        PAP_HOME=/usr/share/argus/pap
+    else
+        if [ -d /opt/argus/pap ]
+        then
+            PAP_HOME=/opt/argus/pap
+        else
+            echo "PAP_HOME not set, not found at standard locations. Exiting."
+            exit 2;
+        fi
+    fi
 fi
 
 echo `date`
