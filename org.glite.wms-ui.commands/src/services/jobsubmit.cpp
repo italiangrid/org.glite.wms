@@ -1007,6 +1007,7 @@ void JobSubmit::checkJSDL(){
 
 void JobSubmit::checkOutputData( void ) {
 
+	return;
 	
 
   	if( adObj->hasAttribute( JDL::OUTPUTDATA ) )
