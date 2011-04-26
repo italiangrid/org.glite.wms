@@ -3,7 +3,7 @@
 #Assumptions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
 
-HOSTNAME=127.0.0.1
+HOSTNAME=`hostname`
 hostname -f > /dev/null 2>&1
 if [ $? -eq 0 ]
 then
@@ -61,7 +61,158 @@ if [ $? -ne 0 ]; then
 fi
 
 #################################################################
-echo "1) testing required security section"
+#echo "1) testing required security section"
+#/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+#sleep 2
+#mv -f $conffile  $bkpfile
+#cat <<EOF > $conffile
+#[paps]
+## Trusted PAPs will be listed here
+
+#[paps:properties]
+
+#poll_interval = 14400
+#ordering = default
+
+#[repository]
+
+#location = $PAP_HOME/repository
+#consistency_check = false
+#consistency_check.repair = false
+
+#[standalone-service]
+
+#hostname = $HOSTNAME
+#port = 8150
+#shutdown_port = 8151
+
+#[security]
+
+#certificate = /etc/grid-security/hostcert.pem
+#private_key = /etc/grid-security/hostkey.pem
+
+#EOF
+#
+# What should happen here?
+# The re-start of the PAP should fail as there are no
+# credentials present! At least they have been commented
+# out of the configuration file.
+#
+#/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
+#sleep 15
+# cat $conffile
+# /etc/rc.d/init.d/$PAP_CTRL status
+#/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+#if [ $? -eq 0 ]; then
+#  echo "The PAP is running... should NOT be running."
+#  failed="yes"
+#  mv -f $bkpfile $conffile
+#  echo "FAILED"
+#else
+#  mv -f $bkpfile $conffile
+#  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
+#  sleep 10
+#  echo "OK"
+#fi
+
+#################################################################
+echo "2) testing required poll_interval "
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
+mv -f $conffile  $bkpfile
+cat <<EOF > $conffile
+[paps]
+## Trusted PAPs will be listed here
+
+[paps:properties]
+
+#poll_interval = 14400
+ordering = default
+
+[repository]
+
+location = $PAP_HOME/repository
+consistency_check = false
+consistency_check.repair = false
+
+[standalone-service]
+
+hostname = $HOSTNAME
+port = 8150
+shutdown_port = 8151
+
+[security]
+
+certificate = /etc/grid-security/hostcert.pem
+private_key = /etc/grid-security/hostkey.pem
+
+EOF
+
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
+sleep 15
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+if [ $? -eq 0 ]; then
+  failed="yes"
+  echo "FAILED"
+  mv -f $bkpfile $conffile
+else
+  mv -f $bkpfile $conffile
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
+  sleep 10
+  echo "OK"
+fi
+
+#################################################################
+echo "3) testing syntax error: missing ']'"
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
+mv -f $conffile  $bkpfile
+cat <<EOF > $conffile
+[paps]
+## Trusted PAPs will be listed here
+
+[paps:properties]
+
+poll_interval = 14400
+ordering = default
+
+[repository]
+
+location = $PAP_HOME/repository
+consistency_check = false
+consistency_check.repair = false
+
+[standalone-service
+
+hostname = $HOSTNAME
+port = 8150
+shutdown_port = 8151
+
+[security]
+
+certificate = /etc/grid-security/hostcert.pem
+private_key = /etc/grid-security/hostkey.pem
+
+EOF
+
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
+sleep 15
+/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
+if [ $? -eq 0 ]; then
+  failed="yes"
+  echo "FAILED"
+  mv -f $bkpfile $conffile
+else
+  mv -f $bkpfile $conffile
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
+  sleep 10
+  echo "OK"
+fi
+
+#################################################################
+echo "4) testing syntax error: missing '='"
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
 mv -f $conffile  $bkpfile
 cat <<EOF > $conffile
 [paps]
@@ -86,156 +237,13 @@ shutdown_port = 8151
 
 [security]
 
-#certificate = /etc/grid-security/hostcert.pem
-#private_key = /etc/grid-security/hostkey.pem
-
-EOF
-#
-# What should happen here?
-# The re-start of the PAP should fail as there are no
-# credentials present! At least they have been commented
-# out of the configuration file.
-#
-/etc/rc.d/init.d/$PAP_CTRL restart
-sleep 10
-# cat $conffile
-# /etc/rc.d/init.d/$PAP_CTRL status
-/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
-if [ $? -eq 0 ]; then
-  echo "The PAP is running... should NOT be running."
-  failed="yes"
-  mv -f $bkpfile $conffile
-  echo "FAILED"
-else
-  mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
-  sleep 10
-  echo "OK"
-fi
-
-#################################################################
-echo "2) testing required poll_interval "
-mv -f $conffile  $bkpfile
-cat <<EOF > $conffile
-[paps]
-## Trusted PAPs will be listed here
-
-[paps:properties]
-
-#poll_interval = 14400
-ordering = default
-
-[repository]
-
-location = $PAP_HOME/repository
-consistency_check = false
-consistency_check.repair = false
-
-[standalone-service]
-
-hostname = 127.0.0.1
-port = 8150
-shutdown_port = 8151
-
-[security]
-
-certificate = /etc/grid-security/hostcert.pem
+certificate  /etc/grid-security/hostcert.pem
 private_key = /etc/grid-security/hostkey.pem
 
 EOF
 
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
-sleep 10
-/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
-if [ $? -eq 0 ]; then
-  failed="yes"
-  echo "FAILED"
-  mv -f $bkpfile $conffile
-else
-  mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
-  sleep 10
-  echo "OK"
-fi
-
-#################################################################
-echo "3) testing syntax error: missing ']'"
-mv -f $conffile  $bkpfile
-cat <<EOF > $conffile
-[paps]
-## Trusted PAPs will be listed here
-
-[paps:properties]
-
-poll_interval = 14400
-ordering = default
-
-[repository]
-
-location = $PAP_HOME/repository
-consistency_check = false
-consistency_check.repair = false
-
-[standalone-service
-
-hostname = 127.0.0.1
-port = 8150
-shutdown_port = 8151
-
-[security]
-
-certificate = /etc/grid-security/hostcert.pem
-private_key = /etc/grid-security/hostkey.pem
-
-EOF
-
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
-sleep 10
-/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
-if [ $? -eq 0 ]; then
-  failed="yes"
-  echo "FAILED"
-  mv -f $bkpfile $conffile
-else
-  mv -f $bkpfile $conffile
-  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
-  sleep 10
-  echo "OK"
-fi
-
-#################################################################
-echo "4) testing syntax error: missing '='"
-mv -f $conffile  $bkpfile
-cat <<EOF > $conffile
-[paps]
-## Trusted PAPs will be listed here
-
-[paps:properties]
-
-poll_interval = 14400
-ordering  default
-
-[repository]
-
-location = $PAP_HOME/repository
-consistency_check = false
-consistency_check.repair = false
-
-[standalone-service]
-
-hostname = 127.0.0.1
-port = 8150
-shutdown_port = 8151
-
-[security]
-
-certificate = /etc/grid-security/hostcert.pem
-private_key = /etc/grid-security/hostkey.pem
-
-EOF
-
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
-sleep 10
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
+sleep 15
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
   failed="yes"
@@ -250,6 +258,8 @@ fi
 
 #################################################################
 echo "5) testing argus syntax error: missing ']'"
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
 mv -f $argusconffile $argusbkpfile
 cat <<EOF > $argusconffile
 [dn
@@ -263,7 +273,7 @@ cat <<EOF > $argusconffile
 
 EOF
 
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
 sleep 10
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
@@ -279,6 +289,8 @@ fi
 
 #################################################################
 echo "6) testing argus syntax error: missing ':'"
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
 mv -f $argusconffile $argusbkpfile
 cat <<EOF > $argusconffile
 [dn]
@@ -292,7 +304,7 @@ cat <<EOF > $argusconffile
 
 EOF
 
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
 sleep 10
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
@@ -308,6 +320,8 @@ fi
 
 #################################################################
 echo "7) testing argus syntax error: missing 'permission'"
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null 2>&1
+sleep 2
 mv -f $argusconffile $argusbkpfile
 cat <<EOF > $argusconffile
 [dn]
@@ -321,9 +335,7 @@ cat <<EOF > $argusconffile
 
 EOF
 
-cat $argusconffile
-
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null 2>&1
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null 2>&1
 sleep 10
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -eq 0 ]; then
@@ -343,7 +355,9 @@ fi
 if [ $? -eq 0 ]; then
   /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 else
-  /etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
+  /etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null
+  sleep 10
+  /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 fi
 sleep 10
 

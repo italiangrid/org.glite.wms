@@ -100,8 +100,6 @@ fi
 ###############################################################
 # Retrieve resource id
 echo "3) testing upf with correct resource id "
-id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
-echo "ID=$id"
 
 #Create new policy file
 cat <<EOF > $policyfile
@@ -112,6 +110,8 @@ resource "resource_1" {
 }
 EOF
 
+id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
+echo "ID=$id"
 $PAP_HOME/bin/pap-admin upf $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
