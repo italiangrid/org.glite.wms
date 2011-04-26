@@ -33,7 +33,7 @@ function set_paramjdlbase()
 	remove $JDLFILE
 	echo "
   JobType = \"parametric\";
-  Executable = \"/bin/echo\"
+  Executable = \"/bin/echo\";
   Arguments = \"_PARAM_\";
   StdOutput  = \"Std-_PARAM_.out\";
   StdError   = \"std-_PARAM_.err\";

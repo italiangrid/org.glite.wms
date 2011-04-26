@@ -130,7 +130,7 @@ else
 fi
 
 message "Test --get option with --nodisplay and --all"
-run_command "$COMMAND --get -f out.txt --noint --nodisplay --all --dir $JOB_OUTPUT_DIR/perusal $JOBID" 0
+run_command "$COMMAND --get -f out.txt --nodisplay --all --dir $JOB_OUTPUT_DIR/perusal $JOBID" 0
 if [[ $? -eq 0 ]] ; then
 	run_command "ls $JOB_OUTPUT_DIR/perusal/out.txt-*" 0
 	if [[ $? -ne 0 ]] ; then
