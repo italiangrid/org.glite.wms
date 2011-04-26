@@ -33,9 +33,8 @@ if [ $? -ne 0 ]; then
   /etc/rc.d/init.d/$PAP_CTRL start
   sleep 10
 fi
-
 argusconffile=$PAP_HOME/conf/pap_authorization.ini
-argusbkpfile=$PAP_HOME/conf/pap_authorization.bkp
+argusbkpfile=/tmp/pap_authorization.bkp
 failed="no"
 
 
@@ -56,8 +55,10 @@ ANYONE : CONFIGURATION_READ
 [fqan]
 EOF
 
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
-sleep 10
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null
+sleep 5
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
+sleep 5
 $PAP_HOME/bin/pap-admin lp >>/dev/null
 if [ $? -eq 0 ]; then
   failed="yes"
@@ -73,12 +74,14 @@ mv -f $argusbkpfile $argusconffile
 if [ $? -eq 0 ]; then
   /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 else
-  /etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
+    /etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null
+    sleep 5
+    /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 fi
 sleep 10
 
 #################################################################
-echo "1) testing lp with anyone full power"
+echo "2) testing lp with anyone full power"
 mv -f $argusconffile  $argusbkpfile
 
 cat <<EOF > $argusconffile
@@ -88,7 +91,9 @@ ANYONE : ALL
 [fqan]
 EOF
 
-/etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
+/etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null
+sleep 5
+/etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 sleep 10
 $PAP_HOME/bin/pap-admin lp >>/dev/null
 if [ $? -ne 0 ]; then
@@ -105,7 +110,9 @@ mv -f $argusbkpfile $argusconffile
 if [ $? -eq 0 ]; then
   /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 else
-  /etc/rc.d/init.d/$PAP_CTRL restart >>/dev/null
+    /etc/rc.d/init.d/$PAP_CTRL stop >>/dev/null
+    sleep 5
+    /etc/rc.d/init.d/$PAP_CTRL start >>/dev/null
 fi
 sleep 10
 
