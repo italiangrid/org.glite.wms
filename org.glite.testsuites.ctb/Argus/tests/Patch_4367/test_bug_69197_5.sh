@@ -8,84 +8,101 @@ obligationfile=obligationfile.txt
 ## This is the needed bit to make EGEE/EMI compatible tests
 if [ -z $PAP_HOME ]
 then
-    if [ -d /usr/share/argus/pap ]
-    then
-        PAP_HOME=/usr/share/argus/pap
-    else
-        if [ -d /opt/argus/pap ]
-        then
-            PAP_HOME=/opt/argus/pap
-        else
-            echo "PAP_HOME not set, not found at standard locations. Exiting."
-            exit 2;
-        fi
-    fi
+if [ -d /usr/share/argus/pap ]
+then
+PAP_HOME=/usr/share/argus/pap
+else
+if [ -d /opt/argus/pap ]
+then
+PAP_HOME=/opt/argus/pap
+else
+echo "PAP_HOME not set, not found at standard locations. Exiting."
+exit 2;
 fi
+fi
+fi
+
+if [ -z $PEP_HOME ]
+then
+if [ -d /usr/share/argus/pepd ]
+then
+PEP_HOME=/usr/share/argus/pepd
+else
+if [ -d /opt/argus/pepd ]
+then
+PEP_HOME=/opt/argus/pepd
+else
+echo "PEP_HOME not set, not found at standard locations. Exiting."
+exit 2;
+fi
+fi
+fi
+
+
 PEP_CTRL=argus-pepd
-if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
+if [ -f /etc/rc.d/init.d/pepd ];then PEP_CTRL=pepd;fi
 echo "PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
 PDP_CTRL=argus-pdp
-if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+if [ -f /etc/rc.d/init.d/pdp ];then PDP_CTRL=pdp;fi
 echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then
-    PAP_CTRL=pap-standalone
+PAP_CTRL=pap-standalone
 fi
 echo "PAP_CTRL set to: /etc/rc.d/init.d/$PAP_CTRL"
 /etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
 if [ $? -ne 0 ]; then
-  echo "PAP is not running"
-  /etc/rc.d/init.d/$PAP_CTRL start
-  sleep 10
+echo "PAP is not running"
+/etc/rc.d/init.d/$PAP_CTRL start
+sleep 10
 fi
 
-pep_config="/etc/argus/pepd/conf/pepd.ini"
-if [ -f /opt/argus/pepd/conf/pepd.ini ]
-then
-    pep_config=/opt/argus/pepd/conf/pepd.ini
-fi
+PEPCLI=pepcli
+if [ -f /opt/glite/bin/pepcli ];then PEPCLI=/opt/glite/bin/pepcli;fi
+echo "pepcli command used as: $PEPCLI"
+
+pep_config="$PEP_HOME/conf/pepd.ini"
 pep_config_saved="/tmp/pepd.ini.saved"
 
 ## To here for EGEE/EMI compatible tests
-
 
 is_proxy=""
 is_proxy="yes"
 
 if [ $is_proxy ]
 then
-    USERCERT=~/user_certificates/test_user_1_cert.pem
-    USERKEY=~/user_certificates/test_user_1_key.pem
+USERCERT=~/user_certificates/test_user_1_cert.pem
+USERKEY=~/user_certificates/test_user_1_key.pem
+USERPWD=`cat ~/user_certificates/password`
 else
-    USERCERT=/etc/grid-security/hostcert.pem
-    USERKEY=/etc/grid-security/hostkey.pem
+USERCERT=/etc/grid-security/hostcert.pem
+USERKEY=/etc/grid-security/hostkey.pem
 fi
 
-if [ ! -d /opt/glite/etc/vomses ]
+if [ ! -d /etc/vomses ]
 then
-    mkdir -p /opt/glite/etc/vomses
+mkdir -p /etc/vomses
 fi
 
-if [ ! -f /opt/glite/etc/vomses/dteam-voms.cern.ch ]
+if [ ! -f /etc/vomses/dteam-voms.cern.ch ]
 then
-    echo \
-    '"dteam" "lxbra2309.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch" "dteam"'\
-     > /opt/glite/etc/vomses/dteam-voms.cern.ch
+echo \
+'"dteam" "voms.hellasgrid.gr" "15004" "/C=GR/O=HellasGrid/OU=hellasgrid.gr/CN=voms.hellasgrid.gr" "dteam"'\
+> /etc/vomses/dteam-voms.cern.ch
 fi
- 
+
 USERPROXY=/tmp/x509up_u0
 rm $USERPROXY
 
 if [ ! -f $USERPROXY ]
 then
-    export PATH=$PATH:/opt/glite/bin/
-    export LD_LIBRARY_PATH=/opt/glite/lib64
-    voms-proxy-init -voms dteam \
-                    -cert ~/user_certificates/test_user_1_cert.pem \
-                    -key ~/user_certificates/test_user_1_key.pem \
-                    -pwstdin < ~/user_certificates/password \
-                    > /dev/null 2>&1
-    # CMD="voms-proxy-info -fqan"; echo $CMD; $CMD
+export PATH=$PATH:/opt/glite/bin/
+export LD_LIBRARY_PATH=/opt/glite/lib64
+voms-proxy-init -voms dteam \
+-cert $USERCERT \
+-key $USERKEY \
+-pwstdin < ~/user_certificates/password
+CMD="voms-proxy-info -fqan"; echo $CMD; $CMD
 fi
 
 # USERCERT=$HOME/user_certificates/test_user_0_cert.pem
@@ -98,29 +115,18 @@ echo "Running: ${script_name}"
 echo `date`
 
 # Get my cert DN for usage later
-
-declare subj_string;
-foo=`openssl x509 -in $USERCERT -subject -noout`; # echo " subject string = $foo";
-IFS=" "
-subj_string=( $foo )
 #
 # Here's the string format
 # subject= /C=CH/O=CERN/OU=GD/CN=Test user 1
 # so should match the first "subject= " and keep the rest
 # of the string
 #
-# Here should check that the
-# /etc/grid-security/voms-grid-mapfile
-#                    grid-mapfile
-#                    groupmapfile
-#
-# Make sure that all references to the credential DN are not present
-# in the above files
-#
-# xxx_tmp=${subj_string[1]}; # echo ${xxx_tmp}
-xxx_tmp=${foo#"subject= "}; # echo ${xxx_tmp}
-obligation_dn=${xxx_tmp}
-searchstring=${xxx_tmp//\//\\\/} ; # echo ${searchstring};
+
+foo=`openssl x509 -in $USERCERT -subject -noout`
+obligation_dn=`echo $foo | sed 's/subject= //'`
+echo " subject string = $obligation_dn"
+
+
 
 # Next remove all the "leases" from the /etc/grid-security/gridmapdir/
 # This may not be the best method below... but OK.
@@ -150,14 +156,14 @@ cp ${source_dir}/${target_file} ${target_dir}/${target_file}.${script_name}
 target_file=/etc/grid-security/grid-mapfile
 DTEAM=".dteam"
 DN_UID="glite"
-echo \"/dteam\" ${DTEAM} > ${target_file}
-echo \"${xxx_tmp}\" ${DN_UID} >> ${target_file}
+echo \"/dteam\" ${DTEAM} > ${target_file} #"
+echo \"${obligation_dn}\" ${DN_UID} >> ${target_file} #"
 echo ${target_file};cat ${target_file}
 
 target_file=/etc/grid-security/groupmapfile
 DTEAM="dteam"
 DN_UID_GROUP="testing"
-echo \"/dteam\" ${DTEAM} > ${target_file}
+echo \"/dteam\" ${DTEAM} > ${target_file} #"
 echo ${target_file};cat ${target_file}
 
 # Now sort out the pepd.ini file
@@ -266,7 +272,7 @@ $PEPCLI $OPTS -p https://`hostname`:8154/authz \
        --key $USERKEY \
        --cert $USERCERT \
        -r "resource_1" \
-       --keypasswd "test" \
+       --keypasswd $USERPWD \
        -a "testwerfer" > /tmp/${script_name}.out
 result=$?; # echo $result
 
@@ -277,24 +283,41 @@ echo "---------------------------------------"
 # looking for
 #
 # ERROR, no primary group found (the DN is not in the group mapfile)
-# So in fact should look for "Deny"
+# So in fact should look for "Deny" -> not for "indeterminate"
 # and processing error
 # and "Failed to map"
 # 
 if [ $result -eq 0 ]
 then
-    grep -qi "deny" /tmp/${script_name}.out;
-    if [ $? -ne 0 ]
+    if [ $PAP_CTRL = argus-pap ]
     then
-        echo "${script_name}: Did not find expected rule: $RULE."
-        failed="yes"
-    fi
-    grep_term="Failed to map subject "
-    grep "Failed to map subject " /tmp/${script_name}.out; result=$?
-    if [ $result -ne 0  ]
-    then
-        echo "${script_name}: Did not find expected \"$grep_term\" " 
-        failed="yes"
+        grep -qi "Indeterminate" /tmp/${script_name}.out;
+        if [ $? -ne 0 ]
+        then
+            echo "${script_name}: Did not find expected rule: Indeterminate."
+            failed="yes"
+        fi
+        grep_term="Failed to map subject "
+        grep "Failed to map subject " /tmp/${script_name}.out; result=$?
+        if [ $result -ne 0  ]
+        then
+            echo "${script_name}: Did not find expected \"$grep_term\" " 
+            failed="yes"
+        fi
+    else
+        grep -qi "Deny" /tmp/${script_name}.out;
+        if [ $? -ne 0 ]
+        then
+            echo "${script_name}: Did not find expected rule: Deny."
+            failed="yes"
+        fi
+        grep_term="Failed to map subject "
+        grep "Failed to map subject " /tmp/${script_name}.out; result=$?
+        if [ $result -ne 0  ]
+        then
+            echo "${script_name}: Did not find expected \"$grep_term\" " 
+            failed="yes"
+        fi
     fi
 fi
 #
@@ -307,7 +330,7 @@ $PEPCLI $OPTS -p https://`hostname`:8154/authz \
        --key $USERKEY \
        --cert $USERCERT \
        -r "resource_1" \
-       --keypasswd "test" \
+       --keypasswd $USERPWD \
        -a "testwerfer" > /tmp/${script_name}.out
 result=$?; # echo $result
 

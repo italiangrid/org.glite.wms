@@ -34,12 +34,6 @@ if [ $? -ne 0 ]; then
 fi
 ## To here for EGEE/EMI compatible tests
 
-/etc/rc.d/init.d/$PAP_CTRL status | grep -q 'PAP running'
-if [ $? -ne 0 ]; then
-  /etc/rc.d/init.d/$PAP_CTRL start
-  sleep 15;
-fi
-
 wget http://localhost:8151/status > /dev/null 2>&1
 result=$?
 if [ $result -ne 0 ]

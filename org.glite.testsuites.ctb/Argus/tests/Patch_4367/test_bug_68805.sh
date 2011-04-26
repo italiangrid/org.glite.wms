@@ -21,10 +21,10 @@ then
     fi
 fi
 PEP_CTRL=argus-pepd
-if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
+if [ -f /etc/rc.d/init.d/pepd ];then PEP_CTRL=pepd;fi
 echo "PEP_CTRL set to: /etc/rc.d/init.d/pep"
 PDP_CTRL=argus-pdp
-if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+if [ -f /etc/rc.d/init.d/pdp ];then PDP_CTRL=pdp;fi
 echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then

@@ -2,7 +2,35 @@
 
 script_name=`basename $0`
 failed="no"
-configfile="/opt/argus/pepd/conf/pepd.ini"
+
+####################################################
+#adapt the script to be compatible with EMI and EGEE
+if [ -z $PEP_HOME ]
+then
+    if [ -d /usr/share/argus/pepd ]
+    then
+        PEP_HOME=/usr/share/argus/pepd
+    else
+        if [ -d /opt/argus/pepd ]
+        then
+            PEP_HOME=/opt/argus/pepd
+        else
+            echo "PEP_HOME not set, not found at standard locations. Exiting."
+            exit 2;
+        fi
+    fi
+fi
+
+PEP_CTRL=argus-pepd
+if [ -f /etc/rc.d/init.d/pepd ]
+then
+PEP_CTRL=pepd;
+fi
+echo "PEP_CTRL set to: $PEP_CTRL"
+#until here
+####################################################
+
+configfile="$PEP_HOME/conf/pepd.ini"
 
 echo "Running: ${script_name}"
 echo `date`

@@ -24,10 +24,10 @@ then
     fi
 fi
 PEP_CTRL=argus-pepd
-if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
+if [ -f /etc/rc.d/init.d/pepd ];then PEP_CTRL=pepd;fi
 echo "PEP_CTRL set to: /etc/rc.d/init.d/pep"
 PDP_CTRL=argus-pdp
-if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+if [ -f /etc/rc.d/init.d/pdp ];then PDP_CTRL=pdp;fi
 echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then
@@ -74,11 +74,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+is_proxy=""
+is_proxy="yes"
+
+if [ $is_proxy ]
+then
+USERCERT=~/user_certificates/test_user_1_cert.pem
+USERKEY=~/user_certificates/test_user_1_key.pem
+USERPWD=`cat ~/user_certificates/password`
+else
+USERCERT=/etc/grid-security/hostcert.pem
+USERKEY=/etc/grid-security/hostkey.pem
+fi
+
+
 # Get my cert DN for usage later
-declare subj_string;
-foo=`openssl x509 -in /etc/grid-security/hostcert.pem -subject -noout`;
-IFS=" "
-subj_string=( $foo )
+foo=`openssl x509 -in $USERCERT -subject -noout`
+obligation_dn=`echo $foo | sed 's/subject= //'`
+echo " subject string = $obligation_dn"
 
 RESOURCE="resource_1"
 ACTION="test_werfer"
@@ -93,9 +106,9 @@ $PAP_HOME/bin/pap-admin $OPTS ap \
              --resource ${RESOURCE} \
              --action $ACTION \
              --obligation $OBLIGATION \
-             ${RULE} subject="${subj_string[1]}"
+             ${RULE} subject="$obligation_dn"
 
-$PAP_HOME/bin/pap-admin lp -srai
+#$PAP_HOME/bin/pap-admin lp -srai
 
 ###############################################################
 

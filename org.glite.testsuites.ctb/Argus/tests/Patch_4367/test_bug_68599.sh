@@ -24,10 +24,10 @@ then
     fi
 fi
 PEP_CTRL=argus-pepd
-if [ -f /etc/rc.d/init.d/pep ];then;PEP_CTRL=pep;fi
-echo "PEP_CTRL set to: /etc/rc.d/init.d/pep"
+if [ -f /etc/rc.d/init.d/pepd ];then PEP_CTRL=pepd;fi
+echo "PEP_CTRL set to: /etc/rc.d/init.d/$PEP_CTRL"
 PDP_CTRL=argus-pdp
-if [ -f /etc/rc.d/init.d/pdp ];then;PDP_CTRL=pdp;fi
+if [ -f /etc/rc.d/init.d/pdp ];then PDP_CTRL=pdp;fi
 echo "PDP_CTRL set to: /etc/rc.d/init.d/$PDP_CTRL"
 PAP_CTRL=argus-pap
 if [ -f /etc/rc.d/init.d/pap-standalone ];then
@@ -45,10 +45,10 @@ fi
 echo "Running: ${script_name}"
 echo `date`
 
-/etc/rc.d/init.d/pep status > /dev/null
+/etc/rc.d/init.d/$PEP_CTRL status > /dev/null
 if [ $? -ne 0 ]; then
   echo "PEPd is not running. Starting one."
-  /etc/rc.d/init.d/pep start
+  /etc/rc.d/init.d/$PEP_CTRL start
   sleep 10
 fi
 
@@ -77,8 +77,7 @@ fi
 # Get my cert DN for usage later
 declare subj_string;
 foo=`openssl x509 -in /etc/grid-security/hostcert.pem -subject -noout`;
-IFS=" "
-subj_string=( $foo )
+subj_string=`echo $foo | sed 's/subject= //'`
 
 RESOURCE="resource_1"
 ACTION="test_werfer"
@@ -93,7 +92,7 @@ $PAP_HOME/bin/pap-admin $OPTS ap \
              --resource ${RESOURCE} \
              --action $ACTION \
              --obligation $OBLIGATION \
-             ${RULE} subject="${subj_string[1]}"
+             ${RULE} subject="${subj_string}"
 
 # $PAP_HOME/bin/pap-admin lp -sai
 
