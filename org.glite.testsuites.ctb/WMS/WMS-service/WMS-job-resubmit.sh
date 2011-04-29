@@ -92,9 +92,9 @@ if [[ "$JOBSTATUS" == *Aborted* ]] ; then # job is aborted
 		else # Check if resubmissions have been triggered from epilogue failures
 			run_command "glite-wms-job-status $JOBID | grep -i -c 'Epilogue failed with error 1'" 0
 			if [[ $? -eq 0 ]] ; then
-				if [[ $OUTPUT -ne 3 ]] ; then # if not look at failure messages
+				if [[ $OUTPUT -lt 3 ]] ; then # if not look at failure messages
 					run_command "glite-wms-job-logging-info -v 2 --event Done $JOBID | grep 'Cannot take token' &> /dev/null" 0
-					if [[ $? -ne 0 ]] ; then # If error message is "Cannot take token" something goes wrong in the WMS
+					if [[ $? -ne 1 ]] ; then # If error message is "Cannot take token" something goes wrong in the WMS
 						message "Test fails. Probably the token for job $JOBID has not been recreated in WMS. Check it."
 						fail=$(($fail+1))
 					else
