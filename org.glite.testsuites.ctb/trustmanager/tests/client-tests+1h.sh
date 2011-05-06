@@ -109,7 +109,6 @@ for f in $TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/lib/*.jar  ; do
 done
 
 export CLASSPATH
-echo classpath is: $CLASSPATH
 
 cd $TOMCAT_WEBAPP/$WEBAPPNAME/WEB-INF/classes
 
@@ -117,6 +116,7 @@ myecho "Testing client against expired CRL"
 java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/$WEBAPPNAME/services/EchoService > output
 if [ $? == 0 ] ; then 
  myecho "Succesfully connected to service even if the CRL was expired."
+ echo classpath is: $CLASSPATH
  myecho "output was:"
  cat output
  myexit 1
@@ -125,7 +125,10 @@ fi
 grep "CRL has expired" output
 
 if [ $? -ne 0 ] ; then 
- myecho "Succesfully connected to service even if the CRL was expired."  
+ myecho "Wrong error message when the CRL was expired."  
+ echo classpath is: $CLASSPATH
+ myecho "output was:"
+ cat output
  myexit 1
 fi
 
