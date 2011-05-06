@@ -180,7 +180,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	string output;
 	string command = "export X509_USER_CERT=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
 	command += "; export X509_USER_KEY=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
-	command += "; /opt/glite/bin/glite-wms-ice-proxy-renew -s " + it->m_myproxyserver;
+	command += "; /usr/bin/glite-wms-ice-proxy-renew -s " + it->m_myproxyserver;
 	command += " -p " + certfile;
 	command += " -o " + certfile + ".renewed";
 
