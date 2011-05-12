@@ -29,9 +29,6 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
-#include "glite/ce/monitor-client-api-c/CESubscription.h"
-#include "glite/ce/monitor-client-api-c/Topic.h"
-#include "glite/ce/monitor-client-api-c/Policy.h"
 
 #include "iceUtils/ClassadSyntax_ex.h"
 #include "classad_distribution.h"
