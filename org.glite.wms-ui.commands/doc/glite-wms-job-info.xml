@@ -234,6 +234,10 @@
         
         <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy;
         use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+        
+        <para>JDL: The file containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); 
+        multiple jdl files can be used with the <option>--collection</option> option.</para>
+
     </refsect1>
     
     <refsect1>
