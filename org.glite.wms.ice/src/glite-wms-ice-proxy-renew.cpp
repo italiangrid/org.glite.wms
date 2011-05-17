@@ -32,6 +32,10 @@ END LICENSE */
 
 //extern int errno;
 
+/* workaround for gsoap 2.7.13 */
+#include "glite/ce/cream-client-api-c/cream_client_soapH.h"
+SOAP_NMAC struct Namespace namespaces[] = {};
+
 using namespace std;
 
 static struct option const long_options[] = {

@@ -55,6 +55,10 @@ END LICENSE */
 
 #include <list>
 
+/* workaround for gsoap 2.7.13 */
+#include "glite/ce/cream-client-api-c/cream_client_soapH.h"
+SOAP_NMAC struct Namespace namespaces[] = {};
+
 using namespace std;
 //using namespace glite::ce::cream_client_api;
 using namespace glite::wms::ice;

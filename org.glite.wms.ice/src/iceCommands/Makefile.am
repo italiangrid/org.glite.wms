@@ -35,7 +35,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(VOMS_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
-		$(GSOAP_CFLAGS) \
+		$(GSOAPXX_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \

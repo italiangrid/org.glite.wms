@@ -34,6 +34,10 @@ END LICENSE */
 
 #include "boost/algorithm/string.hpp"
 
+/* workaround for gsoap 2.7.13 */
+#include "glite/ce/cream-client-api-c/cream_client_soapH.h"
+SOAP_NMAC struct Namespace namespaces[] = {};
+
 std::string status_to_numstr( const std::string& status ) {
   if(status == "REGISTERED" ) return "0";
   if(status == "PENDING" ) return "1";

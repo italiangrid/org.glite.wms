@@ -76,7 +76,7 @@ AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src/iceDb/sqlite \
                 $(VOMS_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
-		$(GSOAP_CFLAGS) \
+		$(GSOAPXX_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \

@@ -38,6 +38,10 @@ END LICENSE */
 #include <boost/lexical_cast.hpp>
 #include <libgen.h> // for dirname
 
+/* workaround for gsoap 2.7.13 */
+#include "glite/ce/cream-client-api-c/cream_client_soapH.h"
+SOAP_NMAC struct Namespace namespaces[] = {};
+
 using namespace std;
 namespace po = boost::program_options;
 namespace iceUtil = glite::wms::ice::util;

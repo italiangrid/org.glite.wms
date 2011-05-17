@@ -42,6 +42,10 @@ END LICENSE */
 #include <boost/format.hpp>
 //#include <boost/algorithm/string.hpp>
 
+/* workaround for gsoap 2.7.13 */
+#include "glite/ce/cream-client-api-c/cream_client_soapH.h"
+SOAP_NMAC struct Namespace namespaces[] = {};
+
 namespace utils = glite::wms::common::utilities;
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;

@@ -50,6 +50,7 @@ queryDb_LDADD = \
 		$(GLITE_CEMONITOR_LIBS)\
 		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -85,6 +86,7 @@ queryStats_LDADD = \
                 $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -117,10 +119,10 @@ queryStats_LDADD = \
 putFL_LDADD =  \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
-                $(GLITE_CREAM_LIBS) \
+		$(GLITE_CEMONITOR_LIBS)\
+		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(LOG4CPP_LIBS) \
+ 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
@@ -146,7 +148,6 @@ putFL_LDADD =  \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 putFL_reschedule_LDADD = \
@@ -155,6 +156,7 @@ putFL_reschedule_LDADD = \
         	        $(GLITE_CEMONITOR_LIBS)\
 	                $(GLITE_CREAM_LIBS) \
 			$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+			$(GSOAPXX_LIBS) \
 			$(LOG4CPP_LIBS) \
 			$(GLOBUS_THR_LIBS) \
 			../src/iceUtils/libglite_wms_iceUtils.la \
@@ -209,6 +211,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
                 $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -244,6 +247,7 @@ glite_wms_ice_rm_LDADD = \
                 $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -279,6 +283,7 @@ glite_wms_ice_db_rm_LDADD = \
                 $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -314,6 +319,7 @@ glite_wms_ice_LDADD = \
                 $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
+		$(GSOAPXX_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -353,7 +359,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GLITE_CREAM_CFLAGS) \
 		$(GLITE_CEMONITOR_CFLAGS) \
 		$(VOMS_CFLAGS) \
-		$(GSOAP_CFLAGS) \
+		$(GSOAPXX_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(BOOST_CFLAGS) \
