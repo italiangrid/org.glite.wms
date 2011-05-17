@@ -1,0 +1,276 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY dhtitle "User Manuals">
+    <!ENTITY dhcommand "glite-wms-job-logging-info">
+    <!ENTITY dhsection "1">
+    
+    <!ENTITY dhfirstname "Alvise">
+    <!ENTITY dhsurname "Dorigo">
+    <!ENTITY dhemail "alvise.dorigo@pd.infn.it">
+    <!ENTITY dhcontrib "Developer of the WMS User Interface">
+    
+]>
+
+
+
+<refentry>
+
+    <refentryinfo>
+        <title>&dhtitle;</title>
+        <productname>&dhcommand;</productname>
+        <authorgroup>
+            <author>
+                <firstname>&dhfirstname;</firstname>
+                <surname>&dhsurname;</surname>
+                <contrib>&dhcontrib;</contrib>
+                <address>
+                    <email>&dhemail;</email>
+                </address>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>&dhcommand;</refentrytitle>
+        <manvolnum>&dhsection;</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>&dhcommand;</refname>
+        <refpurpose>Queries the LB persistent DB for logging information about jobs.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>&dhcommand;</command>
+            <arg choice="opt"><option>options</option></arg>
+            <arg choice="plain" rep="repeat"><replaceable><![CDATA[<job ID>]]></replaceable></arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para><command>&dhcommand;</command> queries the LB persistent DB for logging information about jobs previously submitted using 
+        <command>glite-wms-job-submit</command>.The job logging information are stored permanently by the LB service and can be retrieved 
+        also after the job has terminated its life-cycle, differently from the bookkeeping information that are in some way 
+        <quote>consumed</quote> by the user during the job existence.</para>
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+        <variablelist>
+
+            <varlistentry>
+                <term><option>--config <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <term><option>-c <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <listitem>
+                    <para>if the command is launched with this option, the configuration file pointed by configfile is used.
+                    This option is meaningless when used together with <option>--vo</option> option</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--debug</option></term>
+                <listitem>
+                    <para>when this option is specified, debugging information is displayed on the standard output and written also either into 
+                    the default log file: <filename>&dhcommand;<![CDATA[_<uid>_<pid>_<time>.log]]></filename> 
+                    located under the <filename>/var/tmp</filename> directory or in the log file specified with <option>--logfile</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--event <replaceable class="parameter"><![CDATA[<event code>]]></replaceable></option></term>
+                <listitem>
+                    <para>makes the command query specified events for requested jobid(s).
+                    The event code can be either an integer or a (case insensitive) string; for a list of  possible values see STATUS TAG.
+                    This option can be repeated several times, all event conditions will be considered as in a logical OR operation
+                    (i.e. --event PURGE --event 4 will query,  for  specified  jobid(s), all PURGE and ENQUEUED events).</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--exclude <replaceable class="parameter"><![CDATA[<event code>]]></replaceable></option></term>
+                <term><option>-e <replaceable class="parameter"><![CDATA[<event code>]]></replaceable></option></term>
+                <listitem>
+                    <para>makes the command exclude specified events for requested jobid(s).
+                    The event code can be either an integer or a (case insensitive) string; for a list of  possible values see STATUS TAG.
+                    This option can be repeated several times, all event conditions will be considered as in a logical AND operation
+                    (i.e. -e PURGE --exclude 4 will query, for specified jobid(s), all events BUT PURGE and ENQUEUED).</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--from <replaceable class="parameter"><![CDATA[<[MM:DD:]hh:mm[:[CC]YY]>]]></replaceable></option></term>
+                <listitem>
+                    <para>makes the command query LB for jobs that have been submitted (more precisely entered the "Submitted" status) after the specified date/time.
+                    If only hours and minutes are specified then the current day is taken into account. 
+                    If the year is not specified then the current year is taken into account.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--help</option></term>
+                <listitem>
+                    <para>Displays command usage.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--input <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-i <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>Allow the user to select the JobId(s) from an input file located in filepath.
+                    The list of jobIds contained in the file is displayed and the user is prompted for a choice. 
+                    Single jobs can be selected specifying the numbers associated to the job identifiers separated by commas. 
+                    E.g. selects the first,the third and the fifth jobId in the list.
+                    Ranges can also be selected specifying ends separated by a dash. 
+                    E.g. selects jobIds in the list from third  position  (included) to  sixth position (included). 
+                    It is worth mentioning that it is possible to select at the same time ranges and single jobs. 
+                    E.g. selects the first job id in the list, the ids from the third to the fifth (ends included)  and finally the eighth one.
+                    When specified toghether with <option>--noint</option>, all available JobId  are selected.
+                    This option cannot be used when one or more jobIds have been specified as extra command argument</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--logfile <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>When this option is specified, a command log file (whose pathname is filepath) is created.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--noint</option></term>
+                <listitem>
+                    <para>if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--output <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-o <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>writes the results of the operation in the file specified by filepath instead of the standard output. 
+                    filepath can be either a simple name or an absolute path (on the submitting machine).
+                    In the former case the file filepath is created in the current working directory.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--to <replaceable class="parameter"><![CDATA[<[MM:DD:]hh:mm[:[CC]YY]>]]></replaceable></option></term>
+                <listitem>
+                    <para>makes the command query LB for jobs that have been submitted (more precisely entered the "Submitted" status) before the specified date/time.
+                    If only hours and minutes are specified then the current day is taken into account. 
+                    If the year is not specified then the current year is taken into account.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--verbosity <replaceable class="parameter"><![CDATA[<level>]]></replaceable></option></term>
+                <term><option>-v <replaceable class="parameter"><![CDATA[<level>]]></replaceable></option></term>
+                <listitem>
+                    <para>sets the detail level of information about the job displayed to the user. 
+                    Possible values for level are:
+                    <itemizedlist>
+                        <listitem><para>0 only JobId and  status/event  displayed</para></listitem>
+                        <listitem><para>1 timestamp and source information added</para></listitem>
+                        <listitem><para>2 all information but jdls displayed</para></listitem>
+                        <listitem><para>3 complete information containing all Jdl strings</para></listitem>
+                    </itemizedlist></para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user-tag <replaceable class="parameter"><![CDATA[<tag name>=<tag value>]]></replaceable></option></term>
+                <listitem>
+                    <para>makes the command include only jobs that have defined specified usertag name and value.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+                <listitem>
+                    <para>displays WMProxy client and servers version numbers.
+                    If the <option>--endpoint</option> option is specified only this service is contacted to retrieve its version.
+                    If it is not  used, the endpoint contacted is that one specified with <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted.
+                    For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).</para>
+                </listitem>
+            </varlistentry>
+            
+            <varlistentry>
+                <term><option>--vo <replaceable class="parameter"><![CDATA[<voname>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option allows the user to specify the Virtual Organisation she/he is currently working for.
+                    If the user proxy contains VOMS  extensions then  the VO specified through this option is overridden by thedefault VO contained in the proxy
+                    (i.e. this option is only useful when working with non-VOMS proxies).</para>
+                </listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+    
+    <refsect1>
+        <title>STATUS TAG</title>
+        <para><itemizedlist>
+            <listitem><para>ABORT</para></listitem>
+            <listitem><para>ACCEPTED</para></listitem>
+            <listitem><para>CANCEL</para></listitem>
+            <listitem><para>CHANGEACL</para></listitem>
+            <listitem><para>CHKPT</para></listitem>
+            <listitem><para>CLEAR</para></listitem>
+            <listitem><para>CURDESCR</para></listitem>
+            <listitem><para>DEQUEUED</para></listitem>
+            <listitem><para>DONE</para></listitem>
+            <listitem><para>ENQUEUED</para></listitem>
+            <listitem><para>HELPERCALL</para></listitem>
+            <listitem><para>HELPERRETURN</para></listitem>
+            <listitem><para>LISTENER</para></listitem>
+            <listitem><para>MATCH</para></listitem>
+            <listitem><para>NOTIFICATION</para></listitem>
+            <listitem><para>PENDING</para></listitem>
+            <listitem><para>PURGE</para></listitem>
+            <listitem><para>REALLYRUNNING</para></listitem>
+            <listitem><para>REFUSED</para></listitem>
+            <listitem><para>REGJOB</para></listitem>
+            <listitem><para>RESOURCEUSAGE</para></listitem>
+            <listitem><para>RESUBMISSION</para></listitem>
+            <listitem><para>RUNNING</para></listitem>
+            <listitem><para>TRANSFER</para></listitem>
+            <listitem><para>UNDEF</para></listitem>
+            <listitem><para>USERTAG</para></listitem>
+        </itemizedlist></para>
+    </refsect1>
+
+    <refsect1>
+        <title>FILES</title>
+        <para><filename>voName/glite_wms.conf</filename>: The user configuration file. 
+        The standard path location is <filename>$GLITE_WMS_LOCATION/etc</filename> (or <filename>$GLITE_LOCATION/etc</filename>);</para>
+        
+        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy;
+        use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+        
+    </refsect1>
+    
+    <refsect1>
+        <title>ENVIRONMENT</title>
+        <para><envar>GLITE_WMS_CLIENT_CONFIG</envar>: This variable may be set to specify the path location of the configuration file.</para>
+        <para><envar>GLITE_WMS_LOCATION</envar>: This variable must be set when the Glite WMS installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_LOCATION</envar>: This variable must be set when the Glite installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_WMS_WMPROXY_ENDPOINT</envar>: This variable may be set to specify the endpoint URL</para>
+        <para><envar>GLOBUS_LOCATION</envar>: This variable must be set when the Globus installation is not located in the default path (<filename>/usr</filename>).</para>
+        <para><envar>GLOBUS_TCP_PORT_RANGE</envar>="<![CDATA[<val min>]]> <![CDATA[<val max>]]>": This variable must be set to define a range of ports to be used
+        for inbound connections in the interactivity context</para>
+        <para><envar>X509_CERT_DIR</envar>: This variable may be set to override the default location of the trusted certificates directory,
+        which is normally <filename>/etc/grid-security/certificates</filename>.</para>
+        <para><envar>X509_USER_PROXY</envar>: This variable may be set to override the default location of the user proxy credentials,
+        which is normally <filename><![CDATA[/tmp/x509up_u<uid>]]></filename>.</para>
+        <para><envar>GLITE_SD_PLUGIN</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, 
+        normally bdii.</para>
+        <para><envar>LCG_GFAL_INFOSYS</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific Server
+        where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"</para>
+    </refsect1>
+
+</refentry>
+
