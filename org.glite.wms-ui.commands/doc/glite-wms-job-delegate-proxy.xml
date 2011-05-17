@@ -181,17 +181,21 @@
     <refsect1>
         <title>EXAMPLES</title>
         
-        <para>request for canceling only one job:</para>
-        <para><command>glite-wms-job-cancel https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        <para>delegates the user credential with <quote>exID</quote> identifier:</para>
+        <para><command>glite-wms-job-delegate -d exID</command></para>
         
-        <para>request for canceling multiple jobs:</para>
-        <para><command>glite-wms-job-cancel https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg https://wmproxy.glite.it:9000/wqikja_-de83jdqd</command></para>
+        <para>delegates the user credential with <quote>exID</quote> identifier to the WMProxy service specified with the <option>-e</option> option:</para>
+        <para><command>glite-wms-job-delegate -d exID -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server</command></para>
         
-        <para>the myids.in input file contains the jobid(s):</para>
-        <para><command>glite-wms-job-cancel --input myids.in</command></para>
-        <para>A message with the result of the operation is displayed on the standard output.</para>
+        <para>delegates the user credential automatically generating the id string:</para>
+        <para><command>glite-wms-job-delegate -a</command></para>
 
-        
+        <para>delegates the user credential to the WMProxy service specified with the <option>-e</option> option automatically generating the id string:</para>
+        <para><command>glite-wms-job-delegate -a -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server</command></para>
+
+        <para>When <option>--endpoint</option> is not specified, the search of an available WMProxy service is  performed according to the modality reported in 
+        the description of the <option>--endpoint</option> option.</para>
+
     </refsect1>
 
     <refsect1>
@@ -199,7 +203,8 @@
         <para><filename>voName/glite_wms.conf</filename>: The user configuration file. 
         The standard path location is <filename>$GLITE_WMS_LOCATION/etc</filename> (or <filename>$GLITE_LOCATION/etc</filename>);</para>
         
-        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy; use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy;
+        use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
     </refsect1>
     
     <refsect1>
@@ -215,16 +220,10 @@
         which is normally <filename>/etc/grid-security/certificates</filename>.</para>
         <para><envar>X509_USER_PROXY</envar>: This variable may be set to override the default location of the user proxy credentials,
         which is normally <filename><![CDATA[/tmp/x509up_u<uid>]]></filename>.</para>
-    </refsect1>
-
-    <refsect1>
-        <title>SEE ALSO</title>
-        <para>
-            <citerefentry>
-                <refentrytitle>glite-wms-job-submit</refentrytitle>
-                <manvolnum>1</manvolnum>
-            </citerefentry>
-        </para>
+        <para><envar>GLITE_SD_PLUGIN</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, 
+        normally bdii.</para>
+        <para><envar>LCG_GFAL_INFOSYS</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific Server
+        where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"</para>
     </refsect1>
 
 </refentry>
