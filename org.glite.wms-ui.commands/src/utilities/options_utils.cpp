@@ -36,7 +36,6 @@ limitations under the License.
 #include <boost/lexical_cast.hpp>
 
 #include "options_utils.h"
-#include "versions.h"
 
 using namespace std;
 using namespace glite::wms::wmproxyapi;
@@ -54,21 +53,13 @@ std::string glite_wms_client_toLower ( const std::string &src){
         return result;
 }
 
-// constants for WMProxy  client software version
-const unsigned int WMP_CLT_MAJOR_VERSION = WMP_CLT_FIRST_VERSION;
-const unsigned int WMP_CLT_MINOR_VERSION = WMP_CLT_SECOND_VERSION;
-const unsigned int WMP_CLT_RELEASE_VERSION = WMP_CLT_THIRD_VERSION;
-const std::string WMP_CLT_POINT_VERSION = ".";
-
 /**
  * Help Info messages
 */
 const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2008 by ElsagDatamat SpA";
 const std::string Options::HELP_EMAIL = "alvise.dorigo@pd.infn.it";
 const std::string Options::HELP_UI = "WMS User Interface" ;
-const std::string Options::HELP_VERSION = "version  "+  boost::lexical_cast<string>(WMP_CLT_MAJOR_VERSION)
-        + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_MINOR_VERSION)
-        + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_RELEASE_VERSION);
+const std::string Options::HELP_VERSION = "version  " WMP_CLT_SOFTWARE_VERSION;
 
 const std::string Options::BUG_MSG = "(please report to " + HELP_EMAIL +")";
 /*
