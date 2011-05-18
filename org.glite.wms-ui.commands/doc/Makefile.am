@@ -24,6 +24,9 @@ dist_man1_MANS = glite-wms-job-cancel.1 \
         glite-wms-job-logging-info.1 \
         glite-wms-job-status.1 
 
+%.1: %.xml
+	xsltproc $(GLITE_DB_MANPAGES_STYLESHEET) $<
+
 install-data-hook:
 	gzip $(DESTDIR)$(mandir)/man1/glite-wms-*.1
 
