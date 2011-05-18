@@ -27,7 +27,7 @@ limitations under the License.
 #include "soapH.h"
 #include "soapWMProxyObject.h"
 
-class WMProxyServe:public WMProxy
+class WMProxyServe:public WMProxyService
 {
 	public:
 		
