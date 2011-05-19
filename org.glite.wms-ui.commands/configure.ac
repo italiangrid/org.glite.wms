@@ -145,6 +145,7 @@ have_glite_voms=no
 have_glite_jobid=no
 
 GLITE_CHECK_LIBDIR
+AC_GLITE_DOCBOOK
 AC_GLITE_SERVICE_DISCOVERY
 AC_OPTIMIZE
 
