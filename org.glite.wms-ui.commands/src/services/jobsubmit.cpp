@@ -432,6 +432,7 @@ void JobSubmit::submission ( ){
 		// Perform Submission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		// and initialize internal JobId:
+		
 		submitPerformStep(STEP_REGISTER);
 		logInfo->print(WMS_DEBUG, "The JobId is: ", this->getJobId() ) ;
 		
@@ -1007,10 +1008,21 @@ void JobSubmit::checkJSDL(){
 
 void JobSubmit::checkOutputData( void ) {
 
-	return;
-	
+	//return;
+	glite::jdl::Ad *ad;
+        
+        if(adObj) {
+          ad = adObj;
+        } else {
+          if(collectAd) 
+            ad = collectAd;
+          else {
+	    //cout << "******** ALL NULL!!! " <<endl;  
+	    return;
+	  }
+        }
 
-  	if( adObj->hasAttribute( JDL::OUTPUTDATA ) )
+  	if( /*adObj*/ad->hasAttribute( JDL::OUTPUTDATA ) )
 	{
 	  //cerr <<" ********* OUTPUT DATA PRESENT !! " << endl;
 	  string id( this->getJobId( ) );
@@ -1030,11 +1042,11 @@ void JobSubmit::checkOutputData( void ) {
 	  
 	  
 	  
-	  classad::ExprTree* osb( adObj->lookUp( "OutputSandbox" ) );
+	  classad::ExprTree* osb( /*adObj*/ad->lookUp( "OutputSandbox" ) );
 	  if( !osb ) {
-	    adObj->setAttributeExpr( "OutputSandbox",  "{ \"" + DS  + "\"}" );
+	    /*adObj*/ad->setAttributeExpr( "OutputSandbox",  "{ \"" + DS  + "\"}" );
 	  } else {
-	    vector<string> OSBs( adObj->getStringValue("OutputSandbox") );
+	    vector<string> OSBs( /*adObj*/ad->getStringValue("OutputSandbox") );
 	    OSBs.push_back( DS );
 	    
 	    string newOSB( "{" );
@@ -1050,13 +1062,13 @@ void JobSubmit::checkOutputData( void ) {
 	    
 	    //cout << "************** newOSB=[" << newOSB << "]" << endl;
 	    
-	    adObj->delAttribute( "OutputSandbox" );
-	    adObj->setAttributeExpr( "OutputSandbox", newOSB );
+	    /*adObj*/ad->delAttribute( "OutputSandbox" );
+	    /*adObj*/ad->setAttributeExpr( "OutputSandbox", newOSB );
 	  }
 	  
 	}
 	
-	//cout << endl << "************** NEW AD = " << adObj->toString() << endl;
+	//cout << endl << "************** NEW AD = " << ad->toString() << endl;
 }
 
 /**
