@@ -28,6 +28,7 @@ END LICENSE */
 #include "iceCommandSubmit.h"
 #include "iceUtils/CreamProxyMethod.h"
 #include "iceUtils/DelegationManager.h"
+#include "iceUtils/BlackListFailJob_ex.h"
 #include "iceThreads/eventStatusListener.h"
 #include "Request_source_purger.h"
 
@@ -388,7 +389,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
       //
       // Registers the job (without autostart)
       //
-      if( !register_job( is_lease_enabled,
+      if( !register_job( is_lease_enabled, // can raise an iceCommandFatal_ex (if CreamProxyMetod::execute raises a BlackListFailJob_ex)
 			 jobdesc,
 			 _gid,
 			 delegation,
@@ -450,17 +451,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     // that in the DB the needed info to start it are
     // there. Let's retrieve them...
     {
-      //list<string> fields_to_retrieve;
-      //fields_to_retrieve.push_back( util::CreamJob::complete_cream_jobid_field() );
-      //fields_to_retrieve.push_back( util::CreamJob::cream_jobid_field() );
-      //fields_to_retrieve.push_back( util::CreamJob::cream_address_field() );
-      //fields_to_retrieve.push_back( util::CreamJob::cream_dbid_field() );
-      
-      //list< pair<string, string> > clause;
-      //clause.push_back( make_pair( util::CreamJob::grid_jobid_field(), _gid ) );
-      //list<vector<string> > results;
-      
-      //db::GetFields getter( fields_to_retrieve, clause, results, "iceCommandSubmit::try_to_submit", false);
       db::GetJobByGid getter( _gid, "iceCommandSubmit::try_to_submit" );
       db::Transaction tnx( false, false );
       tnx.execute( &getter );
@@ -472,8 +462,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 	dbid       = tmp.cream_dbid( );//results.begin()->at(3);
       }
     }
-    
-    // completeid, __creamURL, proxy_time_end, dbid, jobId, jobdesc
     
     CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name << " TID=[" << getThreadID() << "] "
                     << "GridJobID [" << _gid << "]" 
@@ -564,10 +552,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
    * in order to receive the status change notifications
    * of job just submitted. But only if listener is ON
    */
-/*  if( m_theIce->is_listener_started() ) {	
-    doSubscription( m_theJob );	
-  }
-  */
   
   {
     m_theJob.set_last_seen( time(0) );
@@ -853,7 +837,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 				     bool& force_delegation,
 				     bool& force_lease,
 				     cream_api::AbsCreamProxy::RegisterArrayResult& res)
-  throw( iceCommandTransient_ex&)
+  throw( iceCommandTransient_ex&, iceCommandFatal_ex& )
 {
   const char* method_name = "iceCommandSubmit::register_job() - ";
 
@@ -900,6 +884,10 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 				  &res,
 				  iceid).execute( 3 );
 
+  } catch( BlackListFailJob_ex& ex ) {
+  
+    throw( iceCommandFatal_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+  
   } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
     // Here CREAM tells us that the delegation ID is unknown.
     // We do not trust this fault, and try to redelegate the

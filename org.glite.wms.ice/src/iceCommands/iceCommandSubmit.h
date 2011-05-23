@@ -111,7 +111,7 @@ namespace util {
 					  const std::string& modified_jdl,
 					  bool& force_delegation,
 					  bool& force_lease,
-					  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res) throw( iceCommandTransient_ex&);
+					  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res) throw( iceCommandTransient_ex&, iceCommandFatal_ex& );
      
      void process_result( bool& retry, 
 					    bool& force_delegation, 

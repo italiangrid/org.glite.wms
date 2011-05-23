@@ -25,6 +25,7 @@ END LICENSE */
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "IceConfManager.h"
+#include "BlackListFailJob_ex.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -58,6 +59,12 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
         // First, check whether the service is blacklisted
 	if( m_honor_blacklist ) {
           if ( m_blacklist->is_blacklisted( m_service ) ) {
+	  
+	    if (IceConfManager::instance()->getConfiguration()->ice()->fail_job_blacklisted_ce()) {
+	      // FAIL THE JOB!!
+	      throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
+	    }
+	  
             throw cream_ex::ConnectionTimeoutException( "The endpoint is blacklisted" ); // FIXME: throw different exception?
           }
 	}
@@ -68,7 +75,7 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
             if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << method_name 
-                                << "Connection timed out to CREAM: \""
+                                << "Connection timed out to CREAM [" << m_service<<" ]: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
                                 << ". Trying again in " << delay << " sec..."
@@ -82,9 +89,14 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
                                 << method_name << "Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
-                                << ". Blacklisting endpoint and giving up."
+                                << ". Blacklisting endpoint [" 
+				<< m_service << "] and giving up."
                                  );
                 m_blacklist->blacklist_endpoint( m_service );
+		if (IceConfManager::instance()->getConfiguration()->ice()->fail_job_blacklisted_ce()) {
+	          // FAIL THE JOB!!
+	          throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
+	        }
                 throw; // rethrow
             }            
         } catch( ... ) {
