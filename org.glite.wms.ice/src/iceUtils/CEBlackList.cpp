@@ -21,6 +21,10 @@ END LICENSE */
 
 #include "CEBlackList.h"
 #include "IceUtils.h"
+#include "IceConfManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+
 #include <algorithm>
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -34,11 +38,11 @@ boost::recursive_mutex CEBlackList::m_mutex;
 
 CEBlackList::CEBlackList( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_operation_count( 0 ),
-    m_operation_count_max( 20 ), // FIXME: hardcoded default
-    m_max_blacklist_time( 10*60 ) // FIXME: hardcoded default
+    m_operation_count( 0 )
 {
-
+  m_operation_count_max = IceConfManager::instance()->getConfiguration()->ice()->ce_blacklist_opcount_max();
+  m_max_blacklist_time  = IceConfManager::instance()->getConfiguration()->ice()->ce_blacklist_time();
+  //m_fail_jobs_to_BLCE   = IceConfManager::instance()->getConfiguration()->ice()->fail_job_blacklisted_ce();
 }
 
 CEBlackList* CEBlackList::instance( ) 

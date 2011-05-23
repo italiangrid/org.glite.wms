@@ -46,6 +46,9 @@ namespace util {
      * blacklist and operations on it can be attempted again.
      */
     class CEBlackList {
+    
+      
+    
     protected:
         CEBlackList( );
 
@@ -67,8 +70,9 @@ namespace util {
 
         log4cpp::Category* m_log_dev;
         std::size_t m_operation_count; ///< number of operations on the blacklist
-        const std::size_t m_operation_count_max; ///< max number of operations before the blacklist is purged from stale entries
-        const std::size_t m_max_blacklist_time; ///< max time (in seconds) an entry is kept in the blacklist
+        std::size_t m_operation_count_max; ///< max number of operations before the blacklist is purged from stale entries
+        std::size_t m_max_blacklist_time; ///< max time (in seconds) an entry is kept in the blacklist
+	//bool m_fail_jobs_to_BLCE; // if true, a job destined to a Blacklisted CE will be immediately failed
 
         std::map< std::string, std::time_t > m_blacklist; ///< map (endpoint) -> expiration time
 
