@@ -103,6 +103,9 @@ def checkExclude(includes, excludes):
 # I PART: INIZIALIZING VARIABLES AND CHECKS
 ############################################
 #initialize some usefull variable
+
+json = False;
+
 sys_exit =0
 prgname="glite-wms-job-status"
 wmsui_utils.err_log_clean(prgname)
@@ -110,7 +113,7 @@ wmsui_checks.check_prefix()
 MSG_STATUS="=status="
 MSG_EXCLUDE="=exclude="
 error_message= wmsui_utils.createErrMsg( prgname , "job Id(s)",["help","version","@","all", "=input$","verbosity=","from=","to=",\
-"=config$" ,"user-tag=", MSG_STATUS , MSG_EXCLUDE, "vo=","=output$","noint","nonodes" , "debug", "logfile$"])
+"=config$" ,"user-tag=", MSG_STATUS , MSG_EXCLUDE, "vo=","=output$","noint","nonodes" , "debug", "logfile$","json"])
 argv=sys.argv
 wmsui_checks.check_noint(sys.argv)
 
@@ -123,7 +126,10 @@ if (len(argv) < 2):
    exit(1)
 
 err, options,values,extra = wmsui_checks.checkOpt(argv[1:] , "i:c:o:v:s:e:" ,["help","version","all", "input=","verbosity=", \
- "from=","to=","config=" ,"user-tag=", "status=","exclude=","vo=","output=","noint","nonodes" , "debug" , "logfile="] )
+ "from=","to=","config=" ,"user-tag=", "status=","exclude=","vo=","output=","noint","nonodes" , "debug" , "logfile=","json"] )
+
+if    ("--json" in options):
+	json = True;
 
 if    ("--help" in options):
    print "\n" + prgname +" full help"
@@ -286,6 +292,8 @@ LBapproach = includes or excludes or userTags or issuer or fromT or toT
 # Retrieve the results according to the parameters
 if LBapproach:
 
+	print "\n*** LB APPROACH\n"
+
 	# Query all the status
 	statesArray = wmsui_api.queryStates(jobs, voName, includes, excludes, uTags, issuer, fromT, toT, level)
 
@@ -296,7 +304,7 @@ if LBapproach:
 		for job in jobs:
 			
 			if job.jobid in statesArray:
-				wmsui_utils.print_message(outFile, statesArray[job.jobid].printStatus(noNodes))
+				wmsui_utils.print_message(outFile, statesArray[job.jobid].printStatus(json, noNodes))
 				st+=1
 			else:	
 				wmsui_utils.print_message(wmsui_utils.info.logFile, "Warning: no matching information for job id: " + job.jobid)
@@ -304,11 +312,18 @@ if LBapproach:
 
 else:
 
+#	//print "\n*** NO LB APPROACH\n" 
+
 	# Set the error level to warning in case of more than one job
 	if len (jobs)>1:
 		em="Warning"
 
 	# Get the status for all the Job ID
+	if json == True:
+		print "{ \"result\": \"success\", ",
+		
+	messageList = list()
+		
 	for jobid in jobs:
 		
 		dbgMsg ("Job::getStatus" , jobid.jobid, level)
@@ -322,7 +337,9 @@ else:
 			# Check if a status has been found
 			if jobStatus:
 				# Print the Status
-				wmsui_utils.print_message(outFile, jobStatus.printStatus(noNodes))
+				#wmsui_utils.print_message(json, outFile, jobStatus.printStatus(json, noNodes))
+				
+				messageList.append( jobStatus.printStatus(json, noNodes) )
 				
 				atLeastOneSuccess = 1
 				st+=1	
@@ -336,8 +353,17 @@ else:
 			# Set the exit code
 			sys_exit= -1
 
+	wmsui_utils.print_message(json, outFile, ",".join( messageList ) )
+
+	if json == True:
+		wmsui_utils.print_message(json, outFile, ", ".join( messageList ) )
+		print " }"
+	else:
+		wmsui_utils.print_message(json, outFile, "\n".join( messageList ) )
+		
 if level==0 and atLeastOneSuccess :
-	wmsui_utils.print_message(outFile,"==========================================================================\n")
+	if json == False:
+		wmsui_utils.print_message(json, outFile,"==========================================================================\n")
 
 #Final error Check
 if not st:
