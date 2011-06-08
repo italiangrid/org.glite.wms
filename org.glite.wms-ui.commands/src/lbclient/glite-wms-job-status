@@ -353,7 +353,7 @@ else:
 			# Set the exit code
 			sys_exit= -1
 
-	wmsui_utils.print_message(json, outFile, ",".join( messageList ) )
+	#wmsui_utils.print_message(json, outFile, ",".join( messageList ) )
 
 	if json == True:
 		wmsui_utils.print_message(json, outFile, ", ".join( messageList ) )
