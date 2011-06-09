@@ -19,7 +19,7 @@
 """
 ***************************************************************************
     filename  : glite-wms-job-status
-    author    : Alessandro Maraschini
+    author    : Alessandro Maraschini, Alvise Dorigo
     email     : alvise.dorigo@pd.infn.it
     copyright : (C) 2004 by DATAMAT
 ***************************************************************************
@@ -31,6 +31,7 @@
 import sys
 import os.path
 import os
+import re
 
 
 #try:
@@ -231,14 +232,17 @@ if userTags:
 #=================================
 #   jobID check
 #=================================
+if json == True:
+	print "{ \"result\": \"success\"",
+	
 jobs= []
 
 if extra:
-	jobs = wmsui_api.getJobIdfromList ( extra)
+	jobs = wmsui_api.getJobIdfromList ( json, extra )
 	if len (jobs) != len(extra):
 		sys_exit= -1
 elif inFile :
-	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(inFile)
+	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile( json, inFile )
 	if sys_exit and jobs and (not wmsui_utils.info.noint):
 		answ=wmsui_utils.questionYN("Do you wish to continue?")
 		if not answ:
@@ -250,9 +254,12 @@ elif inFile :
 if not jobs:
 	if sys_exit:
 		# Unable to parse /find specified JobId
-		errMsg('Error','UI_WRONG_JOBID_ALL')
+		if json == False:
+			errMsg('Error','UI_WRONG_JOBID_ALL')
+		else:
+			print "}"
 		exit(1)
-
+	
 #Define the error/warning message:
 em="Error"
 
@@ -302,7 +309,7 @@ if LBapproach:
 		atLeastOneSuccess = 1
 		
 		for job in jobs:
-			
+			#print "**** CHECKING JOB [" + job.jobid + "]"
 			if job.jobid in statesArray:
 				wmsui_utils.print_message(outFile, statesArray[job.jobid].printStatus(json, noNodes))
 				st+=1
@@ -319,44 +326,75 @@ else:
 		em="Warning"
 
 	# Get the status for all the Job ID
-	if json == True:
-		print "{ \"result\": \"success\", ",
+#	if json == True:
+#		print "{ \"result\": \"success\", ",
 		
 	messageList = list()
 		
 	for jobid in jobs:
-		
-		dbgMsg ("Job::getStatus" , jobid.jobid, level)
-		
-		apiMsg = ""
-		
-		try:
-			# Get the status of the current Job
-			jobStatus = wmsui_api.getStatus(jobid, level)
-	
-			# Check if a status has been found
-			if jobStatus:
-				# Print the Status
-				#wmsui_utils.print_message(json, outFile, jobStatus.printStatus(json, noNodes))
+		#print "**** CHECKING JOB [" + jobid.jobid + "]"
+		p = re.compile('^https://.+:[0-9]+/.+');
+		m = p.match(jobid.jobid)
+		if not m:
+			#print "DONT MATCH!!!"
+			messageList.append("\"" + jobid.jobid + "\": \"JOBID CONTAINS WRONG FORMAT: SHOULD BE https://<host>:<tcpport>/<ID>\"" )
+			pass
+		else:
+			#print "GETTING STATUS..."
+			dbgMsg ("Job::getStatus" , jobid.jobid, level)
+			
+			apiMsg = ""
+			
+			try:
+				# Get the status of the current Job
+				jobStatus = wmsui_api.getStatus(jobid, level)
 				
-				messageList.append( jobStatus.printStatus(json, noNodes) )
+				# Check if a status has been found
+				if jobStatus:
+					# Print the Status
+				        #wmsui_utils.print_message(json, outFile, jobStatus.printStatus(json, noNodes))
+			                messageList.append( jobStatus.printStatus(json, noNodes) )
 				
 				atLeastOneSuccess = 1
-				st+=1	
-		except Exception, apiMsg:
-			# Print the error message on log file
-			wmsui_utils.print_message(wmsui_utils.info.logFile ,  "\n")
+				st+=1
+				
+			except Exception, apiMsg:
+				# Print the error message on log file
+                                #wmsui_utils.print_message(json, wmsui_utils.info.logFile ,  "\n")
 			
-			# Show on screen the error
-			errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
+				if json == True:
+					errmex = apiMsg.args[0].lower()
+					print "\n\n********** errmex=["+errmex+"]\n\n"
+					if errmex.find("no matching jobs found") > -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOB NOT FOUND\"" )
+					if errmex.find("no route to host") > -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOBID CONTAINS WRONG ENDPOINT OR ENDPOINT CANNOT BE CONTACTED\"" )
+					if errmex.find("connection timed out") > -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOBID CONTAINS WRONG ENDPOINT OR ENDPOINT CANNOT BE CONTACTED (CONNECTION TIMEOUT)\"" )
+						
+					if errmex.find("connection refused") > -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOBID CONTAINS WRONG ENDPOINT OR ENDPOINT CANNOT BE CONTACTED (CONNECTION REFUSED)\"" )
+								
+					if errmex.find("unknown host") > -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOBID CONTAINS UNKNOWN ENDPOINT\"" )
+						
+					if errmex.find("jobID is not in a valid format") != -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"JOBID FORMAT NOT VALID\"" )
+					if errmex.find("bad argument") != -1:
+						messageList.append( "\"" + jobid.jobid + "\": \"BAD ARGUMENT\"" )
+											
+				# Show on screen the error
+				if json == False:
+					errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
 
-			# Set the exit code
-			sys_exit= -1
+				# Set the exit code
+				if json == False:
+					sys_exit= -1
 
 	#wmsui_utils.print_message(json, outFile, ",".join( messageList ) )
 
 	if json == True:
-		wmsui_utils.print_message(json, outFile, ", ".join( messageList ) )
+		wmsui_utils.print_message(json, outFile, ", " + ", ".join( messageList ) )
 		print " }"
 	else:
 		wmsui_utils.print_message(json, outFile, "\n".join( messageList ) )
