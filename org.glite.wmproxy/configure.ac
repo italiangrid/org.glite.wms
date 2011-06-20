@@ -213,6 +213,8 @@ AC_SEC_LCAS
 AC_SEC_LCMAPS
 AC_SEC_LCMAPS_WITHOUT_GSI
 
+PKG_CHECK_MODULES(ARGUS_PEP_API_C, libargus-pep, , AC_MSG_ERROR(["ARGUS_PEP_API_C not found"]))
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
