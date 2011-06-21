@@ -69,7 +69,7 @@ limitations under the License.
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
 #include "voms/voms_api.h"  // voms parsing
 
-
+ #include <sys/time.h>
 namespace glite {
 namespace wms{
 namespace client {
@@ -2286,6 +2286,8 @@ string Utils::resolveIPv4_IPv6(string host_tbr) {
     
 	resolved_host = "UnresolvedHost";
 
+	vector<string> names;
+
 	for (res = result; res != NULL; res = res->ai_next) {
 		char hostname[NI_MAXHOST] = "";
 	
@@ -2297,16 +2299,26 @@ string Utils::resolveIPv4_IPv6(string host_tbr) {
 	
 		if (*hostname) {
 	  	    resolved_host = hostname;
-	       	    break;
+		    names.push_back( resolved_host );
+	       	    //break;
 	  	}
 	
 	}
  
-    	if( resolved_host == "UnresolvedHost" ) {
-		freeaddrinfo(result);
+ 	if(names.size() == 0) {
+	  
+	    freeaddrinfo(result);
 	        throw WmsClientException(__FILE__,__LINE__,"resolveIPv4_IPv6",DEFAULT_ERR_CODE,
                         "Wrong Value", "Unable to resolve hostname");
+	  
 	}
+	
+	timeval TV;
+	gettimeofday( &TV, 0 );
+ 	srand( TV.tv_usec );
+        random_shuffle(names.begin(), names.end());
+	
+ 	resolved_host = names.at(0);
 
     	freeaddrinfo(result);
 
