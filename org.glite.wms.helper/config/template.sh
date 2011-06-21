@@ -282,7 +282,7 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 register_sandbox() # 1 - input/output, 2 - from, 3 - to
 {
   eval `$lb_register_sandbox \
-        --jobid i"$GLITE_WMS_JOBID" \
+        --jobid "$GLITE_WMS_JOBID" \
         --"$1" \
         --from "$2" \
         --to "$3" \
@@ -1001,7 +1001,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     result=$?
     if [ $result -eq 0 ]; then
       log_bare_event "Running"
-      push_in_LM_done_reason"Taken token ${__shallow_resubmission_token}"
+      push_in_LM_done_reason "Taken token ${__shallow_resubmission_token}"
     else
       fatal_error "Cannot take shallow resubmission token ${__shallow_resubmission_token}" # parsed 'as is' by LM to cause a resubmit
     fi
