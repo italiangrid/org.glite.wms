@@ -2,7 +2,7 @@ Summary: Java libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-java
 Version:
 Release:
-License: Apache License 2.0
+License: Apache Software License
 Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
