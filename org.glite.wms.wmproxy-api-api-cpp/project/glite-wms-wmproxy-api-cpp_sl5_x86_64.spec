@@ -51,6 +51,10 @@ chrpath --delete %{buildroot}/usr/lib64/libglite_wms_wmproxy_api_cpp.so.0.0.0
 %clean
 rm -rf %{buildroot} 
 
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
 %files
 %defattr(-,root,root)
 %dir /usr/share/doc/glite-wms-wmproxy-api-cpp-%{version}/
