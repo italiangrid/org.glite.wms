@@ -49,7 +49,7 @@ limitations under the License.
   <target name="check" depends="init">
     <fail message="The module is not configured" unless="isConfigured"/>
     <uptodate property="alreadyCompiled" targetfile="lib/${pkg-jarname}">
-      <srcfiles dir= "${org.glite.wms.wsdl.location}/interface"
+      <srcfiles dir= "${org.glite.wms.wsdl.location}/share/wsdl"
                 includes="**/WMProxy.wsdl"/>
       <srcfiles dir= "src"
                 includes="**/*.java"/>
@@ -108,6 +108,9 @@ limitations under the License.
             packagenames="org.glite.wms.wmproxy*"
             destdir="${docs-installdir}/html"
             windowtitle="${pkg-name}"
+            author="true"
+            failonerror="false"
+            use="true"
             breakiterator="yes">
             <bottom><![CDATA[<i>Copyright &#169; 2004-2008. <A href="http://public.eu-egee.org/">EU-EGEE</A></i>]]></bottom>
             <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
