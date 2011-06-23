@@ -17,12 +17,10 @@
 
 ## Process this file with automake to produce Makefile.in
 
-EXTRA_DIST = LICENSE \
-CHANGES
+EXTRA_DIST = LICENSE 
 
-docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
-doc_DATA = LICENSE \
-CHANGES
+docdir = $(datadir)/doc/@PACKAGE@-@PVER@
+doc_DATA = LICENSE 
 
 ## Subdirectories list
 SUBDIRS = src doc config 
@@ -30,8 +28,8 @@ SUBDIRS = src doc config
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
 
-doc:
-	doxygen wms-client.dox
+#doc:
+#	doxygen wms-client.dox
 
 stage:
 	@set fnord $(MAKEFLAGS); amf=$$2; \

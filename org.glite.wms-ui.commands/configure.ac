@@ -11,8 +11,6 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
-#
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS UI Commands], [3.3.3])
@@ -61,114 +59,40 @@ AC_CHECK_FUNCS([memset])
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
-have_boost=no
-have_classads=no
-have_globus=no
-have_gridsite=no
-have_libtar=no
-have_zlib=no
-
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_MSG_RESULT(["BOOST found $have_boost"])
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
-AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
-
-AC_LIBTAR([], have_libtar=yes, have_libtar=no)
-AC_MSG_RESULT(["LIBTAR found $have_libtar"])
-
-AC_ZLIB([], have_zlib=yes, have_zlib=no)
-AC_MSG_RESULT(["ZLIB found $have_zlib"])
+GLITE_CHECK_LIBDIR
+AC_GLITE_DOCBOOK
+AC_OPTIMIZE
 
 AC_GSOAP
 AC_ARES
-
-if test "$have_globus" = "no"; then
-  AC_MSG_RESULT(["Please verify GLOBUS package"])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_RESULT(["Please verify BOOST package"])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_RESULT(["Please verify CLASSADS package"])
-fi
-
-if test "$have_gridsite" = "no"; then
-  AC_MSG_RESULT(["Please verify GRIDSITE package"])
-fi
-
-if test "$have_libtar" = "no"; then
-  AC_MSG_RESULT(["Please verify LIBTAR package"])
-fi
-
-if test "$have_zlib" = "no"; then
-  AC_MSG_RESULT(["Please verify ZLIB package"])
-fi
-
-if test "$have_globus" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_gridsite" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_libtar" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_zlib" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-have_glite_wmsutils=no
-have_glite_jdl=no
-have_glite_lb=no
-have_glite_wms_wmproxy=no
-have_glite_voms=no
-have_glite_jobid=no
-
-GLITE_CHECK_LIBDIR
-AC_GLITE_DOCBOOK
 AC_GLITE_SERVICE_DISCOVERY
-AC_OPTIMIZE
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-GLITE_CHECK_JOBID([], have_glite_jobid=yes, have_glite_jobid=no)
-AC_MSG_RESULT(["GLITE_JOBID found $have_glite_jobid"])
+AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
+AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
 
-AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
-AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
 
-AC_GLITE_WMS_WMPROXY([], have_glite_wms_wmproxy=yes, have_glite_wms_wmproxy=no)
-AC_MSG_RESULT(["GLITE_WMS_WMPROXY found $have_glite_wms_wmproxy"])
+C_ZLIB([], AC_MSG_RESULT(["ZLIB ok"]), AC_MSG_ERROR(["ZLIB not found"]))
 
-AC_VOMS([], have_glite_voms=yes, have_glite_voms=no)
-AC_MSG_RESULT(["VOMS found $have_glite_voms"])
+AC_LIBTAR([], AC_MSG_RESULT(["LIBTAR ok"]), AC_MSG_ERROR(["LIBTAR not found"]))
+
+AC_GLITE_WMSUTILS([], AC_MSG_RESULT(["GLITE_WMSUTILS ok"]), AC_MSG_ERROR(["GLITE_WMSUTILS not found"]))
+
+GLITE_CHECK_JOBID([], AC_MSG_RESULT(["GLITE_JOBID ok"]), AC_MSG_ERROR(["GLITE_JOBID not found"]))
+
+AC_GLITE_JDL([], AC_MSG_RESULT(["GLITE_JDL ok"]), AC_MSG_ERROR(["GLITE_JDL not found"]))
+
+AC_GLITE_LB([], AC_MSG_RESULT(["GLITE_LB ok"]), AC_MSG_ERROR(["GLITE_LB not found"]))
+
+AC_GLITE_WMS_WMPROXY([], AC_MSG_RESULT(["GLITE_WMS_WMPROXY ok"]), AC_MSG_ERROR(["GLITE_WMS_WMPROXY not found"]))
+
+AC_VOMS([], AC_MSG_RESULT(["VOMS ok"]), AC_MSG_ERROR(["VOMS not found"]))
 
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
@@ -179,7 +103,7 @@ AC_CONFIG_FILES([src/commands/Makefile])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite_wmsui_cmd_err.conf])
 AC_CONFIG_FILES([doc/Makefile])
-AC_CONFIG_FILES([wms-client.dox])
+#AC_CONFIG_FILES([wms-client.dox])
 
 
 AC_OUTPUT
