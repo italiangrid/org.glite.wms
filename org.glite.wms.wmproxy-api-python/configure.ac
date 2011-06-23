@@ -19,7 +19,7 @@ AC_INIT([GLite WMS wmproxy-api-python], [3.3.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/wmproxymethods.py])
-AC_CONFIG_SRCDIR([examples/make_proxy_cert.c])
+#AC_CONFIG_SRCDIR([examples/make_proxy_cert.c])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -59,22 +59,18 @@ AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
 GLITE_CHECK_LIBDIR
 
-AC_PYTHON([2.2.3], have_python=yes, have_python=no)
-AC_MSG_RESULT(["PYTHON found $have_python"])
+AC_PYTHON([2.2.3], AC_MSG_RESULT(["PYTHON ok"]), AC_MSG_ERROR(["PYTHON not found"]))
 
-AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
-AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
-
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
+#AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
+#AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
 
 
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([examples/Makefile])
+#AC_CONFIG_FILES([examples/Makefile])
 
 AC_OUTPUT
 
