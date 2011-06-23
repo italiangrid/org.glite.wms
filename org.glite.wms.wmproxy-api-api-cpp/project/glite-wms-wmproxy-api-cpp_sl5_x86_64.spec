@@ -2,7 +2,7 @@ Summary: C/C++ libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-cpp
 Version:
 Release:
-License: Apache License 2.0
+License: Apache Software License
 Vendor: EMI
 URL: http://glite.cern.ch/
 Packager: WMS group <wms-support@lists.infn.it>
