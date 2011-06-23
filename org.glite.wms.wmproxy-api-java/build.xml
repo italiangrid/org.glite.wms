@@ -27,16 +27,12 @@ limitations under the License.
   <property name="docs-installdir" value="${dist.location}/share/doc/${pkg-name}"/>
   <property name="pkg-jarname" value="${pkg-name}.jar"/>
 
+  <property name="axis.location" value="/usr/local/axis1.4"/>
+  <property name="util-java.location" value="${stage.location}"/>
+  <property name="org.glite.wms.wsdl.location" value="${stage.location}"/>
+
   <path id="compile.classpath">
-    <fileset dir="${axis.location}/lib">
-        <include name="*.jar"/>
-    </fileset>
-    <!-- fileset dir="${glite.location}/usr/share/java">
-        <include name="glite-security-trustmanager.jar"/>
-        <include name="glite-security-delegation-java.jar"/>
-        <include name="glite-security-util-java.jar"/>
-        <include name="delegation-java.jar"/>
-    </fileset -->
+    <fileset dir="${axis.location}/lib" includes="**/*.jar" />
     <fileset dir="${util-java.location}/share/java">
         <include name="trustmanager.jar"/>
         <include name="trustmanager-axis.jar"/>
@@ -87,6 +83,7 @@ limitations under the License.
     </javac>
 
     <jar destfile="lib/${pkg-jarname}"
+         index="true"
          basedir="bin/classes">
     	<manifest>
         	<attribute name="Package-Title" value="${pkg-name}"/>
