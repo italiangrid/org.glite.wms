@@ -80,8 +80,9 @@ Documentation files for dealing with Job Description Language
 %doc %{_javadocdir}/%{name}/html/package-list
 %dir %{_javadocdir}/%{name}/html/org/
 %dir %{_javadocdir}/%{name}/html/org/glite/
-%dir %{_javadocdir}/%{name}/html/org/glite/jdl/
-%doc %{_javadocdir}/%{name}/html/org/glite/jdl/*.html
-%dir %{_javadocdir}/%{name}/html/org/glite/jdl/class-use/
-%doc %{_javadocdir}/%{name}/html/org/glite/jdl/class-use/*.html
+%dir %{_javadocdir}/%{name}/html/org/glite/wms/
+%dir %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/
+%doc %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/*.html
+%dir %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/
+%doc %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/*.html
 
