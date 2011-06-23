@@ -55,56 +55,37 @@ AC_DEFINE(WITH_IPV6)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-have_boost=no
-have_globus=no
-have_gridsite=no
-
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_MSG_RESULT(["BOOST found $have_boost"])
-
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
-AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
-
-if test "$have_globus" = "no"; then
-  AC_MSG_RESULT(["Please verify GLOBUS package"])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_RESULT(["Please verify BOOST package"])
-fi
-
-if test "$have_gridsite" = "no"; then
-  AC_MSG_RESULT(["Please verify GRIDSITE package"])
-fi
-
-if test "$have_globus" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_gridsite" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
 GLITE_CHECK_LIBDIR
 AC_GLITE_WMS_WSDL
 AC_GSOAP
 
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
+
+#AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
+
+AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
+
+DX_DOXYGEN_FEATURE(ON)
+DX_DOT_FEATURE(OFF)
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN(glite-wms-wmproxy-api-cpp, project/doxygen/doxygen.cfg, doc)
+
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/wmproxy-api-cpp.pc])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([examples/Makefile])
-AC_CONFIG_FILES([wmproxy-api-cpp.dox])
+#AC_CONFIG_FILES([wmproxy-api-cpp.dox])
 
 AC_OUTPUT
 

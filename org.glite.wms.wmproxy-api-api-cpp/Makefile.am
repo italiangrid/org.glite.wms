@@ -20,7 +20,7 @@
 EXTRA_DIST = LICENSE \
 CHANGES
 
-docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+docdir = $(datadir)/doc/@PACKAGE@-@PVER@
 doc_DATA = LICENSE \
 CHANGES
 
@@ -31,8 +31,10 @@ SUBDIRS = src interface
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
 
-doc:
-	doxygen wmproxy-api-cpp.dox
+#doc:
+#	doxygen wmproxy-api-cpp.dox
+
+include project/doxygen/aminclude.am
 
 stage:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
