@@ -50,7 +50,13 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-chrpath --delete %{buildroot}/usr/bin/* 
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-cancel
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-delegate-proxy
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-info
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-list-match
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-output
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-perusal
+chrpath --delete %{buildroot}/usr/bin/glite-wms-job-submit
 
 %clean
 rm -rf %{buildroot}
