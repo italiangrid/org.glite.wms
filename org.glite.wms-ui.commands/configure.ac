@@ -75,7 +75,7 @@ AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
 
 AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
 
-C_ZLIB([], AC_MSG_RESULT(["ZLIB ok"]), AC_MSG_ERROR(["ZLIB not found"]))
+AC_ZLIB([], AC_MSG_RESULT(["ZLIB ok"]), AC_MSG_ERROR(["ZLIB not found"]))
 
 AC_LIBTAR([], AC_MSG_RESULT(["LIBTAR ok"]), AC_MSG_ERROR(["LIBTAR not found"]))
 
