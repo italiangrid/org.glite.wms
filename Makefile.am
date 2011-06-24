@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3.28.1.2.1  2011/06/24 14:16:20  pandreet
+#       New packaging style for jobsubmission
+#
 #       Revision 1.3.28.1  2006/10/10 11:33:13  gianelle
 #       Install SubmitAdapter.h because it is used by the planner
 #
@@ -35,7 +38,7 @@
 
 EXTRA_DIST = LICENSE
 
-docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+docdir = $(datadir)/doc/@PACKAGE@-@PVER@
 doc_DATA = LICENSE
 
 ## Subdirectories list

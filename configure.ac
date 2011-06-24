@@ -14,152 +14,6 @@
 #       Authors: Paolo Andreetto <paolo.andreetto@pd.infn.it>
 #       Version info: $Id$
 #       Release: $Name$
-#
-#       Revision history:
-#       $Log$
-#       Revision 1.22.2.16.6.6  2011/03/22 14:20:04  pandreet
-#       Removed workaround
-#
-#       Revision 1.22.2.16.6.5  2011/03/11 15:00:04  pandreet
-#       Removed with-glite-location
-#
-#       Revision 1.22.2.16.6.4  2011/03/07 09:23:23  pandreet
-#       Incremented version number
-#
-#       Revision 1.22.2.16.6.3  2011/02/16 15:52:04  pandreet
-#       Path for init-script is relocatable
-#
-#       Revision 1.22.2.16.6.2  2011/01/05 11:10:57  pandreet
-#       Pkg-config support for jss
-#
-#       Revision 1.22.2.16.6.1  2010/09/03 10:11:46  pandreet
-#       Ares AC definitions in build files
-#
-#       Revision 1.22.2.16  2008/05/20 11:36:59  eronchie
-#       increased version
-#
-#       Revision 1.22.2.15  2008/02/13 13:28:42  amarasch
-#       towards wms_3_1_96_2
-#
-#       Revision 1.22.2.14  2008/02/04 07:12:34  giaco
-#       - remove deps from expat and libtar
-#
-#       Revision 1.22.2.13  2007/05/14 10:15:25  rlops
-#       increased version
-#
-#       Revision 1.22.2.12  2007/05/10 14:39:48  rlops
-#       increased version
-#
-#       Revision 1.22.2.11  2007/05/09 09:18:38  rlops
-#       increased version
-#
-#       Revision 1.22.2.10  2006/12/12 13:36:24  rlops
-#       increased version
-#
-#       Revision 1.22.2.9  2006/11/22 11:10:32  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.8  2006/11/21 16:28:51  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.7  2006/10/10 11:33:14  gianelle
-#       Install SubmitAdapter.h because it is used by the planner
-#
-#       Revision 1.22.2.6  2006/09/22 08:46:51  eronchie
-#       decreased version
-#
-#       Revision 1.22.2.5  2006/09/21 13:34:07  gianelle
-#       Increment version
-#
-#       Revision 1.22.2.4  2006/08/30 16:12:18  gianelle
-#       Remove the "force" parameter from the cancel function (no more used)
-#       Update also the version.
-#
-#       Revision 1.22.2.3  2006/07/26 14:02:50  gianelle
-#       Update version for the tag
-#
-#       Revision 1.22.2.2  2006/04/03 16:34:11  gianelle
-#       removed unused m4 files
-#
-#       Revision 1.22.2.1  2006/04/03 16:17:03  gianelle
-#       emoved JP dependencies (GLITE_WMS_OPTIONAL_JP_LIBS)
-#
-#       Revision 1.22  2006/03/20 22:27:55  eronchie
-#       Increased version
-#
-#       Revision 1.21  2006/03/16 17:28:39  gianelle
-#       Migration to "new" jdl library
-#
-#       Revision 1.20  2006/03/15 13:19:54  gianelle
-#       Drops any explicit references to ares.
-#
-#       Revision 1.19  2006/03/15 12:55:51  gianelle
-#       Added (macro) support for:
-#       - libtar
-#       - Optimization
-#       - Gpbox
-#       - JP
-#       - Purger
-#
-#       Revision 1.18  2006/03/14 21:22:14  eronchie
-#       Applied PURGER macro
-#
-#       Revision 1.17  2005/10/15 12:03:41  eronchie
-#       Increased version
-#
-#       Revision 1.16  2005/09/20 14:11:36  gianelle
-#       Syncronize the rc1 branch with head.
-#
-#       Revision 1.15  2004/12/10 07:50:30  eronchie
-#       Increased version
-#
-#       Revision 1.14  2004/11/01 10:39:52  dimeglio
-#       Incremented version number
-#
-#       Revision 1.13  2004/09/22 01:04:17  dimeglio
-#       Fixed missing parenthesis in AC_INIT
-#
-#       Revision 1.12  2004/09/21 19:25:48  glbuild
-#       modified module.version
-#
-#       Revision 1.11  2004/08/27 13:19:40  eronchie
-#       Added handling of config directory
-#       Added start up script files
-#
-#       Revision 1.10  2004/07/30 08:17:38  eronchie
-#       Increased condor version 6.7.1
-#
-#       Revision 1.9  2004/07/28 14:38:57  pandreet
-#       Proxyrenewal dependencies fixed
-#
-#       Revision 1.8  2004/07/28 10:19:09  eronchie
-#       Added m4files.list property
-#
-#       Revision 1.7  2004/07/27 13:46:37  pandreet
-#       LB dependencies fixed
-#
-#       Revision 1.6  2004/07/27 11:39:01  eronchie
-#       *** empty log message ***
-#
-#       Revision 1.5  2004/07/27 09:41:25  pandreet
-#       JobId and Exception dependencies fixed
-#
-#       Revision 1.4  2004/07/25 16:42:14  eronchie
-#       Updated jobid, and tls
-#       Moved out from org.glite.wms and put in org.glite.wms-utils
-#
-#       Revision 1.3  2004/07/18 11:56:40  eronchie
-#       Updated LB dependency
-#
-#       Revision 1.2  2004/07/18 11:53:35  eronchie
-#       Added AC_GLITE_LB check
-#       WARNING: work in progress
-#
-#       Revision 1.1  2004/07/06 10:05:38  pandreet
-#       Basic build files for jobsubmission
-#
-#
-# Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS jobsubmission], [3.3.1])
@@ -207,53 +61,39 @@ AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 GLITE_CHECK_LIBDIR
 GLITE_CHECK_INITDIR
 
-have_boost=no
-have_classads=no
-have_condorg=no
-have_globus=no
-                                                                                
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_CONDORG(6.7.1, have_condorg=yes, have_condorg=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["CONDORG found $have_condorg"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-have_glite_wms_common=no
-have_glite_wmsutils=no
-have_glite_jdl=no
-have_glite_wms_purger=no
-have_glite_lb=no
-have_glite_renewal=no                                                      
-have_glite_jp=no
-                      
+AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
+
+AC_CONDORG(6.7.1, AC_MSG_RESULT(["CONDORG ok"]), AC_MSG_ERROR(["CONDORG not found"]))
+
 GLITE_CHECK_JOBID
-                                                                               
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))
+PKG_CHECK_MODULES(GLITE_WMSUTILS_CLASSADS, classad-utils, , AC_MSG_ERROR(["WMSUTILS_CLASSADS not found"]))
 
-AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
+PKG_CHECK_MODULES(GLITE_JDL, jdl-api-cpp, AC_MSG_ERROR(["JDL not found"]))
 
-AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
-AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_CONF, wms-common-conf, , AC_MSG_ERROR(["WMS_COMMON_CONF not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LDIF2CLASSADS, wms-common-ldif2classads, , AC_MSG_ERROR(["WMS_COMMON_LDIF2CLASSADS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LOGGER, wms-common-logger, , AC_MSG_ERROR(["WMS_COMMON_LOGGER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR(["WMS_COMMON_PROCESS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
 
-AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
-AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+PKG_CHECK_MODULES(GLITE_WMS_PURGER, wms-purger, ,AC_MSG_ERROR(["WMS_PURGER not found"]))
 
-AC_PROXYRENEWAL([], have_glite_renewal=yes, have_glite_renewal=no)
-AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_renewal"])
+AC_GLITE_LB([], AC_MSG_RESULT(["GLITE_LB ok"]), AC_MSG_ERROR(["GLITE_LB not found"]))
+
+AC_PROXYRENEWAL([], AC_MSG_RESULT(["PROXY RENEWAL ok"]), AC_MSG_ERROR(["PROXY RENEWAL not found"]))
 
 AC_ARES
 
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
