@@ -7,7 +7,6 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-Packager: ETICS
 BuildArch: noarch
 Requires: python-fpconst
 Requires: PyXML
