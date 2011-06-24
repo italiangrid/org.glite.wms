@@ -56,19 +56,6 @@ AC_HEADER_TIME
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-have_classads=no
-have_boost=no
-have_glite_wmsutils=no
-have_globus=no
-have_glite_lb=no
-have_glite_prxrenewal=no
-have_glite_wms_common=no
-have_gridsite=no
-have_xml2=no
-have_glite_wms_purger=no
-have_myproxy=no
-have_voms=no
-
 AC_OPTIMIZE
 GLITE_CHECK_LIBDIR
 GLITE_CHECK_INITDIR
@@ -77,43 +64,42 @@ AC_ARES
 GLITE_CHECK_JOBID
 AC_GLITE_CEMONITOR_API
 AC_GLITE_CREAM_API
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GSOAP([])
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 
-AC_XML2([], have_xml2=yes, have_xml2=no)
-AC_MSG_RESULT(["XML2 found $have_xml2"])
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
-AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_PROXYRENEWAL([], have_glite_prxrenewal=yes, have_glite_prxrenewal=no)
-AC_MSG_RESULT(["PROXY RENEWAL found $have_glite_prxrenewal"])
+AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))
+PKG_CHECK_MODULES(GLITE_WMSUTILS_CLASSADS, classad-utils, , AC_MSG_ERROR(["WMSUTILS_CLASSADS not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_CONF, wms-common-conf, , AC_MSG_ERROR(["WMS_COMMON_CONF not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LDIF2CLASSADS, wms-common-ldif2classads, , AC_MSG_ERROR(["WMS_COMMON_LDIF2CLASSADS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LOGGER, wms-common-logger, , AC_MSG_ERROR(["WMS_COMMON_LOGGER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR(["WMS_COMMON_PROCESS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_PURGER, wms-purger, ,AC_MSG_ERROR(["WMS_PURGER not found"]))
+
+AC_XML2([], AC_MSG_RESULT(["XML2 ok"]), AC_MSG_ERROR(["XML2 not found"]))
+
+AC_GLITE_LB([], AC_MSG_RESULT(["GLITE_LB ok"]), AC_MSG_ERROR(["GLITE_LB not found"]))
+
+AC_PROXYRENEWAL([], AC_MSG_RESULT(["PROXY RENEWAL ok"]), AC_MSG_ERROR(["PROXY RENEWAL not found"]))
 
 AC_SEC_GSOAP_PLUGIN
 
-AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
-AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
+AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
 
-AC_VOMS([], have_voms=yes, have_voms=no)
-AC_MSG_RESULT(["VOMS found $have_voms"])
+AC_VOMS([], AC_MSG_RESULT(["VOMS ok"]), AC_MSG_ERROR(["VOMS not found"]))
 
-have_myproxy=no
-AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
-AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
+AC_MYPROXY([], AC_MSG_RESULT(["MYPROXY ok"]), AC_MSG_ERROR(["MYPROXY not found"]))
 
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
