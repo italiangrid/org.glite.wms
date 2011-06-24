@@ -50,7 +50,7 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
- 
+chrpath --delete %{buildroot}/usr/bin/* 
 
 %clean
 rm -rf %{buildroot}
@@ -61,7 +61,7 @@ rm -rf %{buildroot}
 %config(noreplace) /etc/glite_wmsui_cmd_*
 /usr/bin/glite-wms-job-*
 %dir /usr/share/doc/glite-wms-ui-commands-%{version}/
-%doc/usr/share/doc/glite-wms-ui-commands-%{version}/LICENSE
+%doc /usr/share/doc/glite-wms-ui-commands-%{version}/LICENSE
 %doc /usr/share/man/man1/*.1.gz
 
 %changelog
