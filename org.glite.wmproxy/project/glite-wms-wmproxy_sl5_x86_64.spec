@@ -33,6 +33,9 @@ Requires: gridsite-shared
 #Requires: glite-wms-configuration
 #Requires: glite-wms-purger
 Requires: lcmaps-plugins-basic
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
 BuildRequires: chrpath
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
@@ -71,8 +74,15 @@ rm -rf %{buildroot}
 
 %post
 /sbin/ldconfig
+/sbin/chkconfig --add glite-wms-wmproxy
 chown root.root /usr/libexec/glite_wms_wmproxy_dirmanager
 chmod u+s /usr/libexec/glite_wms_wmproxy_dirmanager
+
+%preun
+if [ $1 -eq 0 ] ; then
+    /sbin/service glite-wms-wmproxy stop >/dev/null 2>&1
+    /sbin/chkconfig --del glite-wms-wmproxy
+fi
 
 %postun -p /sbin/ldconfig
 
