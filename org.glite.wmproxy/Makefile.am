@@ -20,9 +20,8 @@
 EXTRA_DIST = LICENSE \
 	CHANGES
 
-docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
-doc_DATA = LICENSE \
-	CHANGES
+docdir = $(datadir)/doc/@PACKAGE@-@PVER@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = src config
@@ -30,8 +29,8 @@ SUBDIRS = src config
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
 
-doc:
-	doxygen wmproxy.dox
+#doc:
+#	doxygen wmproxy.dox
 
 stage:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
