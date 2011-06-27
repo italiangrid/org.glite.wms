@@ -10,218 +10,6 @@
 ## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 ## See the License for the specific language governing permissions and 
 ## limitations under the License.
-#
-#       Common configure.ac file for the GLite WMS Common module
-#
-#       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
-#       Version info: $Id$
-#       Release: $Name$
-#
-#       Revision history:
-#       $Log$
-#       Revision 1.22.2.22.4.1.2.3.4.4  2011/03/15 09:11:00  pandreet
-#       Removed old macros
-#
-#       Revision 1.22.2.22.4.1.2.3.4.3  2011/03/11 13:51:10  pandreet
-#       Removed with-glite-location
-#
-#       Revision 1.22.2.22.4.1.2.3.4.2  2011/03/07 09:41:37  pandreet
-#       Incremented version number
-#
-#       Revision 1.22.2.22.4.1.2.3.4.1  2011/01/05 10:36:50  pandreet
-#       Pkg-config support for helper
-#
-#       Revision 1.22.2.22.4.1.2.3  2009/12/23 12:54:48  fcapanni
-#       revert to previous revision
-#
-#       Revision 1.22.2.22.4.1.2.2  2009/11/04 09:33:31  monforte
-#       Fix for bug #45883: Optimization of resubmission
-#
-#       Revision 1.22.2.22.4.1.2.1  2009/06/12 09:00:19  fcapanni
-#       removed AC_GLITE_WMS_OPTIONAL with unused macros AC_GLITE_JP AC_GLITE_GPBOX
-#
-#       Revision 1.22.2.22.4.1  2009/03/11 15:48:42  monforte
-#       *** empty log message ***
-#
-#       Revision 1.22.2.22  2007/12/20 16:42:42  amarasch
-#       not all needed files were included in tag 3.1.19
-#
-#       Revision 1.22.2.21  2007/12/04 07:58:36  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.20  2007/11/06 11:28:48  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.19  2007/10/11 16:50:52  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.18  2007/06/15 11:34:46  rlops
-#       increased version
-#
-#       Revision 1.22.2.17  2007/04/18 13:06:30  rlops
-#       increased version
-#
-#       Revision 1.22.2.16  2007/04/12 10:51:33  rlops
-#       increased version
-#
-#       Revision 1.22.2.15  2007/03/30 13:11:03  rlops
-#       increased version
-#
-#       Revision 1.22.2.14  2007/03/22 15:53:56  rlops
-#       increased version
-#
-#       Revision 1.22.2.13  2007/03/19 15:50:51  rlops
-#       increased versions
-#
-#       Revision 1.22.2.12  2007/03/14 15:54:07  rlops
-#       increased verions
-#
-#       Revision 1.22.2.11  2007/03/12 10:10:17  rlops
-#       increased version
-#
-#       Revision 1.22.2.10  2007/03/01 11:43:10  rlops
-#       increased versions
-#
-#       Revision 1.22.2.9  2007/02/21 15:55:18  rlops
-#       increased version
-#
-#       Revision 1.22.2.8  2007/02/05 15:03:40  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.7  2006/11/21 16:35:56  eronchie
-#       Increased version
-#
-#       Revision 1.22.2.6  2006/09/22 07:59:41  eronchie
-#       increased version
-#
-#       Revision 1.22.2.5  2006/06/26 11:22:01  monforte
-#       Fix for bug #17601
-#
-#       Revision 1.22.2.4  2006/04/19 10:58:54  mcecchi
-#       increased version number
-#
-#       Revision 1.22.2.3  2006/04/10 14:22:13  monforte
-#       Fix for bug #16141
-#
-#       Revision 1.22.2.2  2006/03/21 16:12:34  eronchie
-#       Added optional macro
-#
-#       Revision 1.22.2.1  2006/03/21 14:06:51  mcecchi
-#       return stack in load_chain restored (unknowingly changed before)
-#
-#       Revision 1.22  2006/03/20 22:08:54  eronchie
-#       Increased version
-#
-#       Revision 1.21  2006/03/17 07:51:00  eronchie
-#       Updated
-#       Applied changed due to the new locations of jdl and classad_utils
-#
-#       Revision 1.20  2006/02/09 14:15:49  mcecchi
-#       URL moved
-#
-#       Revision 1.19  2006/01/24 12:16:03  mcecchi
-#       jobwrapper unification
-#
-#       Revision 1.18  2005/10/15 11:57:04  eronchie
-#       Increased version
-#
-#       Revision 1.17  2005/10/14 09:12:08  eronchie
-#       Added security and gbox macros
-#
-#       Revision 1.16  2005/10/07 15:45:20  eronchie
-#       Added templates handling
-#
-#       Revision 1.15  2005/09/22 11:42:50  eronchie
-#       Started merging with rc1.4
-#
-#       Revision 1.14  2005/06/13 08:18:08  monforte
-#       Merge RC1 -> HEAD
-#
-#       Revision 1.12.2.9  2005/06/08 15:01:04  eronchie
-#       Added (
-#       Increased version
-#
-#       Revision 1.12.2.8  2005/04/17 18:33:29  eronchie
-#       Removed temporarely test/Makefile
-#
-#       Revision 1.12.2.7  2005/04/15 16:18:27  vmedici
-#       unit test
-#
-#       Revision 1.12.2.6  2005/04/06 08:38:18  fprelz
-#       Increased revision number, as already done by 'dimeglio' on
-#       org.glite.wms.helper/project/version.properties
-#
-#       Revision 1.12.2.5  2005/03/14 10:45:23  eronchie
-#       Increased version
-#
-#       Revision 1.12.2.4  2005/02/18 14:35:41  eronchie
-#       Updated
-#       Increased version for the following reason:
-#
-#       "Modified JobAdapter to allow submission of Condor 'vanilla' jobs
-#       via Condor-C"
-#
-#       Revision 1.12.2.3  2005/02/08 15:17:26  fprelz
-#       Increased minor version, as the broker helper links in the matchmaking
-#       library statically, and the latter received a bug fix.
-#
-#       Revision 1.12.2.2  2005/01/17 16:54:38  eronchie
-#       Updated optimization
-#
-#       Revision 1.12.2.1  2005/01/13 17:01:41  eronchie
-#       Added patch related to bug 3931
-#
-#       Revision 1.12  2004/12/10 07:47:50  eronchie
-#       Increased version
-#
-#       Revision 1.11  2004/11/26 08:03:03  eronchie
-#       Increased version
-#
-#       Revision 1.10  2004/10/13 21:43:24  eronchie
-#       Added libraries
-#
-#       Revision 1.9  2004/09/22 01:01:27  dimeglio
-#       Fixed missing parenthesis in AC_INIT
-#
-#       Revision 1.8  2004/09/21 19:24:45  glbuild
-#       modified module.version
-#
-#       Revision 1.7  2004/07/28 10:51:21  eronchie
-#       Added m4files.list property
-#
-#       Revision 1.6  2004/07/27 11:34:57  eronchie
-#       Start using AC_GLITE_WMSUTILS
-#
-#       Revision 1.5  2004/07/23 14:13:18  eronchie
-#       jobid was moved under wmsutils subsystem
-#
-#       Revision 1.4  2004/07/06 13:55:36  monforte
-#       Initial Helpers porting to new build system
-#       WARNING: work in progress...
-#
-#       Revision 1.3  2004/07/05 16:06:00  eronchie
-#       Start handling helper
-#       WARNING: work in progress
-#
-#       Revision 1.2  2004/07/05 14:55:56  eronchie
-#       Start handling helper
-#       WARNING: work in progress
-#
-#       Revision 1.1  2004/07/02 13:11:39  monforte
-#       Initial Helper porting to new build system
-#       WARNING: work in progress
-#
-#       Revision 1.2  2004/06/30 08:35:15  monforte
-#       Initial MatchMaking porting to new build system
-#
-#       Revision 1.1  2004/06/26 15:25:03  eronchie
-#       Start handling matchmaking
-#       WARNING: work in progress
-#
-#
-#
-                                                                                                                                                             
-# Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS Helper], [3.3.1])
@@ -272,85 +60,40 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
-have_boost=no
-have_classads=no
-have_globus=no
-have_cppunit=no
-
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_MSG_RESULT(["BOOST found $have_boost"])
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-AC_CPPUNIT(1.10.2,have_cppunit=yes, have_cppunit=no)
-AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
-
-if test "$have_globus" = "no"; then
-  AC_MSG_RESULT(["Please verify GLOBUS package"])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_RESULT(["Please verify BOOST package"])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_RESULT(["Please verify CLASSADS package"])
-fi
-
-if test "$have_cppunit" = "no"; then
-  AC_MSG_RESULT(["Please verify CPPUNIT package"])
-fi
-
-if test "$have_globus" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_cppunit" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-have_glite_wmsutils=no
-have_glite_wms_common=no
-have_glite_wms_jdl=no
-have_glite_wms_broker=no
-have_glite_wms_brokerinfo=no
-have_glite_wms_matchmaking=no
-have_glite_wms_ism=no
-
 GLITE_CHECK_LIBDIR
 AC_OPTIMIZE
 
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_GLITE_WMS_BROKER([], have_glite_wms_broker=yes, have_glite_wms_broker=no)
-AC_GLITE_WMS_BROKERINFO([], have_glite_wms_brokerinfo=yes, have_glite_wms_brokerinfo=no)
-AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
-AC_GLITE_WMS_MATCHMAKING([], have_glite_wms_matchmaking=yes, have_glite_wms_matchmaking=no)
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
-AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
-AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
-AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
-AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
-AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
+AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
+
+PKG_CHECK_MODULES(CPPUNIT, cppunit, , AC_MSG_ERROR(["CPPUNIT not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))
+PKG_CHECK_MODULES(GLITE_WMSUTILS_CLASSADS, classad-utils, , AC_MSG_ERROR(["WMSUTILS_CLASSADS not found"]))
+
+PKG_CHECK_MODULES(GLITE_JDL, jdl-api-cpp, , AC_MSG_ERROR(["JDL not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_CONF, wms-common-conf, , AC_MSG_ERROR(["WMS_COMMON_CONF not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LDIF2CLASSADS, wms-common-ldif2classads, , AC_MSG_ERROR(["WMS_COMMON_LDIF2CLASSADS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LOGGER, wms-common-logger, , AC_MSG_ERROR(["WMS_COMMON_LOGGER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR(["WMS_COMMON_PROCESS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
+
+
+PKG_CHECK_MODULES(GLITE_WMS_BROKERINFO, wms-brokerinfo, , AC_MSG_ERROR(["BROKERINFO not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_BROKER, wms-broker, , AC_MSG_ERROR(["BROKER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_ISM, wms-ism, , AC_MSG_ERROR(["ISM not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_ISM_II_PURCHASER, wms-ism-ii-purchaser, , AC_MSG_ERROR(["ISM_II_PURCHASER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_MATCHMAKING, wms-matchmaking, ,AC_MSG_ERROR(["MATCHMAKING not found"]))
+
 
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([Makefile])
