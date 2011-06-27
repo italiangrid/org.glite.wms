@@ -11,14 +11,6 @@
 ## See the License for the specific language governing permissions and 
 ## limitations under the License.
 
-#       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
-#       Version info: 
-#       Release: $Name$
-#
-#       $Id$
-
-# Process this file with autoconf to produce a configure script.
-
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS ISM], [3.3.1])
 AC_CONFIG_AUX_DIR([./project])
@@ -70,66 +62,35 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
-have_boost=no
-have_classads=no
-have_cppunit=no
-
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_MSG_RESULT(["BOOST found $have_boost"])
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-
-AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
-AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
-
-if test "$have_boost" = "no"; then
-  AC_MSG_RESULT(["Please verify BOOST package"])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_RESULT(["Please verify CLASSADS package"])
-fi
-
-if test "$have_cppunit" = "no"; then
-  AC_MSG_RESULT(["Please verify CPPUNIT package"])
-fi
-
-if test "$have_boost" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_classads" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_cppunit" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-have_glite_wms_common=no
-have_glite_jdl=no
-have_glite_wms_ism=no
-have_glite_wmsutils=no
-have_glite_ce=no
-
 GLITE_CHECK_LIBDIR
 
 GLITE_CHECK_LDAP
 
 AC_OPTIMIZE
 
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
+AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+PKG_CHECK_MODULES(CPPUNIT, cppunit, , AC_MSG_ERROR(["CPPUNIT not found"]))
 
-# Configuration items
-AC_PREFIX_DEFAULT([/opt/glite])
+PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))
+PKG_CHECK_MODULES(GLITE_WMSUTILS_CLASSADS, classad-utils, , AC_MSG_ERROR(["WMSUTILS_CLASSADS not found"]))
+
+PKG_CHECK_MODULES(GLITE_JDL, jdl-api-cpp, , AC_MSG_ERROR(["JDL not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_CONF, wms-common-conf, , AC_MSG_ERROR(["WMS_COMMON_CONF not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LDIF2CLASSADS, wms-common-ldif2classads, , AC_MSG_ERROR(["WMS_COMMON_LDIF2CLASSADS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LOGGER, wms-common-logger, , AC_MSG_ERROR(["WMS_COMMON_LOGGER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR(["WMS_COMMON_PROCESS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_ISM, wms-ism, , AC_MSG_ERROR(["ISM not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_ISM_II_PURCHASER, wms-ism-ii-purchaser, , AC_MSG_ERROR(["ISM_II_PURCHASER not found"]))
+
+AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([example/Makefile])
