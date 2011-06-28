@@ -72,8 +72,8 @@ rm -rf %{buildroot}
 /usr/share/glite-wms/jobwrapper.template.sh
 %dir /usr/share/doc/glite-wms-helper-%{version}/
 /usr/share/doc/glite-wms-helper-%{version}/LICENSE
-/usr/lib64/libglite_wms_helper_*.so.0.0.0
-/usr/lib64/libglite_wms_helper_*.so.0
+/usr/lib64/libglite_wms_helper*.so.0.0.0
+/usr/lib64/libglite_wms_helper*.so.0
 
 %changelog
 
@@ -97,5 +97,5 @@ Development files for the WMS helper module
 /usr/lib64/pkgconfig/wms-helper-jobadapter.pc
 /usr/lib64/pkgconfig/wms-helper-broker-ism.pc
 /usr/lib64/pkgconfig/wms-helper.pc
-/usr/lib64/libglite_wms_helper_*.so
+/usr/lib64/libglite_wms_helper*.so
 
