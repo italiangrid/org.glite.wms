@@ -30,7 +30,7 @@ Requires: gridsite-shared
 #Requires: zlib
 #Requires: glite-lb-client
 #Requires: glite-wms-utils-classad
-#Requires: glite-wms-configuration
+Requires: glite-wms-configuration
 #Requires: glite-wms-purger
 Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
@@ -67,7 +67,7 @@ else
 fi
 rm %{buildroot}/usr/lib64/*.la
 chrpath --delete %{buildroot}/usr/lib64/*.so.0.0.0
-
+chrpath --delete %{buildroot}/usr/bin/glite_wms_wmproxy_server
 
 %clean
 rm -rf %{buildroot}
@@ -97,7 +97,6 @@ fi
 %config(noreplace) /etc/glite-wms/wmproxy.gacl.template
 %config(noreplace) /etc/glite-wms/wmproxy_logrotate.conf.template
 %config(noreplace) /etc/lcmaps/lcmaps.db.template
-%dir /etc/rc.d/init.d/
 /etc/rc.d/init.d/glite-wms-wmproxy
 /usr/sbin/glite_wms_wmproxy_load_monitor
 /usr/bin/glite_wms_wmproxy_server
@@ -110,7 +109,6 @@ fi
 /usr/lib64/libglite_wms_wmproxy_*.so.0.0.0
 /usr/lib64/libglite_wms_wmproxy_*.so.0
 /usr/lib64/libglite_wms_wmproxy_*.so
-%dir /usr/libexec/
 /usr/libexec/glite_wms_wmproxy_dirmanager
 
 %changelog
