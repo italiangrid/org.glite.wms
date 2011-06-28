@@ -72,7 +72,7 @@ Group: System Environment/Libraries
 %description devel
 Development files for the WMS information superkmarket
 
-%files
+%files devel
 %defattr(-,root,root)
 %dir /usr/include/glite/
 %dir /usr/include/glite/wms/
