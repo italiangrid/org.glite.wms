@@ -13,7 +13,7 @@ BuildArch: x86_64
 #Requires: glite-px-proxyrenewal
 #Requires: glite-ce-cream-client-api-c
 #Requires: gsoap
-#Requires: glite-wms-configuration
+Requires: glite-wms-configuration
 #Requires: glite-wms-purger
 #Requires: boost
 #Requires: glite-ce-monitor-client-api-c
