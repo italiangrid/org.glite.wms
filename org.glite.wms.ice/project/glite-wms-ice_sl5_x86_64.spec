@@ -52,6 +52,7 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
+rm -f %{buildroot}/usr/lib64/*.la
 chrpath --delete %{buildroot}/usr/lib64/libglite_wms_*.so.0.0.0
 
 
