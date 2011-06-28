@@ -45,6 +45,7 @@ sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc > %
 mv %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc
 sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc > %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc.new
 mv %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc
+rm -f /usr/lib64/libglite_wms_ism*.la
 chrpath --delete %{buildroot}/usr/lib64/libglite_wms_*.so.0.0.0
  
 
