@@ -125,6 +125,7 @@ Condor-G connector for the WMS (Development files)
 /usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc
 /usr/lib64/pkgconfig/wms-jss-logmonitor.pc
 /usr/lib64/pkgconfig/wms-jss-common.pc
+/usr/lib64/libglite_wms_jss_*.so
 %dir /usr/include/glite/
 %dir /usr/include/glite/wms/
 %dir /usr/include/glite/wms/jobsubmission/
