@@ -13,7 +13,7 @@ BuildArch: x86_64
 #Requires: classads
 #Requires: glite-jdl-api-cpp
 #Requires: glite-lb-client
-#Requires: glite-wms-configuration
+Requires: glite-wms-configuration
 #Requires: condor
 #Requires: glite-wms-purger
 #Requires: boost
