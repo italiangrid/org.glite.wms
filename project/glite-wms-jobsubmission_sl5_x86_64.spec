@@ -4,7 +4,7 @@ Version:
 Release:
 License: Apache Software License
 Vendor: EMI
-Packager: CREAM group <cream-support@lists.infn.it>
+Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: Applications/Internet
 BuildArch: x86_64
