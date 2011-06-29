@@ -16,10 +16,18 @@ libglite_wms_helper_broker_ism_la_SOURCES = \
         exceptions.cpp
 
 libglite_wms_helper_broker_ism_la_LIBADD = \
+	$(GLITE_JDL_LIBS) \
 	$(GLITE_WMS_BROKER_LIBS) \
-	$(GLITE_WMS_MATCHMAKING_LIBS) \
 	$(GLITE_WMS_BROKERINFO_LIBS) \
-	$(GLITE_WMS_ISM_LIBS)
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_WMS_MATCHMAKING_LIBS) \
+	$(GLITE_WMS_ISM_LIBS) \
+        $(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_WMS_CLASSAD_PLUGIN_LIBS) \
+        $(BOOST_LIBS) \
+        $(CLASSAD_LIBS)
+
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
