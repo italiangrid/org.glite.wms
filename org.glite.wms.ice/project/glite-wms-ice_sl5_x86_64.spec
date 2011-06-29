@@ -32,7 +32,7 @@ Integrated CREAM Environment
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -52,9 +52,17 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-rm -f %{buildroot}/usr/lib64/*.la
-chrpath --delete %{buildroot}/usr/lib64/libglite_wms_*.so.0.0.0
-
+rm -f %{buildroot}%{_libdir}/*.la
+chrpath --delete %{buildroot}%{_libdir}/libglite_wms_*.so.0.0.0
+chrpath --delete %{buildroot}/usr/bin/queryStats
+chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-safe
+chrpath --delete %{buildroot}/usr/bin/putFL
+chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-db-rm
+chrpath --delete %{buildroot}/usr/bin/putFL_reschedule
+chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-rm
+chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-proxy-renew
+chrpath --delete %{buildroot}/usr/bin/queryDb
+chrpath --delete %{buildroot}/usr/bin/glite-wms-ice
 
 %clean
 rm -rf %{buildroot}
@@ -73,7 +81,6 @@ fi
 
 %files
 %defattr(-,root,root)
-%dir /etc/rc.d/init.d/
 /etc/rc.d/init.d/glite-wms-ice
 /usr/bin/queryDb
 /usr/bin/glite-wms-ice-proxy-renew
@@ -87,10 +94,13 @@ fi
 /usr/bin/glite-wms-ice
 %dir /usr/share/doc/glite-wms-ice-%{version}/
 %doc /usr/share/doc/glite-wms-ice-%{version}/LICENSE
-/usr/lib64/libglite_wms_*.so.0.0.0
-/usr/lib64/libglite_wms_*.so.0
-/usr/lib64/libglite_wms_*.so
+%{_libdir}/libglite_wms_*.so.0.0.0
+%{_libdir}/libglite_wms_*.so.0
+%{_libdir}/libglite_wms_*.so
 
 %changelog
 
+%post debuginfo -p /sbin/ldconfig
+
+%postun debuginfo -p /sbin/ldconfig
 
