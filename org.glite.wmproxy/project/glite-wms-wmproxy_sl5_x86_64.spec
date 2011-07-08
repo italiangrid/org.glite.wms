@@ -47,7 +47,7 @@ Workload Management Proxy service
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -65,8 +65,8 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-rm %{buildroot}/usr/lib64/*.la
-chrpath --delete %{buildroot}/usr/lib64/*.so.0.0.0
+rm %{buildroot}%{_libdir}/*.la
+chrpath --delete %{buildroot}%{_libdir}/*.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/glite_wms_wmproxy_server
 
 %clean
@@ -106,10 +106,14 @@ fi
 /usr/bin/glite-wms-wmproxy-gridmapfile2gacl
 %dir /usr/share/doc/glite-wms-wmproxy-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-%{version}/LICENSE
-/usr/lib64/libglite_wms_wmproxy_*.so.0.0.0
-/usr/lib64/libglite_wms_wmproxy_*.so.0
-/usr/lib64/libglite_wms_wmproxy_*.so
+%{_libdir}/libglite_wms_wmproxy_*.so.0.0.0
+%{_libdir}/libglite_wms_wmproxy_*.so.0
+%{_libdir}/libglite_wms_wmproxy_*.so
 /usr/libexec/glite_wms_wmproxy_dirmanager
 
 %changelog
+
+%post debuginfo -p /sbin/ldconfig
+
+%postun debuginfo -p /sbin/ldconfig
  
