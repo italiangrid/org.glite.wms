@@ -23,7 +23,7 @@ Information Supermarket for the Workload Management System
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -41,12 +41,12 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc > %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-ism.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc > %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc
-rm -f %{buildroot}/usr/lib64/libglite_wms_ism*.la
-chrpath --delete %{buildroot}/usr/lib64/libglite_wms_*.so.0.0.0
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc > %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc > %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc
+rm -f %{buildroot}%{_libdir}/libglite_wms_ism*.la
+chrpath --delete %{buildroot}%{_libdir}/libglite_wms_*.so.0.0.0
  
 
 %clean
@@ -61,14 +61,15 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 %dir /usr/share/doc/glite-wms-ism-%{version}/
 %doc /usr/share/doc/glite-wms-ism-%{version}/LICENSE
-/usr/lib64/libglite_wms_ism*.so.0.0.0
-/usr/lib64/libglite_wms_ism*.so.0
+%{_libdir}/libglite_wms_ism*.so.0.0.0
+%{_libdir}/libglite_wms_ism*.so.0
 
 %changelog
 
 %package devel
 Summary: Development files for the WMS information superkmarket
 Group: System Environment/Libraries
+Requires: %{name}%{?_isa} = %{version}-%{release}
 
 %description devel
 Development files for the WMS information superkmarket
@@ -81,7 +82,12 @@ Development files for the WMS information superkmarket
 %dir /usr/include/glite/wms/ism/purchaser/
 /usr/include/glite/wms/ism/*.h
 /usr/include/glite/wms/ism/purchaser/*.h
-/usr/lib64/pkgconfig/wms-ism-ii-purchaser.pc
-/usr/lib64/pkgconfig/wms-ism.pc
-/usr/lib64/libglite_wms_*.so
+%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc
+%{_libdir}/pkgconfig/wms-ism.pc
+%{_libdir}/libglite_wms_*.so
+
+%post debuginfo -p /sbin/ldconfig
+
+%postun debuginfo -p /sbin/ldconfig
+
 
