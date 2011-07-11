@@ -29,6 +29,11 @@ END LICENSE */
 #include <iostream>
 #include <cstring>
 #include <cerrno>
+#include <signal.h>
+
+#include <globus_gsi_credential.h>
+#include <globus_gsi_proxy.h>
+#include <globus_gsi_cert_utils_constants.h>
 
 //extern int errno;
 
@@ -37,6 +42,25 @@ END LICENSE */
 SOAP_NMAC struct Namespace namespaces[] = {};
 
 using namespace std;
+
+static volatile int die = 0, child_died = 0;
+
+static void
+catchsig(int sig)
+{
+   switch (sig) {
+      case SIGINT:
+      case SIGTERM:
+      case SIGQUIT:
+         die = sig;
+         break;
+      case SIGCHLD:
+         child_died = 1;
+         break;
+      default:
+         break;
+   }
+}
 
 static struct option const long_options[] = {
    { "server",   required_argument, 0, 's' },
@@ -101,6 +125,30 @@ main(int argc, char *argv[])
    }
 
    ctx->log_dst = GLITE_RENEWAL_LOG_NONE;
+
+   globus_module_activate(GLOBUS_GSI_CERT_UTILS_MODULE);
+   globus_module_activate(GLOBUS_GSI_PROXY_MODULE);
+
+   struct sigaction     sa;
+   
+   sigset_t mask;
+
+   memset(&sa,0,sizeof(sa));
+   sa.sa_handler = catchsig;
+   sigaction(SIGINT,&sa,NULL);
+   sigaction(SIGQUIT,&sa,NULL);
+   sigaction(SIGTERM,&sa,NULL);
+   sigaction(SIGCHLD,&sa,NULL);
+   sigaction(SIGPIPE,&sa,NULL);
+
+   sigemptyset(&mask);
+   sigaddset(&mask, SIGINT);
+   sigaddset(&mask, SIGQUIT);
+   sigaddset(&mask, SIGTERM);
+   sigaddset(&mask, SIGCHLD);
+   sigaddset(&mask, SIGPIPE);
+   sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
 
    ret = glite_renewal_core_renew(ctx, server, 0, proxy, &new_proxy);
    if (ret) {

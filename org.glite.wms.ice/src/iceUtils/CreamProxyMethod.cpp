@@ -62,10 +62,10 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 	  
 	    if (IceConfManager::instance()->getConfiguration()->ice()->fail_job_blacklisted_ce()) {
 	      // FAIL THE JOB!!
-	      throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
+	      throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE is configured to abort the job");
 	    }
 	  
-            throw cream_ex::ConnectionTimeoutException( "The endpoint is blacklisted" ); // FIXME: throw different exception?
+            throw cream_ex::ConnectionTimeoutException( "The endpoint [" + m_service + "] is blacklisted" ); // FIXME: throw different exception?
           }
 	}
         try {
