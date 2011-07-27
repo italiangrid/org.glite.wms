@@ -612,7 +612,6 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   api_util::scoped_timer procTimeEvents( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] Entire method" );
   static const char* method_name = "iceCommandEventQuery::processSingleEvent() - ";
 
-
   string jobdesc( theJob.describe() );
 
   cream_api::job_statuses::job_status status = (cream_api::job_statuses::job_status)atoi(event->getPropertyValue("type").c_str());
@@ -694,7 +693,6 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   
   IceLBEvent* ev = iceLBEventFactory::mkEvent( theJob, true );
   if ( ev ) {
-    //api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
     
     bool log_with_cancel_seqcode = (theJob.status( ) == glite::ce::cream_client_api::job_statuses::CANCELLED) && (!theJob.cancel_sequence_code( ).empty( ));
 	

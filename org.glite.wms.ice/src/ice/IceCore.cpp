@@ -603,7 +603,16 @@ void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) thro
 		    << "because it's Input Sandbox proxy file is expired: "
 		    << V.getErrorMessage()
 		    );
-     return;
+    IceLBEvent* ev = new job_aborted_event( *the_job );
+    if ( ev ) {
+      
+      bool log_with_cancel_seqcode = (the_job->status( ) == glite::ce::cream_client_api::job_statuses::CANCELLED) && (!the_job->cancel_sequence_code( ).empty( ));
+      
+      m_lb_logger->logEvent( ev, log_with_cancel_seqcode, true );
+      
+    }
+    
+    return;
   }
   
     util::CreamJob _the_job(*the_job);
