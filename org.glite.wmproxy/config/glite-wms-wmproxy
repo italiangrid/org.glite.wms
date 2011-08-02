@@ -63,17 +63,23 @@ case "$1" in
          RETVAL=1
         fi
 	;;
-  start|stop|restart)
+  start)
+        if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1 ;then
+		echo "WMProxy already running"
+        else
+		$httpdpath -k start -f $config
+	fi
+	;;
+  stop|restart)
 	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
-	sleep 10 
+	sleep 1
 	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
-	#$apachectl -k $@ -f $config
 	$httpdpath -k $@ -f $config
 	RETVAL=$?
 	;;
   graceful)
-  $httpdpath -k $@ -f $config
-  RETVAL=$?
+	$httpdpath -k $@ -f $config
+	RETVAL=$?
   ;;
   configtest)
 	$httpdpath -t -f $config
@@ -85,3 +91,4 @@ case "$1" in
 esac
 
 exit $RETVAL
+
