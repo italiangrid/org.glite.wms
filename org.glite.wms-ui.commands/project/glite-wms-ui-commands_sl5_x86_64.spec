@@ -7,21 +7,14 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch: x86_64
-#Requires: glite-wms-wmproxy-api-cpp
-#Requires: glite-jobid-api-cpp
-#Requires: libtar
-#Requires: classads
+BuildArch:
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-service-discovery-api-c-devel,} libtool
+BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
+BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp, glite-jdl-api-cpp-devel,} boost-devel
+BuildRequires: %{!?extbuilddir: glite-lb-client, glite-wms-ui-api-python,} libtar-devel, zlib-devel
+BuildRequires: docbook-style-xsl, c-ares-devel
 Requires: glite-wms-ui-api-python
-#Requires: glite-service-discovery-api-c
-#Requires: zlib
-#Requires: glite-lb-client
-#Requires: globus-gass-copy-progs
-#Requires: gridsite-shared
-#Requires: glite-jdl-api-cpp
-#Requires: boost
-#Requires: glite-wms-utils-exception
-BuildRequires: chrpath
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz

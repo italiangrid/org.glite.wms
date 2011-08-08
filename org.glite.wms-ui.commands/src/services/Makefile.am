@@ -64,7 +64,6 @@ AM_CPPFLAGS = \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
         -I$(top_srcdir)/src \
         -I$(top_srcdir)/build/src \
-	$(GLOBUS_NOTHR_CFLAGS) \
 	$(GRIDSITE_GLOBUS_CFLAGS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_CFLAGS) \
 	$(BOOST_CFLAGS) \
