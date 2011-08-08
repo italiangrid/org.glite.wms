@@ -7,10 +7,9 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch: noarch
-Requires: python-fpconst
-Requires: PyXML
-Requires: SOAPpy
+BuildArch:
+BuildRequires: python-fpconst, PyXML, SOAPpy, python-devel
+Requires: python-fpconst, PyXML, SOAPpy
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
