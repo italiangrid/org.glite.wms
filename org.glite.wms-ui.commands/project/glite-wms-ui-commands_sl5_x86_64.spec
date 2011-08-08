@@ -14,10 +14,18 @@ BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp, glite-jdl-api-cpp-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-lb-client, glite-wms-ui-api-python,} libtar-devel, zlib-devel
 BuildRequires: docbook-style-xsl, c-ares-devel
+BuildRequires: globus-common-devel, globus-callout-devel, globus-openssl-devel
+BuildRequires: globus-openssl-module-devel, globus-gsi-callback-devel, globus-gsi-cert-utils-devel
+BuildRequires: globus-gsi-credential-devel, globus-gsi-openssl-error-devel, globus-gsi-proxy-core-devel
+BuildRequires: globus-gsi-proxy-ssl-devel, globus-gsi-sysconfig-devel,globus-gssapi-error-devel
+BuildRequires: globus-gssapi-gsi-devel, globus-gss-assist-devel
+BuildRequires: globus-ftp-client-devel, globus-ftp-control-devel
 Requires: glite-wms-ui-api-python
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Command line user interface for the WMS
