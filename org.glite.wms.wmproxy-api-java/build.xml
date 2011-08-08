@@ -24,7 +24,7 @@ limitations under the License.
   <available file=".configuration.properties" property="isConfigured"/>
 
   <property name="pkg-name" value="glite-wms-wmproxy-api-java"/>
-  <property name="docs-installdir" value="${dist.location}/share/doc/${pkg-name}"/>
+  <property name="docs-installdir" value="${dist.location}/usr/share/doc/${pkg-name}"/>
   <property name="pkg-jarname" value="${pkg-name}.jar"/>
 
   <property name="axis.location" value="/usr/local/axis1.4"/>
@@ -33,7 +33,7 @@ limitations under the License.
 
   <path id="compile.classpath">
     <fileset dir="${axis.location}/lib" includes="**/*.jar" />
-    <fileset dir="${util-java.location}/share/java">
+    <fileset dir="${util-java.location}/usr/share/java">
         <include name="trustmanager.jar"/>
         <include name="trustmanager-axis.jar"/>
         <include name="delegation-java.jar"/>
@@ -49,7 +49,7 @@ limitations under the License.
   <target name="check" depends="init">
     <fail message="The module is not configured" unless="isConfigured"/>
     <uptodate property="alreadyCompiled" targetfile="lib/${pkg-jarname}">
-      <srcfiles dir= "${org.glite.wms.wsdl.location}/share/wsdl"
+      <srcfiles dir= "${org.glite.wms.wsdl.location}/usr/share/wsdl"
                 includes="**/WMProxy.wsdl"/>
       <srcfiles dir= "src"
                 includes="**/*.java"/>
@@ -65,7 +65,7 @@ limitations under the License.
       </classpath>
     </taskdef>
 
-    <wsdl2java url="${org.glite.wms.wsdl.location}/share/wsdl/wms/WMProxy.wsdl"
+    <wsdl2java url="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
                output="src/autogen"
                deployscope="application"
                serverSide="no"
@@ -126,14 +126,15 @@ limitations under the License.
 
 
   <target name="install" depends="compile, doc">
-    <mkdir dir="${dist.location}/share/java"/>
-    <copy toDir="${dist.location}/share/java">
+    <mkdir dir="${dist.location}/usr/share/java"/>
+    <copy toDir="${dist.location}/usr/share/java">
       <fileset dir="lib">
         <include name="*.jar" /> 
       </fileset>
     </copy>
 
-    <copy file="LICENSE" todir="${docs-installdir}"/>
+    <mkdir dir="${dist.location}/usr/share/doc/${pkg-name}-${module.version}"/>
+    <copy file="LICENSE" todir="${dist.location}/usr/share/doc/${pkg-name}-${module.version}"/>
 
   </target>
 
