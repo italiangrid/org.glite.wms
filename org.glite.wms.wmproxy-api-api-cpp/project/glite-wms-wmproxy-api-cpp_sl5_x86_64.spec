@@ -7,14 +7,15 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Packager: WMS group <wms-support@lists.infn.it>
 Group: System Environment/Libraries
-BuildArch: x86_64
-#Requires: boost
-#Requires: glite-wms-utils-exception
-#Requires: gsoap
-BuildRequires: chrpath
+BuildArch:
+BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool, doxygen
+BuildRequires: %{!?extbuilddir: glite-wms-utils-exception-devel,} boost-devel
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} gsoap-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 C/C++ libraries for the WM Proxy service
@@ -29,6 +30,7 @@ C/C++ libraries for the WM Proxy service
 if test "x%{extbuilddir}" == "x--" ; then
   ./configure --prefix=%{buildroot}/usr --with-gsoap-version=2.7.13 --disable-static PVER=%{version}
   make
+  make doxygen-doc
 fi
 
 %install
@@ -68,6 +70,8 @@ rm -rf %{buildroot}
 %package devel
 Summary: C/C++ libraries for the WM Proxy service (development files)
 Group: System Environment/Libraries
+Requires: gridsite-devel, glite-wms-utils-exception-devel
+Requires: boost-devel, gsoap-devel
 
 %description devel
 C/C++ libraries for the WM Proxy service (development files)
