@@ -77,7 +77,7 @@ queryDb_LDADD = \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
 queryStats_LDADD = \
@@ -113,7 +113,7 @@ queryStats_LDADD = \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
 putFL_LDADD =  \
@@ -183,7 +183,7 @@ putFL_reschedule_LDADD = \
 			$(BOOST_PO_LIBS) \
 			-lboost_date_time \
 			-lboost_serialization \
-			$(VOMS_CPP_THR_LIBS) \
+			$(VOMS_LIBS) \
 			iceDb/sqlite/libsqlite3.a
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
@@ -238,7 +238,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_rm_LDADD = \
@@ -274,7 +274,7 @@ glite_wms_ice_rm_LDADD = \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
 glite_wms_ice_db_rm_LDADD = \
@@ -310,7 +310,7 @@ glite_wms_ice_db_rm_LDADD = \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_LDADD = \
@@ -346,13 +346,13 @@ glite_wms_ice_LDADD = \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(VOMS_CPP_THR_LIBS) \
+		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_proxy_renew_LDADD = \
 		$(GLOBUS_NOTHR_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
-		$(MYPROXY_NOTHR_LIBS) \
+		$(MYPROXY_LIBS) \
 		$(RENEWAL_NOTHR_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
@@ -360,13 +360,15 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GLITE_CEMONITOR_CFLAGS) \
 		$(VOMS_CFLAGS) \
 		$(GSOAPXX_CFLAGS) \
-		$(GLOBUS_THR_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
-		$(GLOBUS_THR_CFLAGS) \
-		$(MYPROXY_NOTHR_CFLAGS) \
+		$(GLOBUS_GSI_CREDENTIAL_CFLAGS) \
+		$(GLOBUS_GSI_PROXY_SSL_CFLAGS) \
+		$(GLOBUS_GSI_PROXY_CORE_CFLAGS) \
+		$(GLOBUS_GSI_CERT_UTILS_CFLAGS) \
+		$(MYPROXY_CFLAGS) \
 		-pipe \
 		-DICE_VERSIONID=\""`date`"\"
 

@@ -39,7 +39,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
-		$(GLOBUS_THR_CFLAGS) \
 		-DGLITE_WMS_ICE_ENABLE_STATS \
 		-pipe
 
