@@ -7,15 +7,15 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch: x86_64
-#Requires: glite-wms-common
-#Requires: boost
-#Requires: classads
-#Requires: glite-wms-utils-classad
-BuildRequires: chrpath
+BuildArch:
+BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-wms-utils-classad-devel,} libtool
+BuildRequires: boost-devel, classads-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Information Supermarket for the Workload Management System
@@ -70,6 +70,8 @@ rm -rf %{buildroot}
 Summary: Development files for the WMS information superkmarket
 Group: System Environment/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: glite-wms-utils-classad-devel, glite-wms-common-devel
+Requires: boost-devel, classads-devel
 
 %description devel
 Development files for the WMS information superkmarket
@@ -86,8 +88,5 @@ Development files for the WMS information superkmarket
 %{_libdir}/pkgconfig/wms-ism.pc
 %{_libdir}/libglite_wms_*.so
 
-%post debuginfo -p /sbin/ldconfig
-
-%postun debuginfo -p /sbin/ldconfig
 
 
