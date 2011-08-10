@@ -7,24 +7,23 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Packager: WMS group <wms-support@lists.infn.it>
 Group: Applications/Internet
-BuildArch: x86_64
-#Requires: glite-wms-common
-#Requires: classads
-#Requires: glite-px-proxyrenewal
-#Requires: glite-ce-cream-client-api-c
-#Requires: gsoap
+BuildArch:
 Requires: glite-wms-configuration
-#Requires: glite-wms-purger
-#Requires: boost
-#Requires: glite-ce-monitor-client-api-c
-#Requires: log4cpp
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
-BuildRequires: chrpath
+BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-ce-cream-client-devel,} libtool
+BuildRequires: %{!?extbuilddir: glite-ce-monitor-client-devel,} classads-devel
+BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
+BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal,} gsoap-devel
+BuildRequires: %{!?extbuilddir: gridsite-devel,} log4cpp-devel
+BuildRequires: myproxy-devel, c-ares-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Integrated CREAM Environment
@@ -47,8 +46,6 @@ mkdir -p %{buildroot}
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
   make install
-  mkdir -p %{buildroot}/%{_docdir}/%{name}
-  cp -R doc/html %{buildroot}/%{_docdir}/%{name}
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
@@ -99,8 +96,4 @@ fi
 %{_libdir}/libglite_wms_*.so
 
 %changelog
-
-%post debuginfo -p /sbin/ldconfig
-
-%postun debuginfo -p /sbin/ldconfig
 
