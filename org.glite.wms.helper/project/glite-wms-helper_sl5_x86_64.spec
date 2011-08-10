@@ -7,22 +7,16 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch: x86_64
-#Requires: glite-wms-broker
-#Requires: glite-wms-common
-#Requires: glite-jobid-api-c
-#Requires: glite-wms-brokerinfo
-#Requires: classads
-#Requires: glite-wms-classad_plugin
-#Requires: glite-jdl-api-cpp
-#Requires: glite-wms-matchmaking
-#Requires: glite-wms-utils-classad
-#Requires: boost
-#Requires: glite-wms-utils-exception
-BuildRequires: chrpath
+BuildArch:
+BuildRequires: %{!?extbuilddir: glite-wms-broker-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp,} libtool
+BuildRequires: %{!?extbuilddir: glite-wms-matchmaking-devel,} boost-devel
+BuildRequires: classads-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Helper module for the Workload Management System
@@ -82,6 +76,11 @@ rm -rf %{buildroot}
 %package devel
 Summary: Development files for the WMS helper module
 Group: System Environment/Libraries
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: glite-wms-broker-devel
+Requires: glite-jobid-api-cpp
+Requires: glite-wms-matchmaking-devel
+
 
 %description devel
 Development files for the WMS helper module
