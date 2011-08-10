@@ -7,39 +7,30 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: Applications/Internet
-BuildArch: x86_64
-#Requires: glite-jobid-api-cpp
-#Requires: fcgi
-#Requires: libxslt
+BuildArch:
 Requires: mod_fcgid
 Requires: httpd
-#Requires: glite-wms-common
 Requires: mod_ssl
-#Requires: glite-jdl-api-cpp
 Requires: gridsite-apache
-#Requires: boost
-#Requires: glite-service-discovery-api-c
-#Requires: argus-pep-api-c
-#Requires: glite-px-proxyrenewal
-#Requires: gsoap
-#Requires: voms
-#Requires: lcmaps-without-gsi
 Requires: gridsite-shared
-#Requires: libtar
-#Requires: classads
-#Requires: zlib
-#Requires: glite-lb-client
-#Requires: glite-wms-utils-classad
 Requires: glite-wms-configuration
-#Requires: glite-wms-purger
 Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
-BuildRequires: chrpath
+BuildRequires: %{!?extbuilddir: gridsite-devel, glite-jobid-api-cpp, voms-devel,} chrpath
+BuildRequires: %{!?extbuilddir: argus-pep-api-c-devel, glite-wms-purger-devel,} libtool
+BuildRequires: %{!?extbuilddir: glite-service-discovery-api-c-devel,} boost-devel
+BuildRequires: %{!?extbuilddir: lcmaps-without-gsi, lcmaps-interface,} classads-devel
+BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-lb-client,} fcgi-devel
+BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal,} libxslt-devel
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} libtar-devel
+BuildRequires: gsoap-devel, httpd-devel, zlib-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Workload Management Proxy service
@@ -52,7 +43,7 @@ Workload Management Proxy service
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr --sysconfdir=%{buildroot}/etc --with-gsoap-version=2.7.13 --disable-static PVER=%{version}
+  ./configure --srcdir=$PWD --prefix=%{buildroot}/usr --sysconfdir=%{buildroot}/etc --with-gsoap-version=2.7.13 --disable-static PVER=%{version}
   make
 fi
 
@@ -113,7 +104,4 @@ fi
 
 %changelog
 
-%post debuginfo -p /sbin/ldconfig
-
-%postun debuginfo -p /sbin/ldconfig
  
