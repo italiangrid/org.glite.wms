@@ -90,7 +90,7 @@ AC_GLITE_LB([], AC_MSG_RESULT(["GLITE_LB ok"]), AC_MSG_ERROR(["GLITE_LB not foun
 
 AC_PROXYRENEWAL([], AC_MSG_RESULT(["PROXY RENEWAL ok"]), AC_MSG_ERROR(["PROXY RENEWAL not found"]))
 
-AC_ARES
+PKG_CHECK_MODULES(ARES, libcares, , AC_MSG_ERROR(["ARES not found"]))
 
 # Configuration items
 AC_PREFIX_DEFAULT([/usr])

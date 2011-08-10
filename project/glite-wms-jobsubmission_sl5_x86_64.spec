@@ -7,23 +7,21 @@ Vendor: EMI
 Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: Applications/Internet
-BuildArch: x86_64
-#Requires: glite-wms-common
-#Requires: glite-jobid-api-c
-#Requires: classads
-#Requires: glite-jdl-api-cpp
-#Requires: glite-lb-client
+BuildArch:
 Requires: glite-wms-configuration
-#Requires: condor
-#Requires: glite-wms-purger
-#Requires: boost
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
-BuildRequires: chrpath
+BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp, glite-lb-client,} libtool
+BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel,} classads-devel
+BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
+BuildRequires: condor, globus-gram-protocol-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
+
+%global debug_package %{nil}
 
 %description
 Condor-G connector for the Workload Management System
@@ -114,6 +112,12 @@ Condor-G connector for the WMS (libraries)
 %package devel
 Summary: Condor-G connector for the WMS (Development files)
 Group: System Environment/Libraries
+Requires: %{name}-lib%{?_isa} = %{version}-%{release}
+Requires: glite-wms-common-devel
+Requires: glite-jobid-api-cpp, glite-lb-client
+Requires: glite-jdl-api-cpp-devel, classads-devel
+Requires: glite-wms-purger-devel, boost-devel
+Requires: condor, globus-gram-protocol-devel
 
 %description devel
 Condor-G connector for the WMS (Development files)
