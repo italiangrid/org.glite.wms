@@ -267,7 +267,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
   if(newT > oldT) {
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
-		   << "Setting user proxy to [ "
+		   << "Setting user proxy to ["
 		   << prx
 		   << "] copied to " << localProxy 
 		   << "] because the old one is less long-lived."

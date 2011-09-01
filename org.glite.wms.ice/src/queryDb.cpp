@@ -59,9 +59,6 @@ std::string status_to_numstr( const std::string& status ) {
 using namespace std;
 using namespace glite::wms::ice;
 
-//namespace iceUtil = glite::wms::ice::util;
-//namespace db = glite::wms::ice::db;
-
 void printhelp( void ) {
   cout << "USAGE: queryDb --conf|-c <WMS CONFIGURATION FILE> [options]" << endl;
   cout << endl << "options: " << endl;
@@ -104,10 +101,6 @@ int main( int argc, char* argv[] )
   bool             debug( false );
   bool             verbose( false );
   int              option_index( 0 );
-  //  list< string >   fields_to_retrieve;
-
-  //  int status_pos   = -1;
-  //  int date_status  = -1;
 
   bool wn       = false;
   bool status   = false;
@@ -229,6 +222,18 @@ int main( int argc, char* argv[] )
   }
 
   
+  if(verbose) {
+    bool at_least_one = curl || myurl || status || ccid || seq_code || lease || did || modif_jdl || userdn || pxfile;
+  
+    if( !at_least_one) {
+      cerr << "Options --verbose|-v requires at least one of the options "
+           << "--userdn,--creamjobid,--gridjobid,--userproxy,--cream-url,"
+	   << "--myproxy-url,--status,--lease-id,--delegation-id,"
+	   << "--worker-node,--jdl,--modified-jdl,--sequence-code" << endl;
+      exit(1);
+    }
+  }
+  
   util::IceConfManager::init( conf_file );
   try{
     util::IceConfManager::instance();
@@ -238,39 +243,43 @@ int main( int argc, char* argv[] )
     exit(1);
   }
 
-//   vector< string > _fields_array;
+  list<util::CreamJob> result, filtered;
 
-//   vector< string > _states_array;
-//   boost::split(_states_array, states, boost::is_any_of(","));
-  
-//   list< string > states_array;
-//   copy( _states_array.begin(), _states_array.end(), back_inserter( states_array ) );
-  
-//   list< pair< string, string > > params;
-  
-//   for( list< string >::const_iterator it = states_array.begin();
-//        it != states_array.end();
-//        ++it )
-//     {
-//       if(!it->empty())
-//         params.push_back( make_pair( "status", status_to_numstr(*it) ));
-//     }
-
-//   if( fields_to_retrieve.empty() )
-//     {
-//       fields_to_retrieve.push_back( "*" );
-//     }
-  //list< vector< string > > result;
-  list<util::CreamJob> result;
-  //db::GetFields getter( fields_to_retrieve, params, result, "queryDb::main" );
   db::GetAllJobs getter( &result, 0, 0, "queryDb::main", false );
-  //  getter.use_or_clause();
+
   db::Transaction tnx(true,false);
   tnx.execute( &getter );
   
+  set<string> filter_states;
+  
+  
+  vector<string> SplitVec;
+  boost::split( SplitVec, states, boost::is_any_of(","), boost::token_compress_on );
+  
+  for(vector<string>::const_iterator sit = SplitVec.begin();
+      sit != SplitVec.end();
+      ++sit )
+      {
+        filter_states.insert( *sit );
+      }
+  
+  
+  if(states.empty()) {
+    filtered = result;
+  } else {
+    
+    list< util::CreamJob >::const_iterator it=result.begin();
+    for( ; it!=result.end(); ++it ) {
+      string currentStatus = glite::ce::cream_client_api::job_statuses::job_status_str[it->status( )];
+      if(filter_states.find( currentStatus )!=filter_states.end()) {
+        filtered.push_back( *it );
+      }
+    }
+  }
+  
   if(verbose) {
-    for( list< util::CreamJob >::const_iterator it=result.begin();
-	 it != result.end();
+    for( list< util::CreamJob >::const_iterator it=filtered.begin();
+	 it != filtered.end();
 	 ++it)
       {
 	if( curl ) 
@@ -297,25 +306,12 @@ int main( int argc, char* argv[] )
 	  cout << "[" << it->user_dn( ) << "]" ;
 	if( pxfile )
 	  cout << "[" << it->user_proxyfile( ) << "]" ;
-	
-
-// 	for(unsigned int counter = 0;
-// 	    counter < 30;
-// 	    counter++)
-// 	  {
-// 	    if(counter == status_pos)
-// 	      cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[ it->status()/*atoi(it->at(counter).c_str())*/ ] << "] ";
-// 	    else {
-	      
-
-// 	      //cout << "[" << it->at(counter) << "] ";
-// 	    }
-// 	  }
-
+	if( wn )
+	  cout << "[" << it->worker_node( ) << "]";
 	cout << endl;
       }
     cout << endl << "------------------------------------------------" << endl;
   }
-  cout << result.size() << " item(s) found" << endl;
+  cout << filtered.size() << " item(s) found" << endl;
 
 }
