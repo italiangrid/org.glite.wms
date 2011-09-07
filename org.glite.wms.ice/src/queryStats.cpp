@@ -37,24 +37,6 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/cream_client_soapH.h"
 SOAP_NMAC struct Namespace namespaces[] = {};
 
-std::string status_to_numstr( const std::string& status ) {
-  if(status == "REGISTERED" ) return "0";
-  if(status == "PENDING" ) return "1";
-  if(status == "IDLE" ) return "2";
-  if(status == "RUNNING" ) return "3";
-  if(status == "REALLY_RUNNING" ) return "4";
-  if(status == "CANCELLED" ) return "5";
-  if(status == "HELD" ) return "6";
-  if(status == "ABORTED" ) return "7";
-  if(status == "DONE_OK" ) return "8";
-  if(status == "DONE_FAILED" ) return "9";
-  if(status == "UNKNOWN" ) return "10";
-  if(status == "PURGED" ) return "11";
-  
-  std::cerr << "Invalid status [" << status << "]. STOP!" << std::endl;
-  exit(1);
-}
-
 using namespace std;
 namespace iceUtil = glite::wms::ice::util;
 namespace db = glite::wms::ice::db;

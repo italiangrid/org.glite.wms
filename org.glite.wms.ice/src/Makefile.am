@@ -47,7 +47,6 @@ glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
 queryDb_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		$(GLITE_CEMONITOR_LIBS)\
 		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -83,7 +82,6 @@ queryDb_LDADD = \
 queryStats_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -119,7 +117,6 @@ queryStats_LDADD = \
 putFL_LDADD =  \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-		$(GLITE_CEMONITOR_LIBS)\
 		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
  		$(LOG4CPP_LIBS) \
@@ -153,7 +150,6 @@ putFL_LDADD =  \
 putFL_reschedule_LDADD = \
 			$(GRIDSITE_GLOBUS_LIBS) \
 			$(XML2_LIBS) \
-        	        $(GLITE_CEMONITOR_LIBS)\
 	                $(GLITE_CREAM_LIBS) \
 			$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 			$(GSOAPXX_LIBS) \
@@ -208,7 +204,6 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -244,7 +239,6 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 glite_wms_ice_rm_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -280,7 +274,6 @@ glite_wms_ice_rm_LDADD = \
 glite_wms_ice_db_rm_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -316,7 +309,6 @@ glite_wms_ice_db_rm_LDADD = \
 glite_wms_ice_LDADD = \
 		$(GRIDSITE_GLOBUS_LIBS) \
 		$(XML2_LIBS) \
-                $(GLITE_CEMONITOR_LIBS)\
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAPXX_LIBS) \
@@ -357,7 +349,6 @@ glite_wms_ice_proxy_renew_LDADD = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GLITE_CREAM_CFLAGS) \
-		$(GLITE_CEMONITOR_CFLAGS) \
 		$(VOMS_CFLAGS) \
 		$(GSOAPXX_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
