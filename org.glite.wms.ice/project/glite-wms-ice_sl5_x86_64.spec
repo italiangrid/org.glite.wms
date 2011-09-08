@@ -13,8 +13,7 @@ Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
-BuildRequires: %{!?extbuilddir: glite-ce-cream-client-devel,} libtool
-BuildRequires: %{!?extbuilddir: glite-ce-monitor-client-devel,} classads-devel
+BuildRequires: %{!?extbuilddir: glite-ce-cream-client-devel,} libtool, classads-devel
 BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal,} gsoap-devel
 BuildRequires: %{!?extbuilddir: gridsite-devel,} log4cpp-devel

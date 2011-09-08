@@ -64,8 +64,6 @@ PKG_CHECK_MODULES(ARES, libcares, , AC_MSG_ERROR(["ARES not found"]))
 
 GLITE_CHECK_JOBID
 
-PKG_CHECK_MODULES(GLITE_CEMONITOR, monitor-client-api-c, , AC_MSG_ERROR(["GLITE_CEMONITOR not found"]))
-
 PKG_CHECK_MODULES(GLITE_CREAM, cream-client-api-c, , AC_MSG_ERROR(["GLITE_CREAM not found"]))
 
 AC_GSOAP([])
