@@ -73,9 +73,9 @@ noinst_HEADERS = \
 glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic $(XSLT_LDFLAGS)
 
 glite_wms_wmproxy_server_LDADD = \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	-lglite_jobid \
