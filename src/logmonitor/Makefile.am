@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.1  2011/09/12 09:25:38  pandreet
+#       Fixed conflict with lb macro
+#
 #       Revision 1.20.2.2.4.1.2.7  2011/03/11 15:00:04  pandreet
 #       Removed with-glite-location
 #
@@ -169,14 +172,13 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
 	$(ARES_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
 	$(RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
         $(RENEWAL_NOTHR_LIBS) \
-	$(GLITE_JOBID_LIBS) \
-	-lglite_lbu_trio
+	$(GLITE_JOBID_LIBS)
 
 libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
