@@ -61,9 +61,9 @@ glite_wms_job_info_SOURCES = \
 	wmp-job-info.cpp
 glite_wms_job_info_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_info_LDADD = \
-        $(GLITE_LB_NOTHR_COMMON_LIBS) \
-        $(GLITE_LB_NOTHR_CLIENT_LIBS) \
-        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+        $(GLITE_LB_COMMON_LIBS) \
+        $(GLITE_LB_CLIENT_LIBS) \
+        $(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
 	$(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -107,9 +107,9 @@ glite_wms_job_submit_SOURCES = \
 	wmp-job-submit.cpp
 glite_wms_job_submit_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_submit_LDADD = \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -136,9 +136,9 @@ glite_wms_job_cancel_SOURCES = \
 	wmp-job-cancel.cpp
 glite_wms_job_cancel_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_cancel_LDADD = \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -161,9 +161,9 @@ glite_wms_job_output_SOURCES = \
 	wmp-job-output.cpp
 glite_wms_job_output_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_output_LDADD = \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -186,9 +186,9 @@ glite_wms_job_perusal_SOURCES = \
 	wmp-job-perusal.cpp
 glite_wms_job_perusal_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_perusal_LDADD = \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
         $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
