@@ -20,16 +20,19 @@ for openssl_command in "/usr/bin/openssl" "`which openssl 2>/dev/null`"; do
 done
 
 tmp_file=`mktemp -q tmp.XXXXXXXXXX`
-find $1 -type f > $tmp_file
+find $1 -cmin +60 > $tmp_file
 valid_proxies=0
 removed_proxies=0
 not_removed_proxies=0
 while read i; do
   log "processing file: $i"
-  is_valid=`$openssl_command x509 -in $i -noout 2>&1`
-  if [ -n "$is_valid" ]; then
-    log "   couldn't remove (not a proxy file)"
-  else
+  rmdir $i 2>/dev/null
+  if [ $? -eq 0 ]; then
+    log "removed empty directory: $i"
+    continue
+  fi
+  $openssl_command x509 -in $i -noout 2>&1
+  if [ $? -eq 0 ]; then
     expiry_date=`$openssl_command x509 -in $i -noout -enddate 2>/dev/null`
     if [ -z "$expiry_date" ]; then
       log "   couldn't remove (unable to get the proxy time left)"
@@ -40,6 +43,7 @@ while read i; do
     if [ $now_epoch -gt $not_after_epoch ]; then
       log "   expired proxy: removing proxy file..."
       rm -f $i
+      rmdir `dirname $i`
       if [ $? != 0 ]; then
         log "   ...couldn't remove proxy file"
         not_removed_proxies=`expr $not_removed_proxies + 1`
