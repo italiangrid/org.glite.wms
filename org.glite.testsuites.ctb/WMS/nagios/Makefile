@@ -12,7 +12,8 @@ MODS1=src/$(PKG1)/__init__.py \
     src/$(PKG1)/wmsmetrics.py \
     src/$(PKG1)/scheduler.py
 
-rpmtopdir := $(shell rpm --eval %_topdir)
+#rpmtopdir := $(shell rpm --eval %_topdir)
+rpmtopdir := $(prefix)/../rpmbuild
 rpmbuild  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
 
 PKGNAME = $(shell grep -s '^Name:'    $(SPECFILE) | sed -e 's/Name: *//')
