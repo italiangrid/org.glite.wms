@@ -1,9 +1,6 @@
-%define site emi.wms
 %define lpylib gridmetrics
-%define dir %{_libexecdir}/grid-monitoring/probes/%{site}
-%define etcdir /etc/gridmon
-
-%define debug_package %{nil}
+%define dir %{_libexecdir}/grid-monitoring/probes/emi.wms
+#%define etcdir /etc/gridmon
 
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %define pylib %{python_sitelib}/%{lpylib}
@@ -15,7 +12,7 @@ Release: 1%{?dist}
 
 License: ASL 2.0
 Group: Monitoring
-Source0: %{name}-%{version}.tgz
+Source: %{name}-%{version}-src.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: python >= 2.4
 Requires: python-GridMon >= 1.1.10
@@ -29,17 +26,11 @@ BuildArch: noarch
 BuildRequires: python >= 2.4
 
 %description
-This package contains nagios probe for EMI WMS service. It use a 
-python-based gridmetrics.
+This package contains nagios probe for EMI WMS service. 
+It use a python-based gridmetrics.
 
 %prep
 %setup -q
-mkdir -p doc/pysam
-if [ `which pydoc 2>/dev/null` ]; then
-    cd doc/pysam
-    pydoc -w ../../
-fi
-
 
 %build
 

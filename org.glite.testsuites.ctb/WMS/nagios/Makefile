@@ -1,3 +1,7 @@
+ifndef prefix
+prefix=dist
+endif
+
 SITE=emi.wms
 PKG1=gridmetrics
 
@@ -14,7 +18,9 @@ rpmbuild  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
 PKGNAME = $(shell grep -s '^Name:'    $(SPECFILE) | sed -e 's/Name: *//')
 PKGVERS = $(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
 
-distdir = dist/$(PKGNAME)-$(PKGVERS)
+#distdir = dist/$(PKGNAME)-$(PKGVERS)
+
+distdir=$(prefix)
 
 dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1) 
 	mkdir -p $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
@@ -26,8 +32,8 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 
 bldprep: dist $(SPECFILE)
 	@mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
-	@cd dist && tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS).tgz \
-	                                               $(PKGNAME)-$(PKGVERS)/*
+	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
+	                                               $(prefix)/*
 	@cp -f $(SPECFILE) $(rpmtopdir)/SPECS/$(SPECFILE)
 
 srpm: bldprep dist $(SPECFILE)
@@ -44,9 +50,9 @@ rpmsl5: bldprep dist $(SPECFILE)
 rpm: rpmsl5 
 
 sources: dist
-	cd dist && tar -zcvf ../$(PKGNAME)-$(PKGVERS).tgz $(PKGNAME)-$(PKGVERS)/
-	rm -rf dist
+	tar -zcvf $(PKGNAME)-$(PKGVERS)-src.tgz $(prefix)/
+	rm -rf $(prefix)
 
 clean:
-	rm -rf dist
-	rm -rf $(PKGNAME)-$(PKGVERS).tgz
+	rm -rf $(prefix)
+	rm -rf $(PKGNAME)-$(PKGVERS)-src.tgz
