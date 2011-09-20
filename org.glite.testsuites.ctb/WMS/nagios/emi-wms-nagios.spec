@@ -12,7 +12,7 @@ Release: 1%{?dist}
 
 License: ASL 2.0
 Group: Monitoring
-Source: %{name}-%{version}-src.tgz
+Source: %{name}-%{version}.src.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: python >= 2.4
 Requires: python-GridMon >= 1.1.10

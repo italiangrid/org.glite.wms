@@ -33,11 +33,11 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 
 bldprep: dist $(SPECFILE)
 	@cd $(distdir)
-	@tar czf emi.wms.nagios-1.0.0-0-src.tgz *; cd ..
+	@tar czf emi-wms-nagios-1.0.0-0.src.tgz *; cd ..
 	@mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
-	@cp -f emi.wms.nagios-1.0.0-0-src.tgz rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz
+	@cp -f emi.wms.nagios-1.0.0-0-src.tgz rpmbuild/SOURCES/emi-wms-nagios-1.0.0-0.src.tgz
 	@cp -f $(SPECFILE) rpmbuild/SPECS/$(SPECFILE)
 
 srpm: bldprep dist $(SPECFILE)
