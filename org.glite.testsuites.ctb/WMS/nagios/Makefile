@@ -5,6 +5,7 @@ endif
 SITE=emi.wms
 PKG1=gridmetrics
 
+SRPM=$(PKGNAME)-$(PKGVERS).src.tgz
 SPECFILE=emi-wms-nagios.spec
 PROBES=src/WMS-probe src/WMS-jdl.template
 FILES=CHANGES setup.py README
@@ -33,11 +34,11 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 
 bldprep: dist $(SPECFILE)
 	@cd $(distdir)
-	@tar czf emi-wms-nagios-1.0.0-0.src.tgz *; cd ..
+	@tar czf $(SRPM) *; cd ..
 	@mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
-	@cp -f emi-wms-nagios-1.0.0-0.src.tgz rpmbuild/SOURCES/emi-wms-nagios-1.0.0-0.src.tgz
+	@cp -f $(SRPM) rpmbuild/SOURCES/$(SRPM)
 	@cp -f $(SPECFILE) rpmbuild/SPECS/$(SPECFILE)
 
 srpm: bldprep dist $(SPECFILE)
@@ -54,9 +55,9 @@ rpmsl5: bldprep dist $(SPECFILE)
 rpm: rpmsl5 
 
 sources: dist
-	tar -zcvf $(PKGNAME)-$(PKGVERS)-src.tgz $(prefix)/
+	tar -zcvf $(SRPM) $(prefix)/
 	rm -rf $(prefix)
 
 clean:
 	rm -rf $(prefix)
-	rm -rf $(PKGNAME)-$(PKGVERS)-src.tgz
+	rm -rf $(SRPM)
