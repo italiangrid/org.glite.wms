@@ -37,7 +37,7 @@ bldprep: dist $(SPECFILE)
 	@mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
-	@cp -f emi.wms.nagios-1.0.0-0-src.tgz rpmbuild/SOURCES/emi-wms-nagios-1.0.0-0.src.tgz
+	@cp -f emi-wms-nagios-1.0.0-0.src.tgz rpmbuild/SOURCES/emi-wms-nagios-1.0.0-0.src.tgz
 	@cp -f $(SPECFILE) rpmbuild/SPECS/$(SPECFILE)
 
 srpm: bldprep dist $(SPECFILE)
