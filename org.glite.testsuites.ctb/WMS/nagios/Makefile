@@ -32,7 +32,8 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 	find $(distdir) -path '.*swp' -prune -exec rm -rf {} \;
 
 bldprep: dist $(SPECFILE)
-	@tar czf emi.wms.nagios-1.0.0-0-src.tgz $(distdir)/*
+	@cd $(distdir)
+	@tar czf ../emi.wms.nagios-1.0.0-0-src.tgz *; cd -
 	@mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
