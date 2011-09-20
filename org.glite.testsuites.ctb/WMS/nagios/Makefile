@@ -32,7 +32,7 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 	find $(distdir) -path '.*swp' -prune -exec rm -rf {} \;
 
 bldprep: dist $(SPECFILE)
-  @cd $(distdir); if test -n "`ls -A`"; then tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0.-src.tgz *; else tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz --files-from /dev/null; fi; cd -
+  @cd $(distdir); if test -n "`ls -A`"; then tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz *; else tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz --files-from /dev/null; fi; cd -
 #	@mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
