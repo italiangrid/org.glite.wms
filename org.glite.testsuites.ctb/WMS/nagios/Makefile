@@ -14,7 +14,7 @@ MODS1=src/$(PKG1)/__init__.py \
 
 #rpmtopdir := $(shell rpm --eval %_topdir)
 rpmtopdir := $(prefix)/../rpmbuild
-rpmbuild  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
+buildcmd  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
 
 PKGNAME = $(shell grep -s '^Name:'    $(SPECFILE) | sed -e 's/Name: *//')
 PKGVERS = $(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
@@ -32,22 +32,23 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 	find $(distdir) -path '.*swp' -prune -exec rm -rf {} \;
 
 bldprep: dist $(SPECFILE)
-  @cd $(distdir); if test -n "`ls -A`"; then tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz *; else tar -czf ../rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz --files-from /dev/null; fi; cd -
-#	@mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
+  @tar czf emi.wms.nagios-1.0.0-0-src.tgz $(distdir)/*
+	@mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 #	@tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS)-src.tgz \
 	                                               $(prefix)/*
-	@cp -f $(SPECFILE) $(rpmtopdir)/SPECS/$(SPECFILE)
+  @cp -f emi.wms.nagios-1.0.0-0-src.tgz rpmbuild/SOURCES/emi.wms.nagios-1.0.0-0-src.tgz
+	@cp -f $(SPECFILE) rpmbuild/SPECS/$(SPECFILE)
 
 srpm: bldprep dist $(SPECFILE)
-	$(rpmbuild) -bs $(SPECFILE)
+	$(buildcmd) -bs $(SPECFILE)
 
 srpmsl5: bldprep dist $(SPECFILE)
-	$(rpmbuild) -bs --define 'dist .sl5' $(SPECFILE)
+	$(buildcmd) -bs --define 'dist .sl5' $(SPECFILE)
 
 srpms: srpmsl5
 
 rpmsl5: bldprep dist $(SPECFILE)
-	$(rpmbuild) --define 'dist .sl5' -ba $(SPECFILE)
+	$(buildcmd) --define 'dist .sl5' -ba $(SPECFILE)
 
 rpm: rpmsl5 
 
