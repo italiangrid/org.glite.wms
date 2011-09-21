@@ -1,5 +1,9 @@
 ifndef prefix
-prefix=dist
+prefix=$(shell pwd)
+endif
+
+ifndef topdir
+topdir=$(shell rpm --eval %_topdir)
 endif
 
 SITE=emi.wms
@@ -13,16 +17,13 @@ MODS1=src/$(PKG1)/__init__.py \
     src/$(PKG1)/wmsmetrics.py \
     src/$(PKG1)/scheduler.py
 
-#rpmtopdir := $(shell rpm --eval %_topdir)
-rpmtopdir := $(prefix)/../rpmbuild
 buildcmd  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
 
 PKGNAME = $(shell grep -s '^Name:'    $(SPECFILE) | sed -e 's/Name: *//')
 PKGVERS = $(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
 
-#distdir = dist/$(PKGNAME)-$(PKGVERS)
-
 distdir=$(prefix)/$(PKGNAME)-$(PKGVERS)
+rpmtopdir=$(topdir)/rpmbuild
 
 dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1) 
 	mkdir -p $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
@@ -34,7 +35,7 @@ dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1)
 
 bldprep: dist $(SPECFILE)
 	cd $(prefix) && tar czf $(SRPM) $(PKGNAME)-$(PKGVERS)/*
-	mkdir -p ${rpmtopdir}/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
+	mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 	cp -f $(prefix)/$(SRPM) ${rpmtopdir}/SOURCES/$(SRPM)
 	cp -f $(SPECFILE) ${rpmtopdir}/SPECS/$(SPECFILE)
 
@@ -56,5 +57,5 @@ sources: dist
 	rm -rf $(prefix)
 
 clean:
-	rm -rf $(prefix)
-	rm -rf $(SRPM)
+	rm -rf $(distdir)
+	rm -rf $(rpmtopdir)
