@@ -37,6 +37,7 @@ httpd=`basename $httpdpath`
 config=${GLITE_WMS_CONFIG_DIR}/glite_wms_wmproxy_httpd.conf
 port=${GLITE_WMS_WMPROXY_PORT-7443}
 RETVAL=0
+export HOSTNAME=`hostname -f`
 
 # See how we were called.
 case "$1" in
