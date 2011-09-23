@@ -44,7 +44,7 @@ import sys
 
 try:
     from gridmon import probe
-    from creammetrics.creamdjsmetrics import CREAMCEDirectSubmissonMetrics as CREAMDJS
+    from creammetrics.CreamDjsMetrics import CREAMCEDirectSubmissonMetrics as CREAMDJS
 except ImportError,e:
     summary = "UNKNOWN: Error loading modules : %s" % (e)
     sys.stdout.write(summary+'\n')

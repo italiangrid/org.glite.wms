@@ -15,8 +15,8 @@ PROBES=src/CREAMCEDJS-probe src/CREAMCE-probe src/wnjob \
 CONFS=etc/emi.nagios-jobmngt.conf
 FILES=CHANGES setup.py README
 MODS1=src/$(PKG1)/__init__.py \
-    src/$(PKG1)/creammetrics.py \
-    src/$(PKG1)/creamdjsmetrics.py \
+    src/$(PKG1)/CreamMetrics.py \
+    src/$(PKG1)/CreamDjsMetrics.py \
     src/$(PKG1)/jdl.py \
     src/$(PKG1)/sched.py
 

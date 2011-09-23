@@ -42,7 +42,7 @@ import sys
 
 try:
     from gridmon import probe
-    from creammetrics.creammetrics import CEGenericMetrics as CE
+    from creammetrics.CreamMetrics import CEGenericMetrics as CE
 except ImportError,e:
     summary = "UNKNOWN: Error loading modules : %s" % (e)
     sys.stdout.write(summary+'\n')
