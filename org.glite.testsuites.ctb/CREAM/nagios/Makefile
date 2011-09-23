@@ -31,18 +31,18 @@ rpmtopdir=$(topdir)/rpmbuild
 dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1) 
 	mkdir -p $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
 	cp -rpf $(PROBES) $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
-#	cp -rpf $(WRAPPERS) $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
 	mkdir -p $(distdir)/etc/gridmon
 	cp -f $(CONFS) $(distdir)/etc/gridmon
 	mkdir -p $(distdir)/$(PKG1)
 	cp -f $(MODS1) $(distdir)/$(PKG1)
 	cp -f $(FILES) $(distdir)
 	find $(distdir) -path '.*swp' -prune -exec rm -rf {} \;
+	find $(distdir) -path 'CVS' -prune -exec rm -rf {} \;
 
 bldprep: dist $(SPECFILE)
 	@mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
 	@cd $(prefix) && tar cfz $(rpmtopdir)/SOURCES/$(PKGNAME)-$(PKGVERS).src.tgz \
-	                                               $(PKGNAME)-$(PKGVERS)/*
+	                                     --exclude='CVS' $(PKGNAME)-$(PKGVERS)/*
 	@cp -f $(SPECFILE) $(rpmtopdir)/SPECS/$(SPECFILE)
 
 
@@ -50,7 +50,7 @@ rpm: bldprep dist $(SPECFILE)
 	$(buildcmd) --define '_topdir ${rpmtopdir}' -ba $(SPECFILE)
 
 sources: dist
-	cd $(prefix) && tar czf ../$(PKGNAME)-$(PKGVERS).src.tgz $(PKGNAME)-$(PKGVERS)/*
+	cd $(prefix) && tar czf ../$(PKGNAME)-$(PKGVERS).src.tgz --exclude='CVS' $(PKGNAME)-$(PKGVERS)/*
 	rm -rf $(distdir)
 
 clean:
