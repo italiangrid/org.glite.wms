@@ -7,7 +7,7 @@ topdir=$(shell rpm --eval %_topdir)
 endif
 
 SITE=emi.wms
-PKG1=gridmetrics
+PKG1=wmsmetrics
 
 SRPM=$(PKGNAME)-$(PKGVERS).src.tgz
 SPECFILE=emi-wms-nagios.spec

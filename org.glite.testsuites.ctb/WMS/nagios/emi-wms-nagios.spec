@@ -1,4 +1,4 @@
-%define lpylib gridmetrics
+%define lpylib wmsmetrics
 %define dir %{_libexecdir}/grid-monitoring/probes/emi.wms
 
 %global debug_package %{nil}

@@ -2,5 +2,5 @@
 
 from distutils.core import setup
 
-setup(packages=['gridmetrics'])
+setup(packages=['wmsmetrics'])
 
