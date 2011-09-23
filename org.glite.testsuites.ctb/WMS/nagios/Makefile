@@ -14,7 +14,7 @@ SPECFILE=emi-wms-nagios.spec
 PROBES=src/WMS-probe src/WMS-jdl.template
 FILES=CHANGES setup.py README
 MODS1=src/$(PKG1)/__init__.py \
-    src/$(PKG1)/wmsmetrics.py \
+    src/$(PKG1)/WmsMetrics.py \
     src/$(PKG1)/scheduler.py
 
 buildcmd  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)

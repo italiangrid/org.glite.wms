@@ -43,7 +43,7 @@ import sys
 
 try:
     from gridmon import probe
-    from wmsmetrics.wmsmetrics import WMSGenericMetrics as WMS
+    from wmsmetrics.WmsMetrics import WMSGenericMetrics as WMS
 except ImportError,e:
     summary = "UNKNOWN: Error loading modules : %s" % (e)
     sys.stdout.write(summary+'\n')
