@@ -1,0 +1,58 @@
+#!/bin/bash
+#****** WN/WN-brokerinfo
+# NAME
+# WN-brokerinfo - Check if BrokerInfo works. The procedure is the following:
+# * Firstly check if BrokerInfo file is defined in $GLITE_WMS_RB_BROKERINFO,
+#   $GLITE_WL_RB_BROKERINFO or $EDG_WL_RB_BROKERINFO  variables
+# * Then try to get CE host name using edg-brokerinfo getCE or glite-brokerinfo 
+#   getCE command respectively. If previous command result value is different 
+#   from 0 test is failed.
+#
+# AUTHOR
+#
+# SAM Team same-devel[at]cern.ch
+#
+# LAST UPDATED
+#
+# 2011-09-22
+#
+# LANGUAGE
+#
+# bash
+#
+# SOURCE
+
+cd $SAME_HOME 
+
+echo "Checking if BrokerInfo works"
+
+if [ ${bifile:=${GLITE_WMS_RB_BROKERINFO:-${GLITE_WL_RB_BROKERINFO:-$EDG_WL_RB_BROKERINFO}}} ] ; then
+    echo "BrokerInfo file: $bifile"
+    set -x
+    ls -l $bifile
+    set +x
+else
+    echo "None of variables: GLITE_WMS_RB_BROKERINFO, GLITE_WL_RB_BROKERINFO, "
+    echo "EDG_WL_RB_BROKERINFO defined! But we will continue anyway..."
+fi
+
+if which glite-brokerinfo > /dev/null; then
+  BI=glite-brokerinfo 
+else
+  BI=edg-brokerinfo
+fi
+echo "Check if we can get the name of CE using $BI command"
+set -x
+$BI -v getCE
+result=$?
+set +x
+
+if [ $result == 0 ] ; then
+    CEHostName=`$BI getCE`
+    echo "summary: getCE:" $CEHostName
+    exit $SAME_OK
+else
+    exit $SAME_ERROR
+fi
+    
+#****

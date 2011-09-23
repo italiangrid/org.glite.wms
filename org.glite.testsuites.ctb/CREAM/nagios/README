@@ -1,0 +1,30 @@
+Probes for (gLite) Grid services. To be used with Nagios.
+
+Grid services covered:
+- CE:
+  * CREAM - job submission via WMS
+  * CREAM - direct job submission
+- WN:
+  * Check csh
+  * Check software version
+  * Check brokerinfo utility
+
+The code is written in Python and uses 'gridmon' Python package, which is
+provided by python-GridMon > v1.1.1 RPM.
+
+The RPM also contains wrappers to launch "old" SAM checks (used for WN checks).
+
+For documentation on probes/metrics please see the following resources.
+
+How to 
+ * invoke and configure for Nagios org.sam probes/metrics
+https://tomtools.cern.ch/confluence/display/SAM/Probes
+
+How to
+ * use wrappers to run SAM/"semi-Nagios" checks
+ * develop probes/metrics using org.sam probes framework
+https://twiki.cern.ch/twiki/bin/view/LCG/SAMToNagios
+
+15-July-2009
+Konstantin Skaburskas, CERN
+<Konstantin.Skaburskas@cern.ch> 
