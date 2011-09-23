@@ -25,37 +25,28 @@ PKGVERS = $(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
 distdir=$(prefix)/$(PKGNAME)-$(PKGVERS)
 rpmtopdir=$(topdir)/rpmbuild
 
-dist: $(SPECFILE) $(PROBES) $(CONFS) $(FILES) $(MODS1) 
+dist: $(SPECFILE) $(PROBES) $(FILES) $(MODS1) 
 	mkdir -p $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
 	cp -rpf $(PROBES) $(distdir)/usr/libexec/grid-monitoring/probes/$(SITE)
 	mkdir -p $(distdir)/$(PKG1) 
 	cp -f $(MODS1) $(distdir)/$(PKG1)
 	cp -f $(FILES) $(distdir)
 	find $(distdir) -path '.*swp' -prune -exec rm -rf {} \;
+	find $(distdir) -path 'CVS' -prune -exec rm -rf {} \;
 
 bldprep: dist $(SPECFILE)
-	cd $(prefix) && tar czf $(SRPM) $(PKGNAME)-$(PKGVERS)/*
 	mkdir -p $(rpmtopdir)/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
-	cp -f $(prefix)/$(SRPM) ${rpmtopdir}/SOURCES/$(SRPM)
+	cd $(prefix) && tar czf ${rpmtopdir}/SOURCES/$(SRPM) --exclude='CVS' $(PKGNAME)-$(PKGVERS)/*
 	cp -f $(SPECFILE) ${rpmtopdir}/SPECS/$(SPECFILE)
 
-srpm: bldprep dist $(SPECFILE)
-	$(buildcmd) -bs $(SPECFILE)
-
-srpmsl5: bldprep dist $(SPECFILE)
-	$(buildcmd) -bs --define 'dist .sl5' $(SPECFILE)
-
-srpms: srpmsl5
-
-rpmsl5: bldprep dist $(SPECFILE)
+rpm: bldprep dist $(SPECFILE)
 	$(buildcmd) --define '_topdir ${rpmtopdir}' -ba $(SPECFILE)
 
-rpm: rpmsl5 
-
 sources: dist
-	tar -zcvf $(SRPM) $(prefix)/
-	rm -rf $(prefix)
+	cd $(prefix) && tar czf ../$(SRPM) --exclude='CVS' $(PKGNAME)-$(PKGVERS)/*
+	rm -rf $(distdir)
 
 clean:
 	rm -rf $(distdir)
 	rm -rf $(rpmtopdir)
+	rm -rf $(SRPM)
