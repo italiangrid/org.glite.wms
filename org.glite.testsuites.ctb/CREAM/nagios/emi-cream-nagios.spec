@@ -1,4 +1,4 @@
-%define lpylib gridmetrics
+%define lpylib creammetrics
 %define dir %{_libexecdir}/grid-monitoring/probes/emi.cream
 %define etcdir /etc/gridmon
 

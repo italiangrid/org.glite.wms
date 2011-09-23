@@ -7,7 +7,7 @@ topdir=$(shell rpm --eval %_topdir)
 endif
 
 SITE=emi.cream
-PKG1=gridmetrics
+PKG1=creammetrics
 
 SPECFILE=emi-cream-nagios.spec
 PROBES=src/CREAMCEDJS-probe src/CREAMCE-probe src/wnjob \
