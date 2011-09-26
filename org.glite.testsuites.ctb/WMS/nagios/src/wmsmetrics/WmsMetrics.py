@@ -195,7 +195,7 @@ class WMSGenericMetrics(probe.MetricGatherer) :
 
 %s
 --jdl-templ <file>    JDL template file (full path). Default:
-                      <org.sam.ProbesLocation>/wnjob/%s
+                      <emi.wms.ProbesLocation>/%s
 --jdl-retrycount <val>          JDL RetryCount (Default: %s).
 --jdl-shallowretrycount <val>   JDL ShallowRetryCount (Default: %s).
 --ces-file <file>     File with list of CEs. Two schemes [file:] or http:
