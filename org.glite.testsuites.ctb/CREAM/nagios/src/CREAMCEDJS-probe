@@ -53,7 +53,7 @@ except ImportError,e:
 
 class CREAMCEMetrics(CREAMDJS):
     def __init__(self, tuples):
-        CREAMDJS.__init__(self, tuples, 'CREAMCE')
+        CREAMDJS.__init__(self, tuples, 'CREAMCEDJS')
 
 runner = probe.Runner(CREAMCEMetrics, probe.ProbeFormatRenderer())
 sys.exit(runner.run(sys.argv))
