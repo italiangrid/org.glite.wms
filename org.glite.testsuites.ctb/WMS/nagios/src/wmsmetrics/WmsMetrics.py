@@ -156,7 +156,7 @@ class WMSGenericMetrics(probe.MetricGatherer) :
 
     gridjobcmd = {'SUBMIT'  : 'glite-wms-job-submit -a',
                   'STATUS'  : 'glite-wms-job-status',
-                  'OUTPUT'  : 'glite-wms-job-output --noint',
+                  'OUTPUT'  : 'glite-wms-job-output --noint --nosubdir',
                   'CANCEL'  : 'glite-wms-job-cancel --noint',
                   'LOGGING' : 'glite-wms-job-logging-info -v 2'}
 
