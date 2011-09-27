@@ -265,6 +265,7 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
                   'LOGGING' : 'glite-ce-job-status -L',
                   'PURGE'   : 'glite-ce-job-purge --noint',
                   'DELEGATE' : 'glite-ce-delegate-proxy',
+                  'OUTPUT'  : 'glite-ce-job-output --noint',
                   'SUBMITALLOWED' : 'glite-ce-allowed-submission'
                   }
 
@@ -321,11 +322,7 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
         self.parse_cmd_args(tuples)
 
         # working directory for metrics
-        self.serviceTypeDJS = '%s%s' % (self.serviceType, 'DJS')
-        st = self.serviceType
-        self.serviceType = self.serviceTypeDJS
         self.make_workdir()
-        self.serviceType = st
 
         # define CREAM Web Services URIs
         if not self.portNumber:
@@ -344,7 +341,7 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
         self._dirJobOutputName = 'jobOutput'
         self._dirJobOutput = self.workdir_metric+'/'+self._dirJobOutputName
         self._fileJobID    = self.workdir_metric+'/jobID'
-        self._fileJobOutputName = 'gridjob.out'
+        self._fileJobOutputName = 'cream.out'
 
         # WN test job tarball
         self._fileWNTarballName  = 'gridjob.tgz'
@@ -667,6 +664,18 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
             self.__job_operation(cmd, timeout=timeout)
         except Exception, e:
             self.printd('Unhandled exeption while cancelling job: %s' % str(e))
+    def _getoutput(self, jobid, outdir):
+        ''''Retrieve job output from CREAM CE.
+        jobid    - id of the job
+        outdir   - where to store job output files
+        '''
+        cmd = '%s --dir %s %s' % (self.gridjobcmd['OUTPUT'], outdir, jobid)
+        self.printdvm('Retrieve the output of the job\n%s' % cmd)
+        try:
+            self.__job_operation(cmd, timeout=False)
+        except Exception, e:
+            self.printd('Unhandled exeption while retrieving job output: %s' % str(e))
+
     def _purge_job(self, jobid, timeout=True):
         ''''Purge the job from CREAM CE.
         jobid    - id of the job
@@ -975,7 +984,7 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
         if self.passcheckdest == 'active':
             to.set_stream()
         def printd(dd, v=probe.VERBOSITY_MIN, cr=True, prep=False):
-            """Prits string either to stdout or appends to a buffer.
+            """Prints string either to stdout or appends to a buffer.
             dd  - string
             v   - verbosity
             cr  - carriage return
@@ -1103,13 +1112,17 @@ class CREAMCEDirectSubmissonMetrics(probe.MetricGatherer):
             '''
             jobstate = 'DONE'
             status = 'OK'
-            fjo = '%s/%s/%s' % (workdir, self._dirJobOutputName,
-                                self._fileJobOutputName)
+            djo = '%s/%s' % (workdir, self._dirJobOutputName)
+            # create the directory where output file is stored
+            dirname = jobid[8:].replace(":", "_").replace("/", "_")
+            fjo = '%s/%s/%s' % (djo, dirname, self._fileJobOutputName)
             printdvm('>>> %s:\n' % host+\
                           'Job is in %s state.\n' % jobstate+\
                           'Purge the job and submit passive check result to '+\
                           '\n<%s,%s>\n<%s,%s>\n' % (host, srvdesc,
                                                     host, self.metJobState))
+            printdvm('Retrieving job output...')
+            self._getoutput(jobid, djo)
             printdvm('Purging the job... ')
             self._purge_job(jobid, timeout=False)
 

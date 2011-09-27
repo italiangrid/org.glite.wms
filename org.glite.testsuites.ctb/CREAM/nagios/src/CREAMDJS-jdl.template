@@ -5,4 +5,7 @@ Executable = "<jdlExecutable>";
 Arguments = "<jdlArguments>";
 StdOutput = "cream.out";
 StdError = "cream.out";
+OutputSandbox = {"cream.out"};
+OutputSandboxBaseDestUri="gsiftp://localhost";
+
 ]
