@@ -76,13 +76,15 @@ int active_side()
   }
 }
 
-boost::shared_ptr<void>& match_on_active_side()
+std::pair<boost::shared_ptr<void>, int> match_on_active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   if (!s_matching_threads[s_active_side]) {
     s_matching_threads[s_active_side].reset(static_cast<int*>(0));
   }
-  return s_matching_threads[(-1 == s_active_side ? 1 : s_active_side)];
+  return std::make_pair(
+    s_matching_threads[-1 == s_active_side ? 1 : s_active_side],
+    s_active_side);
 }
 
 namespace {

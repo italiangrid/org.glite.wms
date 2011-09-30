@@ -97,7 +97,7 @@ ism_mutex_type& get_ism_mutex(size_t the_ism_index);
 void switch_active_side();
 int dark_side();
 int active_side();
-boost::shared_ptr<void>& match_on_active_side();
+std::pair<boost::shared_ptr<void>, int> match_on_active_side();
 int matching_threads(int side);
 
 ism_type::value_type make_ism_entry(
