@@ -65,7 +65,7 @@ void JobFilePurger::do_purge( bool everything )
 
   if( lmconfig->remove_job_files() ) {
     unsigned long int            removed;
-    auto_ptr<Files>              files( ( this->jfp_dagId.c_jobid() != 0 ) ? new Files(this->jfp_dagId, this->jfp_jobId) : 
+    auto_ptr<Files>              files(jfp_isDag ? new Files(this->jfp_dagId, this->jfp_jobId) : 
 					new Files(this->jfp_jobId) );
 
     try {
