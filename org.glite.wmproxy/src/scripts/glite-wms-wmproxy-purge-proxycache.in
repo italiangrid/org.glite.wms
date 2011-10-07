@@ -25,7 +25,7 @@ valid_proxies=0
 removed_proxies=0
 not_removed_proxies=0
 while read i; do
-  log "processing file/directory: $i"
+  log "processing file|directory: $i"
   if [ -d "$i" ]; then
     rmdir $i 2>/dev/null
     if [ $? -eq 0 ]; then
@@ -44,9 +44,6 @@ while read i; do
       now_epoch=`date +%s`
       if [ $now_epoch -gt $not_after_epoch ]; then
         log "   expired proxy: removing proxy file..."
-        if [ -f "`dirname $i`/userkey.pem" ]; then
-          rm -f `dirname $i`/userkey.pem
-        fi
         rm -f $i
         rmdir `dirname $i`
         if [ $? != 0 ]; then
