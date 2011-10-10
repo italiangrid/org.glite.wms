@@ -45,14 +45,14 @@ while read i; do
       if [ $now_epoch -gt $not_after_epoch ]; then
         log "   expired proxy: removing proxy file..."
         rm -f $i
-        rmdir `dirname $i`
         if [ $? != 0 ]; then
-          log "   ...couldn't remove proxy file or there are other files in the parent directory"
+          log "   ...couldn't remove proxy file"
           not_removed_proxies=`expr $not_removed_proxies + 1`
         else
           log "   ...proxy file has been removed"
           removed_proxies=`expr $removed_proxies + 1`
         fi
+        rmdir `dirname $i`
       else
         time_left=`expr $not_after_epoch - $now_epoch`
         log "   the proxy is still valid ($time_left seconds left)"
