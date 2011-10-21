@@ -40,10 +40,10 @@ namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
-const char * X509_VOMS_DIR = "X509_VOMS_DIR";
-const char * X509_CERT_DIR = "X509_CERT_DIR";
-const char * VOMS_DIR = "/etc/grid-security/vomsdir";
-const char * CERT_DIR = "/etc/grid-security/certificates";
+const char* X509_VOMS_DIR = "X509_VOMS_DIR";
+const char* X509_CERT_DIR = "X509_CERT_DIR";
+const char* VOMS_DIR = "/etc/grid-security/vomsdir";
+const char* CERT_DIR = "/etc/grid-security/certificates";
 
 const std::string STANDARD_PROXY = "CN=proxy";
 const std::string LIMITED_PROXY = "CN=limited proxy";
@@ -54,95 +54,88 @@ namespace wmputilities = glite::wms::wmproxy::utilities;
 using namespace std;
 using namespace glite::wms::wmproxy::utilities; //Exception
 
-
-//
-// Prototypes
-//
-STACK_OF(X509) * load_chain(char *certfile);
-
-
-//
-// Class Implementation
-//
-
-VOMSAuthZ::VOMSAuthZ(const string &proxypath)
+VOMSAuthN::VOMSAuthN(const string &proxypath)
+	: data_(0)
 {
-	this->data = NULL;
-	parseVoms(const_cast<char*>(proxypath.c_str()));
+	parseVoms(proxypath.c_str());
 }
 
-VOMSAuthZ::~VOMSAuthZ()
+VOMSAuthN::~VOMSAuthN()
 {
-	if (this->cert) {
-		X509_free(this->cert);
+	if (cert_) {
+		X509_free(cert_);
 	}
-	if (this->data) {
-		VOMS_Destroy(this->data);
+	if (data_) {
+		VOMS_Destroy(data_);
 	}
 }
 
 bool
-VOMSAuthZ::hasVOMSExtension()
+VOMSAuthN::hasVOMSExtension()
 {
-	return this->data;
+	return data_;
+}
+
+std::vector<std::string> getFQANs() {
+	voms vm;
+	v.DefaultData(data_);
+	return vm.std; // TODO C++ APIs
 }
 
 char *
-VOMSAuthZ::getDN()
+VOMSAuthN::getDN()
 {
 	GLITE_STACK_TRY("getDN()");
+	char buf[1024];
 	
-	if (this->data) {
+	if (data_) {
 		int error = 0;
-		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
+		struct voms* defaultvoms = VOMS_DefaultData(data_, &error);
 		if (defaultvoms) {
-			char * dn = defaultvoms->user;
-			return dn;
+			return defaultvoms->user;
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDN", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	errormessage(error));
+		    	"VOMSAuthN::getDN", wmputilities::WMS_AUTHORIZATION_ERROR,
+		    	VOMS_ErrorMessage(data_, error, buf, 1024));
 		}
-		//free(defaultvoms);
 	}
-	// Proxy certificate is not a VOMS Proxy certificate
-	return NULL;
+	// not a VOMS Proxy certificate
+	return 0;
 	
 	GLITE_STACK_CATCH();
 }
 
 string
-VOMSAuthZ::getDefaultFQAN()
+VOMSAuthN::getDefaultFQAN()
 {
 	GLITE_STACK_TRY("getDefaultFQAN()");
 	
-	if (this->data) {
+	if (data_) {
 		int error = 0;
-		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
+		struct voms* defaultvoms = VOMS_DefaultData(data_, &error);
 		if (defaultvoms) {
 			char ** deffqan = defaultvoms->fqan;
 			return string(*deffqan);
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultFQAN", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	errormessage(error));
+		    	"VOMSAuthN::getDefaultFQAN", wmputilities::WMS_AUTHORIZATION_ERROR,
+		    	VOMS_ErrorMessage(data_, error, buf, 1024));
 		}
-		//free(defaultvoms);
 	}
-	// Proxy certificate is not a VOMS Proxy certificate
+	// not a VOMS Proxy certificate
 	return "";
 
 	GLITE_STACK_CATCH();
 }
 
 VOProxyInfoStructType *
-VOMSAuthZ::getDefaultVOProxyInfo()
+VOMSAuthN::getDefaultVOProxyInfo()
 {
 	GLITE_STACK_TRY("getDefaultVOProxyInfo()");
 	VOProxyInfoStructType * voproxyinfo = new VOProxyInfoStructType();
-	if (this->data) {
+	if (data_) {
 		int error = 0;
-		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
+		struct voms * defaultvoms = VOMS_DefaultData(data_, &error);
 		if (defaultvoms) {
 			voproxyinfo->user = defaultvoms->user;
 			voproxyinfo->userCA = defaultvoms->userca;
@@ -163,10 +156,9 @@ VOMSAuthZ::getDefaultVOProxyInfo()
     		voproxyinfo->attribute = fqanvector;
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	errormessage(error));
+		    	"VOMSAuthN::getDefaultVOProxyInfo", wmputilities::WMS_AUTHORIZATION_ERROR,
+		    	VOMS_ErrorMessage(data_, error, buf, 1024));
 		}
-		//free(defaultvoms);  TODO why commented?
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return voproxyinfo;
@@ -175,14 +167,14 @@ VOMSAuthZ::getDefaultVOProxyInfo()
 	
 }
 
+// proxy certificate info
 ProxyInfoStructType *
-VOMSAuthZ::getProxyInfo()
+VOMSAuthN::getProxyInfo()
 {
 	GLITE_STACK_TRY("getProxyInfo()");
 	ProxyInfoStructType *proxyinfo = new ProxyInfoStructType();
-	char * subject = X509_NAME_oneline(X509_get_subject_name(this->cert),NULL, 0);
+	char * subject = X509_NAME_oneline(X509_get_subject_name(cert_),NULL, 0);
 
-	// Getting type
 	if (subject) {
 		string subjectstring = string(subject);
 		if (subjectstring.find(STANDARD_PROXY) != string::npos) {
@@ -190,10 +182,10 @@ VOMSAuthZ::getProxyInfo()
 		} else if (subjectstring.find(LIMITED_PROXY) != string::npos) {
 				proxyinfo->type = "limited proxy";
 		} else {
-				proxyinfo->type = "uknown";
+				proxyinfo->type = "unknown";
 		}
 	} else {
-		proxyinfo->type = "uknown";
+		proxyinfo->type = "unknown";
 		proxyinfo->subject = "";
 		proxyinfo->issuer = "";
 		proxyinfo->identity = "";
@@ -209,12 +201,12 @@ VOMSAuthZ::getProxyInfo()
 	OPENSSL_free(subject);
 
 	// Getting issuer
-	proxyinfo->issuer   = string(X509_NAME_oneline(X509_get_issuer_name(this->cert), NULL, 0));
+	proxyinfo->issuer   = string(X509_NAME_oneline(X509_get_issuer_name(cert_), NULL, 0));
 	// Getting identity (is the same as issuser)
 	proxyinfo->identity = proxyinfo->issuer;
 	// Getting strength
 	int bits = -1;
-	EVP_PKEY * key = X509_extract_key(this->cert);
+	EVP_PKEY * key = X509_extract_key(cert_);
 	bits = 8 * EVP_PKEY_size(key);
 	if (key) {
 		EVP_PKEY_free(key);
@@ -222,31 +214,34 @@ VOMSAuthZ::getProxyInfo()
 	proxyinfo->strength = boost::lexical_cast<string>(bits);
 
 	// Getting start time
-	proxyinfo->startTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notBefore(this->cert)));
+	proxyinfo->startTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notBefore(cert_)));
 	// Getting end time
-	proxyinfo->endTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notAfter(this->cert)));
+	proxyinfo->endTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notAfter(cert_)));
 	
 	// Getting voms info if any
-	if (this->data) {proxyinfo->vosInfo.push_back(getDefaultVOProxyInfo());}
-	else{ edglog(warning)<<"The Proxy does not contain VOMS extension" << endl;  }
-
+	if (data_) {
+		proxyinfo->vosInfo.push_back(getDefaultVOProxyInfo());
+	} else {
+		edglog(warning)<<"The Proxy does not contain VOMS extension" << endl;
+	}
 
 	return proxyinfo;
 	GLITE_STACK_CATCH();
 }
-	
+
+// voms extensions info
 int
-VOMSAuthZ::parseVoms(char * proxypath)
+VOMSAuthN::parseVoms(char const* proxypath)
 {
 	GLITE_STACK_TRY("parseVoms()");
 	
-	edglog_fn("VOMSAuthZ::parseVoms");
+	edglog_fn("VOMSAuthN::parseVoms");
 	edglog(debug)<<"Proxy path: "<<string(proxypath)<<endl;
 	int error = 0;
 	
-	char * envval = NULL;
-	char * vomsdir = NULL;
-	char * certdir = NULL;
+	char* envval = NULL;
+	char* vomsdir = NULL;
+	char* certdir = NULL;
 	if ((envval = getenv(X509_VOMS_DIR))) {
 		vomsdir = envval;
 	} else {
@@ -257,91 +252,30 @@ VOMSAuthZ::parseVoms(char * proxypath)
 	} else {
 		certdir = const_cast<char*>(CERT_DIR);
 	}
-	if (!(this->data = VOMS_Init(vomsdir, certdir))) {
+	if (!(data_ = VOMS_Init(vomsdir, certdir))) {
 		edglog(debug)<<"Error in VOMS_Init()"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
+	    	"VOMSAuthN::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 	    	"Unable to retrive VOMS Proxy information");
 	}
 	
-	// Make sure the ciphers in the 'names_lh' OpenSSL global hash 
-    // get initialised 
-    SSL_library_init();
-      		
-  	BIO * in = NULL;
-  	this->cert = NULL;
-  	STACK_OF(X509) * chain = NULL;
-  	in = BIO_new(BIO_s_file());
-  	if (in) {
-    	if (BIO_read_filename(in, proxypath) > 0) {
-      		this->cert = PEM_read_bio_X509(in, NULL, 0, NULL);
-      		if (!this->cert) {
-      			BIO_free(in);
-        		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
-        			"doesn't exist or has bad permissions"<<endl;
-        		throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
-			    	"Proxy file doesn't exist or has bad permissions");
-      		}
-      		chain = load_chain(proxypath);
-
-  		// Verifing all flags except for VERIFY_DATE
-      		// Time left verification is done by a different method after server
-      		// operation call
-      		//VOMS_SetVerificationType(VERIFY_NOTARGET | VERIFY_SIGN | VERIFY_ORDER
-      		//	| VERIFY_ID, data, &error);
-      		if (!VOMS_SetVerificationType(~VERIFY_DATE, this->data, &error)) {
-      			BIO_free(in);
-      			string msg = errormessage(error);
-				edglog(severe)<<"Error in VOMS_SetVerificationType: "<<msg<<endl;
-      			throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
-			    	msg);
-      		}
-  		
-      		if (!VOMS_Retrieve(this->cert, chain, RECURSE_CHAIN, this->data, &error)) {
-      			BIO_free(in);
-      			if (error == VERR_NOEXT) {
-					// Proxy is not a VOMS Proxy
-					this->data = NULL;
-					return 1;
-				}
-				string msg = errormessage(error);
-				edglog(severe)<<"Error in VOMS_Retrieve: "<<msg<<endl;
-				throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
-			    	msg);
-      		}
-      		BIO_free(in);
-    	} else {
-    		BIO_free(in);
-    		edglog(severe)<<"Error in BIO_read_filename: Proxy file doesn't "
-    			"exist or has bad permissions"<<endl;
-			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	"Proxy file doesn't exist or has bad permissions");
-		}
-	} else {
-		edglog(severe)<<"Error in BIO_new"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
-	    	"Unable to get information from Proxy file");
-  	}
+	FILE *f = fopen(proxypath, "r");
+	if (f) {
+		VOMS_SetVerificationType(~VERIFY_DATE, data_, &error);
+		return VOMS_RetrieveFromFile(f, RECURSE_DEEP, data_, &error);
+	}
 	return 0;
 	
 	GLITE_STACK_CATCH();
 }
 
-
-//
-// Static methods
-//
+namespace {
 
 time_t 
-VOMSAuthZ::ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
+ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 {
 	struct tm tm;
-    int offset;
+	int offset;
 
     memset(&tm,'\0',sizeof tm);
 #define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
@@ -368,7 +302,7 @@ VOMSAuthZ::ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 }
 
 const long 
-VOMSAuthZ::convASN1Date(const std::string &date)
+convASN1Date(const std::string &date)
 {
     char     *str;
     time_t    offset;
@@ -471,136 +405,7 @@ VOMSAuthZ::convASN1Date(const std::string &date)
     return newtime;
 }
 
-
-//
-// Private methods
-//
-
-string
-VOMSAuthZ::errormessage(int error)
-{
-	GLITE_STACK_TRY("errormessage()");
-	
-	string msg = "Unable to retrive VOMS Proxy information: ";
-	switch (error) {
-		case VERR_NOEXT:
-			msg += "VERR_NOEXT";
-		    break;
-		case VERR_IDCHECK:
-		    msg += "VERR_IDCHECK";
-		    break;
-		case VERR_TIME:
-			msg += "The user delegated Proxy has expired";
-		    break;
-		case VERR_ORDER:
-			msg += "VERR_ORDER";
-		    break;
-		case VERR_NOSOCKET:
-			msg += "VERR_NOSOCKET";
-		    break;
-		case VERR_NOIDENT:
-			msg += "VERR_NOIDENT";
-		    break;
-		case VERR_COMM:
-			msg += "VERR_COMM";
-		    break;
-		case VERR_PARAM:
-			msg += "VERR_PARAM";
-		    break;
-		case VERR_NOINIT:
-			msg += "VERR_NOINIT\n(please check delegated Proxy validity)";
-		    break;
-		case VERR_EXTRAINFO:
-			msg += "VERR_EXTRAINFO";
-		    break;
-		case VERR_FORMAT:
-			msg += "VERR_FORMAT";
-		    break;
-		case VERR_NODATA:
-			msg += "VERR_NODATA";
-		    break;
-		case VERR_PARSE:
-			msg += "VERR_PARSE";
-		    break;
-		case VERR_DIR:
-			msg += "VERR_DIR";
-		    break;
-		case VERR_SIGN:
-			msg += "VERR_SIGN";
-		    break;
-		case VERR_SERVER:
-			msg += "VERR_SERVER";
-		    break;
-		case VERR_MEM:
-			msg += "VERR_MEM";
-		    break;
-		case VERR_VERIFY:
-			msg += "VERR_VERIFY";
-		    break;
-		case VERR_TYPE:
-			msg += "VERR_TYPE";
-		    break;
-		default:
-			msg += "default";
-		  	break;
-	}
-	edglog(debug)<<msg<<endl;
-	return msg;
-	
-	GLITE_STACK_CATCH();
-}
-
-STACK_OF(X509) * load_chain(char *certfile)
-{
-  STACK_OF(X509_INFO) *sk=NULL;
-  STACK_OF(X509) *stack=NULL, *ret=NULL;
-  BIO *in=NULL;
-  X509_INFO *xi;
-  int first = 1;
-
-  if(!(stack = sk_X509_new_null())) {
-    edglog(severe)<<"Memory allocation failure"<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  if(!(in=BIO_new_file(certfile, "r"))) {
-    edglog(severe)<<"Error opening the file: "<<string(certfile)<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  // This loads from a file, a stack of x509/crl/pkey sets
-  if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-    edglog(severe)<<"Error reading the file: "<<string(certfile)<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  // scan over it and pull out the certs
-  while (sk_X509_INFO_num(sk)) {
-    // skip first cert
-    if (first) {
-      first = 0;
-      continue;
-    }
-    xi=sk_X509_INFO_shift(sk);
-    if (xi->x509 != NULL) {
-      sk_X509_push(stack,xi->x509);
-      xi->x509=NULL;
-    }
-    X509_INFO_free(xi);
-  }
-  if(!sk_X509_num(stack)) {
-    edglog(severe)<<"No certificates in file: "<<string(certfile)<<endl;
-    sk_X509_free(stack);
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-  BIO_free(in);
-  ret=stack;
-  return ret;
-}
+} // anonymous namespace
 
 } // namespace authorizer
 } // namespace wmproxy

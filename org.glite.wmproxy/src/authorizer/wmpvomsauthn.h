@@ -44,35 +44,21 @@ namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
-class VOMSAuthZ {
+class VOMSAuthN {
+public:
 	
-	public:
-	
-		VOMSAuthZ(const std::string &proxypath);
-		virtual ~VOMSAuthZ();
-		
-		bool hasVOMSExtension();
-		
-		char * getDN();
-		
-		std::string getDefaultFQAN();
-		
-		VOProxyInfoStructType * getDefaultVOProxyInfo();
-		
-		ProxyInfoStructType * getProxyInfo();
-		
-		static time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
-		
-		static const long convASN1Date(const std::string &date);
-
-	private:
-	
-		X509 * cert;
-		struct vomsdata * data;
-		
-		int parseVoms(char * proxypath);
-		
-		std::string errormessage(int error);
+	VOMSAuthN(const std::string &proxypath);
+	virtual ~VOMSAuthN();
+	bool hasVOMSExtension();
+	char* getDN();
+	std::string getDefaultFQAN();
+	std::vector<std::string> getFQANs();
+	VOProxyInfoStructType* getDefaultVOProxyInfo();
+	ProxyInfoStructType* getProxyInfo();
+private:
+	int parseVoms(char* proxypath);
+	X509* cert_;
+	struct vomsdata* data_;
 };
 
 } // namespace authorizer

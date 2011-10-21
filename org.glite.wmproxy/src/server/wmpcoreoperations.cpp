@@ -393,7 +393,7 @@ authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
 string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
-authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 if (vomsproxy.hasVOMSExtension()) {
 	auth->authorize(delegatedproxyfqan);
@@ -1109,7 +1109,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 
 	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
 	} else {
@@ -2053,7 +2053,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(delegatedproxyfqan);
@@ -2171,7 +2171,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
         edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
-        authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+        authorizer::VOMSAuthN vomsproxy(delegatedproxy);
         string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
         if (vomsproxy.hasVOMSExtension()) {
                 auth->authorize(delegatedproxyfqan);
@@ -2520,7 +2520,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
 	string delegatedproxyfqan = "";
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
 		delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 		auth->authorize(delegatedproxyfqan);
@@ -2694,7 +2694,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 
 	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
 	} else {

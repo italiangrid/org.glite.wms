@@ -900,8 +900,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		proxy = WMPDelegation::getDelegatedProxyPath(id);
 		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
-	// Common part: retreve vomsproxy and its info  //TODO TODO
-	authorizer::VOMSAuthZ vomsproxy = authorizer::VOMSAuthZ(proxy);
+	authorizer::VOMSAuthN vomsproxy = authorizer::VOMSAuthN(proxy);
 	getProxyInfo_response.items = vomsproxy.getProxyInfo();
 	
 	edglog(debug)<<"getProxyInfo successfully"<<endl;
