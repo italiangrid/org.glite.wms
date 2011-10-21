@@ -263,16 +263,14 @@ parseFQAN(const string &fqan)
 	GLITE_STACK_TRY("parseFQAN()");
 	vector<string> returnvector;
 	boost::char_separator<char> separator("/");
-	boost::tokenizer<boost::char_separator<char> >
-    	tok(fqan, separator);
-    for (boost::tokenizer<boost::char_separator<char> >::iterator
-    		token = tok.begin(); token != tok.end(); token++) {
-    	returnvector.push_back(*token);
+	boost::tokenizer<boost::char_separator<char> > tok(fqan, separator);
+	for (boost::tokenizer<boost::char_separator<char> >::iterator
+    		token = tok.begin(); token != tok.end(); ++token) {
+		returnvector.push_back(*token);
 	}
 	return returnvector;
 	GLITE_STACK_CATCH();
 }
-
 
 string
 getEnvVO()
@@ -282,24 +280,21 @@ getEnvVO()
 	GLITE_STACK_CATCH();
 }
 
-string
-getEnvFQAN()
+vector<string>
+getEnvFQANs()
 {
+	// TODO: why not directly from VOMS?!?
 	GLITE_STACK_TRY("getEnvFQAN()");
 
         int i = 0;
-        std::string fqan;
+        std::string fqans;
         std::string const fqan_tag("fqan:");
         unsigned int const fqan_tag_size = std::string(fqan_tag).size();
-//        while (fqan.empty() && i < 5) {
 	char *tmp;
 	do {
 	  tmp = getenv(std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str());
 	  
           std::string grst_cred;
-//           char* tmp = getenv(
-// 	    std::string("GRST_CRED_AURI_" + boost::lexical_cast<std::string>(i)).c_str()
-// 	  );
           if (tmp) {
             grst_cred = std::string(tmp);
 	  }
@@ -310,7 +305,7 @@ getEnvFQAN()
             fqan = grst_cred.substr(fqan_tag_size);
           }
           ++i;
-        } while(fqan.empty() && tmp);
+        } while(!tmp);
 	
         if (fqan.empty()) {
           edglog(error) << "Cannot extract fqan from gridsite" << endl;
@@ -318,7 +313,7 @@ getEnvFQAN()
           edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
         }
 
-	return fqan;
+	return fqans;
 	GLITE_STACK_CATCH();
 }
 

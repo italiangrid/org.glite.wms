@@ -20,10 +20,12 @@ lib_LTLIBRARIES = \
 
 noinst_HEADERS = \
 	wmpauthorizer.h \
+	argus_authz.h \
 	wmpvomsauthz.h
 
 libglite_wms_wmproxy_authorizer_la_SOURCES = \
 	wmpauthorizer.cpp \
+	argus_authz.cpp \
 	wmpgaclmanager.cpp \
 	wmpvomsauthz.cpp
 
@@ -40,5 +42,3 @@ AM_CPPFLAGS = \
 	-DHAVE_STRINGSTREAM
 
 MAINTAINERCLEANFILES = Makefile.in
-
-

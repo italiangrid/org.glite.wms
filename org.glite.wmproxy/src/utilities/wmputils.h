@@ -299,17 +299,17 @@ std::vector<std::string> computeOutputSBDestURI(std::vector<std::string>
 
 /*
  * Returns the Virtual Organisation contained in the requesting client Proxy.
- * The value is get from an environment variable set by GridSite
+ * The value is got from an environment variable set by GridSite
  * @return the Virtual Organisation
  */
 std::string getEnvVO();
 
 /*
  * Returns the FQAN contained in the requesting client Proxy.
- * The value is get from an environment variable set by GridSite
+ * The value is got from an environment variable set by GridSite
  * @return the FQAN
  */
-std::string getEnvFQAN();
+std::vector<std::string> getEnvFQANs();
 
 /**
  * Gets the user Distinguished Name of the user. This is the DN of the request

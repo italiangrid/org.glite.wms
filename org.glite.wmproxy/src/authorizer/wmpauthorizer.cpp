@@ -22,33 +22,25 @@ limitations under the License.
 //
 
 #include <iostream>
-
-// added to build on IA64
-#include <pwd.h>
+#include <pwd.h> // to build on IA64
 #include <sys/types.h>
+#include <dlfcn.h>
 
 #include <openssl/pem.h>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "wmpauthorizer.h"
+#include "argus_authz.h"
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-
-// Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-
-
-//Logger
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
-
-// Proxyrenewal
 #include "glite/security/proxyrenewal/renewal.h"
-
-
 extern "C" {
-	// LCMAPS C libraries headers
 #ifdef LCMAPSWITHOUTGSI
         #include "lcmaps_without_gsi/lcmaps.h"
         #include "lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
@@ -57,24 +49,15 @@ extern "C" {
 	#include "lcmaps/lcmaps_return_poolindex_without_gsi.h"
 #endif
 }
-
-#include <dlfcn.h>
 #include "wmpgaclmanager.h"
-
 #include "wmpvomsauthz.h"
 #endif  // GLITE_WMS_WMPROXY_TOOLS
 
-// Utilities
 #include "utilities/wmputils.h"
 
 #ifndef ALLOW_EMPTY_CREDENTIALS
 #define ALLOW_EMPTY_CREDENTIALS
 #endif
-
-//Boost
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
-
 
 namespace glite {
 namespace wms {
@@ -86,7 +69,7 @@ namespace wmputilities = glite::wms::wmproxy::utilities;
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 using namespace glite::wmsutils::exception;
-namespace logger       = glite::wms::common::logger;
+namespace logger = glite::wms::common::logger;
 
 // Job Directories
 const char* WMPAuthorizer::INPUT_SB_DIRECTORY = "input";
@@ -95,7 +78,6 @@ const char* WMPAuthorizer::PEEK_DIRECTORY = "peek";
 const char* WMPAuthorizer::DOCUMENT_ROOT = "DOCUMENT_ROOT";
 const string WMPAuthorizer::VOMS_GACL_FILE = "glite_wms_wmproxy.gacl";
 const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
-
 #endif
 
 // FQAN strings
@@ -105,7 +87,7 @@ const std::string FQAN_NULL = "null";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
+WMPAuthorizer::WMPAuthorizer(char const* lcmaps_logfile)
 : userid(0), usergroup(0), mapdone(false)
 { }
 
@@ -176,7 +158,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 			throw ex;
 		}
 	}
-	// VOMS Authorizing
+	// VOMS authN
 	string envFQAN = wmputilities::getEnvFQAN(); // taken from gridsite
 	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
 	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
@@ -190,7 +172,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 				+ certfqan + ")");
 		}
 	} 
-	// Gacl Authorizing
+	// Gridsite authZ
 	checkGaclUserAuthZ(envFQAN, userdn);
 	GLITE_STACK_CATCH();
 }
@@ -208,7 +190,6 @@ WMPAuthorizer::mapUser()
 	edglog(debug)<<"certfqan: "<<certfqan_<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
-	// Initialising structure
 	lcmaps_init(0);
 	lcmaps_account_info_t plcmaps_account;
 	retval = lcmaps_account_info_init(&plcmaps_account);
@@ -217,6 +198,7 @@ WMPAuthorizer::mapUser()
 		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
 		"LCMAPS info initialization failure");
 	}
+
 	// Send user mapping request to LCMAPS
 	int mapcounter = 0; // single mapping result
 	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
@@ -274,6 +256,12 @@ WMPAuthorizer::mapUser()
 	}
 	this->mapdone = true;
 	GLITE_STACK_CATCH();
+}
+
+void
+WMPAuthorizer::argus_AuthZ(string const& fqan, string const& dn)
+{
+wmputilities::getEndpoint()
 }
 
 void
@@ -413,20 +401,16 @@ try {
         
 	// checks exec permission
 	if (!exec) {
-		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
 		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 			"checkGaclUserAuthZ()",
 			wmputilities::WMS_AUTHORIZATION_ERROR,
 			"Authorization error: user not authorized");
-		//LCAS CHECK }
 	}
 	GLITE_STACK_CATCH();
 } catch (wmputilities::GaclException &exc){
-  //LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
   string errmsg = "User not authorized:\n";
   errmsg += exc.what();
   throw wmputilities::GaclException(__FILE__, __LINE__, "checkGaclUserAuthZ()", wmputilities::WMS_GACL_FILE, errmsg);
-  //LCAS CHECK }
 }
 
 void
@@ -441,7 +425,6 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 		
 		// Creates a gacl file in the job directory
 		authorizer::WMPgaclPerm permission =
-			authorizer::GaclManager::WMPGACL_READ |
 			authorizer::GaclManager::WMPGACL_LIST |
 			authorizer::GaclManager::WMPGACL_WRITE |
 			authorizer::GaclManager::WMPGACL_READ;
@@ -510,7 +493,6 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 	
 	// Creates a gacl file in the job directory
 	authorizer::WMPgaclPerm permission =
-		authorizer::GaclManager::WMPGACL_READ |
 		authorizer::GaclManager::WMPGACL_LIST |
 		authorizer::GaclManager::WMPGACL_WRITE |
 		authorizer::GaclManager::WMPGACL_READ;
