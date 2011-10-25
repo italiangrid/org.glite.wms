@@ -306,7 +306,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer auth;
-	auth.authorize(wmputilities::getEnvFQAN());
+	auth.authorize();
 	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
 
 	pair<long, long> quotas;
@@ -333,7 +333,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer auth;
-	auth.authorize(wmputilities::getEnvFQAN());
+	auth.authorize();
 	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
 	
 	pair<long, long> quotas;
