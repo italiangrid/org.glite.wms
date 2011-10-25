@@ -24,16 +24,15 @@ limitations under the License.
 #include "wmpsignalhandler.h"
 
 #include "fcgios.h"
-
+#include <cxxabi.h>
+#include <execinfo.h>
 #include <signal.h>
 #include <fcgi_stdio.h>
 
-// Logging
-#include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "utilities/logging.h"
 
-// Global variable for signal handling
 extern volatile sig_atomic_t handled_signal_recv;
 
 namespace glite {
@@ -46,6 +45,69 @@ using namespace std;
 // Handler prototype
 void handler(int code);
 
+namespace {
+
+std::string
+demangle(const char* symbol) {
+  size_t size;
+  int status;
+  char temp[128];
+  char* demangled;
+  //first, try to demangle a c++ name
+  if (1 == sscanf(symbol, "%*[^(]%*[^_]%127[^)+]", temp)) {
+    if (NULL != (demangled = abi::__cxa_demangle(temp, 0, &size, &status))) {
+      std::string result(demangled);
+      free(demangled);
+      return result;
+    }
+  }
+  //if that didn't work, try to get a regular c symbol
+  if (1 == sscanf(symbol, "%127s", temp)) {
+    return temp;
+  }
+
+  //if all else fails, just return the symbol
+  return symbol;
+}
+
+void handle_synch_signal(int signum, siginfo_t* info, void* ptr) {
+  edglog_fn("handle_synch_signal");
+  std::string synch_sig_msg = "Got a synchronous signal (" +
+    boost::lexical_cast<std::string>(signum)+ "), stack trace:\n";
+
+  int const MAX_FRAME_LEN = 20;
+  void *bt[MAX_FRAME_LEN];
+  char **strings;
+  size_t sz;
+  sz = backtrace(bt, MAX_FRAME_LEN);
+  strings = backtrace_symbols(bt, sz);
+  for (unsigned int i = 0; i < sz; ++i) {
+    synch_sig_msg += demangle(strings[i])  + '\n';
+  }
+  edglog(fatal) << synch_sig_msg << std::endl;
+  exit(-1);
+}
+
+void setup_synch_signal_handler() {
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_sigaction = handle_synch_signal;
+  action.sa_flags = SA_SIGINFO; // sa_sigaction instead of sa_handler
+  int signum;
+  if(sigaction(signum = SIGSEGV, &action, NULL) < 0) {
+    Error("cannot install signal handler for signal: " << signum);
+  }
+  if(sigaction(signum = SIGABRT, &action, NULL) < 0) {
+    Error("cannot install signal handler for signal: " << signum);
+  }
+  if(sigaction(signum = SIGILL, &action, NULL) < 0) {
+    Error("cannot install signal handler for signal: " << signum);
+  }
+  if(sigaction(signum = SIGFPE, &action, NULL) < 0) {
+    Error("cannot install signal handler for signal: " << signum);
+  }
+}
+
 typedef void handler_func(int);
 void install_signal(int signo, handler_func* func)
 {
@@ -56,9 +118,13 @@ void install_signal(int signo, handler_func* func)
   sigaction(signo, &act, &old_act);
 }
 
+} // anonymous namespace
+
 void
 initsignalhandler()
 {
+  setup_synch_signal_handler();
+
   install_signal(SIGUSR1, handler);
   install_signal(SIGPIPE, SIG_IGN);
   install_signal(SIGTERM, handler);
@@ -68,7 +134,7 @@ initsignalhandler()
   install_signal(SIGUSR1, handler);
   install_signal(SIGQUIT, handler);
 
-	handled_signal_recv = 0;
+  handled_signal_recv = 0;
 }
 
 void handler(int code) {
