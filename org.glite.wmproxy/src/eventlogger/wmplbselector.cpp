@@ -37,8 +37,10 @@ limitations under the License.
 // File Lock
 #include "utilities/wmputils.h"
 
+#ifdef USE_RESOURCE_DISCOVERY_API_C
 // Service Discovery
 #include "ServiceDiscovery.h"
+#endif
 
 // Ad
 #include "glite/jdl/Ad.h"
@@ -561,6 +563,9 @@ WMPLBSelector::callServiceDiscovery()
 	GLITE_STACK_TRY("callServiceDiscovery()");
 	edglog_fn("WMPLBSelector::callServiceDiscovery");
 	vector<string> returnvector;
+
+#ifdef USE_RESOURCE_DISCOVERY_API_C
+
 	if (this->lbsdtype != "") {
 		SDServiceList *serviceList = NULL;
 		SDException ex;
@@ -587,6 +592,12 @@ WMPLBSelector::callServiceDiscovery()
 	} else {
 		edglog(warning)<<"Service Discovery type is empty"<<endl;
 	}
+#else
+
+        edglog(warning)<<"Service Discovery is disabled"<<endl;
+
+#endif
+
 	return returnvector;
 	GLITE_STACK_CATCH();
 }

@@ -120,8 +120,6 @@ PKG_CHECK_MODULES(GLITE_WMS_PURGER, wms-purger, ,AC_MSG_ERROR(["WMS_PURGER not f
 
 PKG_CHECK_MODULES(ARGUS_PEP_API_C, libargus-pep, , AC_MSG_ERROR(["ARGUS_PEP_API_C not found"]))
 
-PKG_CHECK_MODULES(GLITE_SERVICE_DISCOVERY_API_C, service-discovery-api-c, , AC_MSG_ERROR(["SERVICE_DISCOVERY not found"]))
-
 # Configuration items
 AC_PREFIX_DEFAULT([/usr])
 AM_CONFIG_HEADER([src/autogen/config.h])
