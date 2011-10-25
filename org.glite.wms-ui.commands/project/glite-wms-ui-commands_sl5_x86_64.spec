@@ -8,8 +8,7 @@ Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch:
-BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath
-BuildRequires: %{!?extbuilddir: glite-service-discovery-api-c-devel,} libtool
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, libtool
 BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp, glite-jdl-api-cpp-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-lb-client, glite-wms-ui-api-python,} libtar-devel, zlib-devel

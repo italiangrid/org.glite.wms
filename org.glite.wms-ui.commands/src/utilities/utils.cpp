@@ -62,8 +62,11 @@ limitations under the License.
 #define local
 #define CHUNK 16384
 #include <sys/mman.h>
+
+#ifdef USE_RESOURCE_DISCOVERY_API_C
 // Service Discovery
 #include "ServiceDiscovery.h"
+#endif
 
 // Voms implementation
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
@@ -657,6 +660,9 @@ std::vector<std::string> Utils::getWmps(){
 */
 std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const string &vo){
 	std::vector<std::string> foundServices ;
+
+#ifdef USE_RESOURCE_DISCOVERY_API_C
+
 	SDServiceList *serviceList=NULL;
 	SDException ex;
 	SDVOList *vos = NULL;
@@ -743,6 +749,10 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 			ex.reason);
 		}
 	}
+
+#else
+        logInfo->print (WMS_WARNING, "Service Discovery is disabled", "", true, true);
+#endif
 	return foundServices;
 }
 
