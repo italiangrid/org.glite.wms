@@ -13,13 +13,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS, 
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 See the License for the specific language governing permissions and 
-limitations under the License.
-*/
-
-//
-// File: wmpvomsauthz.h
-// Author: Giuseppe Avellino <egee@datamat.it>
-//
+limitations under the License.  */
 
 #ifndef GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
 #define GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
@@ -33,11 +27,7 @@ limitations under the License.
 #define __THROW
 #endif
 #include "server/wmpresponsestruct.h"
-
-// API VOMS
-extern "C" {
-	#include "voms/voms_apic.h"
-}
+#include "voms/voms_api.h"
 
 namespace glite {
 namespace wms {
@@ -47,18 +37,18 @@ namespace authorizer {
 class VOMSAuthN {
 public:
 	
-	VOMSAuthN(const std::string &proxypath);
-	virtual ~VOMSAuthN();
+	VOMSAuthN(std::string const& proxypath);
+	~VOMSAuthN();
 	bool hasVOMSExtension();
-	char* getDN();
+	std::string getDN();
 	std::string getDefaultFQAN();
 	std::vector<std::string> getFQANs();
 	VOProxyInfoStructType* getDefaultVOProxyInfo();
 	ProxyInfoStructType* getProxyInfo();
 private:
-	int parseVoms(char* proxypath);
 	X509* cert_;
-	struct vomsdata* data_;
+	vomsdata data_;
+	voms* defaultvoms_;
 };
 
 } // namespace authorizer

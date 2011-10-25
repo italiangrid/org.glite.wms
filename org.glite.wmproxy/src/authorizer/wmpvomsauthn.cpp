@@ -42,6 +42,7 @@ using namespace std;
 using namespace glite::wms::wmproxy::utilities;
 
 VOMSAuthN::VOMSAuthN(const string &proxypath)
+	: cert_(0), defaultvoms_(0)
 {
 	GLITE_STACK_TRY("parseVoms()");
 	
