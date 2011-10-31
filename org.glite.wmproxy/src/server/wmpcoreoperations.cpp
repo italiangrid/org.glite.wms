@@ -89,7 +89,7 @@ limitations under the License.
 // Authorizer
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
-#include "authorizer/wmpvomsauthz.h"
+#include "authorizer/wmpvomsauthn.h"
 
 
 // Global variables for configuration
@@ -385,25 +385,23 @@ edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 // complicate checkSecurity: TODO
 // - delegatedproxy, delegatedproxyfqan, auth  needed/reused
 
-//** Authorizing user
-edglog(debug)<<"Authorizing user..."<<endl;
-authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
-
 // Getting delegated proxy from SSL Proxy cache
-string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+string delegatedproxy = getDelegatedProxyPath(delegation_id);
 edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
+
+authorizer::WMPAuthorizer auth(delegatedproxy);
 
 authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 if (vomsproxy.hasVOMSExtension()) {
-	auth->authorize(delegatedproxyfqan);
+	auth.authorize(delegatedproxyfqan);
 } else {
-	auth->authorize();
+	auth.authorize();
 }
 
 // GACL Authorizing
 edglog(debug)<<"Checking for drain..."<<endl;
-if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+if ( authorizer::checkJobDrain ( ) ) {
 	edglog(error)<<"Unavailable service (the server is temporarily drained)"
 		<<endl;
 	throw AuthorizationException(__FILE__, __LINE__,
@@ -414,15 +412,11 @@ if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 }
 
 // Checking proxy validity
-authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+authorizer::checkProxy(delegatedproxy);
 
 jobregister(jobRegister_response, jdl, delegation_id, delegatedproxy,
-	delegatedproxyfqan, auth);
+	delegatedproxyfqan, &auth);
 
-// Release Memory
-if (auth) {
-	delete auth;
-}
 edglog(debug)<<"Registered successfully"<<endl;
 
 GLITE_STACK_CATCH();
@@ -517,7 +511,7 @@ if (jobids.size()) {
 	    }
 	}
 	// Creating gacl file in the private job directory
-	authorizer::WMPAuthorizer::setJobGacl(jobids);
+	authorizer::setJobGacl(jobids);
 }
 
 GLITE_STACK_CATCH();
@@ -598,7 +592,7 @@ string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
 wmputilities::fileCopy(delegatedproxy, proxybak);
 
 // Creating gacl file in the private job directory
-authorizer::WMPAuthorizer::setJobGacl(jobid);
+authorizer::setJobGacl(jobid);
 
 // Creating sub jobs directories
 if (jobids.size()) {
@@ -1095,10 +1089,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	// string delegatedproxy= wmputilities::getJobDelegatedProxyPath(*jid);
 
 
-	//** Authorizing user
-	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
-
 	// Checking job existency (if the job directory doesn't exist:
 	// The job has not been registered from this Workload Manager Proxy
 	// or it has been purged)
@@ -1107,18 +1097,19 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	authorizer::WMPAuthorizer auth(delegatedproxy);
 
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::checkProxyExistence(delegatedproxy, job_id);
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+		auth.authorize(vomsproxy.getDefaultFQAN(), job_id);
 	} else {
-		auth->authorize("", job_id);
+		auth.authorize("", job_id);
 	}
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+	if ( authorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
 	    	"wmpcoreoperations::jobStart()", wmputilities::WMS_AUTHORIZATION_ERROR,
@@ -1139,7 +1130,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 
 	// Checking proxy validity
 	try {
-		authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+		authorizer::checkProxy(delegatedproxy);
 	} catch (JobOperationException &ex) {
 		if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
 			wmplogger.setSequenceCode(EDG_WLL_SEQ_ABORT);
@@ -1187,9 +1178,8 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 
 	Ad tempad;
 	tempad.fromFile(jdlpath);
-	submit(tempad.toString(), jid, auth, wmplogger);
+	submit(tempad.toString(), jid, &auth, wmplogger);
 
-	delete auth;
 	delete jid;
 
 	GLITE_STACK_CATCH();
@@ -2045,25 +2035,25 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	// complicate checkSecurity: TODO
 	// - delegatedproxy, delegatedproxyfqan, auth  needed/reused
-	//** Authorizing user
-	edglog(debug)<<"Authorizing user..."<<endl;
-	boost::scoped_ptr<authorizer::WMPAuthorizer> auth(new authorizer::WMPAuthorizer());
+
+	edglog(debug)<< "VOMS provided DN: " << vomsproxy.getDN() << std::endl;
 
 	// Getting delegated proxy inside job directory
-	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+	string delegatedproxy = getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
+	authorizer::WMPAuthorizer auth(delegatedproxyfqan);;
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(delegatedproxyfqan);
+		auth.authorize(delegatedproxyfqan);
 	} else {
-		auth->authorize();
+		auth.authorize();
 	}
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+	if ( authorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
@@ -2074,12 +2064,12 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	}
 
 	// Checking proxy validity
-	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+	authorizer::checkProxy(delegatedproxy);
 
 	// Registering the job for submission
 	jobRegisterResponse jobRegister_response;
 	pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
-		delegation_id, delegatedproxy, delegatedproxyfqan, auth.get());
+		delegation_id, delegatedproxy, delegatedproxyfqan, &auth);
 
 	// Getting job identifier from register response
 	string jobid = reginfo.first;
@@ -2127,7 +2117,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		}
 	}
 
-	submit(reginfo.second, jid.get(), auth.get(), wmplogger, true);
+	submit(reginfo.second, jid.get(), &auth, wmplogger, true);
 	GLITE_STACK_CATCH();
 }
 
@@ -2160,28 +2150,22 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
 
         edglog(debug)<<"JSDL to Submit:\n"<<jdl<<endl;
 
-
-        // complicate checkSecurity: TODO
-        // - delegatedproxy, delegatedproxyfqan, auth  needed/reused
-        //** Authorizing user
-        edglog(debug)<<"Authorizing user..."<<endl;
-        authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
-
         // Getting delegated proxy inside job directory
-        string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+        string delegatedproxy = getDelegatedProxyPath(delegation_id);
         edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
+        authorizer::WMPAuthorizer auth(delegatedproxy);
 
         authorizer::VOMSAuthN vomsproxy(delegatedproxy);
         string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
         if (vomsproxy.hasVOMSExtension()) {
-                auth->authorize(delegatedproxyfqan);
+                auth.authorize(delegatedproxyfqan);
         } else {
-                auth->authorize();
+                auth.authorize();
         }
 
         // GACL Authorizing
         edglog(debug)<<"Checking for drain..."<<endl;
-        if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+        if ( authorizer::checkJobDrain ( ) ) {
                 edglog(error)<<"Unavailable service (the server is temporarily drained)"
                         <<endl;
                 throw AuthorizationException(__FILE__, __LINE__,
@@ -2192,11 +2176,11 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         }
 
         // Checking proxy validity
-        authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+        authorizer::checkProxy(delegatedproxy);
         // Registering the job for submission
         jobRegisterResponse jobRegister_response;
         pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
-                delegation_id, delegatedproxy, delegatedproxyfqan, auth);
+                delegation_id, delegatedproxy, delegatedproxyfqan, &auth);
 
 
         // Getting job identifier from register response
@@ -2244,13 +2228,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
                         soap_send_fault(soap);
                 }
         }
-
-        submit(reginfo.second, jid, auth, wmplogger, true);
-
-        if (auth) {
-                delete auth;
-        }
-        delete jid;
+        submit(reginfo.second, jid, &auth, wmplogger, true);
 
         GLITE_STACK_CATCH();
 }
@@ -2418,7 +2396,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		ad->setLocalAccess(false);
 
 		// Getting delegated proxy from SSL Proxy cache
-		string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+		string delegatedproxy = getDelegatedProxyPath(delegation_id);
 		edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
 		// Setting VIRTUAL_ORGANISATION attribute
@@ -2511,27 +2489,23 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 
 	edglog(debug)<<"JDL to find Match:\n"<<jdl<<endl;
 
-	// Authorizing user
-	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
-
 	// Getting delegated proxy from SSL Proxy cache
-	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+	string delegatedproxy = getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
+	authorizer::WMPAuthorizer auth(delegatedproxy);
 
 	string delegatedproxyfqan = "";
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
 		delegatedproxyfqan = vomsproxy.getDefaultFQAN();
-		auth->authorize(delegatedproxyfqan);
+		auth.authorize(delegatedproxyfqan);
 	} else {
-		auth->authorize();
+		auth.authorize();
 	}
-	delete auth;
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+	if ( authorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
@@ -2542,7 +2516,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	}
 
 	// Checking proxy validity
-	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+	authorizer::checkProxy(delegatedproxy);
 	listmatch(jobListMatch_response, jdl, delegation_id, delegatedproxyfqan);
 	GLITE_STACK_CATCH();
 }
@@ -2593,7 +2567,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 		string userkey;
 		bool isproxyfile = false;
 		try {
-			authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+			authorizer::checkProxy(delegatedproxy);
 
 			// Creating temporary Proxy file
 			char time_string[20];
@@ -2679,10 +2653,6 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 
 	JobId *jobid = new JobId(jid);
 
-	//** Authorizing user
-	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth =
-		new authorizer::WMPAuthorizer();
 
 	// Checking job existency (if the job directory doesn't exist:
 	// The job has not been registered from this Workload Manager Proxy
@@ -2692,15 +2662,15 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	authorizer::WMPAuthorizer auth(delegatedproxy);
 
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+	authorizer::checkProxyExistence(delegatedproxy, jid);
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
+		auth.authorize(vomsproxy.getDefaultFQAN(), jid);
 	} else {
-		auth->authorize("", jid);
+		auth.authorize("", jid);
 	}
-	delete auth;
 
 	if (wmputilities::isOperationLocked(
 			wmputilities::getGetOutputFileListLockFilePath(*jobid))) {

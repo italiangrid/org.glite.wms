@@ -13,13 +13,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-//
-// File: wmpauthorizer.cpp
-// Author: Giuseppe Avellino <egee@datamat.it>
-//
+limitations under the License. */
 
 #include <iostream>
 #include <pwd.h> // to build on IA64
@@ -71,6 +65,8 @@ namespace wmputilities = glite::wms::wmproxy::utilities;
 using namespace glite::wmsutils::exception;
 namespace logger = glite::wms::common::logger;
 
+namespace {
+
 // Job Directories
 const char* WMPAuthorizer::INPUT_SB_DIRECTORY = "input";
 const char* WMPAuthorizer::OUTPUT_SB_DIRECTORY = "output";
@@ -84,6 +80,8 @@ const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
 const std::string FQAN_FIELDS[ ]  = { "vo", "group", "group", "role", "capability"};
 const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
+
+}
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
@@ -100,7 +98,7 @@ WMPAuthorizer::getUserName()
 	if (!mapdone) {
 		mapUser();
 	}
-	return this->username;
+	return username;
 	GLITE_STACK_CATCH();
 }
 
@@ -111,7 +109,7 @@ WMPAuthorizer::getUserId()
 	if (!mapdone) {
 		mapUser();
 	}
-	return this->userid;
+	return userid;
 	GLITE_STACK_CATCH();
 }
 
@@ -122,7 +120,7 @@ WMPAuthorizer::getUserGroup()
 	if (!mapdone) {
 		mapUser();
 	}
-	return this->usergroup;
+	return usergroup;
 	GLITE_STACK_CATCH();
 }
 
@@ -134,10 +132,9 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 
 	string userdn = string(wmputilities::getUserDN());
 	if (jobid != "") {
-		// Checking job owner
+		// need to get the FQANs from the VOMS APIs
 		string userproxypath = wmputilities::getJobDelegatedProxyPath(jobid);
-		// TODO change it to do check depending on the server operation requested:
-		// i.e. jobCancel check for write, getOutputFileList check for list/read
+		// only one action: no check for write, listr or read
 		string gaclfile = wmputilities::getJobDirectoryPath(jobid) + "/"
 			+ GaclManager::WMPGACL_DEFAULT_FILE;
 		edglog(debug)<<"Job gacl file: "<<gaclfile<<endl;
@@ -158,13 +155,25 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 			throw ex;
 		}
 	}
-	// VOMS authN
-	string envFQAN = wmputilities::getEnvFQAN(); // taken from gridsite
+
+	string envFQANs;
+	if (!userproxypath_.empty()) {
+        	VOMSAuthN authn(userproxypath_);
+		envFQANs = authn.getFQANs();
+	} else if (!jobid.empty()) {
+        	VOMSAuthN authn(userproxypath);
+		envFQANs = authn.getFQANs();
+	} else {
+		// use the fucking gridsite auri
+		envFQANs.push_back(authn.getEnvFQAN());
+	}
+
 	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
 	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
+//if (gridsite)
 	if (certfqan != "") {
 		certfqan_ = certfqan;
-		if (!compareFQANAuthN(certfqan, envFQAN)) {
+		if (!compareFQANAuthN(certfqan, envFQANs.front())) {
 			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    		"Client proxy FQAN (" + envFQAN +
@@ -173,7 +182,9 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 		}
 	} 
 	// Gridsite authZ
-	checkGaclUserAuthZ(envFQAN, userdn);
+	checkGaclUserAuthZ(envFQANs.front(), userdn);
+//else if (argus)
+
 	GLITE_STACK_CATCH();
 }
 
@@ -182,7 +193,7 @@ WMPAuthorizer::mapUser()
 {
 	GLITE_STACK_TRY("mapUser()");
 	edglog_fn("WMPAuthorizer::mapUser");
-	this->mapdone = false;
+	mapdone = false;
 	int retval;
 	struct passwd * user_info = NULL;
 	char * user_dn = wmputilities::getUserDN();
@@ -224,11 +235,11 @@ WMPAuthorizer::mapUser()
 	}
 
 	// Getting username from uid
-	this->userid = plcmaps_account.uid;
-	user_info = getpwuid(this->userid);
+	userid = plcmaps_account.uid;
+	user_info = getpwuid(userid);
 	if (user_info == NULL) {
 		edglog(error)<<"LCMAPS: Unkwonwn uid "
-			<< this->userid << endl;
+			<< userid << endl;
 		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 			"getpwuidn()",wmputilities::WMS_USERMAP_ERROR,
 			"LCMAPS could not find the username related to uid");
@@ -244,9 +255,9 @@ WMPAuthorizer::mapUser()
 			" of user running server\n(please contact server administrator)");
 	}
 	// Setting value for username private member
-	this->username = string(user_info->pw_name);
+	username = string(user_info->pw_name);
 	// Setting value for usergroup private member
-	this->usergroup = user_info->pw_gid;
+	usergroup = user_info->pw_gid;
 	// Cleaning structure
 	retval = lcmaps_account_info_clean(&plcmaps_account);
 	if (retval) {
@@ -254,7 +265,7 @@ WMPAuthorizer::mapUser()
 			"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
 			"LCMAPS info clean failure");
 	}
-	this->mapdone = true;
+	mapdone = true;
 	GLITE_STACK_CATCH();
 }
 
@@ -522,7 +533,7 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 }
 
 bool 
-WMPAuthorizer::checkJobDrain()
+checkJobDrain()
 {
 	GLITE_STACK_TRY("checkJobDrain");
 	edglog_fn("WMPAuthorizer::checkJobDrain");
@@ -710,7 +721,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 }
 
 bool
-WMPAuthorizer::compareDN(char * dn1, char * dn2)
+compareDN(char * dn1, char * dn2)
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareDN");
@@ -746,7 +757,7 @@ WMPAuthorizer::compareDN(char * dn1, char * dn2)
 }
 
 bool
-WMPAuthorizer::compareFQAN (const string &ref, const string &in )
+compareFQAN (const string &ref, const string &in )
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareFQAN");
@@ -913,7 +924,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 
 
 bool
-WMPAuthorizer::compareFQANAuthN (const string &ref, const string &in )
+compareFQANAuthN (const string &ref, const string &in )
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_TRY("compareFQAN");
@@ -1091,8 +1102,8 @@ WMPAuthorizer::compareFQANAuthN (const string &ref, const string &in )
 
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-const long
-WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
+long
+getProxyTimeLeft(const string &pxfile)
 {
 	GLITE_STACK_TRY("getProxyTimeLeft");
 	edglog_fn("WMPAuthorizer::getProxyTimeLeft");
@@ -1137,8 +1148,8 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 }
 
 
-const long 
-WMPAuthorizer::getNotBefore(const string &pxfile)
+long 
+getNotBefore(const string &pxfile)
 {
 	GLITE_STACK_TRY("getNotBefore()");
 	edglog_fn("WMPAuthorizer::getNotBefore");
@@ -1182,7 +1193,7 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
 }
 
 void
-WMPAuthorizer::checkProxy(const string &proxy)
+checkProxy(const string &proxy)
 {
 	GLITE_STACK_TRY("checkProxy()");
 	edglog_fn("WMPAuthorizer::checkProxy");
@@ -1217,7 +1228,7 @@ WMPAuthorizer::checkProxy(const string &proxy)
 }
 
 void
-WMPAuthorizer::checkProxyExistence(const string &userproxypath, const string &jobid)
+checkProxyExistence(const string &userproxypath, const string &jobid)
 {
 	GLITE_STACK_TRY("checkProxyExistence()");
 	edglog_fn("WMPAuthorizer::checkProxyExistence");

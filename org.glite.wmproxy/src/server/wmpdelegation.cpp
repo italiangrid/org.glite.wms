@@ -1,5 +1,4 @@
-/*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+/* Copyright (c) Members of the EGEE Collaboration. 2004. 
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.  
 
@@ -13,30 +12,15 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS, 
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 See the License for the specific language governing permissions and 
-limitations under the License.
-*/
-
-//
-// File: wmpdelegation.cpp
-// Author: Giuseppe Avellino <egee@datamat.it>
-//
+limitations under the License.  */
 
 #include <string>
 #include <iostream>
-
-// boost
 #include <boost/lexical_cast.hpp>
 
-#include "wmpdelegation.h"
-
-// Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-
-// Common utility methods
-#include "utilities/wmputils.h" // getUserDN()
-
-// Logger
+#include "utilities/wmputils.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
@@ -51,27 +35,27 @@ namespace wms {
 namespace wmproxy {
 namespace server {
 
-const char * WMPDelegation::GRST_PROXYCACHE = "proxycache";
-const char * WMPDelegation::DOCUMENT_ROOT = "DOCUMENT_ROOT";
+const char* GRST_PROXYCACHE = "proxycache";
+const char* DOCUMENT_ROOT = "DOCUMENT_ROOT";
 
 // gLite environment variables
-const char * GLITE_LOCATION = "GLITE_LOCATION";
-const char * GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
+const char* GLITE_LOCATION = "GLITE_LOCATION";
+const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 // This Number will follow loaded DELEGATION interface wsdl version
 const std::string DELEGATION_VERSION_NUMBER= "2.0.0";
 const std::string DELEGATION_INTERFACE_VERSION_NUMBER= "2.0.0";
 
 using namespace std;
-using namespace glite::wms::wmproxy::server;  //Exception codes
+using namespace glite::wms::wmproxy::server;
 
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 
 string
-WMPDelegation::getProxyDir()
+getProxyDir()
 {
 	GLITE_STACK_TRY("getProxyDir()");
-	edglog_fn("WMPDelegation::getProxyDir");
+	edglog_fn("getProxyDir");
 
 	char * docroot = getenv(DOCUMENT_ROOT);
 	if (!docroot) {
@@ -97,10 +81,10 @@ WMPDelegation::getProxyDir()
 }
 
 string
-WMPDelegation::getProxyRequest(const string &original_delegation_id)
+getProxyRequest(const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("getProxyRequest()");
-	edglog_fn("WMPDelegation::getProxyRequest");
+	edglog_fn("getProxyRequest");
 
         // Initialise delegation_id
         string delegation_id = original_delegation_id;
@@ -139,10 +123,10 @@ WMPDelegation::getProxyRequest(const string &original_delegation_id)
 }
 
 void
-WMPDelegation::putProxy(const string &original_delegation_id, const string &proxy_req)
+putProxy(const string &original_delegation_id, const string &proxy_req)
 {
 	GLITE_STACK_TRY("putProxy()");
-	edglog_fn("WMPDelegation::putProxy");
+	edglog_fn("putProxy");
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
@@ -176,10 +160,10 @@ WMPDelegation::putProxy(const string &original_delegation_id, const string &prox
 }
 
 string
-WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
+renewProxyRequest(const std::string &original_delegation_id)
 {
 	GLITE_STACK_TRY("renewProxyRequest()");
-	edglog_fn("WMPDelegation::renewProxyRequest");
+	edglog_fn("renewProxyRequest");
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
 
@@ -198,7 +182,7 @@ WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
 	// Check Proxy Path: renewProxyRequest will only work with already existing delegated proxies
-	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+	if (!wmputilities::fileExists(getDelegatedProxyPath(delegation_id))){
 		free(user_dn);
 		edglog(critical)<<"Unable to renew Proxy request: Previous client delegated proxy not found"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -208,7 +192,7 @@ WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 		edglog(debug)<<"Previous client delegated proxy found: proceed with ProxyRequest renewal"<<endl;
 	}
 
-	char * request = NULL;
+	char* request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != 0) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
@@ -225,10 +209,10 @@ WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 }
 
 pair<string, string>
-WMPDelegation::getNewProxyRequest()
+getNewProxyRequest()
 {
 	GLITE_STACK_TRY("getNewProxyRequest()");
-	edglog_fn("WMPDelegation::getNewProxyRequest");
+	edglog_fn("getNewProxyRequest");
 	char * delegation_id ;
 #ifndef GRST_VERSION
 	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -241,9 +225,9 @@ WMPDelegation::getNewProxyRequest()
 	char * user_dn = wmputilities::getUserDN();
 
 	// Check Proxy Path
-	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+	if (!wmputilities::fileExists(getDelegatedProxyPath(delegation_id))){
 		edglog(debug)<<"Previous client delegated proxy not found: proceed with new Proxy Request"<<endl;
-	}else{
+	} else {
 #ifndef GRST_VERSION
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
                                 "getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
@@ -311,10 +295,10 @@ WMPDelegation::getNewProxyRequest()
 }
 
 void
-WMPDelegation::destroyProxy(const string &original_delegation_id)
+destroyProxy(const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("destroyProxy()");
-	edglog_fn("WMPDelegation::destroyProxy");
+	edglog_fn("destroyProxy");
 
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
@@ -334,7 +318,7 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
 	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
 
-	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+	if (!wmputilities::fileExists(getDelegatedProxyPath(delegation_id))){
 		free(user_dn);
 		edglog(critical)<<"Client delegated proxy not found: destroy Proxy not allowed"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -360,9 +344,9 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 }
 
 time_t
-WMPDelegation::getTerminationTime(const string &original_delegation_id) {
+getTerminationTime(const string &original_delegation_id) {
 	GLITE_STACK_TRY("getTerminationTime()");
-	edglog_fn("WMPDelegation::getTerminationTime");
+	edglog_fn("getTerminationTime");
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
 	// Initialise delegation_id
@@ -379,7 +363,7 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 	}
 	edglog(debug)<<"delegation ID: "<<delegation_id<<endl;
 	// Check Proxy Path
-	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+	if (!wmputilities::fileExists(getDelegatedProxyPath(delegation_id))){
 		free(user_dn);
 		edglog(critical)<<"Client delegated proxy not found: get termination time not allowed"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -416,13 +400,11 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
     GLITE_STACK_CATCH();
 }
 
-
-
 string
-WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
+getDelegatedProxyPath(const string &delegation_id)
 {
 	GLITE_STACK_TRY("getDelegatedProxyPath()");
-	edglog_fn("WMPDelegation::getDelegatedProxyPath");
+	edglog_fn("getDelegatedProxyPath");
 
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
@@ -445,25 +427,20 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	GLITE_STACK_CATCH();
 }
 
-string WMPDelegation::getDelegationInterfaceVersion()
+string getDelegationInterfaceVersion()
 {
 	GLITE_STACK_TRY("getDelegationInterfaceVersion()");
-	edglog_fn("WMPDelegation::getDelegationInterfaceVersion");
+	edglog_fn("getDelegationInterfaceVersion");
 	return DELEGATION_VERSION_NUMBER;
 	GLITE_STACK_CATCH();
 }
 
-string WMPDelegation::getDelegationVersion()
+string getDelegationVersion()
 {
 	GLITE_STACK_TRY("getDelegationVersion()");
-	edglog_fn("WMPDelegation::getDelegationVersion");
+	edglog_fn("getDelegationVersion");
 	return DELEGATION_VERSION_NUMBER;
 	GLITE_STACK_CATCH();
 }
 
-
-} // namespace server
-} // namespace wmproxy
-} // namespace wms
-} // namespace glite
-
+}}}}

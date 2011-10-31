@@ -276,7 +276,7 @@ string
 getEnvVO()
 {
 	GLITE_STACK_TRY("getEnvVO()");
-	return parseFQAN(getEnvFQAN()).front();
+	return parseFQAN(getEnvFQANs().front()).front();
 	GLITE_STACK_CATCH();
 }
 
@@ -286,6 +286,8 @@ getEnvFQANs()
 	// TODO: why not directly from VOMS?!?
 	GLITE_STACK_TRY("getEnvFQAN()");
 
+VOMSAuthN::VOMSAuthN(const string &proxypath)
+getFQANs() 
         int i = 0;
         std::string fqans;
         std::string const fqan_tag("fqan:");

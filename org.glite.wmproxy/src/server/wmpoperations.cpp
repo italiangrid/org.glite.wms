@@ -387,7 +387,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 
 			string userProxyJob =  wmputilities::getJobDelegatedProxyPath(jobid);
-			long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(userProxyJob);	
+			long timeleft = authorizer::getProxyTimeLeft(userProxyJob);	
 
 			// Setting user proxy, checks whether the user proxy is still valid
 			// switching to host proxy if the user proxy expired
@@ -601,7 +601,7 @@ getDelegationVersion(getVersionResponse &getVersion_response)
 	edglog_fn("wmpoperations::getDelegationVersion");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getDelegationVersion");
-	getVersion_response.version = WMPDelegation::getDelegationVersion();
+	getVersion_response.version = getDelegationVersion();
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
 	GLITE_STACK_CATCH();
@@ -614,7 +614,7 @@ getDelegationIntefaceVersion(getVersionResponse &getVersion_response)
 	edglog_fn("wmpoperations::getDelegationInterfaceVersion");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getDelegationInterfaceVersion");
-	getVersion_response.version = WMPDelegation::getDelegationInterfaceVersion();
+	getVersion_response.version = getDelegationInterfaceVersion();
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
 	GLITE_STACK_CATCH();
@@ -644,7 +644,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 #endif
 	
 	getProxyReq_response.request =
-		WMPDelegation::getProxyRequest(delegation_id);
+		getProxyRequest(delegation_id);
 	edglog(debug)<<"Proxy requested successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -664,7 +664,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
 
-	WMPDelegation::putProxy(delegation_id, proxy);
+	putProxy(delegation_id, proxy);
 	edglog(debug)<<"Proxy put successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -684,7 +684,7 @@ renewProxyReq(string &renewProxyReq_response,
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
 
-	renewProxyReq_response = WMPDelegation::renewProxyRequest(delegation_id);
+	renewProxyReq_response = renewProxyRequest(delegation_id);
 	edglog(debug)<<"Proxy renewed successfully"<<endl;
 
 	GLITE_STACK_CATCH();
@@ -703,7 +703,7 @@ getNewProxyReq(pair<string, string> &retpair)
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
 
-	retpair = WMPDelegation::getNewProxyRequest();
+	retpair = getNewProxyRequest();
 
 	edglog(debug)<<"found delegationID: "<<retpair.first<<endl;
 	edglog(debug)<<"found proxyRequest "<<retpair.second<<endl;
@@ -725,7 +725,7 @@ destroyProxy(const string &delegation_id)
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
 	
-	WMPDelegation::destroyProxy(delegation_id);
+	destroyProxy(delegation_id);
 	edglog(debug)<<"destroyProxy successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -745,7 +745,7 @@ getProxyTerminationTime(time_t
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
 
-	getProxyTerminationTime_response = WMPDelegation::getTerminationTime(delegation_id);
+	getProxyTerminationTime_response = getTerminationTime(delegation_id);
 	edglog(debug)<<"getProxyTerminationTime successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
@@ -885,7 +885,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		}
 		auth.authorize("", id);
 		proxy = wmputilities::getJobDelegatedProxyPath(id);
-		authorizer::WMPAuthorizer::checkProxyExistence(proxy, id);
+		authorizer::checkProxyExistence(proxy, id);
 		edglog(debug)<<"Job proxy: "<<proxy<<endl;
 	} else {
 		edglog(info)<<"Delegation Id: "<<id<<endl;
@@ -897,7 +897,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Delegation Id not valid");
 		}
-		proxy = WMPDelegation::getDelegatedProxyPath(id);
+		proxy = getDelegatedProxyPath(id);
 		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
 	authorizer::VOMSAuthN vomsproxy = authorizer::VOMSAuthN(proxy);

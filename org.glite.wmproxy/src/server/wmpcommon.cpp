@@ -16,11 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//
-// File: wmpcommon.cpp
-// Author: Giuseppe Avellino <egee@datamat.it>
-//
-
 #include "wmpcommon.h"
 
 #include <ctype.h> // isspace
@@ -104,26 +99,26 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 		throw AuthorizationException(__FILE__, __LINE__,
 			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
 			"Unable to perform authorization with both Job and Delegation identificator");
-	} else if (jid){   // wmpoperation case:
+	} else if (jid) {   // wmpoperation case:
 		checkJobDirectoryExistence(*jid);
 		// Getting delegated proxy inside job directory
 		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid->toString());
+		authorizer::checkProxyExistence(delegatedproxy, jid->toString());
 		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
 		if (vomsproxy.hasVOMSExtension()) {
 			auth.authorize(vomsproxy.getDefaultFQAN(), jid->toString());
 		} else {
 			auth.authorize("", jid->toString());
 		}
-	}else if (delegation_id){   // wmpcoreoperation case:
-		delegatedproxy = glite::wms::wmproxy::server::WMPDelegation::getDelegatedProxyPath(*delegation_id);
+	} else if (delegation_id) {   // wmpcoreoperation case:
+		delegatedproxy = glite::wms::wmproxy::server::getDelegatedProxyPath(*delegation_id);
 		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
 		if (vomsproxy.hasVOMSExtension()) {
 			auth.authorize(vomsproxy.getDefaultFQAN());
 		} else {
 			auth.authorize();
 		}
-		authorizer::WMPAuthorizer::checkProxy(delegatedproxy); // TODO always call method?
+		authorizer::checkProxy(delegatedproxy);
 	} else {
 		// Unreachable point neither jobid nor delegationid provided
 		throw AuthorizationException(__FILE__, __LINE__,
@@ -131,9 +126,9 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 			"Unable to perform authorization with no Job/Delegation identificator");
 	}
 	// GACL Authorizing (optional, only certain [important] operations require)
-	if (gaclAuthorizing){
+	if (gaclAuthorizing) {
 		edglog(debug)<<"Checking for drain..."<<endl;
-		if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+		if (authorizer::WMPAuthorizer::checkJobDrain()) {
 			edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 				throw AuthorizationException(__FILE__, __LINE__,
 				"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,

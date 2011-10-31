@@ -260,7 +260,7 @@ int GaclManager::removeEntry (const WMPgaclCredType &type,
 								if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ){
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #endif
-									found = authorizer::WMPAuthorizer::compareFQAN( rawvalue, nv->value);
+									found = authorizer::compareFQAN( rawvalue, nv->value);
 								} else{
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #endif
@@ -968,7 +968,7 @@ int GaclManager::loadCredential ( ) {
 						if (nv){
 							if (strcmp (rawname, nv->name ) == 0 ){
 								if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ){
-									found = authorizer::WMPAuthorizer::compareFQAN(nv->value, rawvalue);
+									found = authorizer::compareFQAN(nv->value, rawvalue);
 								} else {
 									if ( strcmp (rawvalue, nv->value ) == 0){
 										found = true;
