@@ -199,7 +199,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getMaxInputSandboxSize");
 	auth.authorize();
 	try {
 		getMaxInputSandboxSize_response.size =
@@ -305,7 +305,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getQuota");
 	auth.authorize();
 	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
 
@@ -332,7 +332,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getFreeQuota");
 	auth.authorize();
 	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
 	
@@ -486,7 +486,7 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getJobTemplate");
 	auth.authorize();
 
 	getJobTemplate_response.jdl =
@@ -509,7 +509,7 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getDAGTemplate");
 	auth.authorize();
 
 	getDAGTemplate_response.jdl = AdConverter::createDAGTemplate(
@@ -532,7 +532,7 @@ getCollectionTemplate(getCollectionTemplateResponse
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getCollectionTemplate");
 	auth.authorize();
 
 	getCollectionTemplate_response.jdl =
@@ -556,7 +556,7 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getIntParametricJobTemplate");
 	auth.authorize();
 	
 	getIntParametricJobTemplate_response.jdl =
@@ -580,7 +580,7 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getStringParametricJobTemplate");
 	auth.authorize();
 	
 	getStringParametricJobTemplate_response.jdl =
@@ -631,7 +631,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getProxyReq");
 	auth.authorize();
 
 #ifndef GRST_VERSION
@@ -661,7 +661,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("putProxy");
 	auth.authorize();
 
 	putProxy(delegation_id, proxy);
@@ -681,7 +681,7 @@ renewProxyReq(string &renewProxyReq_response,
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("renewProxyReq");
 	auth.authorize();
 
 	renewProxyReq_response = renewProxyRequest(delegation_id);
@@ -700,7 +700,7 @@ getNewProxyReq(pair<string, string> &retpair)
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getNewProxyReq");
 	auth.authorize();
 
 	retpair = getNewProxyRequest();
@@ -722,7 +722,7 @@ destroyProxy(const string &delegation_id)
 	
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("destroyProxy");
 	auth.authorize();
 	
 	destroyProxy(delegation_id);
@@ -742,7 +742,7 @@ getProxyTerminationTime(time_t
 	initWMProxyOperation("getProxyTerminationTime");
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getProxyTerminationTime");
 	auth.authorize();
 
 	getProxyTerminationTime_response = getTerminationTime(delegation_id);
@@ -870,7 +870,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getProxyInfo");
 	auth.authorize();
 
 	string proxy;
@@ -1263,7 +1263,7 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getTransferProtocols");
 	auth.authorize();
 
 
@@ -1293,7 +1293,7 @@ getJobStatusOp(getJobStatusResponse &getJobStatus_response, const string &job_id
 
 	// Authorizing user
 	edglog(debug)<<"Authorizing user..."<<endl;  // TODO CUSTOM authorization for JOB STATUS!!!
-	authorizer::WMPAuthorizer auth;
+	authorizer::WMPAuthorizer auth("getJobStatusOp");
 	auth.authorize();
 
 	// TODO status flag could be parametrized

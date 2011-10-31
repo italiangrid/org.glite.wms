@@ -1,5 +1,4 @@
-/*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+/* Copyright (c) Members of the EGEE Collaboration. 2004. 
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.  
 
@@ -13,7 +12,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS, 
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 See the License for the specific language governing permissions and 
-limitations under the License.  */
+limitations under the License. */
 
 #ifndef GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
 #define GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
@@ -34,12 +33,14 @@ namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
+time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 class VOMSAuthN {
 public:
 	
 	VOMSAuthN(std::string const& proxypath);
 	~VOMSAuthN();
 	bool hasVOMSExtension();
+	std::string getVO();
 	std::string getDN();
 	std::string getDefaultFQAN();
 	std::vector<std::string> getFQANs();

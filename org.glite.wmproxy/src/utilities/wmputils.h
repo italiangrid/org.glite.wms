@@ -140,8 +140,6 @@ std::string getEndpoint();
 void parseAddressPort(const std::string &addressport,
 	std::pair<std::string, int> &addresspair);
 
-
-
 /**
 * Check whether globus installed version allow DNS direct mapping
 * This method is a patch to grant correct behaviour for components using old
@@ -149,11 +147,6 @@ void parseAddressPort(const std::string &addressport,
 * return true if direct mapping is allowed
 */
 bool checkGlobusVersion();
-
-
-//
-// Job specific methods
-//
 
 /**
  * Returns the destination URI reading the protocol to use from configuration
@@ -291,34 +284,28 @@ std::vector<std::string> computeOutputSBDestURIBase(std::vector<std::string>
 std::vector<std::string> computeOutputSBDestURI(std::vector<std::string>
 	osbdesturi, const std::string &dest_uri);
 
-
-
-//
-// Proxy & Proxy info
-//
-
 /*
  * Returns the Virtual Organisation contained in the requesting client Proxy.
  * The value is got from an environment variable set by GridSite
  * @return the Virtual Organisation
  */
-std::string getEnvVO();
+std::string getGridsiteVO();
 
 /*
  * Returns the FQAN contained in the requesting client Proxy.
  * The value is got from an environment variable set by GridSite
  * @return the FQAN
  */
-std::vector<std::string> getEnvFQANs();
+std::vector<std::string> getGridsiteFQANs();
 
 /**
  * Gets the user Distinguished Name of the user. This is the DN of the request
  * environment
  * @return the user DN
  */
-char * getUserDN();
+std::string getUserDN();
 
-char * convertDNEMailAddress(char const* const dn);
+std::string convertDNEMailAddress(char const* const dn);
 
 /**
  * Parses the FQAN to get a vector containing the different elements

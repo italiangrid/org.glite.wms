@@ -26,15 +26,16 @@ limitations under the License.
 
 #include <string>
 #include <vector>
+#include <sys/types.h>
 
-#include "glite/authz/pep/xacml.h"
+#include "argus/xacml.h"
 
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
-std::pair<xacml_decision_t, std::pair< uid_t, uid_t> >
+std::pair<xacml_decision_t, std::pair<uid_t, gid_t> >
 argus_authZ(
         std::vector<std::string> pepds,
         std::vector<std::string> fqans,
@@ -44,3 +45,5 @@ argus_authZ(
 );
 
 }}}}
+
+#endif

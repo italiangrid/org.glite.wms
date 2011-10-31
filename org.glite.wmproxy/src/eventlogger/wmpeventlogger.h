@@ -76,7 +76,7 @@ class WMPEventLogger  {
 			int desturiport = 0);
 
 		// Enable/Disable/Retrieve settings for  LB Proxy
-		void setLBProxy(bool value, char * userdn = NULL);
+		void setLBProxy(bool value, std::string dn = "");
 		bool getLBProxy();
 
 		// Enable/Disable/Retrieve settings for Bulk Match Making

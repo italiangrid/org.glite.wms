@@ -18,8 +18,7 @@
 //
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/authz/pep/util/buffer.h"
-#include "glite/authz/pep/pep.h"
+#include "argus/pep.h"
 
 #include "argus_authz.h"
 
@@ -79,13 +78,13 @@ create_xacml_subject_voms_fqans(std::vector<std::string> fqans)
 	}
 
 	xacml_attribute_setdatatype(voms_fqan, XACML_DATATYPE_STRING);
-	for (int i = 0; i < fqans.size(); ++i) {
-		if (!fqans[i]) {
-			Error("NULL pointer in FQANs list at element: " << i);
+	for (unsigned int i = 0; i < fqans.size(); ++i) {
+		if (fqans[i].empty()) {
+			Error("empty FQAN in list at element: " << i);
 			xacml_subject_delete(subject);
 			return 0;
 		}
-		xacml_attribute_addvalue(voms_fqan, fqans[i]);
+		xacml_attribute_addvalue(voms_fqan, fqans[i].c_str());
 		if (i == 0) { // the first FQAN is the voms-primary-fqan
 			xacml_attribute_t* voms_primary_fqan = xacml_attribute_create(XACML_AUTHZINTEROP_SUBJECT_VOMS_PRIMARY_FQAN);
 			if (!voms_primary_fqan) {
@@ -94,7 +93,7 @@ create_xacml_subject_voms_fqans(std::vector<std::string> fqans)
 				return 0;
 			}
 			xacml_attribute_setdatatype(voms_primary_fqan, XACML_DATATYPE_STRING);
-			xacml_attribute_addvalue(voms_primary_fqan, fqan);
+			xacml_attribute_addvalue(voms_primary_fqan, fqans[i].c_str());
 			xacml_subject_addattribute(subject, voms_primary_fqan);
 		}
 	}
@@ -158,7 +157,7 @@ create_xacml_resourceid(std::string resourceid)
 
 xacml_action_t* create_xacml_actionid(std::string actionid)
 {
-	if (!actionid) {
+	if (actionid.empty()) {
 		return 0;
 	}
 	xacml_action_t* action = xacml_action_create();
@@ -173,7 +172,7 @@ xacml_action_t* create_xacml_actionid(std::string actionid)
 		return 0;
 	}
 
-	xacml_attribute_addvalue(action_attrid, actionid);
+	xacml_attribute_addvalue(action_attrid, actionid.c_str());
 	xacml_action_addattribute(action, action_attrid);
 
 	return action;
@@ -205,7 +204,7 @@ xacml_request_t* create_xacml_request(
 	return request;
 }
 
-std::pair<xacml_decision_t, std::pair< uid_t, uid_t> >
+std::pair<xacml_decision_t, std::pair< uid_t, gid_t> >
 get_response(
 	xacml_response_t* response,
 	std::string resourceid)
@@ -214,18 +213,22 @@ get_response(
 	static const char X_POSIX_ACCOUNT_MAP[]= "x-posix-account-map";
 	static std::string decision_str[] = {"deny", "permit", "indeterminate", "not applicable", "unknown"};
 
+	std::pair<xacml_decision_t, std::pair<uid_t, gid_t> > error(
+		XACML_DECISION_INDETERMINATE, std::pair<uid_t, gid_t>(0, 0));
+	std::pair<xacml_decision_t, std::pair<uid_t, gid_t> > ret(error);
 	if (!response) {
 		Error("argus: response is NULL");
-		return -1;
+		return error;
 	}
 	size_t results_l = xacml_response_results_length(response);
-	for (size_t i = 0; i < results_l; ++i) {
+	for (size_t i = 0; i < results_l; ++i) { // only the first resource is relevant here
 		xacml_result_t* result = xacml_response_getresult(response,i);
 		char const* const resourceid_recv = xacml_result_getresourceid(result);
 		if (!(resourceid_recv && std::string(resourceid_recv) == resourceid)) {
-			return -1; // only the first resource is relevant here
+			return error;
 		}
 		xacml_decision_t decision = xacml_result_getdecision(result);
+		ret.first = decision;
 		Debug("decision: " << decision_str[decision]);
 		xacml_status_t* status = xacml_result_getstatus(result);
 		xacml_statuscode_t* statuscode= xacml_status_getcode(status);
@@ -243,12 +246,12 @@ get_response(
 			Error("argus: no Obligation received, cannot map user");
 		}
 
-		std::pair<xacml_decision_t, std::pair< uid_t, uid_t> > result(decision, std::pair<uid_t, uid_t>(0,0));
-
 		for (size_t j = 0; j < obligations_l; ++j) {
 			xacml_obligation_t* obligation = xacml_result_getobligation(result, j);
-			xacml_fulfillon_t fulfillon= xacml_obligation_getfulfillon(obligation);
-			if (fulfillon == decision) {
+			//xacml_fulfillon_t fulfillon = xacml_obligation_getfulfillon(obligation);
+//        XACML_FULFILLON_DENY = 0, /**< Fulfill the Obligation on @b Deny decision */
+//        XACML_FULFILLON_PERMIT
+			//if (fulfillon == decision) {
 				char const* const obligationid = xacml_obligation_getid(obligation);
 				size_t attrs_l = xacml_obligation_attributeassignments_length(obligation);
 				if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_SECONDARY_GIDS, obligationid) && attrs_l > 0) {
@@ -266,10 +269,10 @@ get_response(
 						char const* const value = xacml_attributeassignment_getvalue(attr, l);
 						if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_UIDGID, obligationid)) {
 							if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_ATTR_POSIX_UID, attrid)) {
-								decision.second.first = value;
+								ret.second.first = atoi(value);
 								Debug("UID = " << value);
 							} else if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_ATTR_POSIX_GID, attrid)) {
-								decision.second.second = value;
+								ret.second.second = atoi(value);
 								Debug("GID = " << value);
 							}
 						} else if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_SECONDARY_GIDS, obligationid)) {
@@ -285,77 +288,77 @@ get_response(
 						}
 					}
 				}
-			}
+			//}
 		}
 
-		return decision; // returns right after the first item
+		return ret; // returns right after the first item
 	}
+	return error;
 }
 
 } // anonymous namespace
 
-// returns first = -1 on error
-std::pair<xacml_decision_t, std::pair< uid_t, uid_t> >
+std::pair<xacml_decision_t, std::pair<uid_t, gid_t> >
 argus_authZ(
-	std::vector<std::string> pepds,
+	std::vector<std::string> pepds, // endpoints
 	std::vector<std::string> fqans,
 	std::string resourceid, // only one resouce per request
 	std::string actionid,
 	std::string subjectid)
 {
-	std::pair<xacml_decision_t, std::pair<uid_t, uid_t> > error(
-		-1, std::pair<uid_t, uid_t>(0, 0)
+	std::pair<xacml_decision_t, std::pair<uid_t, gid_t> > error(
+		XACML_DECISION_INDETERMINATE, std::pair<uid_t, gid_t>(0, 0)
 	);
-	pep_error_t pep_rc = pep_initialize();
-	if (pep_rc != PEP_OK) {
-		Error("failed to init PEP client: " <<  pep_strerror(pep_rc));
-	    	pep_destroy();
+	PEP* pep = pep_initialize();
+	if (!pep) {
+		Error("failed to init PEP client");
 		return error;
 	}
 
 	// endpoint urls
+	pep_error_t pep_rc;
 	for(unsigned int i = 0; i < pepds.size(); ++i) {
-		pep_rc = pep_setoption(PEP_OPTION_ENDPOINT_URL, pepds[i].c_str());
+		pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_URL, pepds[i].c_str());
 		if (pep_rc != PEP_OK) {
-			Error("failed to set PEPd url: " << url << ": " << pep_strerror(pep_rc));
+			Error("failed to set PEPd url: " << pepds[i] << ": " << pep_strerror(pep_rc));
 		}
-	        pep_destroy();
+	        pep_destroy(pep);
 		return error;
 	}
 
-	//pep_setoption(PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_INFO); // PEP_LOGLEVEL_DEBUG
+	//pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_INFO); // PEP_LOGLEVEL_DEBUG
 
 	//int timeout = 10;
 	//Debug("setting PEP-C client timeout: " << timeout);
-	//pep_rc = pep_setoption(PEP_OPTION_ENDPOINT_TIMEOUT, timeout);
+	//pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_TIMEOUT, timeout);
 	//if (pep_rc != PEP_OK) {
 	//	Warning("failed to set PEP client timeout: " << timeout
 	//		<< ": " << pep_strerror(pep_rc));
 	//}
 
 	// no SSL validation
-	//pep_rc = pep_setoption(PEP_OPTION_ENDPOINT_SSL_VALIDATION, 0);
+	//pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_SSL_VALIDATION, 0);
 	//if (pep_rc! = PEP_OK) {
 	//	Warning("failed to disable PEPd SSL validation: " << pep_strerror(pep_rc));
 	//}
 
 	Debug("creating XACML subject for argus");
 	xacml_subject_t* subject = xacml_subject_create();
-	xacml_subject_t* subjectid = create_xacml_subjectid(subjectid);
-	if (!subjectid 
-		|| !merge_xacml_subject_attrs_into(subjectid, subject)) {
+	xacml_subject_t* subject_id = create_xacml_subjectid(subjectid);
+	if (!subject_id 
+		|| !merge_xacml_subject_attrs_into(subject_id, subject)) {
 
-	    	pep_destroy();
+	    	pep_destroy(pep);
 		return error;
 	}
 
 	xacml_subject_t* subject_voms_fqan = create_xacml_subject_voms_fqans(fqans);
         if (!subject_voms_fqan) {
-	    	pep_destroy();
+	    	pep_destroy(pep);
 		return error;
 	}
 	if (!merge_xacml_subject_attrs_into(subject_voms_fqan, subject)) {
-	    	pep_destroy();
+	    	pep_destroy(pep);
 		return error;
 	}
 
@@ -366,23 +369,24 @@ argus_authZ(
 	xacml_request_t* request = create_xacml_request(subject, resource, action);
 	if (!request) {
 		Error("failed to create XACML request");
-	    	pep_destroy();
+	    	pep_destroy(pep);
 		return error;
 	}
 
 	// submit request
 	Info("XACML request for argus");
 	xacml_response_t* response = NULL;
-	pep_rc = pep_authorize(&request, &response);
+	pep_rc = pep_authorize(pep, &request, &response);
 	if (pep_rc != PEP_OK) {
 		Error("failed to authorize XACML request: " << pep_strerror(pep_rc) << " for argus");
-	    	pep_destroy();
+	    	pep_destroy(pep);
 		return error;
 	}
 
-        xacml_decision_t decision = get_response(response, resourceid);
+	std::pair<xacml_decision_t, std::pair<uid_t, gid_t> > decision
+		= get_response(response, resourceid);
 
-	pep_destroy();
+	pep_destroy(pep);
 	xacml_request_delete(request);
 	xacml_response_delete(response);
 

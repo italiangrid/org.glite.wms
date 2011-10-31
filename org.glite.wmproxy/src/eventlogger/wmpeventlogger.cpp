@@ -175,20 +175,18 @@ bool WMPEventLogger::getBulkMM(){return m_bulkMM_b;}
 
 // LBProxy
 void
-WMPEventLogger::setLBProxy(bool value, char * userdn)
+WMPEventLogger::setLBProxy(bool value, std::string userdn)
 {
 	GLITE_STACK_TRY("setLBProxy()");
 	edglog_fn("WMPEventlogger::setLBProxy");
-	if (userdn){
+	if (!userdn.empty()){
 		// DN case patch: if  userdn is present set the converted one
-		char * temp_user_dn = wmputilities::convertDNEMailAddress(userdn);
-		userdn = strdup(temp_user_dn);
-		free(temp_user_dn);		
+		userdn = wmputilities::convertDNEMailAddress(userdn.c_str());
 	}
 	m_lbProxy_b = value;
 	if (value) {
 		edglog(debug)<<"Setting LBProxy to 'true'"<<endl;
-		if (edg_wll_SetParam(ctx_, EDG_WLL_PARAM_LBPROXY_USER, userdn)) {
+		if (edg_wll_SetParam(ctx_, EDG_WLL_PARAM_LBPROXY_USER, userdn.c_str())) {
 			edglog(critical)<<error_message("Parameter setting "
 				"EDG_WLL_PARAM_LBPROXY_USER failed\nedg_wll_SetParam")<<endl;
 		}
@@ -679,9 +677,7 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 	if (m_lbProxy_b) {
 	        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 	
-         	char * temp_user_dn = wmputilities::convertDNEMailAddress(getUserDN());
-         	string str_tmp_dn(temp_user_dn);
-                free(temp_user_dn);
+         	string str_tmp_dn = wmputilities::convertDNEMailAddress(getUserDN().c_str());
 
 		if (edg_wll_SetLoggingJobProxy(ctx_, jobid.c_jobid(), seq_code, str_tmp_dn.c_str(), EDG_WLL_SEQ_NORMAL)){
 			string msg = error_message("Set logging job failed\n"
@@ -867,7 +863,7 @@ WMPEventLogger::setUserProxy(const string &proxy)
 	// Checking proxy validity
 	if (proxy != "") {
 		try {
-			authorizer::WMPAuthorizer::checkProxy(proxy);
+			authorizer::checkProxy(proxy);
 		} catch (Exception &ex) {
 			if (ex.getCode() != wmputilities::WMS_PROXY_EXPIRED) {
 				// Problem with proxy (not expired)

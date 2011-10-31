@@ -44,7 +44,7 @@ extern "C" {
 #endif
 }
 #include "wmpgaclmanager.h"
-#include "wmpvomsauthz.h"
+#include "wmpvomsauthn.h"
 #endif  // GLITE_WMS_WMPROXY_TOOLS
 
 #include "utilities/wmputils.h"
@@ -67,13 +67,8 @@ namespace logger = glite::wms::common::logger;
 
 namespace {
 
-// Job Directories
-const char* WMPAuthorizer::INPUT_SB_DIRECTORY = "input";
-const char* WMPAuthorizer::OUTPUT_SB_DIRECTORY = "output";
-const char* WMPAuthorizer::PEEK_DIRECTORY = "peek";
-const char* WMPAuthorizer::DOCUMENT_ROOT = "DOCUMENT_ROOT";
-const string WMPAuthorizer::VOMS_GACL_FILE = "glite_wms_wmproxy.gacl";
-const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
+#define DOCUMENT_ROOT "DOCUMENT_ROOT"
+std::string const GACL_FILE("glite_wms_wmproxy.gacl");
 #endif
 
 // FQAN strings
@@ -85,8 +80,12 @@ const std::string FQAN_NULL = "null";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-WMPAuthorizer::WMPAuthorizer(char const* lcmaps_logfile)
-: userid(0), usergroup(0), mapdone(false)
+WMPAuthorizer::WMPAuthorizer(std::string const& action)
+: userid(0), usergroup(0), mapdone(false), action_(action)
+{ }
+
+WMPAuthorizer::WMPAuthorizer(std::string const& action, std::string const& userproxypath)
+: userid(0), usergroup(0), mapdone(false), action_(action), userproxypath_(userproxypath)
 { }
 
 WMPAuthorizer::~WMPAuthorizer() {}
@@ -132,8 +131,6 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 
 	string userdn = string(wmputilities::getUserDN());
 	if (jobid != "") {
-		// need to get the FQANs from the VOMS APIs
-		string userproxypath = wmputilities::getJobDelegatedProxyPath(jobid);
 		// only one action: no check for write, listr or read
 		string gaclfile = wmputilities::getJobDirectoryPath(jobid) + "/"
 			+ GaclManager::WMPGACL_DEFAULT_FILE;
@@ -156,31 +153,30 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 		}
 	}
 
-	string envFQANs;
+	vector<string> envFQANs;
 	if (!userproxypath_.empty()) {
         	VOMSAuthN authn(userproxypath_);
 		envFQANs = authn.getFQANs();
 	} else if (!jobid.empty()) {
-        	VOMSAuthN authn(userproxypath);
+        	VOMSAuthN authn(wmputilities::getJobDelegatedProxyPath(jobid));
 		envFQANs = authn.getFQANs();
 	} else {
-		// use the fucking gridsite auri
-		envFQANs.push_back(authn.getEnvFQAN());
+		// use the fucking gridsite auri TODO
+		envFQANs = wmputilities::getGridsiteFQANs();
 	}
 
-	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
-	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
+// TODO
 //if (gridsite)
-	if (certfqan != "") {
-		certfqan_ = certfqan;
-		if (!compareFQANAuthN(certfqan, envFQANs.front())) {
-			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    		"Client proxy FQAN (" + envFQAN +
-				") does not match delegated proxy FQAN ("
-				+ certfqan + ")");
-		}
-	} 
+	//if (certfqan != "") {
+	//	fqan_ = certfqan;
+	//	if (!compareFQANAuthN(certfqan, envFQANs.front())) {
+	//		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+	//	    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+	//	    		"Client proxy FQAN (" + envFQAN +
+	//			") does not match delegated proxy FQAN ("
+	//			+ certfqan + ")");
+	//	}
+	//} 
 	// Gridsite authZ
 	checkGaclUserAuthZ(envFQANs.front(), userdn);
 //else if (argus)
@@ -196,9 +192,8 @@ WMPAuthorizer::mapUser()
 	mapdone = false;
 	int retval;
 	struct passwd * user_info = NULL;
-	char * user_dn = wmputilities::getUserDN();
 
-	edglog(debug)<<"certfqan: "<<certfqan_<<endl;
+	edglog(debug)<<"certfqan: "<<fqan_<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
 	lcmaps_init(0);
@@ -214,16 +209,15 @@ WMPAuthorizer::mapUser()
 	int mapcounter = 0; // single mapping result
 	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
 	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
-	fqan_list[0] = const_cast<char*>(certfqan_.c_str());
+	fqan_list[0] = const_cast<char*>(fqan_.c_str());
 	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
-	char * temp_user_dn = wmputilities::convertDNEMailAddress(user_dn);
-	string str_tmp_dn(temp_user_dn);
-        free(temp_user_dn);
 
-	retval = lcmaps_return_account_without_gsi((char*)str_tmp_dn.c_str(), fqan_list, fqan_num, mapcounter, &plcmaps_account);
+	string user_dn = wmputilities::getUserDN();
+	retval = lcmaps_return_account_without_gsi(const_cast<char*>(user_dn.c_str()),
+		fqan_list, fqan_num, mapcounter, &plcmaps_account);
 
 	if (retval) {
-		retval = lcmaps_return_account_without_gsi(user_dn,
+		retval = lcmaps_return_account_without_gsi(const_cast<char*>(user_dn.c_str()),
 			fqan_list, fqan_num, mapcounter, &plcmaps_account);
 		if (retval) {
 			edglog(error)<<"LCMAPS failed authorization: User "<<user_dn <<" is not authorized"<<endl;
@@ -270,12 +264,6 @@ WMPAuthorizer::mapUser()
 }
 
 void
-WMPAuthorizer::argus_AuthZ(string const& fqan, string const& dn)
-{
-wmputilities::getEndpoint()
-}
-
-void
 WMPAuthorizer::checkGaclUserAuthZ(string const& fqan, string const& dn)
 try {
 	GLITE_STACK_TRY("checkGaclUserAuthZ()");
@@ -295,18 +283,18 @@ try {
 	string gaclfile;
 	if (getenv("GLITE_WMS_CONFIG_DIR")) {
 		gaclfile = string(getenv("GLITE_WMS_CONFIG_DIR"))
-			+ '/' + WMPAuthorizer::VOMS_GACL_FILE;
+			+ '/' + GACL_FILE;
 	} else if (getenv("GLITE_LOCATION")) {
 		gaclfile = string(getenv("GLITE_LOCATION")) + "/etc/"
-			+ WMPAuthorizer::VOMS_GACL_FILE;
+			+ GACL_FILE;
 	} else if (getenv("WMS_LOCATION_ETC")) {
 		gaclfile = string(getenv("WMS_LOCATION_ETC")) + '/'
-			+ WMPAuthorizer::VOMS_GACL_FILE;
+			+ GACL_FILE;
 	} else if (getenv("WMS_LOCATION")) {
 		gaclfile = string(getenv("WMS_LOCATION")) + "/etc/"
-			+ WMPAuthorizer::VOMS_GACL_FILE;
+			+ GACL_FILE;
 	} else {
-		gaclfile = "/etc/glite-wms/" + WMPAuthorizer::VOMS_GACL_FILE;
+		gaclfile = "/etc/glite-wms/" + GACL_FILE;
 	}
 	GaclManager gacl(gaclfile);
 
@@ -425,7 +413,7 @@ try {
 }
 
 void
-WMPAuthorizer::setJobGacl(vector<string> &jobids)
+setJobGacl(vector<string> &jobids)
 {
 	GLITE_STACK_TRY("setJobGacl()");
 	edglog_fn("WMPAuthorizer::setJobGacl vector");
@@ -447,10 +435,10 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 		try {
 			authorizer::GaclManager gacl(filename, true);
 			// adds the new user credential entry
-			gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn);
+			gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn.c_str());
 			// allow permission
 			gacl.allowPermission(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
-					user_dn, permission);
+					user_dn.c_str(), permission);
 			gacl.saveGacl();
 		} catch (wmputilities::GaclException &exc) {
 			errmsg = "internal server error: unable to set the gacl user properties";
@@ -495,7 +483,7 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 }
 
 void
-WMPAuthorizer::setJobGacl(const string &jobid)
+setJobGacl(const string &jobid)
 {
 	GLITE_STACK_TRY("setJobGacl()");
 	edglog_fn("WMPAuthorizer::setJobGacl string");
@@ -515,10 +503,10 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 	try {
 		authorizer::GaclManager gacl(filename, true);
 		// adds the new user credential entry
-		gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn);
+		gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn.c_str());
 		// allow permission
 		gacl.allowPermission( authorizer::GaclManager::WMPGACL_PERSON_TYPE,
-				user_dn, permission);
+				user_dn.c_str(), permission);
 		gacl.saveGacl( );
 	} catch (wmputilities::GaclException &exc) {
 		string errmsg = "internal server error: unable to set the gacl user properties";
@@ -574,7 +562,7 @@ checkJobDrain()
  *      /VO [ /group [ /subgroup (s) ]  ]  [ /Role = Role_Value ] [ /Capability = Capability_Value]
  */
 std::vector<std::pair<std::string,std::string> >
-WMPAuthorizer::parseFQAN(const std::string &fqan)
+parseFQAN(const std::string &fqan)
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_TRY("parseFQAN");
@@ -1124,7 +1112,7 @@ getProxyTimeLeft(const string &pxfile)
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
-			timeleft = (VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notAfter(x)) - time(NULL))
+			timeleft = (ASN1_UTCTIME_get(X509_get_notAfter(x)) - time(NULL))
 				/ 60;
 			free(x);
 		} else {
@@ -1170,7 +1158,7 @@ getNotBefore(const string &pxfile)
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
 		}
-			sec = VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notBefore(x));
+			sec = ASN1_UTCTIME_get(X509_get_notBefore(x));
 			free(x);
 		} else {
 			BIO_free(in);
@@ -1200,6 +1188,7 @@ checkProxy(const string &proxy)
 
 	edglog(debug)<<"Proxy path: "<<proxy<<endl;
 	
+	static int const PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
 	time_t now = time(NULL);
 	time_t proxytime = getNotBefore(proxy);
 	double timediff = proxytime - now;

@@ -56,9 +56,9 @@ class WMPAuthorizer {
 public:
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-	WMPAuthorizer(char * lcmaps_logfile = NULL);
+	WMPAuthorizer(std::string const& operation);
+	WMPAuthorizer(std::string const& operation, std::string const& proxycert);
 	~WMPAuthorizer();
-
    
 	/**
 	* Calls Gacl to check if the user is authorized to submit requests to WMProxy. 
@@ -91,15 +91,17 @@ public:
 	*/
 	void authorize(const std::string &certfqan = "", const std::string &jobid = "");
 private:
+	void mapUser();
 	std::string username;
 	uid_t userid;
 	uid_t usergroup;
 	std::string lcmaps_logfile;
 	bool mapdone;
-	std::string certfqan_;
-	void mapUser();
+	std::string fqan_;
+	std::string action_;
+	std::string userproxypath_;
     
- #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
+#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 };
 
 } // namespace authorizer

@@ -77,10 +77,10 @@ limitations under the License.
 extern std::string sandboxdir_global;
 extern bool globusDNS_global;
 
-namespace logger		  = glite::wms::common::logger;
+namespace logger = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
-namespace jobid			  = glite::jobid;
-namespace purger          = glite::wms::purger;
+namespace jobid = glite::jobid;
+namespace purger  = glite::wms::purger;
 #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 using namespace std;
@@ -101,26 +101,18 @@ namespace utilities {
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-// Environment variable name to get User Distinguished Name
-const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
-
+const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN"; // mod_ssl env var
 const char* DOCUMENT_ROOT = "DOCUMENT_ROOT";
-
 const string INPUT_SB_DIRECTORY = "input";
 const string OUTPUT_SB_DIRECTORY = "output";
 const string PEEK_DIRECTORY = "peek";
-
-// Default name of the delegated Proxy copied inside private job directory
-const string USER_PROXY_NAME = "user.proxy";
+const string USER_PROXY_NAME = "user.proxy"; //delegated proxy copied in sandbox
 const string USER_PROXY_NAME_BAK = ".user.proxy.bak";
-
 const string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
 const string JDL_TO_START_FILE_NAME = "JDLToStart";
 const string JDL_STARTED_FILE_NAME = "JDLStarted";
-
 const string START_LOCK_FILE_NAME = ".startLockFile.lock";
 const string GET_OUTPUT_LOCK_FILE_NAME = ".getOutputLockFile.lock";
-
 const string ALL_PROTOCOLS = "all";
 const string DEFAULT_PROTOCOL = "default";
 
@@ -260,7 +252,6 @@ getJobDirectoryURIsVector(vector<pair<string, int> > allProtocols,
 vector<string>
 parseFQAN(const string &fqan)
 {
-	GLITE_STACK_TRY("parseFQAN()");
 	vector<string> returnvector;
 	boost::char_separator<char> separator("/");
 	boost::tokenizer<boost::char_separator<char> > tok(fqan, separator);
@@ -269,28 +260,23 @@ parseFQAN(const string &fqan)
 		returnvector.push_back(*token);
 	}
 	return returnvector;
-	GLITE_STACK_CATCH();
 }
 
 string
-getEnvVO()
+getGridsiteVO()
 {
-	GLITE_STACK_TRY("getEnvVO()");
-	return parseFQAN(getEnvFQANs().front()).front();
-	GLITE_STACK_CATCH();
+	return parseFQAN(getGridsiteFQANs().front()).front();
 }
 
 vector<string>
-getEnvFQANs()
+getGridsiteFQANs()
 {
 	// TODO: why not directly from VOMS?!?
 	GLITE_STACK_TRY("getEnvFQAN()");
 
-VOMSAuthN::VOMSAuthN(const string &proxypath)
-getFQANs() 
         int i = 0;
-        std::string fqans;
-        std::string const fqan_tag("fqan:");
+        vector<string> fqans;
+        static string const fqan_tag("fqan:");
         unsigned int const fqan_tag_size = std::string(fqan_tag).size();
 	char *tmp;
 	do {
@@ -304,17 +290,11 @@ getFQANs()
             grst_cred.size() > fqan_tag_size
             && grst_cred.substr(0, fqan_tag_size) == fqan_tag
           ) {
-            fqan = grst_cred.substr(fqan_tag_size);
+            fqans.push_back(grst_cred.substr(fqan_tag_size));
           }
           ++i;
         } while(!tmp);
 	
-        if (fqan.empty()) {
-          edglog(error) << "Cannot extract fqan from gridsite" << endl;
-        } else {
-          edglog(debug) << "GRIDSITE_AURI_" << i - 1 << " extracted fqan: " << fqan << endl;
-        }
-
 	return fqans;
 	GLITE_STACK_CATCH();
 }
@@ -490,7 +470,7 @@ bool checkGlobusVersion(){
  * N.B. To be removed when all components will use OpenSSL 0.9.7
  * --------------------------------------------------------------------------
  */
-char *
+string
 convertDNEMailAddress(char const* const dn)
 {
 	GLITE_STACK_TRY("convertDNEMailAddress()");
@@ -520,9 +500,7 @@ convertDNEMailAddress(char const* const dn)
 	}
 */
 	edglog(debug)<<"Converted DN: "<<newdn<<endl;
-	char * user_dn_final = strdup(newdn.c_str());
-
-	return user_dn_final;
+	return newdn;
 
 	GLITE_STACK_CATCH();
 }
@@ -865,18 +843,18 @@ getUserFreeQuota(pair<long, long>& result, string uname)
 	GLITE_STACK_CATCH();
 }
 
-char *
+std::string
 getUserDN()
 {
 	GLITE_STACK_TRY("getUserDN()");
 	edglog_fn("wmputils::getUserDN");
 	edglog(debug)<<"Getting user DN..."<<endl;
-	char* p = NULL;
-	char* client_dn = NULL;
-	char* user_dn = NULL;
+	char *p = 0;
+	char *client_dn = 0;
+	char *user_dn = 0;
 
 	client_dn = getenv(SSL_CLIENT_DN);
-	if ((client_dn == NULL) || (client_dn == '\0')) {
+	if ((client_dn == 0) || (client_dn == '\0')) {
 		edglog(debug)<<"Environment variable "<<string(SSL_CLIENT_DN)
 			<<" not correctly defined"<<endl;
 		throw ProxyOperationException(__FILE__, __LINE__,
@@ -897,9 +875,9 @@ getUserDN()
 			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
 	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
-	char* user_dn_final=strdup(   convertDNEMailAddress(user_dn)  );
+	string user_dn_final = string(convertDNEMailAddress(user_dn));
         free (user_dn);
-	edglog(debug)<<"User DN: "<<user_dn_final<<endl;
+	edglog(debug) << "User DN: " << user_dn_final << endl;
 	return user_dn_final;
 	GLITE_STACK_CATCH();
 }

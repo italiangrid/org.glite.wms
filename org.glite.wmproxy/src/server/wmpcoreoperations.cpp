@@ -150,27 +150,6 @@ namespace eventlogger    = glite::wms::wmproxy::eventlogger;
 namespace configuration  = glite::wms::common::configuration;
 namespace wmsutilities   = glite::wms::common::utilities;
 
-/* Common Methods:  */
-
-/* WMP Logger Initializer
-* Perform ALL common operation to WMPEvent Logger
-* NB: may me moved to WMPeventLogger::init TODO
-*/
-void WMPEventLoggerInitializer(WMPEventLogger &wmplogger, std::pair<std::string, int> &lbaddress_port, JobId *jid, const string &delegatedproxy){
-// WMPEventLogger wmplogger(wmputilities::getEndpoint());
-lbaddress_port = conf.getLBLocalLoggerAddressPort();
-wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-conf.getDefaultProtocol(), conf.getDefaultPort());
-edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
-edglog(debug)<<"LB Port: "<<
-	boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
-wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-wmplogger.setUserProxy(delegatedproxy);
-}
-
-
-
-// "private" methods prototypes
 pair<string, string> jobregister(jobRegisterResponse &jobRegister_response,
 const string &jdl, const string &delegation_id,
 const string &delegatedproxy, const string &delegatedproxyfqan,
@@ -389,7 +368,7 @@ edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 string delegatedproxy = getDelegatedProxyPath(delegation_id);
 edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
-authorizer::WMPAuthorizer auth(delegatedproxy);
+authorizer::WMPAuthorizer auth("jobRegister", delegatedproxy);
 
 authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
@@ -1097,7 +1076,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	authorizer::WMPAuthorizer auth(delegatedproxy);
+	authorizer::WMPAuthorizer auth("jobStart", delegatedproxy);
 
 	authorizer::checkProxyExistence(delegatedproxy, job_id);
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
@@ -2033,9 +2012,6 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	edglog(debug)<<"JDL to Submit:\n"<<jdl<<endl;
 
 
-	// complicate checkSecurity: TODO
-	// - delegatedproxy, delegatedproxyfqan, auth  needed/reused
-
 	edglog(debug)<< "VOMS provided DN: " << vomsproxy.getDN() << std::endl;
 
 	// Getting delegated proxy inside job directory
@@ -2044,7 +2020,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
 	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
-	authorizer::WMPAuthorizer auth(delegatedproxyfqan);;
+	authorizer::WMPAuthorizer auth("jobSubmit"; delegatedproxyfqan);
 	if (vomsproxy.hasVOMSExtension()) {
 		auth.authorize(delegatedproxyfqan);
 	} else {
@@ -2153,7 +2129,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         // Getting delegated proxy inside job directory
         string delegatedproxy = getDelegatedProxyPath(delegation_id);
         edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
-        authorizer::WMPAuthorizer auth(delegatedproxy);
+        authorizer::WMPAuthorizer auth("jobSubmitJSDL", delegatedproxy);
 
         authorizer::VOMSAuthN vomsproxy(delegatedproxy);
         string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
@@ -2492,7 +2468,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	// Getting delegated proxy from SSL Proxy cache
 	string delegatedproxy = getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
-	authorizer::WMPAuthorizer auth(delegatedproxy);
+	authorizer::WMPAuthorizer auth("jobListMatch"; delegatedproxy);
 
 	string delegatedproxyfqan = "";
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
@@ -2662,7 +2638,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	authorizer::WMPAuthorizer auth(delegatedproxy);
+	authorizer::WMPAuthorizer auth("jobPurge", delegatedproxy);
 
 	authorizer::checkProxyExistence(delegatedproxy, jid);
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
