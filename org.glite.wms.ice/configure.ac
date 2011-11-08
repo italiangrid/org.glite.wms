@@ -66,7 +66,8 @@ GLITE_CHECK_JOBID
 
 PKG_CHECK_MODULES(GLITE_CREAM, cream-client-api-c, , AC_MSG_ERROR(["GLITE_CREAM not found"]))
 
-AC_GSOAP([])
+PKG_CHECK_MODULES(GSOAP, gsoapssl++, , AC_MSG_ERROR(["GSOAP not found"]))
+AC_GSOAP_EXTRAS
 
 AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 

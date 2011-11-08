@@ -49,7 +49,7 @@ queryDb_LDADD = \
 		$(XML2_LIBS) \
 		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -84,7 +84,7 @@ queryStats_LDADD = \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -152,7 +152,7 @@ putFL_reschedule_LDADD = \
 			$(XML2_LIBS) \
 	                $(GLITE_CREAM_LIBS) \
 			$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-			$(GSOAPXX_LIBS) \
+			$(GSOAP_LIBS) \
 			$(LOG4CPP_LIBS) \
 			$(GLOBUS_THR_LIBS) \
 			../src/iceUtils/libglite_wms_iceUtils.la \
@@ -206,7 +206,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -241,7 +241,7 @@ glite_wms_ice_rm_LDADD = \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -276,7 +276,7 @@ glite_wms_ice_db_rm_LDADD = \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -311,7 +311,7 @@ glite_wms_ice_LDADD = \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
-		$(GSOAPXX_LIBS) \
+		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
@@ -350,7 +350,7 @@ glite_wms_ice_proxy_renew_LDADD = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GLITE_CREAM_CFLAGS) \
 		$(VOMS_CFLAGS) \
-		$(GSOAPXX_CFLAGS) \
+		$(GSOAP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
