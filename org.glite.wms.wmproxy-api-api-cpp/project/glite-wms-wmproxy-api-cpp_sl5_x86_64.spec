@@ -28,7 +28,7 @@ C/C++ libraries for the WM Proxy service
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr --with-gsoap-version=2.7.13 --disable-static PVER=%{version}
+  ./configure --prefix=%{buildroot}/usr --disable-static PVER=%{version}
   make
   make doxygen-doc
 fi
