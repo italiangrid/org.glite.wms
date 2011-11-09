@@ -21,7 +21,6 @@ Requires: python-GridMon >= 1.1.10
 Requires: python-ldap
 Requires: python-suds >= 0.3.5
 Requires: nagios-submit-conf >= 0.2
-Requires: grid-monitoring-probes-hr.srce >= 0.20.1
 Requires: openssl >= 0.9.8e-12
 AutoReqProv: no
 BuildArch: noarch
