@@ -40,22 +40,16 @@ enum FQANFields {
 	FQAN_CAPABILITY
 };
 
-long getProxyTimeLeft(const std::string &proxypath);
 void checkProxy(const std::string &proxypath);
 void checkProxyExistence(const std::string &proxypath, const std::string &jobid);
-bool compareDN(char * dn1, char * dn2);
 std::vector<std::pair<std::string, std::string> > parseFQAN(const std::string &fqan);
-long getNotBefore(const std::string &proxypath);
-bool checkJobDrain();
-bool compareFQAN(const std::string &infqan, const std::string &reffqan);
-bool compareFQANAuthN(const std::string &infqan, const std::string &reffqan); 	
-void setJobGacl(const std::string &jobid);
-void setJobGacl(std::vector<std::string> &jobids);
+bool checkGridsiteJobDrain();
+void setGridsiteJobGacl(const std::string &jobid);
+void setGridsiteJobGacl(std::vector<std::string> &jobids);
 
 class WMPAuthorizer {
-public:
-
 #ifndef GLITE_WMS_WMPROXY_TOOLS
+public:
 	WMPAuthorizer(std::string const& operation);
 	WMPAuthorizer(std::string const& operation, std::string const& proxycert);
 	~WMPAuthorizer();
@@ -92,11 +86,10 @@ public:
 	void authorize(const std::string &certfqan = "", const std::string &jobid = "");
 private:
 	void mapUser();
-	std::string username;
-	uid_t userid;
-	uid_t usergroup;
-	std::string lcmaps_logfile;
-	bool mapdone;
+	std::string username_;
+	uid_t userid_;
+	uid_t usergroup_;
+	bool mapdone_;
 	std::string fqan_;
 	std::string action_;
 	std::string userproxypath_;

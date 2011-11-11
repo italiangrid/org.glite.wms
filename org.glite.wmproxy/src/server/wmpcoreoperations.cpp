@@ -26,6 +26,7 @@ limitations under the License.
 #include <boost/pool/detail/singleton.hpp>
 #include <boost/scoped_ptr.hpp>  // smart pointers
 
+#include <fcgi_stdio.h>
 #include <fstream>
 #include <errno.h>
 #include <signal.h>
@@ -249,85 +250,89 @@ jobregister (jobRegisterResponse &jobRegister_response, const string &jdl,
 const string &delegation_id, const string &delegatedproxy,
 const string &delegatedproxyfqan, authorizer::WMPAuthorizer *auth)
 {
-GLITE_STACK_TRY("jobregister()");
-edglog_fn("wmpcoreoperations::jobregister");
+	GLITE_STACK_TRY("jobregister()");
+	edglog_fn("wmpcoreoperations::jobregister");
 
-// Checking for VO in jdl file
-string vo = wmputilities::getEnvVO();
-Ad ad;
-int type = getType(jdl, &ad);
-if (ad.hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
-	if (vo != "") {
-		string jdlvo = ad.getString(JDL::VIRTUAL_ORGANISATION);
-		if (glite_wms_jdl_toLower(jdlvo) != glite_wms_jdl_toLower(vo)) {
-			string msg = "Jdl " + JDL::VIRTUAL_ORGANISATION
-				+ " attribute (" + jdlvo + ") is different from delegated Proxy Virtual "
-				"Organisation ("+ vo +")";
-			edglog(error)<<msg<<endl;
-			throw JobOperationException(__FILE__, __LINE__,
-			"wmpcoreoperations::jobregister()",
-			wmputilities::WMS_INVALID_JDL_ATTRIBUTE, msg);
+	// Checking for VO in jdl file
+	string vo = wmputilities::getGridsiteVO();
+	Ad ad;
+	int type = getType(jdl, &ad);
+	if (ad.hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
+		if (vo != "") {
+			string jdlvo = ad.getString(JDL::VIRTUAL_ORGANISATION);
+			if (glite_wms_jdl_toLower(jdlvo) != glite_wms_jdl_toLower(vo)) {
+				string msg = "Jdl " + JDL::VIRTUAL_ORGANISATION
+					+ " attribute (" + jdlvo + ") is different from delegated Proxy Virtual "
+					"Organisation ("+ vo +")";
+				edglog(error)<<msg<<endl;
+				throw JobOperationException(__FILE__, __LINE__,
+				"wmpcoreoperations::jobregister()",
+				wmputilities::WMS_INVALID_JDL_ATTRIBUTE, msg);
+			}
 		}
 	}
-}
-pair<string, string> returnpair;
-// Checking TYPE/JOBTYPE attributes and convert JDL when needed
-if (type == TYPE_DAG) {
-	edglog(debug)<<"Type DAG"<<endl;
-	WMPExpDagAd dag(jdl);
-	dag.setLocalAccess(false);
-	returnpair = regist(jobRegister_response, auth, delegation_id,
-		delegatedproxy, delegatedproxyfqan, jdl, &dag);
-} else if (type == TYPE_JOB) {
-	edglog(debug)<<"Type Job"<<endl;
-	JobAd jad (*(ad.ad()));
-	jad.setLocalAccess(false);
-	// Checking for multiple job type (not yet supported)
-	if (jad.hasAttribute(JDL::JOBTYPE)) {
-		if (jad.getStringValue(JDL::JOBTYPE).size() > 1) {
-		edglog(error)<<"Composite Job Type not yet supported"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"wmpcoreoperations::jobregister()",
-			wmputilities::WMS_INVALID_JDL_ATTRIBUTE,
-			"Composite Job Type not yet supported");
-		}
-	}
-	if (jad.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARAMETRIC)) {
-		edglog(info)<<"Converting Parametric job to DAG..."<<endl;
-		WMPExpDagAd dag (*(AdConverter::bulk2dag(&ad)));
+
+	pair<string, string> returnpair;
+
+	// Checking TYPE/JOBTYPE attributes and convert JDL when needed
+	if (type == TYPE_DAG) {
+		edglog(debug)<<"Type DAG"<<endl;
+		WMPExpDagAd dag(jdl);
 		dag.setLocalAccess(false);
 		returnpair = regist(jobRegister_response, auth, delegation_id,
 			delegatedproxy, delegatedproxyfqan, jdl, &dag);
-	} else if (jad.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)) {
-		// PARTITIONABLE Jobs ARE DEPRECATED!!!
-		string msg = "Partitionable Jobs are Deprecated";
-		edglog(error)<< msg << ": Exiting" << endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobregister()", wmputilities::WMS_JDL_PARSING,msg);
+	} else if (type == TYPE_JOB) {
+		edglog(debug)<<"Type Job"<<endl;
+		JobAd jad (*(ad.ad()));
+		jad.setLocalAccess(false);
+		// Checking for multiple job type (not yet supported)
+		if (jad.hasAttribute(JDL::JOBTYPE)) {
+			if (jad.getStringValue(JDL::JOBTYPE).size() > 1) {
+			edglog(error)<<"Composite Job Type not yet supported"<<endl;
+			throw JobOperationException(__FILE__, __LINE__,
+				"wmpcoreoperations::jobregister()",
+				wmputilities::WMS_INVALID_JDL_ATTRIBUTE,
+				"Composite Job Type not yet supported");
+			}
+		}
+		if (jad.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARAMETRIC)) {
+			edglog(info)<<"Converting Parametric job to DAG..."<<endl;
+			WMPExpDagAd dag (*(AdConverter::bulk2dag(&ad)));
+			dag.setLocalAccess(false);
+			returnpair = regist(jobRegister_response, auth, delegation_id,
+				delegatedproxy, delegatedproxyfqan, jdl, &dag);
+		} else if (jad.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)) {
+			// PARTITIONABLE Jobs ARE DEPRECATED!!!
+			string msg = "Partitionable Jobs are Deprecated";
+			edglog(error)<< msg << ": Exiting" << endl;
+			throw JobOperationException(__FILE__, __LINE__,
+				"jobregister()", wmputilities::WMS_JDL_PARSING,msg);
+		} else {
+			// Normal Jobs (neither PARAMETRIC nor COLLECTION)
+			returnpair.first = regist(jobRegister_response, auth, delegation_id,
+				delegatedproxy, delegatedproxyfqan, jdl, &jad);
+			returnpair.second = jad.toSubmissionString();
+		}
+	} else if (type == TYPE_COLLECTION) {
+		edglog(debug)<<"Type Collection"<<endl;
+		WMPExpDagAd dag(*(AdConverter::collection2dag(&ad)));
+		dag.setLocalAccess(false);
+		returnpair = regist(jobRegister_response, auth, delegation_id,
+			delegatedproxy, delegatedproxyfqan, jdl, &dag);
 	} else {
-		// Normal Jobs (neither PARAMETRIC nor COLLECTION)
-		returnpair.first = regist(jobRegister_response, auth, delegation_id,
-			delegatedproxy, delegatedproxyfqan, jdl, &jad);
-		returnpair.second = jad.toSubmissionString();
+		string invalidJobType = ad.hasAttribute(JDL::TYPE)  ?
+			ad.getString(JDL::TYPE) :
+			"(empty value)" ;
+		throw JobOperationException(__FILE__, __LINE__,
+			"wmpcoreoperations::jobregister()",
+			wmputilities::WMS_INVALID_JDL_ATTRIBUTE,
+			"Invalid Job Type: " +invalidJobType);
 	}
-} else if (type == TYPE_COLLECTION) {
-	edglog(debug)<<"Type Collection"<<endl;
-	WMPExpDagAd dag(*(AdConverter::collection2dag(&ad)));
-	dag.setLocalAccess(false);
-	returnpair = regist(jobRegister_response, auth, delegation_id,
-		delegatedproxy, delegatedproxyfqan, jdl, &dag);
-} else {
-	string invalidJobType = ad.hasAttribute(JDL::TYPE)  ?
-		ad.getString(JDL::TYPE) :
-		"(empty value)" ;
-	throw JobOperationException(__FILE__, __LINE__,
-		"wmpcoreoperations::jobregister()",
-		wmputilities::WMS_INVALID_JDL_ATTRIBUTE,
-		"Invalid Job Type: " +invalidJobType);
+
+	return returnpair;
+	GLITE_STACK_CATCH();
 }
-return returnpair;
-GLITE_STACK_CATCH();
-}
+
 /*
 * Method  jobRegister  (upcase "R")
 * called by wmpgsoapoperations::ns1__jobRegister
@@ -380,7 +385,7 @@ if (vomsproxy.hasVOMSExtension()) {
 
 // GACL Authorizing
 edglog(debug)<<"Checking for drain..."<<endl;
-if ( authorizer::checkJobDrain ( ) ) {
+if ( authorizer::checkGridsiteJobDrain ( ) ) {
 	edglog(error)<<"Unavailable service (the server is temporarily drained)"
 		<<endl;
 	throw AuthorizationException(__FILE__, __LINE__,
@@ -490,7 +495,7 @@ if (jobids.size()) {
 	    }
 	}
 	// Creating gacl file in the private job directory
-	authorizer::setJobGacl(jobids);
+	authorizer::setGridsiteJobGacl(jobids);
 }
 
 GLITE_STACK_CATCH();
@@ -571,7 +576,7 @@ string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
 wmputilities::fileCopy(delegatedproxy, proxybak);
 
 // Creating gacl file in the private job directory
-authorizer::setJobGacl(jobid);
+authorizer::setGridsiteJobGacl(jobid);
 
 // Creating sub jobs directories
 if (jobids.size()) {
@@ -599,7 +604,7 @@ edglog_fn("wmpcoreoperations::setAttributes JOB");
 // Inserting Proxy VO if not present in original jdl file
 edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
 if (!jad->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
-	jad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
+	jad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getGridsiteVO());
 }
 
 // Setting job identifier
@@ -638,10 +643,7 @@ if (jad->hasAttribute(JDL::CERT_SUBJ)) {
 	jad->delAttribute(JDL::CERT_SUBJ);
 }
 
-char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
-string str_tmp_dn(temp_user_dn);
-free(temp_user_dn);
-jad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+jad->setAttribute(JDL::CERT_SUBJ, wmputilities::getUserDN());
 
 edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 if (jad->hasAttribute(JDLPrivate::USERPROXY)) {
@@ -843,10 +845,7 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 		dag->removeAttribute(JDL::CERT_SUBJ);
 	}
 
-	char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
-	string str_tmp_dn(temp_user_dn);
-        free(temp_user_dn);
-	dag->setReserved(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+	dag->setReserved(JDL::CERT_SUBJ, wmputilities::getUserDN());
 
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 	if (dag->hasAttribute(JDLPrivate::USERPROXY)) {
@@ -937,7 +936,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Inserting Proxy VO if not present in original jdl file
 	edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
 	if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
-		dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
+		dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getGridsiteVO());
 	}
 
 	vector<string> jobids(wmplogger.generateSubjobsIds(jid.get(), dag->size()));
@@ -1088,7 +1087,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::checkJobDrain ( ) ) {
+	if ( authorizer::checkGridsiteJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
 	    	"wmpcoreoperations::jobStart()", wmputilities::WMS_AUTHORIZATION_ERROR,
@@ -2011,16 +2010,14 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	edglog(debug)<<"JDL to Submit:\n"<<jdl<<endl;
 
-
-	edglog(debug)<< "VOMS provided DN: " << vomsproxy.getDN() << std::endl;
-
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
+	edglog(debug)<< "VOMS provided DN: " << vomsproxy.getDN() << std::endl;
 	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
-	authorizer::WMPAuthorizer auth("jobSubmit"; delegatedproxyfqan);
+	authorizer::WMPAuthorizer auth("jobSubmit", delegatedproxyfqan);
 	if (vomsproxy.hasVOMSExtension()) {
 		auth.authorize(delegatedproxyfqan);
 	} else {
@@ -2029,7 +2026,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::checkJobDrain ( ) ) {
+	if ( authorizer::checkGridsiteJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
@@ -2141,7 +2138,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
 
         // GACL Authorizing
         edglog(debug)<<"Checking for drain..."<<endl;
-        if ( authorizer::checkJobDrain ( ) ) {
+        if (authorizer::checkGridsiteJobDrain()) {
                 edglog(error)<<"Unavailable service (the server is temporarily drained)"
                         <<endl;
                 throw AuthorizationException(__FILE__, __LINE__,
@@ -2378,7 +2375,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		// Setting VIRTUAL_ORGANISATION attribute
 		if (!ad->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
 			edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
-			ad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
+			ad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getGridsiteVO());
 		}
 
 		if (delegatedproxyfqan != "") {
@@ -2394,10 +2391,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		}
 		edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
 
-		char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
-		string str_tmp_dn(temp_user_dn);
-                free(temp_user_dn);
-		ad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+		ad->setAttribute(JDL::CERT_SUBJ, wmputilities::getUserDN());
 
                 classad::ExprTree* wms_requirements = 
                   (*configuration::Configuration::instance()->wm()).wms_requirements();
@@ -2468,7 +2462,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	// Getting delegated proxy from SSL Proxy cache
 	string delegatedproxy = getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
-	authorizer::WMPAuthorizer auth("jobListMatch"; delegatedproxy);
+	authorizer::WMPAuthorizer auth("jobListMatch", delegatedproxy);
 
 	string delegatedproxyfqan = "";
 	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
@@ -2481,7 +2475,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::checkJobDrain ( ) ) {
+	if (authorizer::checkGridsiteJobDrain()) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,

@@ -43,7 +43,6 @@ const int EXEC_FAILURE = 2;
 const int FORK_FAILURE = -1;
 const int COREDUMP_FAILURE = -2;
 
-#ifndef GLITE_WMS_WMPROXY_TOOLS
 enum FQANFields {
 	FQAN_VO,
 	FQAN_GROUP,
@@ -111,8 +110,6 @@ void untarFile(const std::string &file, const std::string &untar_starting_path,
 void writeTextFile(const std::string &path, const std::string &text);
 
 std::string readTextFile(const std::string &path);
-
-
 
 //
 // Service & service host methods
@@ -273,8 +270,6 @@ std::string getDestURI(const std::string &jobid, const std::string &protocol,
 std::string to_filename(glite::jobid::JobId j, int level = 0,
 	bool extended_path = true);
 
-
-
 //
 // OutputSandbox manipulation methods
 //
@@ -305,8 +300,6 @@ std::vector<std::string> getGridsiteFQANs();
  */
 std::string getUserDN();
 
-std::string convertDNEMailAddress(char const* const dn);
-
 /**
  * Parses the FQAN to get a vector containing the different elements
  * @param fqan the fqan to parse
@@ -332,7 +325,6 @@ bool hasParent(glite::lb::JobStatus status);
  */
 
 glite::jobid::JobId getParent(glite::lb::JobStatus status);
-
 
 //
 // "External" methods
@@ -390,8 +382,6 @@ int generateRandomNumber(int lowerlimit, int upperlimit);
  * @param seconds number of seconds to wait
  */
 void waitForSeconds(int seconds);
-
-#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 /**
    * Removes white spaces at the beginning and

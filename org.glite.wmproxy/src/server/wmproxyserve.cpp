@@ -21,6 +21,8 @@ limitations under the License.
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
+#include <fcgi_stdio.h>
+
 #include "soapH.h"
 #include "wmproxyserve.h"
 
@@ -131,7 +133,7 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	if (handled_signal_recv > 0) {
 		edglog(info)<<"-------- Exiting Server Instance -------"<< std::endl;
 		edglog(info)<<"Signal code received: "<< handled_signal_recv << std::endl;
-    FCGI_Finish();
+    		FCGI_Finish();
 		exit(0);
 	}
 	return SOAP_OK;

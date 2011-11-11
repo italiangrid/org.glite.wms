@@ -272,6 +272,10 @@ vector<string>
 getGridsiteFQANs()
 {
 	// TODO: why not directly from VOMS?!?
+	// because atm we don't know the delegated certificate path, unless
+	// the request reports it (or at least the jobid)
+	// we must still stick with this one function, at least for a reduced set
+	// of requests: getFreeQuota, getQUota at least
 	GLITE_STACK_TRY("getEnvFQAN()");
 
         int i = 0;
@@ -457,56 +461,6 @@ bool checkGlobusVersion(){
 	return false;
 }
 
-
-/*
- * ----- WARNING!! ----------------------------------------------------------
- * This method is a patch to grant correct behaviour for components using old
- * version of OpenSSL library.
- *
- * it converts:
- * - emailAddress to Email
- * - UID          to USERID
- *
- * N.B. To be removed when all components will use OpenSSL 0.9.7
- * --------------------------------------------------------------------------
- */
-string
-convertDNEMailAddress(char const* const dn)
-{
-	GLITE_STACK_TRY("convertDNEMailAddress()");
-	edglog_fn("wmputils::convertDNEMailAddress");
-
-/* PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
-
-	if (globusDNS_global){
-		//NO conversion needed, return the original
-		edglog(debug)<<"No Conversion needed, use original DN: "<<dn<<endl;
-		return dn;
-	}
-*/
-
-	string newdn(dn);
-	string toreplace = "emailAddress";
-	std::string::size_type pos = newdn.rfind(toreplace, newdn.size());
-	if (pos != string::npos) {
-		newdn.replace(pos, toreplace.size(), "Email");
-	}
-
-/* FIX for BUG bug #39903, commented part to be removed
-	toreplace = "UID";
-	pos = newdn.rfind(toreplace, newdn.size());
-	if (pos != string::npos) {
-		newdn.replace(pos, toreplace.size(), "USERID");
-	}
-*/
-	edglog(debug)<<"Converted DN: "<<newdn<<endl;
-	return newdn;
-
-	GLITE_STACK_CATCH();
-}
-
-
-// TODO Use boost filesystem
 int
 fileExists(const string &path)
 {
@@ -875,10 +829,10 @@ getUserDN()
 			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
 	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
-	string user_dn_final = string(convertDNEMailAddress(user_dn));
-        free (user_dn);
-	edglog(debug) << "User DN: " << user_dn_final << endl;
-	return user_dn_final;
+	edglog(debug) << "User DN: " << user_dn << endl;
+	string dn_str(user_dn);
+	free(user_dn);
+	return dn_str;
 	GLITE_STACK_CATCH();
 }
 

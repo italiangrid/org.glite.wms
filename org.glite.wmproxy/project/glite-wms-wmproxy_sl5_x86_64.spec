@@ -91,9 +91,9 @@ fi
 /usr/sbin/glite_wms_wmproxy_load_monitor
 /usr/bin/glite_wms_wmproxy_server
 /usr/bin/glite-wms-wmproxy-purge-proxycache
-/usr/bin/glite-wms-wmproxy-gacladmin
-/usr/bin/glite-wms-wmproxy-purge-proxycache-binary
-/usr/bin/glite-wms-wmproxy-gridmapfile2gacl
+#/usr/bin/glite-wms-wmproxy-gacladmin
+#/usr/bin/glite-wms-wmproxy-purge-proxycache-binary
+#/usr/bin/glite-wms-wmproxy-gridmapfile2gacl
 %dir /usr/share/doc/glite-wms-wmproxy-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-%{version}/LICENSE
 %{_libdir}/libglite_wms_wmproxy_*.so.0.0.0

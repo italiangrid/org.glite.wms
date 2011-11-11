@@ -27,13 +27,16 @@ limitations under the License. */
 #endif
 #include "server/wmpresponsestruct.h"
 #include "voms/voms_api.h"
+#include "boost/shared_ptr.hpp"
 
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
-time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+long getProxyTimeLeft(std::string const& pxfile);
+time_t ASN1_UTCTIME_get(ASN1_UTCTIME const* s);
+
 class VOMSAuthN {
 public:
 	
@@ -48,7 +51,7 @@ public:
 	ProxyInfoStructType* getProxyInfo();
 private:
 	X509* cert_;
-	vomsdata data_;
+	vomsdata* data_;
 	voms* defaultvoms_;
 };
 

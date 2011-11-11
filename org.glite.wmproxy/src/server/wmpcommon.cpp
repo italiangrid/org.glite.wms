@@ -48,7 +48,7 @@ limitations under the License.
 // Authorizer
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
-#include "authorizer/wmpvomsauthz.h"
+#include "authorizer/wmpvomsauthn.h"
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;
@@ -92,7 +92,6 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 {
 	edglog_fn("wmpcommon::checkSecurity");
 	edglog(info)<<"Performing Security checks"<<endl;
-	authorizer::WMPAuthorizer auth;
 	string delegatedproxy;
 	if (jid && delegation_id){
 		// Unreachable point: both jobid and delegationid provided
@@ -104,20 +103,8 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 		// Getting delegated proxy inside job directory
 		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 		authorizer::checkProxyExistence(delegatedproxy, jid->toString());
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-		if (vomsproxy.hasVOMSExtension()) {
-			auth.authorize(vomsproxy.getDefaultFQAN(), jid->toString());
-		} else {
-			auth.authorize("", jid->toString());
-		}
 	} else if (delegation_id) {   // wmpcoreoperation case:
 		delegatedproxy = glite::wms::wmproxy::server::getDelegatedProxyPath(*delegation_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-		if (vomsproxy.hasVOMSExtension()) {
-			auth.authorize(vomsproxy.getDefaultFQAN());
-		} else {
-			auth.authorize();
-		}
 		authorizer::checkProxy(delegatedproxy);
 	} else {
 		// Unreachable point neither jobid nor delegationid provided
@@ -125,10 +112,17 @@ void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gac
 			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
 			"Unable to perform authorization with no Job/Delegation identificator");
 	}
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer auth("checkSecurity", delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
+		auth.authorize(vomsproxy.getDefaultFQAN());
+	} else {
+		auth.authorize();
+	}
 	// GACL Authorizing (optional, only certain [important] operations require)
 	if (gaclAuthorizing) {
 		edglog(debug)<<"Checking for drain..."<<endl;
-		if (authorizer::WMPAuthorizer::checkJobDrain()) {
+		if (authorizer::checkGridsiteJobDrain()) {
 			edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 				throw AuthorizationException(__FILE__, __LINE__,
 				"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,

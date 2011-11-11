@@ -79,7 +79,7 @@ limitations under the License.
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "authorizer/wmpvomsauthz.h"
+#include "authorizer/wmpvomsauthn.h"
 
 //namespace glite {
 //namespace wms {
@@ -725,7 +725,7 @@ destroyProxy(const string &delegation_id)
 	authorizer::WMPAuthorizer auth("destroyProxy");
 	auth.authorize();
 	
-	destroyProxy(delegation_id);
+	glite::wms::wmproxy::server::destroyProxy(delegation_id);
 	edglog(debug)<<"destroyProxy successfully"<<endl;
 	
 	GLITE_STACK_CATCH();

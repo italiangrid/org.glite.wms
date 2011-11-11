@@ -92,8 +92,7 @@ AM_CPPFLAGS = \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLITE_JDL_CFLAGS) \
 	$(GLITE_JOBID_CFLAGS) \
-	$(BOOST_CFLAGS) \
-	-DHAVE_STRINGSTREAM
+	$(BOOST_CFLAGS)
 
 CLEANFILES = wmputils.cpp wmpauthorizer.cpp wmpgaclmanager.cpp
 

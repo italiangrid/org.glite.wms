@@ -21,8 +21,8 @@ limitations under the License.
 // Author: Marco Cecchi
 //
 
-#ifndef GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
-#define GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
+#ifndef GLITE_WMS_WMPROXY_ARGUS_AUTHORIZER_H
+#define GLITE_WMS_WMPROXY_ARGUS_AUTHORIZER_H
 
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ namespace wms {
 namespace wmproxy {
 namespace authorizer {
 
-std::pair<xacml_decision_t, std::pair<uid_t, gid_t> >
+boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
 argus_authZ(
         std::vector<std::string> pepds,
         std::vector<std::string> fqans,

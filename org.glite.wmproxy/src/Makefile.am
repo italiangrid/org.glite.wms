@@ -14,6 +14,6 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
-SUBDIRS = utilities eventlogger authorizer commands dirmanager server tools scripts 
+SUBDIRS = utilities eventlogger authorizer commands dirmanager server scripts 
 
 MAINTAINERCLEANFILES = Makefile.in
