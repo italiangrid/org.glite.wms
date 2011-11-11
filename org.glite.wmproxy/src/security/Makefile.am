@@ -16,7 +16,7 @@
 # WARNING: work in progress
 
 lib_LTLIBRARIES = \
-	libglite_wms_wmproxy_authorizer.la
+	libglite_wms_wmproxy_security.la
 
 noinst_HEADERS = \
 	wmpauthorizer.h \

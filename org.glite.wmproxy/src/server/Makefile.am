@@ -17,7 +17,7 @@
 
 WMPROXY_UTILITIES = $(top_builddir)/src/utilities/libglite_wms_wmproxy_utilities.la
 WMPROXY_EVENTLOGGER = $(top_builddir)/src/eventlogger/libglite_wms_wmproxy_eventlogger.la
-WMPROXY_AUTHZ = $(top_builddir)/src/authorizer/libglite_wms_wmproxy_authorizer.la
+WMPROXY_SECURITY= $(top_builddir)/src/authorizer/libglite_wms_wmproxy_security.la
 WMPROXY_COMMANDS = $(top_builddir)/src/commands/libglite_wms_wmproxy_commands.la \
 $(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 
@@ -86,7 +86,7 @@ glite_wms_wmproxy_server_LDADD = \
         $(GLITE_WMS_COMMON_QUOTA_LIBS) \
 	$(WMPROXY_UTILITIES) \
 	$(WMPROXY_EVENTLOGGER) \
-	$(WMPROXY_AUTHZ) \
+	$(WMPROXY_SECURITY) \
 	$(WMPROXY_COMMANDS) \
 	$(CLASSAD_LIBS) \
 	$(ARES_LIBS) \

@@ -1056,14 +1056,11 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	GLITE_STACK_TRY("jobStart()");
 	edglog_fn("wmpcoreoperations::jobStart");
 
+	authorizer::do_authZ("jobStart", job_id);
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobStart");
-
 	JobId *jid = new JobId(job_id);
-	// checkSecurity(jid, NULL, true);  delegated proxy and auth needed TODO
-	// string delegatedproxy= wmputilities::getJobDelegatedProxyPath(*jid);
-
-
 	// Checking job existency (if the job directory doesn't exist:
 	// The job has not been registered from this Workload Manager Proxy
 	// or it has been purged)
@@ -2209,12 +2206,12 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	GLITE_STACK_TRY("jobCancel()");
 	edglog_fn("wmpcoreoperations::jobCancel");
 
+	authorizer::do_authZ("jobCancel", job_id);
+
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("jobCancel");
 
 	JobId *jid = new JobId(job_id);
-	// wmpcommon perform all security checks
-	checkSecurity(jid);
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
