@@ -11,9 +11,33 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Giuseppe Avellino <egee@datamat.it>
 #
+# WARNING: work in progress
 
-SUBDIRS = utilities eventlogger security commands dirmanager server scripts 
+lib_LTLIBRARIES = \
+	libglite_wms_wmproxy_authorizer.la
+
+noinst_HEADERS = \
+	wmpauthorizer.h \
+        wmpdelegation.h \
+	argus_authz.h \
+	wmpvomsauthn.h
+
+libglite_wms_wmproxy_authorizer_la_SOURCES = \
+	wmpauthorizer.cpp \
+        wmpdelegation.cpp \
+	argus_authz.cpp \
+	wmpgaclmanager.cpp \
+	wmpvomsauthn.cpp
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	$(BOOST_CFLAGS) \
+	$(VOMS_CFLAGS) \
+	$(SEC_LCMAPS_WITHOUT_GSI_CFLAGS) \
+	$(SEC_LCMAPS_INTERFACE_CFLAGS) \
+	$(GLOBUS_NOTHR_CFLAGS) \
+	$(ARGUS_PEP_API_C_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

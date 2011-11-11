@@ -82,60 +82,8 @@ namespace wmputilities	= glite::wms::wmproxy::utilities;
 namespace authorizer 	= glite::wms::wmproxy::authorizer;
 namespace jobid		= glite::jobid;
 
-
-
-
 /**
-* Perform Authorization/Authentication process
-**/
-void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gaclAuthorizing)
-{
-	edglog_fn("wmpcommon::checkSecurity");
-	edglog(info)<<"Performing Security checks"<<endl;
-	string delegatedproxy;
-	if (jid && delegation_id){
-		// Unreachable point: both jobid and delegationid provided
-		throw AuthorizationException(__FILE__, __LINE__,
-			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
-			"Unable to perform authorization with both Job and Delegation identificator");
-	} else if (jid) {   // wmpoperation case:
-		checkJobDirectoryExistence(*jid);
-		// Getting delegated proxy inside job directory
-		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-		authorizer::checkProxyExistence(delegatedproxy, jid->toString());
-	} else if (delegation_id) {   // wmpcoreoperation case:
-		delegatedproxy = glite::wms::wmproxy::server::getDelegatedProxyPath(*delegation_id);
-		authorizer::checkProxy(delegatedproxy);
-	} else {
-		// Unreachable point neither jobid nor delegationid provided
-		throw AuthorizationException(__FILE__, __LINE__,
-			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
-			"Unable to perform authorization with no Job/Delegation identificator");
-	}
-	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
-	authorizer::WMPAuthorizer auth("checkSecurity", delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth.authorize(vomsproxy.getDefaultFQAN());
-	} else {
-		auth.authorize();
-	}
-	// GACL Authorizing (optional, only certain [important] operations require)
-	if (gaclAuthorizing) {
-		edglog(debug)<<"Checking for drain..."<<endl;
-		if (authorizer::checkGridsiteJobDrain()) {
-			edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
-				throw AuthorizationException(__FILE__, __LINE__,
-				"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
-				"Unavailable service (the server is temporarily drained)");
-		} else {
-			edglog(debug)<<"No drain"<<endl;
-		}
-	}
-}
-
-
-/**
-* Check the filelist/jobdir approach
+* check for filelist/jobdir
 **/
 void
 checkConfiguration()

@@ -275,7 +275,7 @@ getGridsiteFQANs()
 	// because atm we don't know the delegated certificate path, unless
 	// the request reports it (or at least the jobid)
 	// we must still stick with this one function, at least for a reduced set
-	// of requests: getFreeQuota, getQUota at least
+	// of requests: getFreeQuota, getQuota at least
 	GLITE_STACK_TRY("getEnvFQAN()");
 
         int i = 0;

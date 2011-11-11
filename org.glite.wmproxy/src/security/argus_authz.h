@@ -17,37 +17,33 @@ limitations under the License.
 */
 
 //
-// File: wmpcommon.h
-// Author: Giuseppe Avellino <egee@datamat.it>
+// File: argus.h
+// Author: Marco Cecchi
 //
 
+#ifndef GLITE_WMS_WMPROXY_ARGUS_AUTHORIZER_H
+#define GLITE_WMS_WMPROXY_ARGUS_AUTHORIZER_H
+
 #include <string>
+#include <vector>
+#include <sys/types.h>
+
+#include "argus/xacml.h"
 
 namespace glite {
-namespace jdl {
-	class Ad;
-}}
+namespace wms {
+namespace wmproxy {
+namespace authorizer {
 
-namespace glite {
-namespace jobid {
-	class JobId;
-}}
+boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
+argus_authZ(
+        std::vector<std::string> pepds,
+        std::vector<std::string> fqans,
+        std::string resourceid,
+        std::string actionid,
+        std::string subjectid
+);
 
+}}}}
 
-// Possible values for jdl type attribute
-enum type {
-	TYPE_JOB,
-	TYPE_DAG,
-	TYPE_COLLECTION,
-};
-
-// Common methods used in both operations and coreoperations
-void setGlobalSandboxDir();
-/**
-* Log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
-*/
-void initWMProxyOperation (const std::string &operation);
-void callLoadScriptFile(const std::string &operation);
-void checkConfiguration();
-int  getType(std::string jdl, glite::jdl::Ad * ad = NULL);
-void checkJobDirectoryExistence(glite::jobid::JobId jid,int level = 0);
+#endif

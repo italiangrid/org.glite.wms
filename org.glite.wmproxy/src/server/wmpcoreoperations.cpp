@@ -366,9 +366,6 @@ if (delegation_id == "") {
 
 edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 
-// complicate checkSecurity: TODO
-// - delegatedproxy, delegatedproxyfqan, auth  needed/reused
-
 // Getting delegated proxy from SSL Proxy cache
 string delegatedproxy = getDelegatedProxyPath(delegation_id);
 edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
@@ -1101,7 +1098,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	wmplogger.setUserProxy(delegatedproxy); // delegated proxy may be returned by checkSecurity
+	wmplogger.setUserProxy(delegatedproxy);
 
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
