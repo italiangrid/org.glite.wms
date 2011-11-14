@@ -10,7 +10,7 @@
 Summary: Nagios probe for the EMI CREAM and WN services
 Name: emi-cream-nagios
 Version: 1.0.0
-Release: 1%{?dist}
+Release: 5%{?dist}
 
 License: ASL 2.0
 Group: Monitoring
