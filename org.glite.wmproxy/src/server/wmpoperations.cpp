@@ -57,8 +57,7 @@ limitations under the License.
 
 #include "commands/listfiles.h"
 
-// Delegation
-#include "wmpdelegation.h"
+#include "security/wmpdelegation.h"
 
 // WMP Exceptions
 #include "utilities/wmpexceptions.h"
@@ -245,7 +244,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
 	JobId jobid(jid);
 	wmplogger.setUserProxy(  wmputilities::getJobDelegatedProxyPath(jobid));
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
@@ -347,14 +346,13 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		// Checking for maradona file, created if and only if the job is in DONE state
 		edglog(debug)<<"Searching for MARADONA file: "<<jobdirectory + FILE_SEPARATOR
 			+ MARADONA_FILE<<endl;
-		// TODO use boost::fs
 		if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
 			// MARADONA file NOT found
 			// Initializing logger
 			WMPEventLogger wmplogger(wmputilities::getEndpoint());
 			std::pair<std::string, int> lbaddress_port
 				= conf.getLBLocalLoggerAddressPort();
-			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
 			wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 
@@ -767,7 +765,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	string errors = "";
 	JobId jid (job_id);
 	// TBD change test in: item == owner
-	if (item == wmputilities::getUserDN()) {
+	if (item == wmputilities::getDN_SSL()) {
 		edglog(error)<<"Removal of the item representing user that has "
 			"registered the job is not allowed"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
@@ -859,7 +857,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
 	wmplogger.setUserProxy(delegatedproxy);
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());

@@ -547,7 +547,7 @@ do_authZ_jobid(std::string const& action, std::string const& job_id)
 {
         // retrieve delegated proxy in job directory
         std::string delegatedproxy = wmputilities::getJobDelegatedProxyPath(job_id);
-        checkProxy(delegatedproxy);
+        checkProxyValidity(delegatedproxy);
         WMPAuthorizer auth(action, delegatedproxy);
         VOMSAuthN vomsproxy(delegatedproxy);
         if (vomsproxy.hasVOMSExtension()) {
@@ -561,7 +561,7 @@ void
 do_authZ(std::string const& action, std::string const& delegation_id)
 {
         std::string delegatedproxy = glite::wms::wmproxy::server::getDelegatedProxyPath(delegation_id);
-        checkProxy(delegatedproxy);
+        checkProxyValidity(delegatedproxy);
         WMPAuthorizer auth(action, delegatedproxy);
         VOMSAuthN vomsproxy(delegatedproxy);
         if (vomsproxy.hasVOMSExtension()) {
@@ -582,11 +582,11 @@ do_authZ(std::string const& action)
 void
 setGridsiteJobGacl(std::vector<std::string> &jobids)
 {
-	GLITE_STACK_TRY("setJobGacl()");
-	edglog_fn("WMPAuthorizer::setJobGacl vector");
+	GLITE_STACK_TRY("setGridsiteJobGacl()");
+	edglog_fn("WMPAuthorizer::setGridsiteJobGacl vector");
 	
 	if (jobids.size()) {
-		string user_dn = wmputilities::getUserDN(); // taken from ssl
+		string user_dn = wmputilities::getDN_SSL(); // taken from ssl
 		string errmsg = "";
 		
 		// Creates a gacl file in the job directory
@@ -612,13 +612,13 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
 			errmsg += "\n(please contact server administrator)\n";
 			errmsg += "please report the following message:\n" ;
 			errmsg += exc.what();
-			throw wmputilities::GaclException(__FILE__, __LINE__, "setJobGacl()",
+			throw wmputilities::GaclException(__FILE__, __LINE__, "setGridsiteJobGacl()",
 				wmputilities::WMS_GACL_FILE, errmsg);
 		}
 		ifstream infile(filename.c_str());
 		if (!infile.good()) {
 			throw wmputilities::FileSystemException(__FILE__, __LINE__,
-				"setJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
+				"setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
 				"input file\n(please contact server administrator)");
 		}
 		string gacltext = "";
@@ -638,7 +638,7 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
 			outfile.open(filename.c_str(), ios::out);
 			if (!outfile.good()) {
 				throw wmputilities::FileSystemException(__FILE__, __LINE__,
-					"setJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
+					"setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
 					"output file\n(please contact server administrator)");
 			}
 			outfile<<gacltext;
@@ -652,10 +652,10 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
 void
 setGridsiteJobGacl(const string &jobid)
 {
-	GLITE_STACK_TRY("setJobGacl()");
-	edglog_fn("WMPAuthorizer::setJobGacl string");
+	GLITE_STACK_TRY("setGridsiteJobGacl()");
+	edglog_fn("WMPAuthorizer::setGridsiteJobGacl string");
 	
-	string user_dn = wmputilities::getUserDN(); // taken from ssl
+	string user_dn = wmputilities::getDN_SSL(); // taken from ssl
 	
 	// Creates a gacl file in the job directory
 	WMPgaclPerm permission =
@@ -680,7 +680,7 @@ setGridsiteJobGacl(const string &jobid)
 		errmsg += " (please contact server administrator)\n";
 		errmsg += "please report the following message:\n" ;
 		errmsg += exc.what ( );
-		throw wmputilities::GaclException(__FILE__, __LINE__, "setJobGacl()",
+		throw wmputilities::GaclException(__FILE__, __LINE__, "setGridsiteJobGacl()",
 			wmputilities::WMS_GACL_FILE, errmsg);
 	}
 		
@@ -801,11 +801,20 @@ checkProxyExistence(const string &userproxypath, const string &jobid)
 
 WMPAuthorizer::WMPAuthorizer(std::string const& action)
 : userid_(0), usergroup_(0), mapdone_(false), action_(action)
-{ }
+{
+	// only the user DN can be taken (from grisite delegation as env var)
+        userdn_ = wmputilities::getDN_SSL();
+        fqans_ = wmputilities::getGridsiteFQANs();
+}
 
 WMPAuthorizer::WMPAuthorizer(std::string const& action, std::string const& userproxypath)
-: userid_(0), usergroup_(0), mapdone_(false), action_(action), userproxypath_(userproxypath)
-{ }
+: userid_(0), usergroup_(0), mapdone_(false), action_(action)
+{
+	// we have the delegated proxy, we can directly use the VOMS APIs
+        VOMSAuthN authn(userproxypath);
+        userdn_ = authn.getDN();
+        fqans_ = authn.getFQANs();
+}
 
 WMPAuthorizer::~WMPAuthorizer() {}
 
@@ -848,43 +857,6 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	GLITE_STACK_TRY("authorize()");
 	edglog_fn("WMPAuthorizer::authorize");
 
-	string userdn = string(wmputilities::getUserDN());
-	// only to authorize htcp requests
-	if (jobid != "") {
-		// no check for gridsite actions: write, list or read
-		string gaclfile = wmputilities::getJobDirectoryPath(jobid) + "/"
-			+ GaclManager::WMPGACL_DEFAULT_FILE;
-		edglog(debug)<<"Job gacl file: "<<gaclfile<<endl;
-		try {
-			GaclManager gaclmanager(gaclfile);
-			if (!gaclmanager.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-					userdn, GaclManager::WMPGACL_WRITE)) {
-				throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-					"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-					"User not authorized to perform this operation");
-			}
-		} catch (Exception &ex) {
-			if (ex.getCode() == wmputilities::WMS_GACL_ITEM_NOT_FOUND) {
-				throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-					"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-					"Operation permitted only to job owner or authorized user");
-			}
-			throw ex;
-		}
-	}
-
-	std::vector<std::string> FQANs;
-	if (!userproxypath_.empty()) {
-        	VOMSAuthN authn(userproxypath_);
-		FQANs = authn.getFQANs();
-	} else if (!jobid.empty()) {
-        	VOMSAuthN authn(wmputilities::getJobDelegatedProxyPath(jobid));
-		FQANs = authn.getFQANs();
-	} else {
-		// use the gridsite auri
-		FQANs = wmputilities::getGridsiteFQANs();
-	}
-
 	if (configuration::Configuration::instance()->wp()->argus_authz()) {
 		std::vector<std::string> endpoints =
 			configuration::Configuration::instance()->wp()->argus_pepd_endpoints();
@@ -892,37 +864,27 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 			boost::tuple<bool, xacml_decision_t, uid_t, gid_t> ans;
 			ans = argus_authZ(
 			        endpoints,
-			        FQANs,
+			        fqans_,
 			        wmputilities::getEndpoint(),
 			        action_,
-			        wmputilities::getUserDN());
+			        wmputilities::getDN_SSL());
 			if (ans.get<1>() == XACML_DECISION_PERMIT) {
 				// set the mapping
-				username_ = ans.get<2>();
+				userid_ = ans.get<2>();
 				usergroup_ = ans.get<3>();
 				mapdone_ = true;
 				return;
 			} else {
 				throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 				"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-				"Argus denied authorization on " + action_ + " by " +wmputilities::getUserDN());
+				"Argus denied authorization on " + action_ + " by " +wmputilities::getDN_SSL());
 			}
 		}
 	}
-	edglog(debug) << "Gridsite authZ" << endl;
-	// Gridsite authZ, if argus not enabled or fails
-	if (certfqan != "") {
-		fqan_ = certfqan;
-		if (!compareFQANAuthN(certfqan, FQANs.front())) {
-			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    		"Client proxy FQAN (" + FQANs.front() +
-				") does not match delegated proxy FQAN ("
-				+ certfqan + ")");
-		}
-	}
 
-	checkGaclUserAuthZ(FQANs.front(), userdn);
+	edglog(debug) << "Gridsite authZ" << endl;
+	checkGaclUserAuthZ(fqans_.front(), userdn_);
+
 	GLITE_STACK_CATCH();
 }
 
@@ -935,7 +897,6 @@ WMPAuthorizer::map_user_lcmaps()
 	int retval;
 	struct passwd* user_info = 0;
 
-	edglog(debug)<<"certfqan: " << fqan_ << endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
         lcmaps_init_and_logfile(
@@ -954,8 +915,8 @@ WMPAuthorizer::map_user_lcmaps()
 	int mapcounter = 0; // single mapping result
 	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
 	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
-	fqan_list[0] = const_cast<char*>(fqan_.c_str());
-	string user_dn = wmputilities::getUserDN();
+	fqan_list[0] = const_cast<char*>(fqans_.front().c_str());
+	string user_dn = wmputilities::getDN_SSL();
 	retval = lcmaps_return_account_without_gsi(const_cast<char*>(user_dn.c_str()),
 		fqan_list, fqan_num, mapcounter, &plcmaps_account);
 
@@ -971,7 +932,6 @@ WMPAuthorizer::map_user_lcmaps()
 		}
 	}
 
-	// Getting username from uid
 	userid_ = plcmaps_account.uid;
 	user_info = getpwuid(userid_);
 	if (user_info == NULL) {
@@ -1018,7 +978,7 @@ try {
    	bool existDN = false;
     	bool existAU = false;
 
-	string dn = string(wmputilities::getUserDN()); // taken from ssl
+	string dn = wmputilities::getDN_SSL(); // taken from ssl
 
 	// Gacl-Mgr
 	string gaclfile;

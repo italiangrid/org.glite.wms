@@ -93,10 +93,9 @@ private:
 	uid_t userid_;
 	uid_t usergroup_;
 	bool mapdone_;
-	std::string fqan_;
+	std::string userdn_;
+	std::vector<std::string> fqans_;
 	std::string action_;
-	std::string userproxypath_;
-    
 #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 };
 

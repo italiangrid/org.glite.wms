@@ -58,7 +58,7 @@ getProxyDir()
 	GLITE_STACK_TRY("getProxyDir()");
 	edglog_fn("getProxyDir");
 
-	char * docroot = getenv(DOCUMENT_ROOT);
+	char* docroot = getenv(DOCUMENT_ROOT);
 	if (!docroot) {
 		edglog(fatal)<<"Unable to get DOCUMENT_ROOT environment variable value"
 			<<endl;
@@ -68,7 +68,7 @@ getProxyDir()
 				"contact server administrator)");
 	}
 
-	char * proxydir;
+	char* proxydir;
 	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE);
 	string returnproxydir = string(proxydir);
 	free(proxydir);
@@ -88,8 +88,8 @@ getDelegatedProxyPath(const string &delegation_id)
 	GLITE_STACK_TRY("getDelegatedProxyPath()");
 	edglog_fn("getDelegatedProxyPath");
 
-	char * delegated_proxy = GRSTx509CachedProxyFind((char*) getProxyDir().c_str(),
-		(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getUserDN().c_str()));
+	char* delegated_proxy = GRSTx509CachedProxyFind((char*) getProxyDir().c_str(),
+		(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getDN_SSL().c_str()));
 	if (delegated_proxy == NULL) {
 		edglog(critical)<<"Unable to get delegated Proxy"<<endl;
 		throw wmputilities::JobOperationException(__FILE__, __LINE__,
@@ -127,9 +127,9 @@ getProxyRequest(const string &original_delegation_id)
         }
         edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
-	char * request = NULL;
+	char* request = 0;
 	if (int ret = GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
-			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getUserDN().c_str()))) {
+			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getDN_SSL().c_str()))) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_PROXY_ERROR,
@@ -169,9 +169,9 @@ putProxy(const string &original_delegation_id, const string &proxy_req)
 
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
-  	edglog(debug)<<"User DN: " << wmputilities::getUserDN() << endl;
+  	edglog(debug)<<"User DN: " << wmputilities::getDN_SSL() << endl;
 	if (GRSTx509CacheProxy((char*) getProxyDir().c_str(),
-			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getUserDN().c_str()),
+			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getDN_SSL().c_str()),
 			(char*) proxy_req.c_str()) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to store client Proxy"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -214,7 +214,7 @@ renewProxyRequest(const std::string &original_delegation_id)
 
 	char* request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
-			(char*) delegation_id.c_str(),  const_cast<char*>(wmputilities::getUserDN().c_str())) != 0) {
+			(char*) delegation_id.c_str(),  const_cast<char*>(wmputilities::getDN_SSL().c_str())) != 0) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
@@ -231,7 +231,7 @@ getNewProxyRequest()
 {
 	GLITE_STACK_TRY("getNewProxyRequest()");
 	edglog_fn("getNewProxyRequest");
-	char * delegation_id ;
+	char* delegation_id;
 #ifndef GRST_VERSION
 	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
                 "getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
@@ -255,7 +255,7 @@ getNewProxyRequest()
 		time_t *finish = (time_t*) malloc(sizeof(time_t));
 
 		if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
-				delegation_id, const_cast<char*>(wmputilities::getUserDN().c_str()), start, finish) != GRST_RET_OK) {
+				delegation_id, const_cast<char*>(wmputilities::getDN_SSL().c_str()), start, finish) != GRST_RET_OK) {
 			free(start);
 			free(finish);
 			free(delegation_id);
@@ -284,9 +284,9 @@ getNewProxyRequest()
 #endif
 	}
 	// Make Actual Proxy Request
-	char * request = NULL;
+	char* request = 0;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
-			delegation_id, const_cast<char*>(wmputilities::getUserDN().c_str())) != 0) {
+			delegation_id, const_cast<char*>(wmputilities::getDN_SSL().c_str())) != 0) {
 		edglog(critical)<<"Unable to complete New Proxy request"<<endl;
 		free(delegation_id);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
@@ -326,7 +326,7 @@ destroyProxy(const string &original_delegation_id)
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-	edglog(debug)<<"User DN: "<< wmputilities::getUserDN() << endl;
+	edglog(debug)<<"User DN: "<< wmputilities::getDN_SSL() << endl;
 
 	if (!wmputilities::fileExists(getDelegatedProxyPath(delegation_id))){
 		edglog(critical)<<"Client delegated proxy not found: destroy Proxy not allowed"<<endl;
@@ -340,7 +340,7 @@ destroyProxy(const string &original_delegation_id)
                 "Unable to perform destroy Proxy with delegation 1");
 #else
 	if (GRSTx509ProxyDestroy((char*) getProxyDir().c_str(),
-			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getUserDN().c_str())) != GRST_RET_OK) {
+			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getDN_SSL().c_str())) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to perform destroy Proxy"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
@@ -379,14 +379,14 @@ getTerminationTime(const string &original_delegation_id) {
   	time_t *finish = (time_t*) malloc(sizeof(time_t));
 
   	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"User DN: "<< wmputilities::getUserDN() << endl;
+  	edglog(debug)<<"User DN: "<< wmputilities::getDN_SSL() << endl;
 #ifndef GRST_VERSION
 	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
         	"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
                 "Unable to perform get termination time with delegation 1");
 #else	
 	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
-			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getUserDN().c_str()), start, finish) != GRST_RET_OK) {
+			(char*) delegation_id.c_str(), const_cast<char*>(wmputilities::getDN_SSL().c_str()), start, finish) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to perform get termination time"<<endl;
 		free(start);
 		free(finish);

@@ -668,7 +668,7 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 	glite::jobid::JobId jobid(jid);
 	if (m_lbProxy_b) {
 	        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
-		if (edg_wll_SetLoggingJobProxy(ctx_, jobid.c_jobid(), seq_code, getUserDN().c_str(), EDG_WLL_SEQ_NORMAL)){
+		if (edg_wll_SetLoggingJobProxy(ctx_, jobid.c_jobid(), seq_code, getDN_SSL().c_str(), EDG_WLL_SEQ_NORMAL)){
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJobProxy");
 			edglog(critical)<<msg<<endl;

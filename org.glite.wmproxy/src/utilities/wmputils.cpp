@@ -798,10 +798,10 @@ getUserFreeQuota(pair<long, long>& result, string uname)
 }
 
 std::string
-getUserDN()
+getDN_SSL()
 {
-	GLITE_STACK_TRY("getUserDN()");
-	edglog_fn("wmputils::getUserDN");
+	GLITE_STACK_TRY("getDN_SSL()");
+	edglog_fn("wmputils::getDN_SSL");
 	edglog(debug)<<"Getting user DN..."<<endl;
 	char *p = 0;
 	char *client_dn = 0;
@@ -812,7 +812,7 @@ getUserDN()
 		edglog(debug)<<"Environment variable "<<string(SSL_CLIENT_DN)
 			<<" not correctly defined"<<endl;
 		throw ProxyOperationException(__FILE__, __LINE__,
-			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
+			"getDN_SSL()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
 
 	user_dn = strdup(client_dn);
@@ -826,7 +826,7 @@ getUserDN()
 	}
 	if ((user_dn == NULL) || (user_dn[0] == '\0')) {
 		throw ProxyOperationException(__FILE__, __LINE__,
-			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
+			"getDN_SSL()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
 	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
 	edglog(debug) << "User DN: " << user_dn << endl;

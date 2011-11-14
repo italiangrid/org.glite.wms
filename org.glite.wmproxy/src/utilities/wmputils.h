@@ -298,7 +298,7 @@ std::vector<std::string> getGridsiteFQANs();
  * environment
  * @return the user DN
  */
-std::string getUserDN();
+std::string getDN_SSL();
 
 /**
  * Parses the FQAN to get a vector containing the different elements
