@@ -17,7 +17,7 @@
 
 WMPROXY_UTILITIES = $(top_builddir)/src/utilities/libglite_wms_wmproxy_utilities.la
 WMPROXY_EVENTLOGGER = $(top_builddir)/src/eventlogger/libglite_wms_wmproxy_eventlogger.la
-WMPROXY_SECURITY= $(top_builddir)/src/authorizer/libglite_wms_wmproxy_security.la
+WMPROXY_SECURITY= $(top_builddir)/src/security/libglite_wms_wmproxy_security.la
 WMPROXY_COMMANDS = $(top_builddir)/src/commands/libglite_wms_wmproxy_commands.la \
 $(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 
