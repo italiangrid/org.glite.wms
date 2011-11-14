@@ -31,7 +31,7 @@ limitations under the License.
 #include <iomanip>
 
 #include "utilities/wmputils.h"
-#include "authorizer/wmpauthorizer.h"
+#include "security/wmpauthorizer.h"
 
 #include "utils.h"
 

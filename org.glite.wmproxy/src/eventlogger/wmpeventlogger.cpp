@@ -49,30 +49,26 @@ limitations under the License.
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
-
-#include "authorizer/wmpauthorizer.h"
-
+#include "security/wmpauthorizer.h"
 
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 extern WMProxyConfiguration conf;
 
-// NAMESPACE
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace eventlogger {
-
-
-namespace jobid        = glite::jobid;
-namespace logger       = glite::wms::common::logger;
-namespace wmputilities = glite::wms::wmproxy::utilities;
-namespace authorizer   = glite::wms::wmproxy::authorizer;
 
 using namespace std;
 using namespace glite::jdl; // DagAd
 using namespace glite::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wms::wmproxy::utilities; //Exception codes
+
+namespace jobid        = glite::jobid;
+namespace logger       = glite::wms::common::logger;
+namespace wmputilities = glite::wms::wmproxy::utilities;
+namespace authorizer   = glite::wms::wmproxy::authorizer;
 
 // Environment variable for user defined log destination
 const char * GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
@@ -853,16 +849,15 @@ WMPEventLogger::setUserProxy(const string &proxy)
 	edglog_fn("WMPEventlogger::setUserProxy");
 	
 	this->delegatedproxy = proxy;
-	// Checking proxy validity
-	if (proxy != "") {
+	if (!proxy.empty()) {
 		try {
-			authorizer::checkProxy(proxy);
+			authorizer::checkProxyValidity(proxy);
 		} catch (Exception &ex) {
 			if (ex.getCode() != wmputilities::WMS_PROXY_EXPIRED) {
 				// Problem with proxy (not expired)
 				throw ex;
-			}else{
-				// Dlegated proxy expired - continue processing
+			// } else {
+				// Delegated proxy expired - continue processing
 				// TODO most commands cannot be performed anymore:
 				// submit/cancel will fail anyway (to be tested)
 				// output/ perusal may continue (to be tested)
@@ -1256,7 +1251,6 @@ WMPEventLogger::getStatus(bool childreninfo)
   	GLITE_STACK_CATCH();
 }
 
-
 //
 //
 // Private methods
@@ -1342,7 +1336,6 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 	GLITE_STACK_CATCH();
 }
 
-
 int
 WMPEventLogger::testAndQuery(edg_wll_QueryRec *jc, edg_wll_QueryRec *ec, edg_wll_Event **events)
 {
@@ -1408,13 +1401,10 @@ WMPEventLogger::testAndQuery(edg_wll_QueryRec *jc, edg_wll_QueryRec *ec, edg_wll
 			lap++;
 			randomsleep();
 		}
-	}    // end while (lap<=QUERY_RETRY_COUNT){ ....
+	}    // end while (lap<=QUERY_RETRY_COUNT)
 	return result;
 	GLITE_STACK_CATCH();
 }
-
-
-
 
 int
 WMPEventLogger::logEvent(event_name event, const char* reason,
@@ -1587,8 +1577,4 @@ WMPEventLogger::randomsleep()
 	GLITE_STACK_CATCH();
 }
 
-
-} // eventlogger
-} // wmproxy
-} // wms
-} // glite
+}}}}

@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <iostream>
 #include <vector>
-#include "authorizer/wmpgaclmanager.h"
+#include "security/wmpgaclmanager.h"
 
 
 extern "C" {

@@ -86,20 +86,14 @@ limitations under the License.
 
 #include "glite/wms/common/utilities/edgstrstream.h"
 
-
-// Authorizer
-#include "authorizer/wmpauthorizer.h"
-#include "authorizer/wmpgaclmanager.h"
-#include "authorizer/wmpvomsauthn.h"
-
+#include "security/wmpvomsauthn.h"
+#include "security/wmpauthorizer.h"
+#include "security/wmpgaclmanager.h"
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
-
-// DONE job output file
-//const std::string MARADONA_FILE = "Maradona.output";
 
 // Perusal functionality
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
@@ -119,13 +113,11 @@ const char * X509_USER_KEY = "X509_USER_KEY";
 const char * GLITE_HOST_CERT = "GLITE_HOST_CERT";
 const char * GLITE_HOST_KEY = "GLITE_HOST_KEY";
 const int CURRENT_STEP_DEF_VALUE = 1;
-// Defining File Separator
+
 #ifdef WIN
-// Windows File Separator
-const std::string FILE_SEPARATOR = "\\";
+	const std::string FILE_SEPARATOR = "\\";
 #else
-// Linux File Separator
-const std::string FILE_SEPARATOR = "/";
+	const std::string FILE_SEPARATOR = "/";
 #endif
 
 // Flag file to check for start operation fault causes
@@ -364,43 +356,43 @@ if (delegation_id == "") {
 #endif
 }
 
-edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
+	edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 
-// Getting delegated proxy from SSL Proxy cache
-string delegatedproxy = getDelegatedProxyPath(delegation_id);
-edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
-
-authorizer::WMPAuthorizer auth("jobRegister", delegatedproxy);
-
-authorizer::VOMSAuthN vomsproxy(delegatedproxy);
-string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
-if (vomsproxy.hasVOMSExtension()) {
-	auth.authorize(delegatedproxyfqan);
-} else {
-	auth.authorize();
-}
-
-// GACL Authorizing
-edglog(debug)<<"Checking for drain..."<<endl;
-if ( authorizer::checkGridsiteJobDrain ( ) ) {
-	edglog(error)<<"Unavailable service (the server is temporarily drained)"
-		<<endl;
+	// Getting delegated proxy from SSL Proxy cache
+	string delegatedproxy = getDelegatedProxyPath(delegation_id);
+	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
+	authorizer::WMPAuthorizer auth("jobRegister", delegatedproxy);
+	authorizer::VOMSAuthN vomsproxy(delegatedproxy);
+	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
+	if (vomsproxy.hasVOMSExtension()) {
+		auth.authorize(delegatedproxyfqan);
+	} else {
+		auth.authorize();
+	}
+	
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if (authorizer::checkGridsiteJobDrain()) {
+		edglog(error) <<
+			"Unavailable service (the server is temporarily drained)" <<endl;
 	throw AuthorizationException(__FILE__, __LINE__,
-	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR,
-	"Unavailable service (the server is temporarily drained)");
-} else {
-	edglog(debug)<<"No drain"<<endl;
-}
+		"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR,
+		"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
 
-// Checking proxy validity
-authorizer::checkProxy(delegatedproxy);
+	authorizer::checkProxyValidity(delegatedproxy);
+	jobregister(
+		jobRegister_response,
+		jdl,
+		delegation_id,
+		delegatedproxy,
+		delegatedproxyfqan,
+		&auth);
 
-jobregister(jobRegister_response, jdl, delegation_id, delegatedproxy,
-	delegatedproxyfqan, &auth);
+	edglog(debug)<<"Registered successfully"<<endl;
 
-edglog(debug)<<"Registered successfully"<<endl;
-
-GLITE_STACK_CATCH();
+	GLITE_STACK_CATCH();
 }
 
 void

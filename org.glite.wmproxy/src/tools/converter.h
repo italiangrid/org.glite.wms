@@ -20,7 +20,7 @@ limitations under the License.
 #define GLITE_WMS_WMPROXY_TOOLS_CONVERTER_H
 
 #include "log.h"
-#include "authorizer/wmpgaclmanager.h"
+#include "security/wmpgaclmanager.h"
 
 #include <vector>
 #include <string>

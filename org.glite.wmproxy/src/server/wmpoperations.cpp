@@ -46,9 +46,9 @@ limitations under the License.
 #include "eventlogger/wmpexpdagad.h"
 #include "eventlogger/wmpeventlogger.h"
 
-// Authorizer  //TODO may be removed?? all authorizing part can me moved in wmpcommon
-#include "authorizer/wmpauthorizer.h"
-#include "authorizer/wmpgaclmanager.h"
+#include "security/wmpvomsauthn.h"
+#include "security/wmpauthorizer.h"
+#include "security/wmpgaclmanager.h"
 
 //Logger
 #include "utilities/logging.h"
@@ -79,10 +79,22 @@ limitations under the License.
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "authorizer/wmpvomsauthn.h"
 
-namespace wmputilities = glite::wms::wmproxy::utilities;
-namespace authorizer = glite::wms::wmproxy::authorizer;
+using namespace std;
+using namespace glite::lb; // JobStatus
+using namespace glite::jdl; // DagAd, AdConverter
+using namespace glite::jobid; //JobId
+
+using namespace glite::wms::wmproxy::server;  //Exception codes
+using namespace glite::wms::wmproxy::utilities; //Exception
+using namespace glite::wms::wmproxy::eventlogger;
+using namespace glite::wms::common::configuration; // Configuration
+
+namespace logger         = glite::wms::common::logger;
+namespace configuration  = glite::wms::common::configuration;
+namespace wmputilities	 = glite::wms::wmproxy::utilities;
+namespace eventlogger    = glite::wms::wmproxy::eventlogger;
+namespace authorizer     = glite::wms::wmproxy::authorizer;
 
 //namespace glite {
 //namespace wms {
@@ -110,7 +122,6 @@ const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
 const long FILE_TRANSFER_SIZE_LIMIT = 2147000000; 
 // 2 Giga = 2 * 1.073.741.824 = 2.147.483.648
 
-
 // Defining File Separator
 #ifdef WIN 
    // Windows File Separator 
@@ -122,25 +133,6 @@ const long FILE_TRANSFER_SIZE_LIMIT = 2147000000;
 
 const std::string ALL_PROTOCOLS = "all";
 const std::string DEFAULT_PROTOCOL = "default";
-
-
-using namespace std;
-using namespace glite::lb; // JobStatus
-using namespace glite::jdl; // DagAd, AdConverter
-using namespace glite::jobid; //JobId
-
-using namespace glite::wms::wmproxy::server;  //Exception codes
-using namespace glite::wms::wmproxy::utilities; //Exception
-using namespace glite::wms::wmproxy::eventlogger;
-using namespace glite::wms::common::configuration; // Configuration
-
-namespace logger         = glite::wms::common::logger;
-namespace configuration  = glite::wms::common::configuration;
-
-namespace wmputilities	 = glite::wms::wmproxy::utilities;
-namespace authorizer 	 = glite::wms::wmproxy::authorizer;
-namespace eventlogger    = glite::wms::wmproxy::eventlogger;
-
 
 //
 // WM Web Service available operations

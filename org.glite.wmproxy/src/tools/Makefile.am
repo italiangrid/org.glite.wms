@@ -73,17 +73,17 @@ wmputils.cpp:
 	/bin/cp $(top_srcdir)/src/utilities/wmputils.cpp wmputils.cpp
 
 wmpauthorizer.cpp:
-	/bin/cp $(top_srcdir)/src/authorizer/wmpauthorizer.cpp wmpauthorizer.cpp
+	/bin/cp $(top_srcdir)/src/security/wmpauthorizer.cpp wmpauthorizer.cpp
 
 wmpgaclmanager.cpp:
-	/bin/cp $(top_srcdir)/src/authorizer/wmpgaclmanager.cpp wmpgaclmanager.cpp
+	/bin/cp $(top_srcdir)/src/security/wmpgaclmanager.cpp wmpgaclmanager.cpp
 
 
 
 AM_CPPFLAGS = \
 	-DGLITE_WMS_WMPROXY_TOOLS \
 	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/authorizer \
+	-I$(top_srcdir)/src/security \
 	-I$(top_srcdir)/src/utilities \
 	-I$(top_srcdir)/src/eventlogger \
 	$(GRIDSITE_OPENSSL_CFLAGS) \

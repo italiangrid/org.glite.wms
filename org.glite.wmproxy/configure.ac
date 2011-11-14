@@ -130,17 +130,11 @@ AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/utilities/Makefile])
 AC_CONFIG_FILES([src/eventlogger/Makefile])
-AC_CONFIG_FILES([src/authorizer/Makefile])
+AC_CONFIG_FILES([src/security/Makefile])
 AC_CONFIG_FILES([src/commands/Makefile])
 AC_CONFIG_FILES([src/dirmanager/Makefile])
 AC_CONFIG_FILES([src/server/Makefile])
-AC_CONFIG_FILES([src/tools/Makefile])
 AC_CONFIG_FILES([src/scripts/Makefile])
-#AC_CONFIG_FILES([test/Makefile])
-#AC_CONFIG_FILES([interface/Makefile])
-#AC_CONFIG_FILES([wmproxy.dox])
 AC_CONFIG_FILES([src/scripts/glite-wms-wmproxy-purge-proxycache])
 
 AC_OUTPUT
-
-

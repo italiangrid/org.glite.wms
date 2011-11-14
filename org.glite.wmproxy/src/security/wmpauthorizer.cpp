@@ -725,10 +725,10 @@ checkGridsiteJobDrain()
 }
 
 void
-checkProxy(const string &proxy)
+checkProxyValidity(const string &proxy)
 {
-	GLITE_STACK_TRY("checkProxy()");
-	edglog_fn("WMPAuthorizer::checkProxy");
+	GLITE_STACK_TRY("checkProxyValidity()");
+	edglog_fn("WMPAuthorizer::checkProxyValidity");
 
 	edglog(debug)<<"Proxy path: "<<proxy<<endl;
 	
@@ -740,7 +740,7 @@ checkProxy(const string &proxy)
 	if (timediff > PROXY_TIME_MISALIGNMENT_TOLERANCE) {
 		edglog(error)<<"Proxy validity starting time in the future ("<< timediff << " secs)"  <<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-			"checkProxy()", wmputilities::WMS_PROXY_ERROR,
+			"checkProxyValidity()", wmputilities::WMS_PROXY_ERROR,
 			"Proxy validity starting time in the future"
 			"\nPlease check client date/time");
 	} else {
@@ -754,7 +754,7 @@ checkProxy(const string &proxy)
 	if (timeleft <= 1) {
 		edglog(error)<<"The delegated Proxy has expired!"<<endl;
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-			"checkProxy()", wmputilities::WMS_PROXY_EXPIRED,
+			"checkProxyValidity()", wmputilities::WMS_PROXY_EXPIRED,
 			"The delegated Proxy has expired");
 	}
 	GLITE_STACK_CATCH();

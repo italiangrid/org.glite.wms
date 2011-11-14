@@ -43,7 +43,7 @@ enum FQANFields {
 std::string do_authZ(std::string const& action);
 void do_authZ_jobid(std::string const& action, std::string const& job_id);
 void do_authZ(std::string const& action, std::string const& delegation_id);
-void checkProxy(const std::string &proxypath);
+void checkProxyValidity(const std::string &proxypath);
 void checkProxyExistence(const std::string &proxypath, const std::string &jobid);
 std::vector<std::pair<std::string, std::string> > parseFQAN(const std::string &fqan);
 bool checkGridsiteJobDrain();
