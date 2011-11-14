@@ -24,7 +24,7 @@ noinst_HEADERS = \
 	argus_authz.h \
 	wmpvomsauthn.h
 
-libglite_wms_wmproxy_authorizer_la_SOURCES = \
+libglite_wms_wmproxy_security_la_SOURCES = \
 	wmpauthorizer.cpp \
         wmpdelegation.cpp \
 	argus_authz.cpp \
