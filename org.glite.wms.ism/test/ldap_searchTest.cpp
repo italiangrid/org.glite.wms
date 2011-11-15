@@ -18,6 +18,7 @@ limitations under the License. */
 #include <lber.h>
 
 #include <iostream>
+#include <iterator>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -30,10 +31,7 @@ limitations under the License. */
 #include <boost/shared_array.hpp>
 #include <boost/program_options.hpp>
 
-#include "glite/wms/common/utilities/scope_guard.h"
-
 namespace po = boost::program_options;
-namespace ut = glite::wms::common::utilities;
 
 class LDAPException : public std::exception
 {
@@ -58,7 +56,7 @@ int main(int ac, char* av[]) {
   desc.add_options()
     ("help", "this help message")
     ("host,h", po::value<std::string>(), "LDAP server")
-    ("port,p", po::value<size_t>()->default_value(2170), "port on LDAP server")
+    ("port,p", po::value<std::string>()->default_value("2170"), "port on LDAP server")
     ("basedn,b", po::value<std::string>()->default_value("mds-vo-name=local,o=grid"), "base dn for search")
     ("filter,f", po::value<std::string>()->default_value("(objectclass=*)"), "RFC-2254 compliant LDAP search filter")
     ("attribute,a", po::value<std::vector<std::string> >()->composing(), "attribute description")
@@ -83,24 +81,22 @@ int main(int ac, char* av[]) {
   if (vm.count("host")) {
     host.assign(vm["host"].as<std::string>());
   }
- 
-  boost::shared_ptr<LDAP> handle(
-    ldap_init(host.c_str(), vm["port"].as<size_t>()), ldap_unbind
+  LDAP* handle = 0 ;
+  int result = ldap_initialize(&handle, std::string("ldap://"+host+":"+vm["port"].as<std::string>()).c_str());
+  boost::shared_ptr<void> ldap_guard(
+    static_cast<void*>(0), boost::bind(ldap_unbind_ext, handle, (LDAPControl**)(0), (LDAPControl**)(0))
   );
-  
-  struct timeval timeout;
-  if (vm.count("timeout")) {
-    timeout.tv_sec = vm["timeout"].as<int>();
-    ldap_set_option(handle.get(), LDAP_OPT_NETWORK_TIMEOUT, &timeout);
-  }
-  int result = ldap_simple_bind_s(handle.get(),0,0);
-  
   if (result != LDAP_SUCCESS ) {
     throw LDAPException(
       std::string("ldap_simple_bind_s error: ").append(
         ldap_err2string(result)
       )
     );
+  }
+  struct timeval timeout;
+  if (vm.count("timeout")) {
+    timeout.tv_sec = vm["timeout"].as<int>();
+    ldap_set_option(handle, LDAP_OPT_NETWORK_TIMEOUT, &timeout);
   }
   std::vector<std::string> topics;
   if (vm.count("attribute")) {
@@ -134,20 +130,23 @@ int main(int ac, char* av[]) {
   c_arr[n]=0;
  
   LDAPMessage *ldresult = 0;
-  ut::scope_guard ldresult_guard(
-    boost::bind(ldap_msgfree, ldresult)
-  );
-
-  int r = ldap_search_st( 
-    handle.get(), 
+    int r = ldap_search_ext_s( 
+    handle, 
     vm["basedn"].as<std::string>().c_str(), 
     vm["scope"].as<size_t>(), 
     vm["filter"].as<std::string>().c_str(), 
     const_cast<char**>(c_arr.get()), 
     false,
+    NULL,
+    NULL,
     &timeout, 
+    LDAP_NO_LIMIT,
     &ldresult
   );
+  boost::shared_ptr<void> ldresult_guard(
+    ldresult, ldap_msgfree
+  );
+
 
   if (r != LDAP_SUCCESS) {
     throw LDAPException(
@@ -158,37 +157,38 @@ int main(int ac, char* av[]) {
   }
     
   for (
-    LDAPMessage* lde = ldap_first_entry(handle.get(), ldresult);
-    lde != 0; lde = ldap_next_entry(handle.get(), lde)
+    LDAPMessage* lde = ldap_first_entry(handle, ldresult);
+    lde != 0; lde = ldap_next_entry(handle, lde)
   ) {
     boost::shared_ptr<char> dn_str(
-      ldap_get_dn( handle.get(), lde ),
+      ldap_get_dn( handle, lde ),
       ber_memfree
     );
 
     BerElement *ber = 0;
-    ut::scope_guard ber_guard(
-      boost::bind(ber_free, ber, 0)
-    );
-    
+   
     std::cout << "dn: " << dn_str << std::endl;
     for( 
-      char* attr = ldap_first_attribute(handle.get(), lde, &ber);
-      attr; attr = ldap_next_attribute(handle.get(), lde, ber) 
+      char* attr = ldap_first_attribute(handle, lde, &ber);
+      attr; attr = ldap_next_attribute(handle, lde, ber) 
     ) {
-      ut::scope_guard attr_guard(
-        boost::bind(ber_memfree, attr)
+      boost::shared_ptr<void> attr_guard(
+        attr, ber_memfree
       );
-      boost::shared_array<char*> values(
-        ldap_get_values(handle.get(), lde, attr),
-        ldap_value_free
+      boost::shared_array<struct berval*> values(
+        ldap_get_values_len(handle, lde, attr),
+        ldap_value_free_len
       );
     
       if (!values) continue;
       for(size_t i=0; values[i] != 0; ++i) {
-        std::cout << attr << ": " << values[i] << "\n"; 
+        std::cout << attr << ": " << values[i]->bv_val << "\n"; 
       }
     }
+     boost::shared_ptr<void> ber_guard(
+       static_cast<void*>(0),boost::bind(ber_free, ber, 0)
+    );
+    
   }
   return 0;
 }

@@ -21,7 +21,8 @@
 check_PROGRAMS = \
   ldap_search \
   ldap_search_async \
-  ii_purchaserTest
+  ii_purchaserTest \
+  ii_g2_purchaserTest
 
 ldap_search_SOURCES = \
 	ldap_searchTest.cpp
@@ -36,6 +37,28 @@ ldap_search_async_SOURCES = \
 ldap_search_async_LDADD = \
         -lldap \
         $(BOOST_LIBS)
+
+ii_g2_purchaserTest_SOURCES = \
+        ism-ii-g2-purchaserTest.cpp
+
+ii_g2_purchaserTest_LDADD = \
+        $(top_srcdir)/build/src/libglite_wms_ism.la \
+        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_g2_purchaser.la \
+        -lldap \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+        $(CLASSAD_LIBS) \
+        $(BOOST_LIBS)
+
+ii_g2_purchaserTest_CPPFLAGS = \
+	-I$(top_srcdir)/interface \
+	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
+	$(CLASSAD_CFLAGS) \
+        $(BOOST_CFLAGS)
 
 ii_purchaserTest_SOURCES = \
         ism-ii-purchaserTest.cpp
@@ -54,7 +77,7 @@ ii_purchaserTest_LDADD = \
         $(BOOST_LIBS)
 
 
-AM_CPPFLAGS = -I$(top_srcdir)/interface \
+AM_CPPFLAGS = -I$(top_srcdir)/interface \	 
         -I$(top_srcdir)/src \
         -I$(top_srcidr)/test \
 	$(CLASSAD_CFLAGS) \
