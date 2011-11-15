@@ -294,10 +294,8 @@ WMPAuthorizer::map_user_lcmaps()
 {
 	edglog_fn("map_user_lcmaps");
 	int retval;
-	struct passwd* user_info = 0;
 
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
-
         lcmaps_init_and_logfile(
 		"/var/log/glite/lcmaps.log",
 		0 /* no FILE* provided */,
@@ -306,7 +304,8 @@ WMPAuthorizer::map_user_lcmaps()
 	retval = lcmaps_account_info_init(&plcmaps_account);
 	if (retval) {
 		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
+		"lcmaps_account_info_init()",
+		wmputilities::WMS_USERMAP_ERROR,
 		"LCMAPS info initialization failure");
 	}
 
@@ -332,8 +331,8 @@ WMPAuthorizer::map_user_lcmaps()
 	}
 
 	uid_ = plcmaps_account.uid;
-	user_info = getpwuid(uid_);
-	if (user_info == NULL) {
+	struct passwd* user_info = getpwuid(uid_);
+	if (user_info == 0) {
 		edglog(error)<<"LCMAPS: Unknown uid " << uid_ << endl;
 		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 			"getpwuidn()",wmputilities::WMS_USERMAP_ERROR,
@@ -349,8 +348,6 @@ WMPAuthorizer::map_user_lcmaps()
 			"Mapping not allowed, mapped local user group equal to group"
 			" of user running server\n(please contact server administrator)");
 	}
-	// Setting value for username private member
-	username_ = string(user_info->pw_name);
 	// Setting value for usergroup private member
 	gid_ = user_info->pw_gid;
 	// Cleaning structure
@@ -598,6 +595,9 @@ WMPAuthorizer::getFQANs()
 string
 WMPAuthorizer::getUserName()
 {
+	struct passwd* user_info = 0;
+	user_info = getpwuid(uid_);
+	username_ = string(user_info->pw_name);
 	return username_;
 }
 
