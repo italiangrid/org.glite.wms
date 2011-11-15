@@ -33,7 +33,7 @@ namespace security {
 namespace {
 
 xacml_subject_t*
-create_xacml_subjectid(std::string x500dn)
+create_xacml_subjectid(std::string const& x500dn)
 {
         edglog_fn("argus_authZ::create_xacml_subjectid");
 
@@ -62,7 +62,7 @@ create_xacml_subjectid(std::string x500dn)
 }
 
 xacml_subject_t*
-create_xacml_subject_voms_fqans(std::vector<std::string> fqans)
+create_xacml_subject_voms_fqans(std::vector<std::string> const& fqans)
 {
         edglog_fn("argus_authZ::create_xacml_subject_voms_fqans");
 
@@ -141,7 +141,7 @@ merge_xacml_subject_attrs_into(
 }
 
 xacml_resource_t*
-create_xacml_resourceid(std::string resourceid)
+create_xacml_resourceid(std::string const& resourceid)
 {
         edglog_fn("argus_authZ::create_xacml_resourceid");
 
@@ -166,7 +166,7 @@ create_xacml_resourceid(std::string resourceid)
 	return resource;
 }
 
-xacml_action_t* create_xacml_actionid(std::string actionid)
+xacml_action_t* create_xacml_actionid(std::string const& actionid)
 {
         edglog_fn("argus_authZ::create_xacml_actionid");
 
@@ -220,7 +220,7 @@ xacml_request_t* create_xacml_request(
 }
 
 boost::tuple<xacml_decision_t, uid_t, gid_t>
-get_response(xacml_response_t* response, std::string resourceid)
+get_response(xacml_response_t* response, std::string const& resourceid)
 {
         edglog_fn("argus_autZ::get_response");
 
@@ -316,11 +316,11 @@ get_response(xacml_response_t* response, std::string resourceid)
 
 boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
 argus_authZ(
-	std::vector<std::string> pepds, // endpoints
-	std::vector<std::string> fqans,
-	std::string resourceid, // only one resource per request
-	std::string actionid,
-	std::string subjectid)
+	std::vector<std::string> const& pepds, // endpoints
+	std::vector<std::string> const& fqans,
+	std::string const& resourceid, // only one resource per request
+	std::string const& actionid,
+	std::string const& subjectid)
 {
 	boost::tuple<bool, xacml_decision_t, uid_t, gid_t> error(
 		false, XACML_DECISION_INDETERMINATE, 0, 0
