@@ -28,7 +28,7 @@
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
 namespace {
 

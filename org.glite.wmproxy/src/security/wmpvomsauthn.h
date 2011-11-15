@@ -32,7 +32,7 @@ limitations under the License. */
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
 long getProxyTimeLeft(std::string const& pxfile);
 time_t ASN1_UTCTIME_get(ASN1_UTCTIME const* s);

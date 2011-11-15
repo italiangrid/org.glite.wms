@@ -38,16 +38,12 @@ limitations under the License.
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
 using namespace std;
 
 using namespace glite::wms::wmproxy::utilities;
 namespace logger = glite::wms::common::logger;
-
-/*
-	useful constants
-*/
 
 // permission codes
 const unsigned int GaclManager::WMPGACL_NOPERM = GRST_PERM_NONE;
@@ -74,7 +70,6 @@ const char* GaclManager::WMPGACL_VOMS_TAG = "fqan";
 
 // default filenames
 const char* GaclManager::WMPGACL_DEFAULT_FILE = GRST_ACL_FILE;
-const char* GaclManager::WMPGACL_DEFAULT_DRAIN_FILE = ".drain";
 
 const int GaclManager::WMPGACL_SUCCESS = 0;
 const int GaclManager::WMPGACL_ERROR = -1;

@@ -28,7 +28,7 @@ limitations under the License. */
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
 const char* X509_VOMS_DIR = "X509_VOMS_DIR";
 const char* X509_CERT_DIR = "X509_CERT_DIR";
@@ -93,6 +93,7 @@ STACK_OF(X509) * load_chain(char const* certfile)
   ret=stack;
   return ret;
 }
+
 const long 
 convASN1Date(const std::string &date)
 {

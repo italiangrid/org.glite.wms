@@ -24,9 +24,7 @@ limitations under the License.
 #ifndef GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 #define GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 
-
 #include "wmpresponsestruct.h"
-
 
 // Web service available core operations. (see wmpoperations.h for others).
 // All methods are void, response values are inserted in the corresponding
@@ -34,26 +32,33 @@ limitations under the License.
 // For more information about arguments see Web Service Description Language
 // file (wsdl).
 
-void jobListMatch(jobListMatchResponse &jobListMatch_response,
-	const std::string &jdl, const std::string &delegation_id);
+void jobListMatch(
+	jobListMatchResponse &jobListMatch_response,
+	std::string const& jdl, std::string const& delegation_id);
 
-void jobSubmit(struct ns1__jobSubmitResponse &response, 
-	jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-	std::string &delegation_id, struct soap *soap);
+void jobSubmit(
+	struct ns1__jobSubmitResponse &response, 
+	jobSubmitResponse &jobSubmit_response, std::string const& jdl,
+	std::string& delegation_id, struct soap *soap);
 
-void jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
-        jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-        std::string &delegation_id, struct soap *soap);
+void jobSubmitJSDL(
+	struct ns1__jobSubmitJSDLResponse &response,
+        jobSubmitResponse &jobSubmit_response, std::string const& jdl,
+        std::string const& delegation_id, struct soap *soap);
 	
-void jobRegister(jobRegisterResponse &jobRegister_response,
-	const std::string &jdl, std::string &delegation_id);
+void jobRegister(
+	jobRegisterResponse &jobRegister_response,
+	std::string const& jdl,
+	std::string& delegation_id);
 
-void jobStart(jobStartResponse &jobStart_response, const std::string &job_id,
+void jobStart(
+	jobStartResponse &jobStart_response,
+	std::string const& job_id,
 	struct soap *soap);
 
-void jobCancel(jobCancelResponse &jobCancel_response, const std::string &job_id);
+void jobCancel(jobCancelResponse &jobCancel_response, std::string const& job_id);
 
-void jobPurge(jobPurgeResponse &jobPurge_response, const std::string &job_id);
+void jobPurge(jobPurgeResponse &jobPurge_response, std::string const& job_id);
 
 #endif // GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 

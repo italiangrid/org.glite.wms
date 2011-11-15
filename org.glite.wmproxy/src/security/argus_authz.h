@@ -33,7 +33,7 @@ limitations under the License.
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
 boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
 argus_authZ(

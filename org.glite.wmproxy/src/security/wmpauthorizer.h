@@ -20,83 +20,52 @@ limitations under the License.  */
 
 #include <string>
 #include <vector>
+#include <sys/types.h>
+
+#include "wmpvomsauthn.h"
 
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 
-/**
- * WMPAuthorizer class provides a set of utility methods for performing
- * Grid Users authorization and mapping to local users. It also relies on 
- * the functions provided by the security lcmaps component.
-*/
-
-enum FQANFields {
-	FQAN_VO,
-	FQAN_GROUP,
-	FQAN_SUBGROUP,
-	FQAN_ROLE,
-	FQAN_CAPABILITY
+struct auth_info {
+	auth_info(uid_t const& uid, gid_t const& gid, std::vector<std::string> const& fqans)
+		: uid_(uid), gid_(gid), fqans_(fqans) { }
+	uid_t uid_;
+	gid_t gid_;
+	std::vector<std::string> fqans_;
 };
 
 std::string do_authZ(std::string const& action);
-void do_authZ_jobid(std::string const& action, std::string const& job_id);
-void do_authZ(std::string const& action, std::string const& delegation_id);
+auth_info do_authZ_jobid(std::string const& action, std::string const& job_id);
+auth_info do_authZ(std::string const& action, std::string const& delegation_id);
 void checkProxyValidity(const std::string &proxypath);
 void checkProxyExistence(const std::string &proxypath, const std::string &jobid);
 std::vector<std::pair<std::string, std::string> > parseFQAN(const std::string &fqan);
-bool checkGridsiteJobDrain();
+bool checkJobDrain();
 void setGridsiteJobGacl(const std::string &jobid);
 void setGridsiteJobGacl(std::vector<std::string> &jobids);
 
 class WMPAuthorizer {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
 public:
 	WMPAuthorizer(std::string const& operation);
 	WMPAuthorizer(std::string const& operation, std::string const& proxycert);
 	~WMPAuthorizer();
    
-	/**
-	* Calls Gacl to check if the user is authorized to submit requests to WMProxy. 
-	* Check is done on the basis of user's credential.
-	*/
-	void checkGaclUserAuthZ(std::string const& fqan, std::string const& dn);
-    
-	/**
-	* Returns the user name
-	* @return a string containing the local user name
-	*/
+	std::vector<std::string> getFQANs();
 	std::string getUserName();
-    
-	/**
-	* Returns the user identifier
-	* @return a uid_t type representing the local user id
-	*/
 	uid_t getUserId();
-    
-	/**
-	* Returns the user group
-	* @return a uid_t type representing the local user group
-	*/
 	uid_t getUserGroup();
-    
-	/**
-	* Does authorization via FQAN
-	* @param certfqan user certificate FQAN
-	* @param jobid the job identifier
-	*/
-	void authorize(const std::string &certfqan = "", const std::string &jobid = "");
+	void authorize();
 private:
 	void map_user_lcmaps();
 	std::string username_;
-	uid_t userid_;
-	uid_t usergroup_;
-	bool mapdone_;
+	uid_t uid_;
+	uid_t gid_;
 	std::string userdn_;
 	std::vector<std::string> fqans_;
 	std::string action_;
-#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 };
 
 } // namespace authorizer

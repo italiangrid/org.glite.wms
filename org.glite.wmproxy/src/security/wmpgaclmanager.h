@@ -30,7 +30,7 @@ extern "C" {
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace authorizer {
+namespace security {
 /**
  * WMPGaclManager class provides a set of utility methods for handling
  * gacl files for Grid Users authorization.

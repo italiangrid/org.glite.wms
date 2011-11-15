@@ -77,7 +77,6 @@ using namespace glite::wms::wmproxy::utilities; //Exception
 
 namespace logger        = glite::wms::common::logger;
 namespace wmputilities	= glite::wms::wmproxy::utilities;
-namespace authorizer 	= glite::wms::wmproxy::authorizer;
 namespace jobid		= glite::jobid;
 
 /**

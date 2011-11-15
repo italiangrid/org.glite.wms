@@ -29,6 +29,7 @@ limitations under the License.
 
 // Boost
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 #include "boost/filesystem/path.hpp"
 
 #include "wmpcommon.h"
@@ -78,7 +79,6 @@ limitations under the License.
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-
 using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::jdl; // DagAd, AdConverter
@@ -93,13 +93,8 @@ namespace logger         = glite::wms::common::logger;
 namespace configuration  = glite::wms::common::configuration;
 namespace wmputilities	 = glite::wms::wmproxy::utilities;
 namespace eventlogger    = glite::wms::wmproxy::eventlogger;
-namespace authorizer     = glite::wms::wmproxy::authorizer;
+namespace security     = glite::wms::wmproxy::security;
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
-//namespace server {
-	
 // Global variables for configuration
 extern WMProxyConfiguration conf;
 
@@ -144,7 +139,7 @@ getVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_TRY("getVersion()");
 	edglog_fn("wmpoperations::getVersion");
 
-	authorizer::do_authZ("getVersion");
+	security::do_authZ("getVersion");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getVersion");
 	getVersion_response.version = WMP_VERSION;
@@ -159,7 +154,7 @@ getJDL(const std::string &job_id, JdlType jdltype, getJDLResponse &getJDL_respon
 	edglog_fn("wmpoperations::getJDL");
 	edglog(debug) << "getJDL requested for job: " << job_id <<endl;
 
-	authorizer::do_authZ_jobid("getJDL", job_id);
+	security::do_authZ_jobid("getJDL", job_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getJDL");
 	getJDL_response.jdl = "";
@@ -187,7 +182,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	GLITE_STACK_TRY("getMaxInputSandboxSize()");
 	edglog_fn("wmpoperations::getMaxInputSandboxSize");
 
-	authorizer::do_authZ("getMaxInputSandboxSize");
+	security::do_authZ("getMaxInputSandboxSize");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getMaxInputSandboxSize");
 	try {
@@ -214,7 +209,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	GLITE_STACK_TRY("getSandboxDestURI()");
 	edglog_fn("wmpoperations::getSandboxDestURI");
 
-        authorizer::do_authZ_jobid("getSandboxDestURI", jid);
+        security::do_authZ_jobid("getSandboxDestURI", jid);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getSandboxDestURI");
 	edglog(debug) << "getSandboxDestURI requested for job: " << jid << endl;
@@ -237,7 +232,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	GLITE_STACK_TRY("getSandboxBulkDestURI()");
 	edglog_fn("wmpoperations::getSandboxBulkDestURI");
 
-	authorizer::do_authZ_jobid("getSandboxBulkDestURI", jid);
+	security::do_authZ_jobid("getSandboxBulkDestURI", jid);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getSandboxBulkDestURI");
 	edglog(debug) << "getSandboxBulkDestURI requested for job: " << jid << endl;
@@ -283,7 +278,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	GLITE_STACK_TRY("getQuota()");
 	edglog_fn("wmpoperations::getQuota");
 	
-	std::string user_name = authorizer::do_authZ("getQuota"); // throws
+	std::string user_name = security::do_authZ("getQuota"); // throws
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getQuota");
 	pair<long, long> quotas;
@@ -305,7 +300,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	GLITE_STACK_TRY("getFreeQuota()");
 	edglog_fn("wmpoperations::getFreeQuota");
 	
-	std::string user_name = authorizer::do_authZ("getFreeQuota"); //throws
+	std::string user_name = security::do_authZ("getFreeQuota"); //throws
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getFreeQuota");
 	pair<long, long> quotas;
@@ -329,7 +324,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog_fn("wmpoperations::getOutputFileList");
 		edglog(debug) << "getOutputFileList requested for job: " << jid << endl;
 
-		authorizer::do_authZ_jobid("getOutputFileList", jid);
+		security::do_authZ_jobid("getOutputFileList", jid);
 		// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 		initWMProxyOperation("getOutputFileList");
 
@@ -357,7 +352,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 
 			string userProxyJob =  wmputilities::getJobDelegatedProxyPath(jobid);
-			long timeleft = authorizer::getProxyTimeLeft(userProxyJob);	
+			long timeleft = security::getProxyTimeLeft(userProxyJob);	
 
 			// Setting user proxy, checks whether the user proxy is still valid
 			// switching to host proxy if the user proxy expired
@@ -414,7 +409,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			// Checking for hidden files
 			filename = wmputilities::getFileName(string(*iter));
 			if ((filename != MARADONA_FILE) && (filename
-					!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
+					!= security::GaclManager::WMPGACL_DEFAULT_FILE)) {
 				filesize = wmputilities::computeFileSize(*iter);
 				edglog(debug)<<"Inserting file name: " <<filename<<endl;
 				edglog(debug)<<"Inserting file size: " <<filesize<<endl;
@@ -452,7 +447,7 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 	GLITE_STACK_TRY("getJobTemplate()");
 	edglog_fn("wmpoperations::getJobTemplate");
 
-	authorizer::do_authZ("getJobTemplate");
+	security::do_authZ("getJobTemplate");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getJobTemplate");
 	
@@ -473,7 +468,7 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 	GLITE_STACK_TRY("getDAGTemplate()");
 	edglog_fn("wmpoperations::getDAGTemplate");
 
-	authorizer::do_authZ("getDAGTemplate");
+	security::do_authZ("getDAGTemplate");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getDAGTemplate");
 
@@ -494,7 +489,7 @@ getCollectionTemplate(getCollectionTemplateResponse
 	GLITE_STACK_TRY("getCollectionTemplate()");
 	edglog_fn("wmpoperations::getCollectionTemplate");
 
-	authorizer::do_authZ("getCollectionTemplate");
+	security::do_authZ("getCollectionTemplate");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getCollectionTemplate");
 	getCollectionTemplate_response.jdl =
@@ -515,7 +510,7 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 	GLITE_STACK_TRY("getIntParametricJobTemplate()");
 	edglog_fn("wmpoperations::getIntParametricJobTemplate");
 
-	authorizer::do_authZ("getIntParametricJobTemplate");	
+	security::do_authZ("getIntParametricJobTemplate");	
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getIntParametricJobTemplate");
 
@@ -536,7 +531,7 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 	GLITE_STACK_TRY("getStringParametricJobTemplate()");
 	edglog_fn("wmpoperations::getStringParametricJobTemplate");
 
-	authorizer::do_authZ("getStringParametricJobTemplate");
+	security::do_authZ("getStringParametricJobTemplate");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getStringParametricJobTemplate");
 	getStringParametricJobTemplate_response.jdl =
@@ -556,7 +551,7 @@ getDelegationVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_TRY("getDelegationVersion()");
 	edglog_fn("wmpoperations::getDelegationVersion");
 
-	authorizer::do_authZ("getDelegationVersion");
+	security::do_authZ("getDelegationVersion");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getDelegationVersion");
 	getVersion_response.version = getDelegationVersion();
@@ -571,7 +566,7 @@ getDelegationIntefaceVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_TRY("getDelegationInterfaceVersion()");
 	edglog_fn("wmpoperations::getDelegationInterfaceVersion");
 
-	authorizer::do_authZ("getDelegationVersion");
+	security::do_authZ("getDelegationVersion");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getDelegationInterfaceVersion");
 	getVersion_response.version = getDelegationInterfaceVersion();
@@ -589,7 +584,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getProxyReq");
 	
-	authorizer::do_authZ("getProxyReq", delegation_id);
+	security::do_authZ("getProxyReq", delegation_id);
 	
 #ifndef GRST_VERSION
 	if (delegation_id == "") {
@@ -616,7 +611,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("putProxy");
 
-	authorizer::WMPAuthorizer auth("putProxy", getDelegatedProxyPath(delegation_id));
+	security::WMPAuthorizer auth("putProxy", getDelegatedProxyPath(delegation_id));
 	auth.authorize();
 
 	putProxy(delegation_id, proxy);
@@ -634,7 +629,7 @@ renewProxyReq(string &renewProxyReq_response,
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("renewProxyReq");
 
-	authorizer::WMPAuthorizer auth("renewProxyReq", getDelegatedProxyPath(delegation_id));
+	security::WMPAuthorizer auth("renewProxyReq", getDelegatedProxyPath(delegation_id));
 	auth.authorize();
 
 	renewProxyReq_response = renewProxyRequest(delegation_id);
@@ -651,7 +646,7 @@ getNewProxyReq(pair<string, string> &retpair)
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getNewProxyReq");
 
-	authorizer::do_authZ("getNewProxyReq");
+	security::do_authZ("getNewProxyReq");
 
 	edglog(debug)<<"found delegationID: "<<retpair.first<<endl;
 	edglog(debug)<<"found proxyRequest "<<retpair.second<<endl;
@@ -668,7 +663,7 @@ destroyProxy(const string &delegation_id)
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("destroyProxy");
 
-	authorizer::do_authZ("destroyProxy", delegation_id);
+	security::do_authZ("destroyProxy", delegation_id);
 	edglog(debug)<<"destroyProxy successful"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -682,7 +677,7 @@ getProxyTerminationTime(time_t
 	GLITE_STACK_TRY("getProxyTerminationTime()");
 	edglog_fn("wmpoperations::getProxyTerminationTime");
 
-	authorizer::do_authZ("getProxyTerminationTime", delegation_id);
+	security::do_authZ("getProxyTerminationTime", delegation_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getProxyTerminationTime");
 	getProxyTerminationTime_response = getTerminationTime(delegation_id);
@@ -697,18 +692,18 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 	GLITE_STACK_TRY("getACLItems()");
 	edglog_fn("wmpoperations::getACLItems");
 
-	authorizer::do_authZ_jobid("getACLItems", job_id);
+	security::do_authZ_jobid("getACLItems", job_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getACLItems");
 	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 	JobId jid(job_id);
  	string jobpath = wmputilities::getJobDirectoryPath(jid);
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
-	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
+	security::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE);
 	getACLItems_response =
-		gaclmanager.getItems(authorizer::GaclManager::WMPGACL_PERSON_TYPE);
+		gaclmanager.getItems(security::GaclManager::WMPGACL_PERSON_TYPE);
 	edglog(debug) << "getACLItems successful" << endl;
 	
 	GLITE_STACK_CATCH();
@@ -721,7 +716,7 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	GLITE_STACK_TRY("addACLItems()");
 	edglog_fn("wmpoperations::addACLItems");
 
-	authorizer::do_authZ_jobid("addACLItems", job_id);
+	security::do_authZ_jobid("addACLItems", job_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("addACLItems");
 	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
@@ -730,14 +725,14 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	string jobpath = wmputilities::getJobDirectoryPath(jid);
 
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
-	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
+	security::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE);
 		
-	vector<pair<authorizer::GaclManager::WMPgaclCredType, string> > gaclvect;
-	pair<authorizer::GaclManager::WMPgaclCredType, string> gaclpair;
+	vector<pair<security::GaclManager::WMPgaclCredType, string> > gaclvect;
+	pair<security::GaclManager::WMPgaclCredType, string> gaclpair;
 	for (unsigned int i = 0; i < dnlist->Item->size(); i++) {
-		gaclpair.first = authorizer::GaclManager::WMPGACL_PERSON_TYPE;
+		gaclpair.first = security::GaclManager::WMPGACL_PERSON_TYPE;
 		edglog(debug)<<"Item to add: "<<(*(dnlist->Item))[i]<<endl;
 		gaclpair.second = (*(dnlist->Item))[i];
 		gaclvect.push_back(gaclpair);
@@ -757,7 +752,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
 
-	authorizer::do_authZ_jobid("removeACLItem", job_id);
+	security::do_authZ_jobid("removeACLItem", job_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("removeACLItem");
 	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
@@ -776,10 +771,10 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	string jobpath = wmputilities::getJobDirectoryPath(jid);
 	
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
-	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
-		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	gaclmanager.removeEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
+	security::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
+		+ security::GaclManager::WMPGACL_DEFAULT_FILE);
+	gaclmanager.removeEntry(security::GaclManager::WMPGACL_PERSON_TYPE,
 		item, errors);
 		
 	if (errors.size() > 0) {
@@ -804,9 +799,9 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 	edglog_fn("wmpoperations::getProxyInfo");
 
 	if (isjobid) {
-		authorizer::do_authZ_jobid("getProxyInfo", id);
+		security::do_authZ_jobid("getProxyInfo", id);
 	} else {
-		authorizer::do_authZ("getProxyInfo", id);
+		security::do_authZ("getProxyInfo", id);
 	}
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getProxyInfo");
@@ -822,7 +817,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 				"Provided Job Id not valid");
 		}
 		proxy = wmputilities::getJobDelegatedProxyPath(id);
-		authorizer::checkProxyExistence(proxy, id);
+		security::checkProxyExistence(proxy, id);
 		edglog(debug)<<"Job proxy: "<<proxy<<endl;
 	} else {
 		edglog(info)<<"Delegation Id: "<<id<<endl;
@@ -836,7 +831,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		proxy = getDelegatedProxyPath(id);
 		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
-	authorizer::VOMSAuthN vomsproxy = authorizer::VOMSAuthN(proxy);
+	security::VOMSAuthN vomsproxy = security::VOMSAuthN(proxy);
 	getProxyInfo_response.items = vomsproxy.getProxyInfo();
 	
 	edglog(debug)<<"getProxyInfo successful"<<endl;
@@ -852,9 +847,6 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 
 	// not exposed: no security checks
 
-	//TODO jid parameter is deleted inside this method - not safe!
-	// TODO jad/dag/ad: remove pointer use
-
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
@@ -867,7 +859,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 
 	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
 	string type;
-	JobAd * jad = NULL;
+	boost::shared_ptr<JobAd> jad;
 	string parent = wmplogger.retrieveRegJobEvent(jid->toString()).parent;
 	if (!wmputilities::fileExists(jdlpath)) {
 		// Checking if the job is a sub-node
@@ -881,9 +873,8 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		// Job is a sub-node, getting JDL from parent JDL
 		JobId parentjid(parent);
 		jdlpath = wmputilities::getJobJDLExistingStartPath(parentjid);
-		WMPExpDagAd *dag = new WMPExpDagAd(wmputilities::readTextFile(jdlpath));
-		jad = new NodeAd(dag->getNode(*jid));
-		delete dag;
+		boost::shared_ptr<WMPExpDagAd> dag(new WMPExpDagAd(wmputilities::readTextFile(jdlpath)));
+		boost::shared_ptr<NodeAd> jad(new NodeAd(dag->getNode(*jid)));
 		
 		// Supported sub-nodes are standard job, setting type = job
 		type = JDL_TYPE_JOB;
@@ -894,16 +885,15 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 			JobId parentjid(parent);
 			jdlpath = wmputilities::getJobJDLExistingStartPath(parentjid);
 		}
-		Ad *ad = new Ad(wmputilities::readTextFile(jdlpath));
+		boost::shared_ptr<Ad> ad(new Ad(wmputilities::readTextFile(jdlpath)));
 		if (ad->hasAttribute(JDL::TYPE)) {
 			type = glite_wms_jdl_toLower(ad->getString(JDL::TYPE));
 		} else {
 			type = JDL_TYPE_JOB;
 		}
 		if (type == JDL_TYPE_JOB) {
-			jad = new JobAd(*(ad->ad()));
+			jad.reset(new JobAd(*(ad->ad())));
 		}
-		delete ad;
 	}
 	edglog(debug) <<"Type: "<<type<<endl;
 	if (type == JDL_TYPE_JOB) {
@@ -983,8 +973,6 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 				}
 			}
 		}
-		
-		delete jad;
 	} else {
 		edglog(debug)<<"Perusal service not available for dag or collection "
 			"type"<<endl;
@@ -1003,7 +991,7 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
         GLITE_STACK_TRY("enableFilePerusal()");
         edglog_fn("wmpoperations::enableFilePerusal");
 
-	authorizer::do_authZ_jobid("enableFilePerusal", job_id);
+	security::do_authZ_jobid("enableFilePerusal", job_id);
         // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
         initWMProxyOperation("enableFilePerusal");
         edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
@@ -1051,7 +1039,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	GLITE_STACK_TRY("getPerusalFiles()");
 	edglog_fn("wmpoperations::getPerusalFiles");
 
-	authorizer::do_authZ_jobid("getPerusalFiles", job_id);
+	security::do_authZ_jobid("getPerusalFiles", job_id);
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getPerusalFiles");
 	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
@@ -1199,7 +1187,7 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 	edglog_fn("wmpoperations::getTransferProtocols");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getTransferProtocols");
-	authorizer::do_authZ("getTransferProtocols");
+	security::do_authZ("getTransferProtocols");
 
 	getTransferProtocols_response.protocols = new StringList;
 	vector<string> *protocols = new vector<string>();
@@ -1223,7 +1211,7 @@ getJobStatusOp(getJobStatusResponse &getJobStatus_response, const string &job_id
 	GLITE_STACK_TRY("getJobStatus()");
 	edglog_fn("wmpoperations::getJobStatus");
 
-	authorizer::do_authZ("getJobStatusOp");
+	security::do_authZ("getJobStatusOp");
 	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
 	initWMProxyOperation("getJobStatus");
 
@@ -1242,8 +1230,3 @@ getJobStatusOp(getJobStatusResponse &getJobStatus_response, const string &job_id
 	edglog(debug)<<"JobStatus retrieved successful"<<endl;
 	GLITE_STACK_CATCH();
 }
-
-//} // server
-//} // wmproxy
-//} // wms
-//} // glite

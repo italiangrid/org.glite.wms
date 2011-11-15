@@ -68,7 +68,6 @@ using namespace glite::wms::wmproxy::utilities; //Exception codes
 namespace jobid        = glite::jobid;
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
-namespace authorizer   = glite::wms::wmproxy::authorizer;
 
 // Environment variable for user defined log destination
 const char * GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
@@ -851,7 +850,7 @@ WMPEventLogger::setUserProxy(const string &proxy)
 	this->delegatedproxy = proxy;
 	if (!proxy.empty()) {
 		try {
-			authorizer::checkProxyValidity(proxy);
+			security::checkProxyValidity(proxy);
 		} catch (Exception &ex) {
 			if (ex.getCode() != wmputilities::WMS_PROXY_EXPIRED) {
 				// Problem with proxy (not expired)
