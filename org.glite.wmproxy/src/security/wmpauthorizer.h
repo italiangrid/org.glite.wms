@@ -15,6 +15,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and 
 limitations under the License.  */
 
+// Authors:
+//      Marco Cecchi
+//      Giuseppe Avellino
+
 #ifndef GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
 #define GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
 
@@ -51,7 +55,7 @@ class WMPAuthorizer {
 public:
 	WMPAuthorizer(std::string const& operation);
 	WMPAuthorizer(std::string const& operation, std::string const& proxycert);
-	~WMPAuthorizer();
+	~WMPAuthorizer() { }
    
 	std::vector<std::string> getFQANs();
 	std::string getUserName();

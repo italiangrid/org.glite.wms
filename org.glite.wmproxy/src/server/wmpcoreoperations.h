@@ -26,39 +26,34 @@ limitations under the License.
 
 #include "wmpresponsestruct.h"
 
-// Web service available core operations. (see wmpoperations.h for others).
 // All methods are void, response values are inserted in the corresponding
 // response structure.
-// For more information about arguments see Web Service Description Language
-// file (wsdl).
-
 void jobListMatch(
-	jobListMatchResponse &jobListMatch_response,
-	std::string const& jdl, std::string const& delegation_id);
-
+	jobListMatchResponse& jobListMatch_response,
+	std::string const& jdl,
+	std::string const& delegation_id);
 void jobSubmit(
-	struct ns1__jobSubmitResponse &response, 
-	jobSubmitResponse &jobSubmit_response, std::string const& jdl,
-	std::string& delegation_id, struct soap *soap);
-
+	struct ns1__jobSubmitResponse& response, 
+	jobSubmitResponse& jobSubmit_response,
+	std::string const& jdl,
+	std::string& delegation_id,
+	struct soap *soap);
 void jobSubmitJSDL(
-	struct ns1__jobSubmitJSDLResponse &response,
-        jobSubmitResponse &jobSubmit_response, std::string const& jdl,
-        std::string const& delegation_id, struct soap *soap);
-	
+	struct ns1__jobSubmitJSDLResponse& response,
+        jobSubmitResponse& jobSubmit_response,
+	std::string const& jdl,
+        std::string& delegation_id,
+	struct soap *soap);
 void jobRegister(
-	jobRegisterResponse &jobRegister_response,
+	jobRegisterResponse& jobRegister_response,
 	std::string const& jdl,
 	std::string& delegation_id);
-
 void jobStart(
-	jobStartResponse &jobStart_response,
+	jobStartResponse& jobStart_response,
 	std::string const& job_id,
 	struct soap *soap);
-
-void jobCancel(jobCancelResponse &jobCancel_response, std::string const& job_id);
-
-void jobPurge(jobPurgeResponse &jobPurge_response, std::string const& job_id);
+void jobCancel(jobCancelResponse& jobCancel_response, std::string const& job_id);
+void jobPurge(jobPurgeResponse& jobPurge_response, std::string const& job_id);
 
 #endif // GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 

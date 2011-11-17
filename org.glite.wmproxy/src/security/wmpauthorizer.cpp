@@ -15,6 +15,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
+// Authors:
+//	Marco Cecchi
+//	Giuseppe Avellino
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -362,8 +366,7 @@ WMPAuthorizer::map_user_lcmaps()
 void
 setGridsiteJobGacl(std::vector<std::string> &jobids)
 {
-	GLITE_STACK_TRY("setGridsiteJobGacl()");
-	edglog_fn("WMPAuthorizer::setGridsiteJobGacl vector");
+	edglog_fn("WMPAuthorizer::setGridsiteJobGacl()");
 	
 	if (jobids.size()) {
 		string user_dn = wmputilities::getDN_SSL(); // taken from ssl
@@ -425,14 +428,11 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
 			outfile.close();
 		}
 	}
-	
-	GLITE_STACK_CATCH();
 }
 
 void
 setGridsiteJobGacl(const string &jobid)
 {
-	GLITE_STACK_TRY("setGridsiteJobGacl()");
 	edglog_fn("WMPAuthorizer::setGridsiteJobGacl string");
 	
 	string user_dn = wmputilities::getDN_SSL(); // taken from ssl
@@ -463,8 +463,6 @@ setGridsiteJobGacl(const string &jobid)
 		throw wmputilities::GaclException(__FILE__, __LINE__, "setGridsiteJobGacl()",
 			wmputilities::WMS_GACL_FILE, errmsg);
 	}
-		
-	GLITE_STACK_CATCH();
 }
 
 bool 
@@ -495,7 +493,6 @@ checkJobDrain()
 void
 checkProxyValidity(const string &proxy)
 {
-	GLITE_STACK_TRY("checkProxyValidity()");
 	edglog_fn("WMPAuthorizer::checkProxyValidity");
 
 	edglog(debug)<<"Proxy path: "<<proxy<<endl;
@@ -525,13 +522,11 @@ checkProxyValidity(const string &proxy)
 			"checkProxyValidity()", wmputilities::WMS_PROXY_EXPIRED,
 			"The delegated Proxy has expired");
 	}
-	GLITE_STACK_CATCH();
 }
 
 void
 checkProxyExistence(const string &userproxypath, const string &jobid)
 {
-	GLITE_STACK_TRY("checkProxyExistence()");
 	edglog_fn("WMPAuthorizer::checkProxyExistence");
 	
 	string userproxypathbak = wmputilities::getJobDelegatedProxyPathBak(jobid);
@@ -563,8 +558,6 @@ checkProxyExistence(const string &userproxypath, const string &jobid)
                }
 
 	}
-	
-	GLITE_STACK_CATCH();
 }
 
 WMPAuthorizer::WMPAuthorizer(std::string const& action)
@@ -583,8 +576,6 @@ WMPAuthorizer::WMPAuthorizer(std::string const& action, std::string const& userp
         userdn_ = authn.getDN();
         fqans_ = authn.getFQANs();
 }
-
-WMPAuthorizer::~WMPAuthorizer() {}
 
 std::vector<std::string>
 WMPAuthorizer::getFQANs()

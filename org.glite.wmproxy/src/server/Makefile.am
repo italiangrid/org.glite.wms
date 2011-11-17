@@ -13,8 +13,6 @@
 #
 #       Authors: Giuseppe Avellino <egee@datamat.it>
 #
-# WARNING: work in progress
-
 WMPROXY_UTILITIES = $(top_builddir)/src/utilities/libglite_wms_wmproxy_utilities.la
 WMPROXY_EVENTLOGGER = $(top_builddir)/src/eventlogger/libglite_wms_wmproxy_eventlogger.la
 WMPROXY_SECURITY= $(top_builddir)/src/security/libglite_wms_wmproxy_security.la

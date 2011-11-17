@@ -90,6 +90,7 @@ limitations under the License.
 #include "security/wmpgaclmanager.h"
 
 // Global variables for configuration
+extern char **environ;
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
@@ -839,91 +840,24 @@ jobregister(
 	GLITE_STACK_CATCH();
 }
 
-/*
-* Method  jobRegister  (upcase "R")
-* called by wmpgsoapoperations::ns1__jobRegister
-* calls wmpcoreoperations::jobregister (lowcase "R", above)
-*/
-void
-jobRegister(
-	jobRegisterResponse &jobRegister_response,
-	string const& jdl,
-	string& delegation_id)
-{
-	GLITE_STACK_TRY("jobRegister()");
-	edglog_fn("wmpcoreoperations::jobRegister");
-
-	// Checking delegation id
-	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
-
-	if (delegation_id == "") {
-#ifndef GRST_VERSION
-		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Delegation id not valid");
-#else
-		delegation_id = GRSTx509MakeDelegationID();
-		edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
-#endif
-	}
-
-	security::auth_info ai(security::do_authZ("jobRegister", delegation_id));
-	edglog(debug)<<"JDL to Register:\n" << jdl << endl;
-	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
-	initWMProxyOperation("jobRegister");
-
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if (security::checkJobDrain()) {
-		edglog(error) <<
-			"Unavailable service (the server is temporarily drained)" <<endl;
-	throw AuthorizationException(__FILE__, __LINE__,
-		"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-
-	std::string userproxypath =
-		glite::wms::wmproxy::server::getDelegatedProxyPath(delegation_id);
-        security::VOMSAuthN authn(userproxypath);
-	jobregister(
-		jobRegister_response,
-		jdl,
-		delegation_id,
-		userproxypath,
-		ai.fqans_.front(),
-		ai.uid_);
-
-	edglog(debug)<<"Registered successfully"<<endl;
-
-	GLITE_STACK_CATCH();
-}
-
 char **
 copyEnvironment(char** sourceEnv)
 {
-extern char **environ;
+	// Vars count
+	char **oldEnv;
+	for (oldEnv = environ; *oldEnv; oldEnv++);
+	int nenvvars = (oldEnv - environ);
 
-// Vars count
-char **oldEnv;
-for (oldEnv = environ; *oldEnv; oldEnv++);
-int nenvvars = (oldEnv - environ);
+	// Memory allocation
+	char ** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
+	char ** tmp = targetEnv;
+	// Copying vars
+	for (oldEnv = sourceEnv; *oldEnv; oldEnv++) {
+    		*targetEnv++ = strdup(*oldEnv);
+	}
+	*targetEnv = 0;
 
-// Memory allocation
-char ** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
-char ** tmp = targetEnv;
-//if (!targetEnv) {
-	// ERROR
-//}
-
-// Copying vars
-for (oldEnv = sourceEnv; *oldEnv; oldEnv++) {
-    *targetEnv++ = strdup(*oldEnv);
-}
-*targetEnv = NULL;
-
-return tmp;
+	return tmp;
 }
 
 /**
@@ -1152,7 +1086,6 @@ submit(
 
 		if (conf.getAsyncJobStart()) {
 			// \/ Copy environment and restore it right after FCGI_Finish
-			extern char **environ;
 			char ** backupenv = copyEnvironment(environ);
 			// return control to client
 			FCGI_Finish();
@@ -2031,9 +1964,11 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id, struct soap 
 }
 
 void
-jobSubmit(struct ns1__jobSubmitResponse &response,
-	jobSubmitResponse &jobSubmit_response, const string &jdl,
-	string & delegation_id, struct soap *soap)
+jobSubmit(struct ns1__jobSubmitResponse& response,
+	jobSubmitResponse &jobSubmit_response,
+	string const& jdl,
+	string& delegation_id,
+	struct soap *soap)
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpcoreoperations::jobSubmit");
@@ -2049,7 +1984,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 #ifndef GRST_VERSION
 		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
+			"jobSubmit()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 #else
                 delegation_id = GRSTx509MakeDelegationID();
@@ -2139,9 +2074,12 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 }
 
 void
-jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
-        jobSubmitResponse &jobSubmit_response, const string &jdl,
-        string &delegation_id, struct soap *soap)
+jobSubmitJSDL
+	(struct ns1__jobSubmitJSDLResponse &response,
+        jobSubmitResponse &jobSubmit_response,
+	string const& jdl,
+        string& delegation_id,
+	struct soap *soap)
 {
         GLITE_STACK_TRY("jobSubmit()");
         edglog_fn("wmpcoreoperations::jobSubmit");
@@ -2157,7 +2095,7 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
 #ifndef GRST_VERSION
                 edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
                 throw ProxyOperationException(__FILE__, __LINE__,
-                        "jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
+                        "jobSubmitJSDL()", wmputilities::WMS_INVALID_ARGUMENT,
                         "Delegation id not valid");
 #else
                 delegation_id=string(GRSTx509MakeDelegationID());
@@ -2232,6 +2170,68 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         submit(reginfo.second, jid, ai.uid_, ai.gid_, wmplogger, true);
 
         GLITE_STACK_CATCH();
+}
+
+/*
+* Method  jobRegister  (upcase "R")
+* called by wmpgsoapoperations::ns1__jobRegister
+* calls wmpcoreoperations::jobregister (lowcase "R", above)
+*/
+void
+jobRegister(
+	jobRegisterResponse& jobRegister_response,
+	string const& jdl,
+	string& delegation_id)
+{
+	GLITE_STACK_TRY("jobRegister()");
+	edglog_fn("wmpcoreoperations::jobRegister");
+
+	if (delegation_id == "") {
+#ifndef GRST_VERSION
+		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
+		throw ProxyOperationException(__FILE__, __LINE__,
+			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
+			"Delegation id not valid");
+#else
+		delegation_id = GRSTx509MakeDelegationID();
+		edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
+#endif
+	}
+
+	// Checking delegation id
+	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
+	// as soon as the delegation ID is known
+	security::auth_info ai(security::do_authZ("jobRegister", delegation_id));
+
+	edglog(debug)<<"JDL to Register:\n" << jdl << endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("jobRegister");
+
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if (security::checkJobDrain()) {
+		edglog(error) <<
+			"Unavailable service (the server is temporarily drained)" <<endl;
+	throw AuthorizationException(__FILE__, __LINE__,
+		"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR,
+		"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
+
+	std::string userproxypath =
+		glite::wms::wmproxy::server::getDelegatedProxyPath(delegation_id);
+        security::VOMSAuthN authn(userproxypath);
+	jobregister(
+		jobRegister_response,
+		jdl,
+		delegation_id,
+		userproxypath,
+		ai.fqans_.front(),
+		ai.uid_);
+
+	edglog(debug)<<"Registered successfully"<<endl;
+
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -2461,8 +2461,10 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 }
 
 void
-jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
-	const string &delegation_id)
+jobListMatch(
+	jobListMatchResponse &jobListMatch_response,
+	string const& jdl,
+	string const& delegation_id)
 {
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, "
 		"const string &jdl, const string &delegation_id)");

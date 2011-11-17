@@ -30,10 +30,10 @@ namespace wms {
 namespace wmproxy {
 namespace security {
 
-const char* X509_VOMS_DIR = "X509_VOMS_DIR";
-const char* X509_CERT_DIR = "X509_CERT_DIR";
-const char* VOMS_DIR = "/etc/grid-security/vomsdir";
-const char* CERT_DIR = "/etc/grid-security/certificates";
+char const* X509_VOMS_DIR = "X509_VOMS_DIR";
+char const* X509_CERT_DIR = "X509_CERT_DIR";
+char const* VOMS_DIR = "/etc/grid-security/vomsdir";
+char const* CERT_DIR = "/etc/grid-security/certificates";
 
 namespace logger = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
@@ -42,7 +42,8 @@ using namespace std;
 
 namespace {
 
-STACK_OF(X509) * load_chain(char const* certfile)
+STACK_OF(X509)*
+load_chain(char const* certfile)
 {
   STACK_OF(X509_INFO) *sk=NULL;
   STACK_OF(X509) *stack=NULL, *ret=NULL;
@@ -77,9 +78,9 @@ STACK_OF(X509) * load_chain(char const* certfile)
       continue;
     }
     xi=sk_X509_INFO_shift(sk);
-    if (xi->x509 != NULL) {
+    if (xi->x509 != 0) {
       sk_X509_push(stack,xi->x509);
-      xi->x509=NULL;
+      xi->x509 = 0;
     }
     X509_INFO_free(xi);
   }
@@ -90,7 +91,7 @@ STACK_OF(X509) * load_chain(char const* certfile)
   	sk_X509_INFO_free(sk);
   }
   BIO_free(in);
-  ret=stack;
+  ret = stack;
   return ret;
 }
 
@@ -413,7 +414,7 @@ VOMSAuthN::getDefaultVOProxyInfo()
 ProxyInfoStructType *
 VOMSAuthN::getProxyInfo()
 {
-	static const std::string PROXY = "CN=";
+	static std::string const proxy_tag = "CN=";
 
 	GLITE_STACK_TRY("getProxyInfo()");
 	ProxyInfoStructType* proxyinfo = new ProxyInfoStructType();
@@ -421,7 +422,7 @@ VOMSAuthN::getProxyInfo()
 
 	if (subject) {
 		string subjectstring = string(subject);
-		if (subjectstring.find(PROXY) != string::npos) {
+		if (subjectstring.find(proxy_tag) != string::npos) {
 				proxyinfo->type = "proxy";
 		} else {
 				proxyinfo->type = "x509";

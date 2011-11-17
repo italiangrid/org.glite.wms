@@ -37,11 +37,11 @@ namespace security {
 
 boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
 argus_authZ(
-        std::vector<std::string> pepds,
-        std::vector<std::string> fqans,
-        std::string resourceid,
-        std::string actionid,
-        std::string subjectid
+        std::vector<std::string> const& pepds,
+        std::vector<std::string> const& fqans,
+        std::string const& resourceid,
+        std::string const& actionid,
+        std::string const& subjectid
 );
 
 }}}}
