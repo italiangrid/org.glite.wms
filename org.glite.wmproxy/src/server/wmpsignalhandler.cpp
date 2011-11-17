@@ -27,7 +27,6 @@ limitations under the License.
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <signal.h>
-#include <fcgi_stdio.h>
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"

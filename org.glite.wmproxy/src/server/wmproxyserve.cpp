@@ -21,7 +21,9 @@ limitations under the License.
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
+#ifdef WITH_FASTCGI
 #include <fcgi_stdio.h>
+#endif
 
 #include "soapH.h"
 #include "wmproxyserve.h"
@@ -52,7 +54,8 @@ SOAP_FMAC5 int SOAP_FMAC6
 WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 {
 #ifndef WITH_FASTCGI
-	unsigned int k = soap->max_keep_alive;
+	unsigned int max_requests = soap->max_keep_alive; // 'hand-made' GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS is replaced by bare
+					       // HTTP keep-alive settings in httpd
 #endif
 
 	do
@@ -94,8 +97,8 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 		soap_begin(soap);
 
 #ifndef WITH_FASTCGI
-		if (!--k) {
-			soap->keep_alive = 0;
+		if (0 == --max_requests) {
+			soap->keep_alive = 0; // exits loop
     }
 #endif
 
@@ -133,7 +136,9 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	if (handled_signal_recv > 0) {
 		edglog(info)<<"-------- Exiting Server Instance -------"<< std::endl;
 		edglog(info)<<"Signal code received: "<< handled_signal_recv << std::endl;
+#ifdef WITH_FASTCGI
     		FCGI_Finish();
+#endif
 		exit(0);
 	}
 	return SOAP_OK;

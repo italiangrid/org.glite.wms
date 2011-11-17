@@ -22,12 +22,6 @@ limitations under the License.
 //
 
 #include <string>
-
-// Fast CGI
-#include <fcgi_stdio.h>
-#include "fcgio.h"
-#include "fcgi_config.h"
-
 #include <signal.h>  // sig_atomic
 
 // gSOAP
@@ -85,10 +79,6 @@ namespace eventlogger   = glite::wms::wmproxy::eventlogger;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
-
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
 
 const string opt_conf_file("glite_wms.conf");
 
@@ -214,8 +204,3 @@ main(int argc, char* argv[])
   	}
 	return 0;
 }
-
-//} // wmproxy
-//} // wms
-//} // glite
-
