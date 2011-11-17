@@ -143,6 +143,8 @@ namespace configuration  = glite::wms::common::configuration;
 namespace wmsutilities   = glite::wms::common::utilities;
 
 namespace {
+ 
+char** targetEnv;
 
 void
 setAttributes(JobAd *jad, JobId *jid, const string &dest_uri, const string &delegatedproxyfqan)
@@ -840,23 +842,24 @@ jobregister(
 	GLITE_STACK_CATCH();
 }
 
-char **
-copyEnvironment(char** sourceEnv)
+char**
+copyEnvironment(char** const sourceEnv)
 {
-	// Vars count
-	char **oldEnv;
-	for (oldEnv = environ; *oldEnv; oldEnv++);
+	for (unsigned int i = 0; targetEnv[i]; ++i) {
+		free(targetEnv[i]);
+	}
+	free(targetEnv);
+
+	char** oldEnv;
+	for (oldEnv = environ; *oldEnv; ++oldEnv);
 	int nenvvars = oldEnv - environ;
 
-	// Memory allocation
-	char** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
-	char** tmp = targetEnv;
+	targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
 	for (oldEnv = sourceEnv; *oldEnv; ++oldEnv) {
-    		strcpy(*targetEnv++, *oldEnv);
+    		*targetEnv++ = strdup(*oldEnv);
 	}
 	*targetEnv = 0;
-
-	return tmp;
+	return targetEnv;
 }
 
 /**
@@ -1085,11 +1088,10 @@ submit(
 
 		if (conf.getAsyncJobStart()) {
 			// \/ Copy environment and restore it right after FCGI_Finish
-			char ** backupenv = copyEnvironment(environ);
+			char** backupenv = copyEnvironment(environ);
 			// return control to client
 			FCGI_Finish();
 			environ = backupenv;
-			// TODO release memory
 			// /_ From here on, execution is asynchronous
 		}
 
