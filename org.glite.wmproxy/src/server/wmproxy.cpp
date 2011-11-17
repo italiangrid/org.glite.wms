@@ -97,7 +97,7 @@ sendFault(WMProxyService &proxy, const string &method, const string &msg, int co
 int
 main(int argc, char* argv[])
 {
-  glite::wms::wmproxy::server::initsignalhandler();
+	glite::wms::wmproxy::server::initsignalhandler();
 	try {
 		extern WMProxyConfiguration conf;
 		conf = boost::details::pool::singleton_default<WMProxyConfiguration>
@@ -159,46 +159,40 @@ main(int argc, char* argv[])
 		extern long servedrequestcount_global;
 		servedrequestcount_global = 0;
 
-		// Running as a Fast CGI application
-		edglog(info)<<"Running as a FastCGI program"<<endl;
-		edglog(info)<<"Entering the FastCGI accept loop..."<<endl;
-		edglog(info)
-			<<"----------------------------------------"
-			<<endl;
+		edglog(info) << "WM proxy serving process started" << endl;
+		edglog(info) <<"---------------------------------------" <<endl;
 
-                openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);	
+                //openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);	
 	
-		for (;;) {
-			WMProxyServe proxy;
-			proxy.serve();
-		}
+		WMProxyServe proxy;
+		proxy.serve();
 		
-		closelog();
-		edglog(info)<<"Exiting the FastCGI loop..."<<endl;
+		//closelog();
+		edglog(info)<<"Exiting WM proxy serving process ..."<<endl;
 		
-    } catch (configuration::CannotOpenFile &file) {
-    	string msg = "Cannot open file: " + string(file.what());
-	    edglog(fatal)<<msg<<endl;
-	    WMProxyService proxy;
-	   	sendFault(proxy, "main", msg, -5);
-    } catch (configuration::CannotConfigure &error) {
-    	string msg = "Cannot configure: " + string(error.what());
-	    edglog(fatal)<<msg<<endl;
-        WMProxyService proxy;
-	   	sendFault(proxy, "main", msg, -4);
+	} catch (configuration::CannotOpenFile &file) {
+	    	string msg = "Cannot open file: " + string(file.what());
+		edglog(fatal)<<msg<<endl;
+		WMProxyService proxy;
+		sendFault(proxy, "main", msg, -5);
+	} catch (configuration::CannotConfigure &error) {
+	    	string msg = "Cannot configure: " + string(error.what());
+		edglog(fatal)<<msg<<endl;
+	        WMProxyService proxy;
+		sendFault(proxy, "main", msg, -4);
 	} catch (wmsexception::Exception &exc) {
 		string msg = "Exception caught: " + string(exc.what());
-	    edglog(fatal)<<msg<<endl;
+		edglog(fatal)<<msg<<endl;
 		WMProxyService proxy;
 	   	sendFault(proxy, "main", msg, -3);
 	} catch (exception &ex) {
 		string msg = "Standard Exception caught: " + string(ex.what());
-	    edglog(fatal)<<msg<<endl;
+		edglog(fatal)<<msg<<endl;
 		WMProxyService proxy;
 	   	sendFault(proxy, "main", msg, -2);
  	} catch (...) {
-    	string msg = "Uncaught exception";
-	    edglog(fatal)<<msg<<endl;
+	    	string msg = "Uncaught exception";
+		edglog(fatal)<<msg<<endl;
 		WMProxyService proxy;
 	   	sendFault(proxy, "main", msg, -1);
   	}

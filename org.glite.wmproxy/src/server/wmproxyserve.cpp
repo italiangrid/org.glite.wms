@@ -17,7 +17,6 @@ limitations under the License.
 */
 
 //
-// File: wmproxyserve.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -38,7 +37,6 @@ limitations under the License.
 
 #include "wmpsignalhandler.h"
 
-
 // Global variable for configuration
 extern WMProxyConfiguration conf;
 
@@ -47,8 +45,10 @@ extern long servedrequestcount_global;
 // Global variable for signal handling 
 extern bool handled_signal_recv;
 
-const long MIN_SERVED_REQUESTS_PLAFOND = 40;
-const long BASE_SERVED_REQUESTS_PLAFOND = 100;
+namespace {
+long const MIN_SERVED_REQUESTS_PLAFOND = 40;
+long const BASE_SERVED_REQUESTS_PLAFOND = 100;
+}
 
 SOAP_FMAC5 int SOAP_FMAC6
 WMProxyServe::wmproxy_soap_serve(struct soap *soap)
