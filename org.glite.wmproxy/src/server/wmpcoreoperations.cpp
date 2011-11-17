@@ -846,14 +846,13 @@ copyEnvironment(char** sourceEnv)
 	// Vars count
 	char **oldEnv;
 	for (oldEnv = environ; *oldEnv; oldEnv++);
-	int nenvvars = (oldEnv - environ);
+	int nenvvars = oldEnv - environ;
 
 	// Memory allocation
-	char ** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
-	char ** tmp = targetEnv;
-	// Copying vars
-	for (oldEnv = sourceEnv; *oldEnv; oldEnv++) {
-    		*targetEnv++ = strdup(*oldEnv);
+	char** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
+	char** tmp = targetEnv;
+	for (oldEnv = sourceEnv; *oldEnv; ++oldEnv) {
+    		strcpy(*targetEnv++, *oldEnv);
 	}
 	*targetEnv = 0;
 
