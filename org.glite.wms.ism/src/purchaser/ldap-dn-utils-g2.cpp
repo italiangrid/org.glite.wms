@@ -95,11 +95,19 @@ bool is_glue2_to_storage_service_dn(std::vector<std::string> const& dn)
     boost::algorithm::istarts_with(dn[2],"GLUE2GroupID");
 }
 
-bool is_glue2_policy_dn(std::vector<std::string> const& dn)
+bool is_glue2_mapping_policy_dn(std::vector<std::string> const& dn)
 {
   return dn.size() > 3 &&
     boost::algorithm::istarts_with(dn[0],"GLUE2PolicyID") &&
     boost::algorithm::istarts_with(dn[1],"GLUE2ShareID") &&
+    boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID") &&
+    boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
+}
+bool is_glue2_access_policy_dn(std::vector<std::string> const& dn)
+{
+  return dn.size() > 3 &&
+    boost::algorithm::istarts_with(dn[0],"GLUE2PolicyID") &&
+    boost::algorithm::istarts_with(dn[1],"GLUE2EndpointID") &&
     boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID") &&
     boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
 }

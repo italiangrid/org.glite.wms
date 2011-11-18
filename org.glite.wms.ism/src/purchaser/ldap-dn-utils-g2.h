@@ -43,7 +43,8 @@ bool is_glue2_manager_dn(std::vector<std::string> const&);
 bool is_glue2_share_dn(std::vector<std::string> const&);
 bool is_glue2_endpoint_dn(std::vector<std::string> const&);
 bool is_glue2_to_storage_service_dn(std::vector<std::string> const&);
-bool is_glue2_policy_dn(std::vector<std::string> const&);
+bool is_glue2_mapping_policy_dn(std::vector<std::string> const&);
+bool is_glue2_access_policy_dn(std::vector<std::string> const&);
 bool is_glue2_resource_dn(std::vector<std::string> const&);
 bool is_glue2_benchmark_dn(std::vector<std::string> const&);
 
