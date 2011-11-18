@@ -37,24 +37,27 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
+#ifdef USE_GSOAP_PARSER
 // GSoap dom parser object
 soap_dom_element document = NULL;
+#endif
 
 /******************************************************************
 initialiseDomParser
 ******************************************************************/
 void initialiseDomParser() {
-
+#ifdef USE_GSOAP_PARSER
   // Create and set the DOM with a new SOAP environment
   document = soap_dom_element(soap_new());
   soap_set_imode(document.soap, SOAP_DOM_NODE | SOAP_XML_GRAPH);
+#endif
 }
 
 /******************************************************************
 destroyDomParser
 ******************************************************************/
 void destroyDomParser() {
-
+#ifdef USE_GSOAP_PARSER
   // Check if the document has been already cleand
   if(NULL != document.soap) {
     // Free the memory allocated
@@ -63,7 +66,7 @@ void destroyDomParser() {
     soap_done(document.soap);
     free(document.soap);
   }
-
+#endif
 }
 
 void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
@@ -94,6 +97,8 @@ void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
 readJsdlFile TODO backport to void
 ******************************************************************/
 jsdl__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
+
+#ifdef USE_GSOAP_PARSER
 
   jsdl__JobDefinition_USCOREType reader; 
 
@@ -141,6 +146,14 @@ jsdl__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
   }
 
   return reader;
+
+#else
+
+  throw *createWmpException (new GenericException ,
+    "readJsdlFile" ,
+    "JSDL parser not available with this version");
+
+#endif
 }
 
 /******************************************************************
