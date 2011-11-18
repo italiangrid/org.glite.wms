@@ -253,7 +253,7 @@ struct is_a_literal_node_starting_with
   std::string prefix;
 };
 
-void extract_glue2_info(ClassAdPtr ad, std::string const& from, std::string const& what)
+void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::string const& what)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
     ad->Lookup(from)
@@ -728,18 +728,37 @@ fetch_bdii_ce_info_g2(
       classad::ClassAd* computingAd_copy(
         dynamic_cast<classad::ClassAd*>(computingAd->Copy())
       );
-      computingAd_copy->Update(
-        *(*sh_it)->second.ad
-      );
-      computingAd_copy->Update(
-        *(*sh_it)->second.execenv_lnk->second.ad
-      );
-      ClassAdPtr g2Ad( new classad::ClassAd );
+      computingAd_copy->Update(*(*sh_it)->second.ad);
+      computingAd_copy->Update(*(*sh_it)->second.execenv_lnk->second.ad);
+
+     ClassAdPtr g2Ad( new classad::ClassAd );
       g2Ad->Insert("Computing", computingAd_copy);
       g2Ad->Insert(
         "MappingPolicy", 
         classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
       );
+      std::string interface_name = cu::evaluate_expression(
+        *ep_it->second.ad, "EndPoint.InterfaceName"
+      );
+      
+      classad::ExprList* el;
+      dynamic_cast<classad::ClassAd*>(computingAd_copy->Lookup("Share"))->
+        EvaluateAttrList("OtherInfo", el);
+
+      std::vector<classad::ExprTree*>::const_iterator oi_it(
+        std::find_if(el->begin(), el->end(),
+          is_a_literal_node_starting_with(
+            "CREAMCEId=" + ba::erase_first_copy(ep_it->first, "_"+interface_name)
+          )
+        )
+      );
+      if (oi_it != el->end()) {
+        classad::Value v;
+        std::string s;
+        (*oi_it)->Evaluate(v) && v.IsStringValue(s);
+        g2Ad->InsertAttr("CREAMCEId",s.substr(s.find("=")+1));
+      }
+
       Debug(">" << *g2Ad);
     }   
   }
