@@ -129,6 +129,15 @@ bool is_glue2_benchmark_dn(std::vector<std::string> const& dn)
     boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
 }
 
+bool is_glue2_application_env_dn(std::vector<std::string> const& dn)
+{
+  return dn.size() > 3 &&
+    boost::algorithm::istarts_with(dn[0],"GLUE2ApplicationEnvironmentID") &&
+    boost::algorithm::istarts_with(dn[1],"GLUE2ResourceID") &&
+    boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID") &&
+    boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
+}
+
 } // namespace purchaser
 } // namespace ism
 } // namespace wms

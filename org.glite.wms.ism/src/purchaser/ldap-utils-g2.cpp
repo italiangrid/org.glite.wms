@@ -114,6 +114,7 @@ typedef std::map<std::string, EndpointInfo> EndpointInfoMap;
 struct ExecEnvInfo
 {
   ClassAdPtr ad;
+  std::set<std::string> applications;
 };
 typedef std::map<std::string, ExecEnvInfo> ExecEnvInfoMap;
 
@@ -440,6 +441,32 @@ void process_glue2_resource_info(
   );
 }
 
+void process_glue2_application_env_info(
+  std::vector<std::string> const& ldap_dn_tokens, 
+  ClassAdPtr ad, 
+  BDIICEInfo& bdii_info
+) 
+{
+  std::string const appenv_id(
+   ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
+  );
+  std::string const resource_id(
+   ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+  );
+
+  std::string application =
+    cu::evaluate_attribute(*ad,"AppName");
+
+  bool insert;
+  ExecEnvInfoMap::iterator execenv_it;
+  boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
+    std::make_pair(resource_id, ExecEnvInfo())
+  );
+ 
+  execenv_it->second.applications.insert(application);
+}
+
+
 void process_glue2_mapping_policy_info(
   std::vector<std::string> const& ldap_dn_tokens, 
   ClassAdPtr ad, 
@@ -485,6 +512,13 @@ void process_glue2_access_policy_info(
   boost::tie(policy_it, insert) = bdii_info.policies.insert(
     std::make_pair(policy_id, AccessPolicyInfo())
   );
+
+  cleanup_glue2_info(ad,
+    boost::assign::list_of("CreationTime")
+      ("UserDomainForeignKey")
+      ("EndpointForeignKey")
+  );
+
   policy_it->second.ad = ad;
 
   EndpointInfoMap::iterator endpoint_it;
@@ -593,6 +627,19 @@ create_classad_from_ldap_entry(
   return result;
 }
 
+inline classad::ExprTree* make_literal(std::string const& s)
+{
+  classad::Value v;
+  v.SetStringValue(s);
+  return classad::Literal::MakeLiteral(v);
+}
+
+inline classad::ExprTree* parse_expression(std::string const& s)
+{
+  classad::ClassAdParser parser;
+  return parser.ParseExpression(s);
+}
+
 } // anonymous namespace
 
 void 
@@ -621,7 +668,6 @@ fetch_bdii_ce_info_g2(
     "(objectclass=GLUE2Benchmark))))))))))"
     ")"
   );
-
   LDAP* ld = 0;
   int result = ldap_initialize(
     &ld, 
@@ -741,6 +787,14 @@ fetch_bdii_ce_info_g2(
       ));
       process_glue2_access_policy_info(ldap_dn_tokens, ad, bdii_info);
     }
+    else if (is_glue2_application_env_dn(ldap_dn_tokens)) {
+      ClassAdPtr ad(
+        create_classad_from_ldap_entry(
+        ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment")
+      ));
+      process_glue2_application_env_info(ldap_dn_tokens, ad, bdii_info);
+    }
+    
 
 
   }
@@ -776,14 +830,25 @@ fetch_bdii_ce_info_g2(
     );
 
     for( ; sh_it != sh_e; ++sh_it) {
-    
+
       classad::ClassAd* computingAd_copy(
         dynamic_cast<classad::ClassAd*>(computingAd->Copy())
       );
       computingAd_copy->Update(*(*sh_it)->second.ad);
-      computingAd_copy->Update(*(*sh_it)->second.execenv_lnk->second.ad);
 
-     ClassAdPtr g2Ad( new classad::ClassAd );
+      std::vector<classad::ExprTree*> apps_el;
+      std::transform(
+        (*sh_it)->second.execenv_lnk->second.applications.begin(),
+        (*sh_it)->second.execenv_lnk->second.applications.end(),
+        std::back_inserter(apps_el),
+        make_literal
+      ); 
+      classad::ClassAd* appenvAd = new classad::ClassAd();
+      appenvAd->Insert("AppName", classad::ExprList::MakeExprList(apps_el));
+      
+      classad::ClassAd* g2Ad = new classad::ClassAd;
+      g2Ad->Insert("ApplicationEnvironment", appenvAd);
+      g2Ad->Update(*(*sh_it)->second.execenv_lnk->second.ad);
       g2Ad->Insert("Computing", computingAd_copy);
       g2Ad->DeepInsert(
         computingAd_copy->Lookup("Share"),
@@ -815,8 +880,15 @@ fetch_bdii_ce_info_g2(
           s.substr(s.find("=")+1)
         );
       }
+      ClassAdPtr result( new classad::ClassAd );
+      result->Insert("GLUE2", g2Ad);
+      result->Insert("CEId", parse_expression(
+        "IsUndefined(GLUE2.Computing.Share.CREAMCEId) ?"
+        "    GLUE2.Computing.Share.ID :  GLUE2.Computing.Share.CREAMCEId"
+      ));
       n_shares++;
-      Debug(">" << *g2Ad);
+      std::string id = cu::evaluate_attribute(*result,"CEId");
+      ce_info_container.insert(std::make_pair(id, result));
     }   
   }
   Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
