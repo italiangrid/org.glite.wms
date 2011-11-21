@@ -882,13 +882,25 @@ fetch_bdii_ce_info_g2(
       }
       ClassAdPtr result( new classad::ClassAd );
       result->Insert("GLUE2", g2Ad);
-      result->Insert("CEId", parse_expression(
-        "IsUndefined(GLUE2.Computing.Share.CREAMCEId) ?"
-        "    GLUE2.Computing.Share.ID :  GLUE2.Computing.Share.CREAMCEId"
+      result->Insert("AuthorizationCheck", parse_expression(
+        "("
+        "  member(other.CertificateSubject,GLUE2.Computing.Endpoint.Policy) ||  "
+        "  member(strcat(\"VO:\",other.VirtualOrganisation),GLUE2.Computing.Endpoint.Policy) || "
+        "  FQANmember(strcat(\"VOMS:\",other.VOMS_FQAN ),GLUE2.Computing.Endpoint.Policy) "
+        ") && "
+        "! FQANmember(strcat(\"DENY:\",other.VOMS_FQAN),GLUE2.Computing.Endpoint.Policy)"
+      ));
+      result->Insert("requirements", parse_expression(
+        "AuthorizationCheck"
       ));
       n_shares++;
-      std::string id = cu::evaluate_attribute(*result,"CEId");
-      ce_info_container.insert(std::make_pair(id, result));
+      std::string id = cu::evaluate_expression(*result,
+       "IsUndefined(GLUE2.Computing.Share.CREAMCEId) ?"
+        "    GLUE2.Computing.Share.ID :  GLUE2.Computing.Share.CREAMCEId"
+      );
+      std::string policy = cu::evaluate_expression(*result,"GLUE2.Computing.Share.Policy[0]");
+      std::string glue13Id = id+"/"+policy.substr(policy.find(":")+1);
+      ce_info_container.insert(std::make_pair(glue13Id, result));
     }   
   }
   Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
