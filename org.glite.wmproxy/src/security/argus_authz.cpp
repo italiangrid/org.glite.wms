@@ -338,7 +338,14 @@ argus_authZ(
       return error;
    }
 
-   FILE* log = fopen("/var/log/wms/argus.log", "a");
+   char* log_dir = 0;
+   log_dir = getenv("GLITE_LOCATION_LOG");
+   FILE* log = 0;
+   if (!log_dir) {
+      log = fopen("/var/log/glite/argus.log", "a");
+   } else {
+      log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "a");
+   }
    pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
 
    // endpoint urls
