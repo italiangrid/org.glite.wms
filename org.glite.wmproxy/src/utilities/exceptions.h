@@ -31,19 +31,17 @@ limitations under the License.
 
 #define _CANNOT_START_ERR_ 1000
 
-namespace utilities = glite::wmsutils::exception;
-
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace server {
 
-class Exception : public utilities::Exception
+class Exception : public glite::wmsutils::exception::Exception
 {
 protected:
    Exception() {}
    Exception(const std::string& s, const std::string& m, int c, const std::string& n) :
-      utilities::Exception(s, m, c, n) {}
+      glite::wmsutils::exception::Exception(s, m, c, n) {}
 };
 
 class CannotStartException : public server::Exception

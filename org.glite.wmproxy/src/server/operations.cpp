@@ -60,7 +60,7 @@ limitations under the License.
 
 
 // WMP Exceptions
-#include "utilities/exceptions.h"
+#include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
 
 // RequestAd
