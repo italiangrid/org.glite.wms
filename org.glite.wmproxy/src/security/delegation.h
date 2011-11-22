@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpdelegation.h
+// File: delegation.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 

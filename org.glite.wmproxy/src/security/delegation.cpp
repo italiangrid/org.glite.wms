@@ -20,7 +20,7 @@ limitations under the License.  */
 
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"

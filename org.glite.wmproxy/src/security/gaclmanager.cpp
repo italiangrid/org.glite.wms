@@ -26,10 +26,10 @@ limitations under the License.
 #include "utilities/wmpexception_codes.h"
 
 //Utilities
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
-#include "wmpgaclmanager.h"
-#include "wmpauthorizer.h"
+#include "gaclmanager.h"
+#include "authorizer.h"
 
 #include <iostream>
 #include <sstream>

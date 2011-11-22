@@ -19,17 +19,17 @@ lib_LTLIBRARIES = \
 	libglite_wms_wmproxy_security.la
 
 noinst_HEADERS = \
-	wmpauthorizer.h \
-        wmpdelegation.h \
+	authorizer.h \
+        delegation.h \
 	argus_authz.h \
-	wmpvomsauthn.h
+	vomsauthn.h
 
 libglite_wms_wmproxy_security_la_SOURCES = \
-	wmpauthorizer.cpp \
-        wmpdelegation.cpp \
+	authorizer.cpp \
+        delegation.cpp \
 	argus_authz.cpp \
-	wmpgaclmanager.cpp \
-	wmpvomsauthn.cpp
+	gaclmanager.cpp \
+	vomsauthn.cpp
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \

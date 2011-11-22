@@ -26,8 +26,8 @@ limitations under the License.
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
 #include "wmproxyserve.h"
-#include "wmpconfiguration.h"
-#include "wmpsignalhandler.h"
+#include "configuration.h"
+#include "signalhandler.h"
 
 namespace server = glite::wms::wmproxy::server;
 

@@ -48,17 +48,17 @@ limitations under the License.
 // File List
 #include "glite/wms/common/utilities/FileList.h"
 
-#include "wmpconfiguration.h"
-#include "wmpgsoapfaultmanipulator.h"
+#include "configuration.h"
+#include "gsoapfaultmanipulator.h"
 
 
-#include "utilities/wmputils.h" // waitForSeconds()
-#include "eventlogger/wmplbselector.h" // lbselectioninfo struct
+#include "utilities/utils.h" // waitForSeconds()
+#include "eventlogger/lbselector.h" // lbselectioninfo struct
 
 // Exceptions
 #include "glite/wmsutils/exception/Exception.h"
 
-#include "wmpsignalhandler.h"
+#include "signalhandler.h"
 
 // Global variable for configuration
 WMProxyConfiguration conf;

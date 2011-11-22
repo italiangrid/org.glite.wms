@@ -39,7 +39,7 @@ limitations under the License.
 #include "glite/wms/common/utilities/jobdir.h"
 
 // Eventlogger
-#include "eventlogger/wmpeventlogger.h"
+#include "eventlogger/eventlogger.h"
 
 namespace classad
 {

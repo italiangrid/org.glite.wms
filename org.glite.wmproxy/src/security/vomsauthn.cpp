@@ -23,7 +23,7 @@ limitations under the License. */
 #include "utilities/logging.h"
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-#include "wmpvomsauthn.h"
+#include "vomsauthn.h"
 
 namespace glite {
 namespace wms {

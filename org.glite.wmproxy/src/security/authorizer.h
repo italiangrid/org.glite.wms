@@ -25,7 +25,7 @@ limitations under the License.  */
 #include <vector>
 #include <sys/types.h>
 
-#include "wmpvomsauthn.h"
+#include "vomsauthn.h"
 
 namespace glite {
 namespace wms {

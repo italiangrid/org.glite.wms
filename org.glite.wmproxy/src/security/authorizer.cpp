@@ -39,10 +39,10 @@ limitations under the License. */
 #include "utilities/logging.h"
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-#include "wmpgaclmanager.h"
-#include "wmpdelegation.h"
-#include "utilities/wmputils.h"
-#include "wmpauthorizer.h"
+#include "gaclmanager.h"
+#include "delegation.h"
+#include "utilities/utils.h"
+#include "authorizer.h"
 #include "argus_authz.h"
 
 extern "C" {

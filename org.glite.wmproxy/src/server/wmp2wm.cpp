@@ -23,13 +23,13 @@ limitations under the License.
 //
 
 #include "wmp2wm.h"
-#include "wmpresponsestruct.h"
+#include "responsestruct.h"
 
 // Event logger
-#include "eventlogger/wmpeventlogger.h"
+#include "eventlogger/eventlogger.h"
 
 // Utilities
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 // Commands
 #include "commands/listjobmatch.h"

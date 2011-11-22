@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmputils.h
+// File: utils.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -32,14 +32,10 @@ limitations under the License.
 // Logging and Bookkeeping
 #include "glite/lb/JobStatus.h"
 
-namespace glite
-{
-namespace wms
-{
-namespace wmproxy
-{
-namespace utilities
-{
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace utilities {
 
 const int SUCCESS = 0;
 const int SCRIPT_FAILURE = 1;
@@ -432,9 +428,6 @@ const std::string getAbsolutePath(const std::string& file);
  */
 const std::string normalizePath( const std::string& fpath ) ;
 
-} // namespace utilities
-} // namespace wmproxy
-} // namespace wms
-} // namespace glite
+}}}}
 
 #endif // GLITE_WMS_WMPROXY_UTILITIES_WMPUTILS_H

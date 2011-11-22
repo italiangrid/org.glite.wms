@@ -18,11 +18,11 @@ limitations under the License.
 */
 
 //
-// File: wmputils.cpp
+// File: utils.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmputils.h"
+#include "utils.h"
 
 #include <iostream>
 #include <fstream>
@@ -57,7 +57,7 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 // Event logger
-#include "eventlogger/wmpeventlogger.h"
+#include "eventlogger/eventlogger.h"
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #include "glite/wms/purger/purger.h"

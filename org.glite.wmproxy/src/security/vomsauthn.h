@@ -17,6 +17,7 @@ limitations under the License. */
 #ifndef GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
 #define GLITE_WMS_WMPROXY_WMPVOMSAUTHZ_H
 
+#include "boost/shared_ptr.hpp"
 // edglog /usr/include/unistd.h compilation problem workaround:
 // declaration of `char* crypt(const char*, const char*) throw ()'
 // throws different exceptions
@@ -25,9 +26,7 @@ limitations under the License. */
 #undef __THROW
 #define __THROW
 #endif
-#include "server/wmpresponsestruct.h"
 #include "voms/voms_api.h"
-#include "boost/shared_ptr.hpp"
 
 namespace glite {
 namespace wms {

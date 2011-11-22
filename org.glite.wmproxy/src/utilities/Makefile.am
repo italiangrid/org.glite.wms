@@ -20,11 +20,11 @@ noinst_HEADERS = \
 	logging.h \
 	wmpexception_codes.h \
 	wmpexceptions.h \
-	wmputils.h
+	utils.h
 
 libglite_wms_wmproxy_utilities_la_SOURCES = \
 	wmpexceptions.cpp \
-	wmputils.cpp
+	utils.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/ \
 	$(CLASSAD_CFLAGS) \
