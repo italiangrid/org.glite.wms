@@ -1,18 +1,18 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -58,14 +58,14 @@ void setFaultDetails(struct soap *soap, int type, void *sp);
  * @param description fault description
  * @param stack a vector containing the fault stack
  */
-void setSOAPFault(struct soap *soap, int code, const std::string &method_name,
-	time_t time_stamp, int error_code, const std::string &description,
-	std::vector<std::string> stack);
+void setSOAPFault(struct soap *soap, int code, const std::string& method_name,
+                  time_t time_stamp, int error_code, const std::string& description,
+                  std::vector<std::string> stack);
 
 /**
  * Sets the fields of the Base Fault Type. The service faults are "subclasses"
  * of the Base Faul Type. The stack vector is set as an empty vector.
- * 
+ *
  * @param soap soap instance pointer
  * @param code fault code
  * @param method_name the name of the method that has caused the fault
@@ -73,7 +73,7 @@ void setSOAPFault(struct soap *soap, int code, const std::string &method_name,
  * @param error_code error code
  * @param description fault description
  */
-void setSOAPFault(struct soap *soap, int code, const std::string &method_name,
-	time_t time_stamp, int error_code, const std::string &description);
-	
+void setSOAPFault(struct soap *soap, int code, const std::string& method_name,
+                  time_t time_stamp, int error_code, const std::string& description);
+
 #endif // GLITE_WMS_WMPROXY_WMPGSOAPFAULTMANIPULATOR_H

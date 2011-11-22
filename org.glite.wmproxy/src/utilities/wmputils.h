@@ -32,10 +32,14 @@ limitations under the License.
 // Logging and Bookkeeping
 #include "glite/lb/JobStatus.h"
 
-namespace glite {
-namespace wms {
-namespace wmproxy {
-namespace utilities {
+namespace glite
+{
+namespace wms
+{
+namespace wmproxy
+{
+namespace utilities
+{
 
 const int SUCCESS = 0;
 const int SCRIPT_FAILURE = 1;
@@ -44,17 +48,17 @@ const int FORK_FAILURE = -1;
 const int COREDUMP_FAILURE = -2;
 
 enum FQANFields {
-	FQAN_VO,
-	FQAN_GROUP,
-	FQAN_SUBGROUP,
-	FQAN_ROLE,
-	FQAN_CAPABILITY
+   FQAN_VO,
+   FQAN_GROUP,
+   FQAN_SUBGROUP,
+   FQAN_ROLE,
+   FQAN_CAPABILITY
 };
 
 enum jobdirectorytype {
-	DIRECTORY_ALL,
-	DIRECTORY_INPUT,
-	DIRECTORY_OUTPUT
+   DIRECTORY_ALL,
+   DIRECTORY_INPUT,
+   DIRECTORY_OUTPUT
 };
 
 //
@@ -66,50 +70,50 @@ enum jobdirectorytype {
  * @param path the file to check for existence
  * @return 0 if file exists 1 otherwise
  */
-int fileExists(const std::string &path);
+int fileExists(const std::string& path);
 
 /**
  * Computes the size of the file represented by path
  * @param path file path
  * @return a long value representing the size
  */
-long computeFileSize(const std::string & path);
+long computeFileSize(const std::string& path);
 
 /**
  * Returns the file name from a path
  * @param path file path
  * @return file name
  */
-std::string getFileName(const std::string &path);
+std::string getFileName(const std::string& path);
 
 /**
  * Copies a file
  * @param source the source file
  * @param target the target file
  */
-void fileCopy(const std::string &source, const std::string &target);
+void fileCopy(const std::string& source, const std::string& target);
 
-int doExecv(const std::string &command, std::vector<std::string> &params,
-	std::string &errormsg);
+int doExecv(const std::string& command, std::vector<std::string> &params,
+            std::string& errormsg);
 
-void uncompressFile(const std::string &filename, const std::string &startingpath);
+void uncompressFile(const std::string& filename, const std::string& startingpath);
 
-void setFlagFile(const std::string &file, bool flag);
+void setFlagFile(const std::string& file, bool flag);
 
-int operationLock(const std::string &lockfile, const std::string &opname);
+int operationLock(const std::string& lockfile, const std::string& opname);
 
 void operationUnlock(int fd);
 
-bool isOperationLocked(const std::string &lockfile);
+bool isOperationLocked(const std::string& lockfile);
 
-void createSuidDirectory(const std::string &directory);
+void createSuidDirectory(const std::string& directory);
 
-void untarFile(const std::string &file, const std::string &untar_starting_path,
-	uid_t userid, uid_t groupid);
+void untarFile(const std::string& file, const std::string& untar_starting_path,
+               uid_t userid, uid_t groupid);
 
-void writeTextFile(const std::string &path, const std::string &text);
+void writeTextFile(const std::string& path, const std::string& text);
 
-std::string readTextFile(const std::string &path);
+std::string readTextFile(const std::string& path);
 
 //
 // Service & service host methods
@@ -134,8 +138,8 @@ std::string resolveIPv4_IPv6(std::string h_tbr);
  */
 std::string getEndpoint();
 
-void parseAddressPort(const std::string &addressport,
-	std::pair<std::string, int> &addresspair);
+void parseAddressPort(const std::string& addressport,
+                      std::pair<std::string, int> &addresspair);
 
 /**
 * Check whether globus installed version allow DNS direct mapping
@@ -151,14 +155,14 @@ bool checkGlobusVersion();
  * @param jobid the job id from which calculate the job directory
  * @return the destination URI
  */
-std::string getDestURI(const std::string &jobid, const std::string &protocol,
-	const std::string &port);
+std::string getDestURI(const std::string& jobid, const std::string& protocol,
+                       const std::string& port);
 
 std::vector<std::string> * getJobDirectoryURIsVector(
-	std::vector<std::pair<std::string, int> > protocols,
-	const std::string &defaultprotocol, int defaultport, int httpsport,
-	const std::string &jid, const std::string &protocol,
-	const std::string &extradir = "");
+   std::vector<std::pair<std::string, int> > protocols,
+   const std::string& defaultprotocol, int defaultport, int httpsport,
+   const std::string& jid, const std::string& protocol,
+   const std::string& extradir = "");
 
 /**
  * Returns the job reduced absolute path
@@ -190,10 +194,10 @@ std::string getJobInputSBRelativePath(glite::jobid::JobId jid, int level = 0);
  * @return job directory absolute path
  */
 std::string getJobStartLockFilePath(glite::jobid::JobId jid,
-	int level = 0);
+                                    int level = 0);
 
 std::string getGetOutputFileListLockFilePath(glite::jobid::JobId jid,
-	int level = 0);
+      int level = 0);
 
 /**
  * Returns the job Input Sandbox directory path
@@ -202,7 +206,7 @@ std::string getGetOutputFileListLockFilePath(glite::jobid::JobId jid,
  * @return input sandbox directory absolute path
  */
 std::string getInputSBDirectoryPath(glite::jobid::JobId jid,
-	int level = 0);
+                                    int level = 0);
 
 /**
  * Returns the job Output Sandbox directory path
@@ -211,7 +215,7 @@ std::string getInputSBDirectoryPath(glite::jobid::JobId jid,
  * @return output sandbox directory absolute path
  */
 std::string getOutputSBDirectoryPath(glite::jobid::JobId jid,
-	int level = 0);
+                                     int level = 0);
 
 /**
  * Returns the job peek directory path
@@ -220,7 +224,7 @@ std::string getOutputSBDirectoryPath(glite::jobid::JobId jid,
  * @return output sandbox directory absolute path
  */
 std::string getPeekDirectoryPath(glite::jobid::JobId jid,
-	int level = 0, bool docroot = true);
+                                 int level = 0, bool docroot = true);
 
 /**
  * Returns the job delegated Proxy path
@@ -229,7 +233,7 @@ std::string getPeekDirectoryPath(glite::jobid::JobId jid,
  * @return delegated Proxy absolute path
  */
 std::string getJobDelegatedProxyPath(glite::jobid::JobId jid,
-	int level = 0);
+                                     int level = 0);
 
 /**
  * Returns the job delegated Proxy path backup file
@@ -238,19 +242,19 @@ std::string getJobDelegatedProxyPath(glite::jobid::JobId jid,
  * @return backup delegated Proxy absolute path
  */
 std::string getJobDelegatedProxyPathBak(glite::jobid::JobId jid,
-	int level = 0);
+                                        int level = 0);
 
 std::string getJobJDLOriginalPath(glite::jobid::JobId jid,
-	bool isrelative = false, int level = 0);
+                                  bool isrelative = false, int level = 0);
 
 std::string getJobJDLToStartPath(glite::jobid::JobId jid,
-	bool isrelative = false, int level = 0);
+                                 bool isrelative = false, int level = 0);
 
 std::string getJobJDLStartedPath(glite::jobid::JobId jid,
-	bool isrelative = false, int level = 0);
+                                 bool isrelative = false, int level = 0);
 
 std::string getJobJDLExistingStartPath(glite::jobid::JobId jid,
-	bool isrelative = false, int level = 0);
+                                       bool isrelative = false, int level = 0);
 
 /**
  * Returns the destination URI reading the protocol to use from configuration
@@ -258,8 +262,8 @@ std::string getJobJDLExistingStartPath(glite::jobid::JobId jid,
  * @param jobid the job id from which calculate the job directory
  * @return the destination URI
  */
-std::string getDestURI(const std::string &jobid, const std::string &protocol,
-	int port);
+std::string getDestURI(const std::string& jobid, const std::string& protocol,
+                       int port);
 
 /**
  * Transforms a JobId into a valid filename
@@ -268,16 +272,16 @@ std::string getDestURI(const std::string &jobid, const std::string &protocol,
  * @param extended_path
  */
 std::string to_filename(glite::jobid::JobId j, int level = 0,
-	bool extended_path = true);
+                        bool extended_path = true);
 
 //
 // OutputSandbox manipulation methods
 //
 std::vector<std::string> computeOutputSBDestURIBase(std::vector<std::string>
-	outputsb, const std::string &baseuri);
+      outputsb, const std::string& baseuri);
 
 std::vector<std::string> computeOutputSBDestURI(std::vector<std::string>
-	osbdesturi, const std::string &dest_uri);
+      osbdesturi, const std::string& dest_uri);
 
 /*
  * Returns the Virtual Organisation contained in the requesting client Proxy.
@@ -305,7 +309,7 @@ std::string getDN_SSL();
  * @param fqan the fqan to parse
  * @return a string vector containing the elements
  */
-std::vector<std::string> parseFQAN(const std::string &fqan);
+std::vector<std::string> parseFQAN(const std::string& fqan);
 
 /**
  * Parses the FQAN to get a vector containing the different elements
@@ -313,7 +317,7 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
  * @return a string vector containing the elements
  */
 std::vector<std::pair<std::string, std::string> >
-	parseFQANPair(const std::string &fqan);
+parseFQANPair(const std::string& fqan);
 
 /**
  * Checks if the Job has a parent, thus if it's a DAG/Collection
@@ -358,8 +362,8 @@ bool getUserFreeQuota(std::pair<long, long>& result, std::string uname);
  * @param dir name of the dir to be generated
  * @param userid the id of the user
  */
-void managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
-	std::vector<std::string> jobids, jobdirectorytype dirtype);
+void managedir(const std::string& dir, uid_t userid, uid_t jobuserid,
+               std::vector<std::string> jobids, jobdirectorytype dirtype);
 
 /**
  * Checks if the input string (representing an attribute name=value)
@@ -396,7 +400,7 @@ const std::string cleanString(std::string str);
    * @param src the input string
    * @return the string, converted to lowercase.
  */
-const std::string toLower(const std::string &src);
+const std::string toLower(const std::string& src);
 
 /**
    * Cuts the input string in two pieces (label and value) according to
@@ -405,7 +409,7 @@ const std::string toLower(const std::string &src);
    * @param label returns the "label" part of the string
    * @param value returns the "value" part of the string
  */
-void split(const std::string &field, std::string &label, std::string &value);
+void split(const std::string& field, std::string& label, std::string& value);
 
 /**
 * Checks whether a string is contained into a vector
@@ -413,20 +417,20 @@ void split(const std::string &field, std::string &label, std::string &value);
 * @param elem the string to be looked for
 * @returns true whether the vector contained the specified string
 */
-bool hasElement(const std::vector<std::string> &vect, const std::string &elem);
+bool hasElement(const std::vector<std::string> &vect, const std::string& elem);
 /*
 * Gets the absolute path of the file
 * @param file the input file
 * @return the absolute file path
 */
-const std::string getAbsolutePath(const std::string &file);
+const std::string getAbsolutePath(const std::string& file);
 
 /**
  * Removes '/' characters at the end of the of the input pathname
  * @param fpath the path to be normalized
  * @return the normalized path
  */
-const std::string normalizePath( const std::string &fpath ) ;
+const std::string normalizePath( const std::string& fpath ) ;
 
 } // namespace utilities
 } // namespace wmproxy

@@ -1,18 +1,18 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -23,6 +23,8 @@ limitations under the License.
 
 #include <string>
 #include <signal.h>  // sig_atomic
+#include "soapH.h"
+
 
 // gSOAP
 #include "WMProxy.nsmap"
@@ -51,7 +53,7 @@ limitations under the License.
 
 
 #include "utilities/wmputils.h" // waitForSeconds()
-#include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
+#include "eventlogger/wmplbselector.h" // lbselectioninfo struct
 
 // Exceptions
 #include "glite/wmsutils/exception/Exception.h"
@@ -70,7 +72,6 @@ std::string dispatcher_type_global;
 std::string filelist_global;
 glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 bool globusDNS_global;
-volatile sig_atomic_t handled_signal_recv ;
 
 namespace logger        = glite::wms::common::logger;
 namespace wmsexception  = glite::wmsutils::exception;
@@ -83,118 +84,114 @@ using namespace std;
 const string opt_conf_file("glite_wms.conf");
 
 void
-sendFault(WMProxyService &proxy, const string &method, const string &msg, int code)
+sendFault(WMProxyService& proxy, const string& method, const string& msg, int code)
 {
-	setSOAPFault(&proxy, code, method, time(NULL), code, msg);
-	soap_print_fault(&proxy, stderr);
-	soap_send_fault(&proxy); 
-	soap_destroy(&proxy);
-	soap_end(&proxy); 
-	soap_done(&proxy);
+   setSOAPFault(&proxy, code, method, time(NULL), code, msg);
+   soap_print_fault(&proxy, stderr);
+   soap_send_fault(&proxy);
+   soap_destroy(&proxy);
+   soap_end(&proxy);
+   soap_done(&proxy);
 }
-
 
 int
 main(int argc, char* argv[])
 {
-	glite::wms::wmproxy::server::initsignalhandler();
-	try {
-		extern WMProxyConfiguration conf;
-		conf = boost::details::pool::singleton_default<WMProxyConfiguration>
-			::instance();
+   glite::wms::wmproxy::server::initsignalhandler();
+   try {
+      extern WMProxyConfiguration conf;
+      conf = boost::details::pool::singleton_default<WMProxyConfiguration>
+             ::instance();
 
-		fstream edglog_stream;
-		conf.init(opt_conf_file,
-			configuration::ModuleType::workload_manager_proxy);
-		string log_file = conf.wmp_config->log_file();
-		// Checking for log file
-		if (!log_file.empty()) {
-			if (!ifstream(log_file.c_str())) {
-		    	ofstream(log_file.c_str());
-		    }
-			edglog_stream.open(log_file.c_str(), ios::in | ios::out
-				| ios::ate);
-		}
-		if (edglog_stream) {
-			logger::threadsafe::edglog.open(edglog_stream,
-				static_cast<logger::level_t>(conf.wmp_config->log_level()));
-		}
-		
-		edglog_fn("wmproxy::main");
-		edglog(info)
-			<<"------- Starting Server Instance -------"
-			<<endl;
-		
-		// Opening log file destination
-		logger::threadsafe::edglog.activate_log_rotation (
-			conf.wmp_config->log_file_max_size(),
-			conf.wmp_config->log_rotation_base_file(),
-			conf.wmp_config->log_rotation_max_file_number());
-		edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
-			<<endl;
+      fstream edglog_stream;
+      conf.init(opt_conf_file,
+                configuration::ModuleType::workload_manager_proxy);
+      string log_file = conf.wmp_config->log_file();
+      // Checking for log file
+      if (!log_file.empty()) {
+         if (!ifstream(log_file.c_str())) {
+            ofstream(log_file.c_str());
+         }
+         edglog_stream.open(log_file.c_str(), ios::in | ios::out
+                            | ios::ate);
+      }
+      if (edglog_stream) {
+         logger::threadsafe::edglog.open(edglog_stream,
+                                         static_cast<logger::level_t>(conf.wmp_config->log_level()));
+      }
 
-		extern string sandboxdir_global;
-		sandboxdir_global = "";
-		
-		extern string dispatcher_type_global;
-		dispatcher_type_global
-			= configuration::Configuration::instance()->wm()->dispatcher_type();
-		edglog(debug)<<"DispatcherType: "<<dispatcher_type_global<<endl;
-		
-		extern string filelist_global;
-		filelist_global
-			= configuration::Configuration::instance()->wm()->input();
+      edglog_fn("wmproxy::main");
+      edglog(info)
+            <<"------- Starting Server Instance -------"
+            <<endl;
 
-		extern eventlogger::WMPLBSelector lbselector;
-		lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
-			conf.getWeightsCachePath(),
-			conf.getWeightsCacheValidity(),
-			conf.isServiceDiscoveryEnabled(),
-			conf.getServiceDiscoveryInfoValidity(),
-			conf.getLBServiceDiscoveryType());
+      // Opening log file destination
+      logger::threadsafe::edglog.activate_log_rotation (
+         conf.wmp_config->log_file_max_size(),
+         conf.wmp_config->log_rotation_base_file(),
+         conf.wmp_config->log_rotation_max_file_number());
+      edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
+                   <<endl;
 
-		// check Globus Version to determine whether to convert DNS
-		//extern bool globusDNS_global;
-		//globusDNS_global = wmputilities::checkGlobusVersion();
-		extern long servedrequestcount_global;
-		servedrequestcount_global = 0;
+      extern string sandboxdir_global;
+      sandboxdir_global = "";
 
-		edglog(info) << "WM proxy serving process started" << endl;
-		edglog(info) <<"---------------------------------------" <<endl;
+      extern string dispatcher_type_global;
+      dispatcher_type_global
+         = configuration::Configuration::instance()->wm()->dispatcher_type();
+      edglog(debug)<<"DispatcherType: "<<dispatcher_type_global<<endl;
 
-                //openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);	
-	
-		WMProxyServe proxy;
-		proxy.serve();
-		
-		//closelog();
-		edglog(info)<<"Exiting WM proxy serving process ..."<<endl;
-		
-	} catch (configuration::CannotOpenFile &file) {
-	    	string msg = "Cannot open file: " + string(file.what());
-		edglog(fatal)<<msg<<endl;
-		WMProxyService proxy;
-		sendFault(proxy, "main", msg, -5);
-	} catch (configuration::CannotConfigure &error) {
-	    	string msg = "Cannot configure: " + string(error.what());
-		edglog(fatal)<<msg<<endl;
-	        WMProxyService proxy;
-		sendFault(proxy, "main", msg, -4);
-	} catch (wmsexception::Exception &exc) {
-		string msg = "Exception caught: " + string(exc.what());
-		edglog(fatal)<<msg<<endl;
-		WMProxyService proxy;
-	   	sendFault(proxy, "main", msg, -3);
-	} catch (exception &ex) {
-		string msg = "Standard Exception caught: " + string(ex.what());
-		edglog(fatal)<<msg<<endl;
-		WMProxyService proxy;
-	   	sendFault(proxy, "main", msg, -2);
- 	} catch (...) {
-	    	string msg = "Uncaught exception";
-		edglog(fatal)<<msg<<endl;
-		WMProxyService proxy;
-	   	sendFault(proxy, "main", msg, -1);
-  	}
-	return 0;
+      extern string filelist_global;
+      filelist_global
+         = configuration::Configuration::instance()->wm()->input();
+
+      extern eventlogger::WMPLBSelector lbselector;
+      lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
+                                              conf.getWeightsCachePath(),
+                                              conf.getWeightsCacheValidity(),
+                                              conf.isServiceDiscoveryEnabled(),
+                                              conf.getServiceDiscoveryInfoValidity(),
+                                              conf.getLBServiceDiscoveryType());
+
+      extern long servedrequestcount_global;
+      servedrequestcount_global = 0;
+
+      edglog(info) << "WM proxy serving process started" << endl;
+      edglog(info) <<"---------------------------------------" <<endl;
+
+      //openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
+
+      WMProxyServe proxy;  // high level class
+      proxy.serve();
+
+      //closelog();
+      edglog(info)<<"Exiting WM proxy serving process ..."<<endl;
+
+   } catch (configuration::CannotOpenFile& file) {
+      string msg = "Cannot open file: " + string(file.what());
+      edglog(fatal)<<msg<<endl;
+      WMProxyService proxy;
+      sendFault(proxy, "main", msg, -5);
+   } catch (configuration::CannotConfigure& error) {
+      string msg = "Cannot configure: " + string(error.what());
+      edglog(fatal)<<msg<<endl;
+      WMProxyService proxy;
+      sendFault(proxy, "main", msg, -4);
+   } catch (wmsexception::Exception& exc) {
+      string msg = "Exception caught: " + string(exc.what());
+      edglog(fatal)<<msg<<endl;
+      WMProxyService proxy;
+      sendFault(proxy, "main", msg, -3);
+   } catch (exception& ex) {
+      string msg = "Standard Exception caught: " + string(ex.what());
+      edglog(fatal)<<msg<<endl;
+      WMProxyService proxy;
+      sendFault(proxy, "main", msg, -2);
+   } catch (...) {
+      string msg = "Uncaught exception";
+      edglog(fatal)<<msg<<endl;
+      WMProxyService proxy;
+      sendFault(proxy, "main", msg, -1);
+   }
+   return 0;
 }

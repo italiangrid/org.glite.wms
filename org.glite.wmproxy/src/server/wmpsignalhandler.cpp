@@ -26,13 +26,10 @@ limitations under the License.
 #include "fcgios.h"
 #include <cxxabi.h>
 #include <execinfo.h>
-#include <signal.h>
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
-
-extern volatile sig_atomic_t handled_signal_recv;
 
 namespace glite {
 namespace wms {
@@ -41,7 +38,7 @@ namespace server {
 
 using namespace std;
 
-// Handler prototype
+volatile sig_atomic_t handled_signal_recv = 0;
 void handler(int code);
 
 namespace {

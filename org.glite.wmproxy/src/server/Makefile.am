@@ -48,6 +48,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	wmpconfiguration.cpp \
 	wmp2wm.cpp \
 	wmpstructconverter.cpp \
+	gsoap-core.cpp -DWITH_FASTCGI \
 	wmpsignalhandler.cpp
 
 
@@ -95,8 +96,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(VOMS_NOTHR_LIBS) \
 	$(FCGI_CPP_LIBS) -lfcgi \
 	$(XSLT_LIBS) \
-	$(ARGUS_PEP_API_C_LIBS) \
-	$(GSOAP_LIBS)
+	$(ARGUS_PEP_API_C_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
@@ -113,6 +113,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(JSDL_CFLAGS) \
 	-DWMP_SOFTWARE_VERSION=\"@VERSION@\"
 	-DWANT_NAMESPACES \
+	-DDEBUG -DSOAP_DEBUG -DWITH_FASTCGI \
 	-DWITH_IPV6
 
 MAINTAINERCLEANFILES = Makefile.in
