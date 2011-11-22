@@ -17,11 +17,11 @@ limitations under the License.
 */
 
 //
-// File: wmplbselector.cpp
+// File: lbselector.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmplbselector.h"
+#include "lbselector.h"
 
 // Boost
 #include <boost/lexical_cast.hpp>
@@ -35,7 +35,7 @@ limitations under the License.
 #include "utilities/wmpexceptions.h"
 
 // File Lock
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 #ifdef USE_RESOURCE_DISCOVERY_API_C
 // Service Discovery

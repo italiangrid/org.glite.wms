@@ -15,7 +15,7 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS)
 INCLUDE=-I$(SRC_DIR) -I/usr/include/openssl/ -I/usr/kerberos/include \
 	-I$(ROOT)/org.glite.wms-utils.exception/interface 
 
-LIBS=-lcurl -lz -lssl$(FLAVOR_EXT) -lcrypto_gcc32pthr -lxml2 -lm -lglite_wmsutils_exception \
+LIBS=-lz -lssl$(FLAVOR_EXT) -lcrypto_gcc32pthr -lxml2 -lm -lglite_wmsutils_exception \
 	-lgridsite  -lmcnab -lgacl-manager \
 	-L $(SRC_DIR) \
 	-L ../lib \

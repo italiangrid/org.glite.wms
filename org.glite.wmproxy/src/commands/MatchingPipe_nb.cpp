@@ -25,10 +25,10 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "utilities/wmpexception_codes.h"
-#include "utilities/wmpexceptions.h"
+#include "utilities/exception_codes.h"
+#include "utilities/exceptions.h"
 
-#include "server/wmpconfiguration.h"
+#include "server/configuration.h"
 
 extern WMProxyConfiguration conf;
 

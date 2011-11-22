@@ -26,6 +26,8 @@ limitations under the License. */
 #undef __THROW
 #define __THROW
 #endif
+
+#include "server/responsestruct.h"
 #include "voms/voms_api.h"
 
 namespace glite {
