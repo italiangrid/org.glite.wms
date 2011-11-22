@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 //
-// File: eventlogger.h
+// File: wmpeventlogger.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -26,7 +26,7 @@ limitations under the License. */
 #include <vector>
 
 #include <boost/scoped_ptr.hpp>
-#include "expdagad.h"
+#include "wmpexpdagad.h"
 #include "glite/jdl/JobAd.h"
 #include "glite/jobid/JobId.h"
 #include "glite/lb/consumer.h"

@@ -15,14 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 //
-// File: eventlogger.cpp
+// File: wmpeventlogger.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "eventlogger.h"
-#include "server/configuration.h"
+#include "wmpeventlogger.h"
+#include "server/wmpconfiguration.h"
 
-#include "lbselector.h"
+#include "wmplbselector.h"
 
 // Boost
 #include <boost/lexical_cast.hpp>
@@ -38,16 +38,16 @@ limitations under the License. */
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "utilities/exception_codes.h"
-#include "utilities/exceptions.h"
-#include "utilities/utils.h"
+#include "utilities/wmpexception_codes.h"
+#include "utilities/wmpexceptions.h"
+#include "utilities/wmputils.h"
 
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
-#include "security/authorizer.h"
+#include "security/wmpauthorizer.h"
 
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 extern WMProxyConfiguration conf;
