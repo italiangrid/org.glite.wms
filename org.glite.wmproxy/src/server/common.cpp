@@ -43,6 +43,7 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
+#include "wmproxyserve.h"
 #include "security/delegation.h"
 #include "security/authorizer.h"
 #include "security/gaclmanager.h"
@@ -50,9 +51,6 @@ limitations under the License.
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;
-
-// Global variable for server instance served request count
-extern long servedrequestcount_global;
 
 // Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
@@ -75,9 +73,10 @@ using namespace std;
 using namespace glite::jdl; // Ad
 using namespace glite::wms::wmproxy::utilities; //Exception
 
-namespace logger        = glite::wms::common::logger;
+namespace logger = glite::wms::common::logger;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
-namespace jobid      = glite::jobid;
+namespace server = glite::wms::wmproxy::server;
+namespace jobid = glite::jobid;
 
 /**
 * check for filelist/jobdir
@@ -199,8 +198,7 @@ initWMProxyOperation(const std::string& operation)
    edglog(info) << displayENV("Remote GRST CRED","GRST_CRED_2")<<endl;
    edglog(info) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
    // Manage static WMProxy  instance serving request number
-   servedrequestcount_global++;
-   edglog(info)<<"WMProxy instance serving core request N.: " <<servedrequestcount_global<<endl;
+   edglog(info)<<"WMProxy instance serving core request N.: " <<++server::servedrequestcount_global<<endl;
 
    checkConfiguration(); // throws
    setGlobalSandboxDir(); // throws

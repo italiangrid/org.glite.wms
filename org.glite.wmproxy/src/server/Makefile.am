@@ -48,7 +48,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	configuration.cpp \
 	wmp2wm.cpp \
 	structconverter.cpp \
-	gsoap-core.cpp -DWITH_FASTCGI \
+	gsoap-core.cpp \
 	signalhandler.cpp
 
 

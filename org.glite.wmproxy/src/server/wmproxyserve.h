@@ -27,6 +27,13 @@ limitations under the License.
 #include "soapH.h"
 #include "soapWMProxyObject.h"
 
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
+
+extern long servedrequestcount_global;
+
 class WMProxyServe: public WMProxyService
 {
 public:
@@ -36,4 +43,5 @@ public:
    };
 };
 
+}}}}
 #endif // GLITE_WMS_WMPROXY_WMPROXYSERVE_H

@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpcommon.h
+// File: common.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -38,7 +38,6 @@ namespace jobid
 class JobId;
 }
 }
-
 
 // Possible values for jdl type attribute
 enum type {

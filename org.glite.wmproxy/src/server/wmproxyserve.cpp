@@ -20,8 +20,8 @@ limitations under the License.
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include <fcgi_stdio.h>
-
+#include <stdsoap2.h>
+#include <fcgi_stdio.h> 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
@@ -29,26 +29,46 @@ limitations under the License.
 #include "configuration.h"
 #include "signalhandler.h"
 
-namespace server = glite::wms::wmproxy::server;
+extern WMProxyConfiguration conf;
+
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
+
+long servedrequestcount_global;
 
 SOAP_FMAC5 int SOAP_FMAC6
 WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 {
-   unsigned int requests = soap->max_keep_alive; // HTTP keep-alive settings in httpd
-   while (requests >= 0 && 0 == server::handled_signal_recv) {
+   while (0 == handled_signal_recv) {
+
+      // Checking for per instance served requests count. If the maximum
+      // value is reached, the server instance is terminated
+      long plafond;
+      char *env_plafond = getenv("GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS");
+      if (env_plafond) {
+         plafond = atol(env_plafond);
+      } else if (conf.getMaxServedRequests()) {
+         plafond = conf.getMaxServedRequests();
+      }
+      if (plafond <= 0) {
+         plafond = 50;
+      }
+      if (servedrequestcount_global >= plafond) {
+         edglog(info) << "-------- Exiting Server Instance -------" << std::endl;
+         edglog(info) << "Maximum core request count reached: "<< plafond << std::endl;
+         FCGI_Finish();
+         break;
+      }
       if (FCGI_Accept() >= 0 ) {
-         edglog(info)<<"0------- fcgi accept"<< std::endl;
          soap_begin(soap);
-         edglog(info)<<"1------- after soap_begin "<< std::endl;
-         edglog(info)<<"2------- keep alive"<< requests<< std::endl;
-         --requests;
 
          if (soap_begin_recv(soap)) {
             if (soap->error < SOAP_STOP) {
-               return soap_send_fault(soap);
+               soap_send_fault(soap);
             }
             soap_closesock(soap);
-            edglog(info)<<"4------- continue :"<< server::handled_signal_recv << "requests" << requests<< std::endl;
             continue;
          }
 
@@ -57,23 +77,19 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
                || soap_body_begin_in(soap)
                || soap_serve_request(soap)
                || (soap->fserveloop && soap->fserveloop(soap))) {
-            edglog(info)<<"55555--- fault"<< std::endl;
-            return soap_send_fault(soap);
+            soap_send_fault(soap);
          }
       } else {
          soap->error = SOAP_EOF;
-         return soap_send_fault(soap);
+         soap_send_fault(soap);
+      }
+
+      if (handled_signal_recv > 0) {
+         edglog(info) << "-------- Exiting Server Instance -------" << std::endl;
+         edglog(info) << "Signal code received: "<< handled_signal_recv << std::endl;
+         break;
       }
    } // while
-
-   if (server::handled_signal_recv > 0) {
-      edglog(info) << "-------- Exiting Server Instance -------" << std::endl;
-      edglog(info) << "Signal code received: "<< server::handled_signal_recv << std::endl;
-   } else {
-      edglog(info) << "-------- Exiting Server Instance -------" << std::endl;
-      edglog(info) << "Maximum number of requests allowed by HTTP keepalive "
-                   "reached (" << soap->max_keep_alive << ')' << std::endl;
-   }
 
    soap_destroy(soap);
    soap_end(soap);
@@ -81,3 +97,5 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 
    return SOAP_OK;
 }
+
+}}}}

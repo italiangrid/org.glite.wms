@@ -77,7 +77,8 @@ create_xacml_subject_voms_fqans(std::vector<std::string> const& fqans)
    }
 
    // all FQANs are voms-fqan Attributes
-   xacml_attribute_t* voms_fqan = xacml_attribute_create(XACML_AUTHZINTEROP_SUBJECT_VOMS_FQAN);
+   xacml_attribute_t* voms_fqan =
+      xacml_attribute_create(XACML_AUTHZINTEROP_SUBJECT_VOMS_FQAN);
    if (!voms_fqan) {
       edglog(error) << "can not allocate XACML Subject/Attribute: "
    	 << XACML_AUTHZINTEROP_SUBJECT_VOMS_FQAN << std::endl;
@@ -94,7 +95,8 @@ create_xacml_subject_voms_fqans(std::vector<std::string> const& fqans)
       }
       xacml_attribute_addvalue(voms_fqan, fqans[i].c_str());
       if (i == 0) { // the first FQAN is the voms-primary-fqan
-         xacml_attribute_t* voms_primary_fqan = xacml_attribute_create(XACML_AUTHZINTEROP_SUBJECT_VOMS_PRIMARY_FQAN);
+         xacml_attribute_t* voms_primary_fqan =
+            xacml_attribute_create(XACML_AUTHZINTEROP_SUBJECT_VOMS_PRIMARY_FQAN);
          if (!voms_primary_fqan) {
             edglog(error) << "can not allocate XACML Subject/Attribute: "
                << XACML_AUTHZINTEROP_SUBJECT_VOMS_PRIMARY_FQAN << std::endl;
@@ -107,7 +109,7 @@ create_xacml_subject_voms_fqans(std::vector<std::string> const& fqans)
       }
    }
 
-   xacml_subject_addattribute(subject,voms_fqan);
+   xacml_subject_addattribute(subject, voms_fqan);
    return subject;
 }
 
@@ -210,13 +212,13 @@ xacml_request_t* create_xacml_request(
       xacml_action_delete(action);
       return 0;
    }
-   if (!subject) {
+   if (subject) {
       xacml_request_addsubject(request, subject);
    }
-   if (!resource) {
+   if (resource) {
       xacml_request_addresource(request, resource);
    }
-   if (!action) {
+   if (action) {
       xacml_request_setaction(request, action);
    }
 
@@ -230,7 +232,13 @@ get_response(xacml_response_t* response, std::string const& resourceid)
 
    // special ObligationId: x-posix-account-map
    static const char X_POSIX_ACCOUNT_MAP[]= "x-posix-account-map";
-   static std::string decision_str[] = {"deny", "permit", "indeterminate", "not applicable", "unknown"};
+   static std::string decision_str[] = {
+      "deny",
+      "permit",
+      "indeterminate",
+      "not applicable",
+      "unknown"
+   };
 
    boost::tuple<xacml_decision_t, uid_t, gid_t> error(
       XACML_DECISION_INDETERMINATE, 0, 0);
@@ -317,6 +325,131 @@ get_response(xacml_response_t* response, std::string const& resourceid)
    return error;
 }
 
+// Dumps a XACML request into a file. NULL values are not displayed.
+int
+dump_xacml_request(FILE* fout, xacml_request_t* request)
+{
+    if (!request) {
+        fprintf(fout, "ERROR: dump_xacml_request: request is NULL");
+        return 1;
+    }
+    size_t subjects_l = xacml_request_subjects_length(request);
+    fprintf(fout, "request: %d subjects\n", (int)subjects_l);
+    unsigned int i= 0;
+    for (; i < subjects_l; ++i) {
+        xacml_subject_t* subject=  xacml_request_getsubject(request, i);
+        char const* const category = xacml_subject_getcategory(subject);
+        if (category)
+            fprintf(fout,"request.subject[%d].category= %s", i, category);
+        size_t attrs_l= xacml_subject_attributes_length(subject);
+        fprintf(fout,"request.subject[%d]: %d attributes", i, (int)attrs_l);
+        unsigned int j= 0;
+        for(; j<attrs_l; j++) {
+            xacml_attribute_t * attr= xacml_subject_getattribute(subject,j);
+            const char * attr_id= xacml_attribute_getid(attr);
+            if (attr_id)
+                fprintf(fout,"request.subject[%d].attribute[%d].id= %s", i,j,attr_id);
+            const char * attr_datatype= xacml_attribute_getdatatype(attr);
+            if (attr_datatype)
+                fprintf(fout,"request.subject[%d].attribute[%d].datatype= %s", i,j,attr_datatype);
+            const char * attr_issuer= xacml_attribute_getissuer(attr);
+            if (attr_issuer)
+                fprintf(fout,"request.subject[%d].attribute[%d].issuer= %s", i,j,attr_issuer);
+            size_t values_l= xacml_attribute_values_length(attr);
+            //fprintf(fout,"request.subject[%d].attribute[%d]: %d values", i,j,(int)values_l);
+            unsigned int k= 0;
+            for (k= 0; k<values_l; k++) {
+                const char * attr_value= xacml_attribute_getvalue(attr,k);
+                fprintf(fout,"request.subject[%d].attribute[%d].value[%d]= %s", i,j,k,attr_value);
+            }
+        }
+    }
+    size_t resources_l= xacml_request_resources_length(request);
+    fprintf(fout,"request: %d resources\n", (int)resources_l);
+    for (i= 0; i<resources_l; i++) {
+        xacml_resource_t * resource= xacml_request_getresource(request,i);
+        const char * res_content= xacml_resource_getcontent(resource);
+        if (res_content)
+            fprintf(fout,"request.resource[%d].content= %s", i, res_content);
+        size_t attrs_l= xacml_resource_attributes_length(resource);
+        fprintf(fout,"request.resource[%d]: %d attributes", i, (int)attrs_l);
+        unsigned int j= 0;
+        for(j= 0; j<attrs_l; j++) {
+            xacml_attribute_t * attr= xacml_resource_getattribute(resource,j);
+            const char * attr_id= xacml_attribute_getid(attr);
+            if (attr_id)
+                fprintf(fout,"request.resource[%d].attribute[%d].id= %s", i,j,attr_id);
+            const char * attr_datatype= xacml_attribute_getdatatype(attr);
+            if (attr_datatype)
+                fprintf(fout,"request.resource[%d].attribute[%d].datatype= %s", i,j,attr_datatype);
+            const char * attr_issuer= xacml_attribute_getissuer(attr);
+            if (attr_issuer)
+                fprintf(fout,"request.resource[%d].attribute[%d].issuer= %s", i,j,attr_issuer);
+            size_t values_l= xacml_attribute_values_length(attr);
+            //fprintf(fout,"request.resource[%d].attribute[%d]: %d values", i,j,(int)values_l);
+            unsigned int k= 0;
+            for (k= 0; k<values_l; k++) {
+                const char * attr_value= xacml_attribute_getvalue(attr,k);
+                if (attr_value)
+                    fprintf(fout,"request.resource[%d].attribute[%d].value[%d]= %s", i,j,k,attr_value);
+            }
+        }
+    }
+    unsigned int j= 0;
+    xacml_action_t * action= xacml_request_getaction(request);
+    if (action) {
+        size_t act_attrs_l= xacml_action_attributes_length(action);
+        fprintf(fout,"request.action: %d attributes",(int)act_attrs_l);
+        for (j= 0; j<act_attrs_l; j++) {
+            xacml_attribute_t * attr= xacml_action_getattribute(action,j);
+            const char * attr_id= xacml_attribute_getid(attr);
+            if (attr_id)
+                fprintf(fout,"request.action.attribute[%d].id= %s", j,attr_id);
+            const char * attr_datatype= xacml_attribute_getdatatype(attr);
+            if (attr_datatype)
+                fprintf(fout,"request.action.attribute[%d].datatype= %s", j,attr_datatype);
+            const char * attr_issuer= xacml_attribute_getissuer(attr);
+            if (attr_issuer)
+                fprintf(fout,"request.action.attribute[%d].issuer= %s", j,attr_issuer);
+            size_t values_l= xacml_attribute_values_length(attr);
+            //fprintf(fout,"request.action.attribute[%d]: %d values", j,(int)values_l);
+            unsigned int k= 0;
+            for (k= 0; k<values_l; k++) {
+                const char * attr_value= xacml_attribute_getvalue(attr,k);
+                if (attr_value)
+                    fprintf(fout,"request.action.attribute[%d].value[%d]= %s",j,k,attr_value);
+            }
+        }
+    }
+    xacml_environment_t * env= xacml_request_getenvironment(request);
+    if (env) {
+        size_t env_attrs_l= xacml_environment_attributes_length(env);
+        fprintf(fout,"request.environment: %d attributes",(int)env_attrs_l);
+        for (j= 0; j<env_attrs_l; j++) {
+            xacml_attribute_t * attr= xacml_environment_getattribute(env,j);
+            const char * attr_id= xacml_attribute_getid(attr);
+            if (attr_id)
+                fprintf(fout,"request.environment.attribute[%d].id= %s", j,attr_id);
+            const char * attr_datatype= xacml_attribute_getdatatype(attr);
+            if (attr_datatype)
+                fprintf(fout,"request.environment.attribute[%d].datatype= %s", j,attr_datatype);
+            const char * attr_issuer= xacml_attribute_getissuer(attr);
+            if (attr_issuer)
+                fprintf(fout,"request.environment.attribute[%d].issuer= %s", j,attr_issuer);
+            size_t values_l= xacml_attribute_values_length(attr);
+            //fprintf(fout,"request.environment.attribute[%d]: %d values", j,(int)values_l);
+            unsigned int k= 0;
+            for (k= 0; k<values_l; k++) {
+                const char * attr_value= xacml_attribute_getvalue(attr,k);
+                if (attr_value)
+                    fprintf(fout,"request.environment.attribute[%d].value[%d]= %s",j,k,attr_value);
+            }
+        }
+    }
+    fprintf(fout,"\n");
+    return 0;
+}
+
 } // anonymous namespace
 
 boost::tuple<bool, xacml_decision_t, uid_t, gid_t>
@@ -325,19 +458,22 @@ argus_authZ(
    std::vector<std::string> const& fqans,
    std::string const& resourceid, // only one resource per request
    std::string const& actionid,
-   std::string const& subjectid,
+   std::string const& dn,
    std::string const& userproxypath)
 {
    edglog_fn("argus_authZ");
+
    boost::tuple<bool, xacml_decision_t, uid_t, gid_t> error(
       false, XACML_DECISION_INDETERMINATE, 0, 0
    );
+
    PEP* pep = pep_initialize();
    if (!pep) {
       edglog(error) << "failed to init PEP client" << std::endl;
       return error;
    }
 
+   pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_DEBUG); // PEP_LOGLEVEL_INFO
    char* log_dir = 0;
    log_dir = getenv("GLITE_LOCATION_LOG");
    FILE* log = 0;
@@ -360,8 +496,6 @@ argus_authZ(
          return error;
       }
    }
-
-   pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_DEBUG); // PEP_LOGLEVEL_INFO
 
    pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_CLIENT_KEY, userproxypath.c_str());
    if (pep_rc != PEP_OK) {
@@ -393,17 +527,12 @@ argus_authZ(
    //    << ": " << pep_strerror(pep_rc));
    //}
 
-   // no SSL validation
-   //pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_SSL_VALIDATION, 0);
-   //if (pep_rc! = PEP_OK) {
-   // Warning("failed to disable PEPd SSL validation: " << pep_strerror(pep_rc));
-   //}
-
    xacml_subject_t* subject = xacml_subject_create();
-   xacml_subject_t* subject_id = create_xacml_subjectid(subjectid);
-   if (!subject_id
-         || !merge_xacml_subject_attrs_into(subject_id, subject)) {
-
+   xacml_subject_t* subject_id = create_xacml_subjectid(dn);
+   if (
+      !subject_id
+      || !merge_xacml_subject_attrs_into(subject_id, subject)
+   ) {
       pep_destroy(pep);
       fclose(log);
       return error;
@@ -433,6 +562,9 @@ argus_authZ(
       return error;
    }
 
+FILE* f = fopen("/tmp/argus_req", "w");
+dump_xacml_request(f, request);
+fclose(f);
    // submit request
    xacml_response_t* response = 0;
    pep_rc = pep_authorize(pep, &request, &response);

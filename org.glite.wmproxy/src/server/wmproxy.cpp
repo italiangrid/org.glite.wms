@@ -1,5 +1,4 @@
-/*
-Copyright (c) Members of the EGEE Collaboration. 2004.
+/* Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.
 
@@ -13,8 +12,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
-*/
+limitations under the License.  */
 
 //
 // File: wmproxy.cpp
@@ -24,7 +22,6 @@ limitations under the License.
 #include <string>
 #include <signal.h>  // sig_atomic
 #include "soapH.h"
-
 
 // gSOAP
 #include "WMProxy.nsmap"
@@ -63,15 +60,11 @@ limitations under the License.
 // Global variable for configuration
 WMProxyConfiguration conf;
 
-// Global variable for server instance served request count
-long servedrequestcount_global;
-
 // Global variables for configuration attributes (ENV dependant)
 std::string sandboxdir_global;
 std::string dispatcher_type_global;
 std::string filelist_global;
 glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
-bool globusDNS_global;
 
 namespace logger        = glite::wms::common::logger;
 namespace wmsexception  = glite::wmsutils::exception;
@@ -80,6 +73,7 @@ namespace eventlogger   = glite::wms::wmproxy::eventlogger;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
+namespace server = glite::wms::wmproxy::server;
 
 const string opt_conf_file("glite_wms.conf");
 
@@ -97,7 +91,7 @@ sendFault(WMProxyService& proxy, const string& method, const string& msg, int co
 int
 main(int argc, char* argv[])
 {
-   glite::wms::wmproxy::server::initsignalhandler();
+   server::initsignalhandler();
    try {
       extern WMProxyConfiguration conf;
       conf = boost::details::pool::singleton_default<WMProxyConfiguration>
@@ -153,15 +147,14 @@ main(int argc, char* argv[])
                                               conf.getServiceDiscoveryInfoValidity(),
                                               conf.getLBServiceDiscoveryType());
 
-      extern long servedrequestcount_global;
-      servedrequestcount_global = 0;
+      server::servedrequestcount_global = 0;
 
       edglog(info) << "WM proxy serving process started" << endl;
       edglog(info) <<"---------------------------------------" <<endl;
 
       //openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
 
-      WMProxyServe proxy;  // high level class
+      server::WMProxyServe proxy;
       proxy.serve();
 
       //closelog();
@@ -172,26 +165,32 @@ main(int argc, char* argv[])
       edglog(fatal)<<msg<<endl;
       WMProxyService proxy;
       sendFault(proxy, "main", msg, -5);
+      return 1;
    } catch (configuration::CannotConfigure& error) {
       string msg = "Cannot configure: " + string(error.what());
       edglog(fatal)<<msg<<endl;
       WMProxyService proxy;
       sendFault(proxy, "main", msg, -4);
+      return 1;
    } catch (wmsexception::Exception& exc) {
       string msg = "Exception caught: " + string(exc.what());
       edglog(fatal)<<msg<<endl;
       WMProxyService proxy;
       sendFault(proxy, "main", msg, -3);
+      return 1;
    } catch (exception& ex) {
       string msg = "Standard Exception caught: " + string(ex.what());
       edglog(fatal)<<msg<<endl;
       WMProxyService proxy;
       sendFault(proxy, "main", msg, -2);
+      return 1;
    } catch (...) {
       string msg = "Uncaught exception";
       edglog(fatal)<<msg<<endl;
       WMProxyService proxy;
       sendFault(proxy, "main", msg, -1);
+      return 1;
    }
+
    return 0;
 }

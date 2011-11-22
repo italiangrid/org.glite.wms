@@ -630,6 +630,7 @@ void
 WMPAuthorizer::authorize()
 {
    edglog_fn("WMPAuthorizer::authorize");
+//throw wmputilities::AuthorizationException(__FILE__, __LINE__, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()", wmputilities::WMS_AUTHORIZATION_ERROR, "Authorization error: user not authorized");
 
    bool use_argus =
       configuration::Configuration::instance()->wp()->argus_authz();
