@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpoperations.h
+// File: operations.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -25,10 +25,10 @@ limitations under the License.
 #define GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 
 
-#include "wmpresponsestruct.h"
+#include "responsestruct.h"
 
 
-// Web service available operations (see wmpcoreoperations.h for core operations).
+// Web service available operations (see coreoperations.h for core operations).
 // All methods are void, response values are inserted in the corresponding
 // response structure.
 // For more information about arguments see Web Service Description Language

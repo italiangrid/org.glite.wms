@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpsignalhandler.h
+// File: signalhandler.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 

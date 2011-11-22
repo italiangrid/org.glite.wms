@@ -17,13 +17,13 @@ limitations under the License.
 */
 
 //
-// File: wmpstructconverter.h
+// File: structconverter.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmpstructconverter.h"
+#include "structconverter.h"
 
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 #include "glite/jdl/RequestAdExceptions.h"
 

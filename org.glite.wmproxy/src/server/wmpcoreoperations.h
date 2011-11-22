@@ -17,14 +17,14 @@ limitations under the License.
 */
 
 //
-// File: wmpcoreoperations.h
+// File: coreoperations.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 #define GLITE_WMS_WMPROXY_WMPCOREOPERATIONS_H
 
-#include "wmpresponsestruct.h"
+#include "responsestruct.h"
 
 // All methods are void, response values are inserted in the corresponding
 // response structure.

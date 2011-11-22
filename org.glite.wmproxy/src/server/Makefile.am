@@ -24,7 +24,7 @@ wm.h : $(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include:/usr/share/gsoap/import \
-	-t $(GLITE_WMS_WSDL_PATH)/wmptypemap.dat \
+	-t $(GLITE_WMS_WSDL_PATH)/typemap.dat \
 	$(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 
 soapC.cpp soapServer.cpp soapH.h soapStub.h: wm.h
@@ -40,31 +40,31 @@ glite_wms_wmproxy_server_SOURCES = \
 	soapServer.cpp \
 	wmproxy.cpp \
 	wmproxyserve.cpp \
-	wmpcommon.cpp \
-	wmpoperations.cpp \
-	wmpcoreoperations.cpp \
-	wmpgsoapoperations.cpp \
-	wmpgsoapfaultmanipulator.cpp \
-	wmpconfiguration.cpp \
+	common.cpp \
+	operations.cpp \
+	coreoperations.cpp \
+	gsoapoperations.cpp \
+	gsoapfaultmanipulator.cpp \
+	configuration.cpp \
 	wmp2wm.cpp \
-	wmpstructconverter.cpp \
+	structconverter.cpp \
 	gsoap-core.cpp -DWITH_FASTCGI \
-	wmpsignalhandler.cpp
+	signalhandler.cpp
 
 
 bin_PROGRAMS = glite_wms_wmproxy_server
 
 noinst_HEADERS = \
 	wmp2wm.h \
-	wmpcommon.h \
+	common.h \
 	wmproxyserve.h \
-	wmpconfiguration.h \
-	wmpgsoapfaultmanipulator.h \
-	wmpoperations.h \
-	wmpcoreoperations.h \
-	wmpstructconverter.h \
-	wmpresponsestruct.h \
-	wmpsignalhandler.h
+	configuration.h \
+	gsoapfaultmanipulator.h \
+	operations.h \
+	coreoperations.h \
+	structconverter.h \
+	responsestruct.h \
+	signalhandler.h
 	
 glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic $(XSLT_LDFLAGS)
 

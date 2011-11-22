@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpresponsestruct.h
+// File: responsestruct.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 

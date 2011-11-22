@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpgsoapfaultmanipulator.cpp
+// File: gsoapfaultmanipulator.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 

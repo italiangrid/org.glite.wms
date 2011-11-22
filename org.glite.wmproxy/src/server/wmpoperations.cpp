@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpoperations.cpp
+// File: operations.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -32,24 +32,24 @@ limitations under the License.
 #include <boost/shared_ptr.hpp>
 #include "boost/filesystem/path.hpp"
 
-#include "wmpcommon.h"
-#include "wmpoperations.h"
-#include "wmpconfiguration.h"
-
-#include "wmpstructconverter.h"
+#include "common.h"
+#include "operations.h"
+#include "configuration.h"
+#include "structconverter.h"
 
 #include "glite/wms/common/utilities/manipulation.h"
 
 // Utilities
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 // Eventlogger
-#include "eventlogger/wmpexpdagad.h"
-#include "eventlogger/wmpeventlogger.h"
+#include "eventlogger/expdagad.h"
+#include "eventlogger/eventlogger.h"
 
-#include "security/wmpvomsauthn.h"
-#include "security/wmpauthorizer.h"
-#include "security/wmpgaclmanager.h"
+#include "security/vomsauthn.h"
+#include "security/authorizer.h"
+#include "security/gaclmanager.h"
+#include "security/delegation.h"
 
 //Logger
 #include "utilities/logging.h"
@@ -58,10 +58,9 @@ limitations under the License.
 
 #include "commands/listfiles.h"
 
-#include "security/wmpdelegation.h"
 
 // WMP Exceptions
-#include "utilities/wmpexceptions.h"
+#include "utilities/exceptions.h"
 #include "utilities/wmpexception_codes.h"
 
 // RequestAd

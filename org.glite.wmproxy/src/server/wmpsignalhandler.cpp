@@ -17,11 +17,11 @@ limitations under the License.
 */
 
 //
-// File: wmpsignalhandler.cpp
+// File: signalhandler.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmpsignalhandler.h"
+#include "signalhandler.h"
 
 #include "fcgios.h"
 #include <cxxabi.h>

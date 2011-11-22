@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpcoreoperations.cpp
+// File: coreoperations.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -34,20 +34,20 @@ limitations under the License.
 #include <sys/types.h>
 
 #include "wmp2wm.h"
-#include "wmpcommon.h"
-#include "wmpcoreoperations.h"
-#include "wmpconfiguration.h"
-#include "wmpstructconverter.h"
+#include "common.h"
+#include "coreoperations.h"
+#include "configuration.h"
+#include "structconverter.h"
 
 #include "glite/wms/common/utilities/manipulation.h"
 
 // Utilities
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 // Eventlogger
-#include "eventlogger/wmpexpdagad.h"
-#include "eventlogger/wmpeventlogger.h"
-#include "eventlogger/wmplbselector.h" // lbselector
+#include "eventlogger/expdagad.h"
+#include "eventlogger/eventlogger.h"
+#include "eventlogger/lbselector.h" // lbselector
 
 // Logger
 #include "utilities/logging.h"
@@ -56,7 +56,7 @@ limitations under the License.
 
 #include "commands/listfiles.h"
 
-#include "security/wmpdelegation.h"
+#include "security/delegation.h"
 
 // Exceptions
 #include "utilities/wmpexceptions.h"
@@ -85,9 +85,9 @@ limitations under the License.
 
 #include "glite/wms/common/utilities/edgstrstream.h"
 
-#include "security/wmpvomsauthn.h"
-#include "security/wmpauthorizer.h"
-#include "security/wmpgaclmanager.h"
+#include "security/vomsauthn.h"
+#include "security/authorizer.h"
+#include "security/gaclmanager.h"
 
 // Global variables for configuration
 extern char **environ;

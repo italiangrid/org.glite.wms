@@ -17,19 +17,19 @@ limitations under the License.
 */
 
 //
-// File: wmpconfiguration.cpp
+// File: configuration.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmpconfiguration.h"
+#include "configuration.h"
 
 #include <boost/regex.hpp>
 
 // Utilities
-#include "utilities/wmputils.h" // getServerHost()
+#include "utilities/utils.h" // getServerHost()
 
 // TRY CATCH macros
-#include "utilities/wmpexceptions.h"
+#include "utilities/exceptions.h"
 
 #include "glite/jdl/Ad.h"
 
@@ -44,7 +44,7 @@ const std::string DEFAULT_FILE_TRANSFER_PROTOCOL = "gsiftp";
 const std::string ALL_OPERATIONS = "AllOperations";
 
 
-namespace wmputilities  = glite::wms::wmproxy::utilities;
+namespace utilities  = glite::wms::wmproxy::utilities;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
@@ -368,7 +368,7 @@ WMProxyConfiguration::getLBServerAddressPort()
    GLITE_STACK_TRY("getLBServerAddressPort()");
 
    if (this->lbserverpair.first == DEFAULT_SERVER_ADDRESS) {
-      this->lbserverpair.first = wmputilities::getServerHost();
+      this->lbserverpair.first = utilities::getServerHost();
    }
    return this->lbserverpair;
 
@@ -381,7 +381,7 @@ WMProxyConfiguration::getLBLocalLoggerAddressPort()
    GLITE_STACK_TRY("getLBLocalLoggerAddressPort()");
 
    if (this->lblocalloggerpair.first == DEFAULT_SERVER_ADDRESS) {
-      this->lblocalloggerpair.first = wmputilities::getServerHost();
+      this->lblocalloggerpair.first = utilities::getServerHost();
    }
    return this->lblocalloggerpair;
 

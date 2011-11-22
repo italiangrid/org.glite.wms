@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpgsoapoperations.cpp
+// File: gsoapoperations.cpp
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -31,19 +31,19 @@ limitations under the License.
 #include <signal.h>  // sig_atomic
 
 // Server
-#include "wmpoperations.h"
-#include "wmpcoreoperations.h"
-#include "wmpresponsestruct.h"
-#include "wmpstructconverter.h"
-#include "wmpgsoapfaultmanipulator.h"
+#include "operations.h"
+#include "coreoperations.h"
+#include "responsestruct.h"
+#include "structconverter.h"
+#include "gsoapfaultmanipulator.h"
 
-#include "wmpsignalhandler.h"
+#include "signalhandler.h"
 
 // Logger
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 // JSDL specific includes:
 #include <string.h>

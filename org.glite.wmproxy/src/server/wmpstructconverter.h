@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpstructconverter.h
+// File: structconverter.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -26,7 +26,7 @@ limitations under the License.
 
 #include "soapH.h"
 
-#include "wmpresponsestruct.h"
+#include "responsestruct.h"
 #include "glite/jdl/ExpDagAd.h" // JobIdStruct
 #include "glite/jdl/adconverter.h" // NodeStruct
 

@@ -16,15 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "wmpcommon.h"
+#include "common.h"
 
 #include <ctype.h> // isspace
 
 // WMP Configuration
-#include "wmpconfiguration.h"
+#include "configuration.h"
 
 // Utilities
-#include "utilities/wmputils.h"
+#include "utilities/utils.h"
 
 // WMP Exceptions
 #include "utilities/wmpexceptions.h"
@@ -43,10 +43,10 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
-#include "security/wmpdelegation.h"
-#include "security/wmpauthorizer.h"
-#include "security/wmpgaclmanager.h"
-#include "security/wmpvomsauthn.h"
+#include "security/delegation.h"
+#include "security/authorizer.h"
+#include "security/gaclmanager.h"
+#include "security/vomsauthn.h"
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;

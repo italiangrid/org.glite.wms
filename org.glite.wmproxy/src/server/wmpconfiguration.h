@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 //
-// File: wmpconfiguration.h
+// File: configuration.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
