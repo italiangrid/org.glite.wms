@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 //
-// File: wmpeventlogger.h
+// File: eventlogger.h
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
@@ -26,7 +26,7 @@ limitations under the License. */
 #include <vector>
 
 #include <boost/scoped_ptr.hpp>
-#include "wmpexpdagad.h"
+#include "expdagad.h"
 #include "glite/jdl/JobAd.h"
 #include "glite/jobid/JobId.h"
 #include "glite/lb/consumer.h"
@@ -95,7 +95,6 @@ public:
    void logEvent(event_name event, const char *reason, bool retry, bool test,
                  const char *file_queue = NULL, const char *jdl = NULL);
    int logAbortEventSync(char *reason);
-   int logAcceptEventSync(const char * fromclient = NULL);
 
    void logUserTag(std::string name, const std::string& value);
    void logUserTags(classad::ClassAd *userTags);

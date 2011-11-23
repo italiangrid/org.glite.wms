@@ -779,53 +779,6 @@ WMPEventLogger::logAbortEventSync(char* reason)
    GLITE_STACK_CATCH();
 }
 
-int
-WMPEventLogger::logAcceptEventSync(const char * fromclient)
-{
-   GLITE_STACK_TRY("logAcceptEventSync()");
-
-   edglog_fn("WMPEventlogger::logAcceptEventSync");
-   edglog(debug)<<"Logging Accept event (sync)"<<endl;
-
-   char * s_from = edg_wll_SourceToString(EDG_WLL_SOURCE_NETWORK_SERVER);
-
-   int outcome = 1;
-   int i = LOG_RETRY_COUNT;
-   if (m_lbProxy_b) {
-      edglog(debug)<<"Logging to LB Proxy..."<<endl;
-      for (; (i > 0) && outcome; i--) {
-         outcome = edg_wll_LogEventProxy(ctx_, EDG_WLL_EVENT_ACCEPTED,
-                                         EDG_WLL_FORMAT_ACCEPTED, s_from, fromclient, "", "");
-         if (outcome) {
-            edglog(severe)<<error_message("Register log accept failed\n"
-                                          "edg_wll_LogEventProxy", outcome)<<endl;
-            randomsleep();
-         }
-      }
-   } else { // end switch LB PROXY
-      edglog(debug)<<"Logging to LB..."<<endl;
-      for (; (i > 0) && outcome; i--) {
-         outcome = edg_wll_LogEventSync(ctx_, EDG_WLL_EVENT_ACCEPTED,
-                                        EDG_WLL_FORMAT_ACCEPTED, s_from, fromclient, "", "");
-         if (outcome) {
-            edglog(severe)<<error_message("Register log sync accept failed\n"
-                                          "edg_wll_LogEventSync", outcome)<<endl;
-            randomsleep();
-         }
-      }
-   } // end switch LB normal
-
-   if (outcome) {
-      string msg = error_message("Register log accept failed\n"
-                                 "edg_wll_LogEventSync/Proxy", outcome);
-      edglog(critical)<<msg<<endl;
-   }
-
-   return outcome;
-
-   GLITE_STACK_CATCH();
-}
-
 void
 WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
                          bool test, const char* file_queue, const char* jdl)
@@ -1429,15 +1382,19 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
       case LOG_ACCEPT: {
          // Log remote address
          string remoteHost="Host not available";
-         if (getenv("REMOTE_ADDR")) {
+         if (getenv("REMOTE_HOST")) {
+            remoteHost = string(getenv("REMOTE_HOST"));
+         } else if (getenv("REMOTE_ADDR")) {
             remoteHost = string(getenv("REMOTE_ADDR"));
             if (getenv("REMOTE_PORT")) {
                remoteHost+= ":" + string(getenv("REMOTE_PORT"));
             }
          }
+
          edglog(debug)<<"Logging Accept event..."<<endl;
          return edg_wll_LogAcceptedProxy(ctx_, EDG_WLL_SOURCE_USER_INTERFACE,
-                                         remoteHost.c_str(), reason, ""); // reason is "From Client"
+                                         edg_wll_SourceToString(EDG_WLL_SOURCE_NETWORK_SERVER),
+                                         remoteHost.c_str(), "");
          break;
       }
       case LOG_ENQUEUE_START:

@@ -89,8 +89,10 @@ limitations under the License.
 #include "security/authorizer.h"
 #include "security/gaclmanager.h"
 
+extern char **environ; // the system variable environ points to an array
+                       // of strings called the 'environment'
+
 // Global variables for configuration
-extern char **environ;
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
@@ -844,7 +846,7 @@ jobregister(
 }
 
 char**
-copyEnvironment(char** const sourceEnv)
+copyEnvironment(char** sourceEnv)
 {
    if (targetEnv) {
       for (unsigned int i = 0; targetEnv[i]; ++i) {
@@ -853,16 +855,18 @@ copyEnvironment(char** const sourceEnv)
       free(targetEnv);
    }
 
-   char** oldEnv;
-   for (oldEnv = environ; *oldEnv; ++oldEnv);
-   int nenvvars = oldEnv - environ;
+   char** oldEnv = environ;
+   int env_vars_num = 0;
+   for (; *oldEnv; ++oldEnv, ++ env_vars_num)
+      ;
 
-   targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **));
+   targetEnv = (char **)malloc (env_vars_num * sizeof(char **));
+   char **retEnv = targetEnv;
    for (oldEnv = sourceEnv; *oldEnv; ++oldEnv) {
       *targetEnv++ = strdup(*oldEnv);
    }
    *targetEnv = 0;
-   return targetEnv;
+   return retEnv;
 }
 
 /**
@@ -962,7 +966,6 @@ jobpurge(jobPurgeResponse& jobPurge_response, JobId *jobid, bool checkstate = fa
                   conf.getDefaultProtocol(), conf.getDefaultPort());
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
 
-   // Setting user proxy
    wmplogger.setUserProxy(delegatedproxy);
 
    // Getting job status to check if purge is possible
@@ -1093,55 +1096,22 @@ submit(
    if (conf.getAsyncJobStart()) {
       // \/ Copy environment and restore it right after FCGI_Finish
       char** backupenv = copyEnvironment(environ);
-      // return control to client
-      FCGI_Finish();
+      FCGI_Finish(); // returns control to client
       environ = backupenv;
       // /_ From here on, execution is asynchronous
    }
 
    edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
-   char * fromclient = NULL;
-   if (getenv("REMOTE_HOST")) {
-      fromclient = getenv("REMOTE_HOST");
-   } else if (getenv("REMOTE_ADDR")) {
-      fromclient = getenv("REMOTE_ADDR");
-   }
-
-   // SYNC log
-   int error = wmplogger.logAcceptEventSync(fromclient);
-   if (error) {
-      edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
-
-      // Logging event start to begin iter before fail log in above catch
-      edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
-      wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
-                         "LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
-                         wmputilities::getJobJDLToStartPath(*jid).c_str());
-
-      throw LBException(__FILE__, __LINE__,
-                        "submit()", wmputilities::WMS_LOGGING_ERROR,
-                        "unable to complete operation");
-   }
-
-   // ASYNC log TODO
-   /*try {
+   try {
       wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
-         fromclient, true, true);
+         "", true, true);
    } catch (LBException lbe) {
       edglog(debug)<<"LOG_ACCEPT failed"<<endl;
-
-      // Logging event start to begin iter before fail log in above catch
-      edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
-      wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
-         "LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
-         wmputilities::getJobJDLToStartPath(*jid).c_str());
-
       lbe.push_back(__FILE__, __LINE__, "submit()");
-
       throw lbe;
-   }*/
+   }
 
-   edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
+   edglog(debug)<<"Logging LOG_ENQUEUE_START"<<std::endl;
    wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
                       "LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
                       wmputilities::getJobJDLToStartPath(*jid).c_str());
@@ -1916,8 +1886,6 @@ jobStart(jobStartResponse& jobStart_response, const string& job_id, struct soap 
    } else {
       edglog(debug)<<"No drain"<<endl;
    }
-   //** END
-
 
    std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
@@ -2144,7 +2112,6 @@ jobSubmitJSDL
    string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
    edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
 
-   // Setting user proxy
    wmplogger.setUserProxy(proxy);
 
    jobSubmit_response.jobIdStruct = jobRegister_response.jobIdStruct;
@@ -2261,8 +2228,6 @@ jobCancel(jobCancelResponse& jobCancel_response, const string& job_id)
    wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
                   conf.getDefaultProtocol(), conf.getDefaultPort());
 
-
-   // Setting user proxy
    wmplogger.setUserProxy(delegatedproxy);
    // Getting job status to check if cancellation is possible
 

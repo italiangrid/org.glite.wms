@@ -59,7 +59,6 @@ limitations under the License.
 // Event logger
 #include "eventlogger/eventlogger.h"
 
-#ifndef GLITE_WMS_WMPROXY_TOOLS
 #include "glite/wms/purger/purger.h"
 #include "glite/wms/common/utilities/quota.h"
 
@@ -81,7 +80,6 @@ namespace logger = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
 namespace jobid = glite::jobid;
 namespace purger  = glite::wms::purger;
-#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 using namespace std;
 
@@ -90,17 +88,9 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-// Define File Separator
-#ifdef WIN
-// Windows File Separator
-const string FILE_SEP = "\\";
-#else
-// Linux File Separator
+namespace {
+
 const string FILE_SEP ="/";
-#endif
-
-#ifndef GLITE_WMS_WMPROXY_TOOLS
-
 const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN"; // mod_ssl env var
 const char* DOCUMENT_ROOT = "DOCUMENT_ROOT";
 const string INPUT_SB_DIRECTORY = "input";
@@ -115,6 +105,8 @@ const string START_LOCK_FILE_NAME = ".startLockFile.lock";
 const string GET_OUTPUT_LOCK_FILE_NAME = ".getOutputLockFile.lock";
 const string ALL_PROTOCOLS = "all";
 const string DEFAULT_PROTOCOL = "default";
+
+}
 
 vector<string>
 computeOutputSBDestURIBase(vector<string> outputsb, const string& baseuri)
@@ -185,8 +177,8 @@ getJobDirectoryURIsVector(vector<pair<string, int> > allProtocols,
    // extra might be empty/input/output/peek
    string extra = (extradir != "") ? (FILE_SEP + extradir) : "";
    // httppath is like: /SandboxDir/Tu/https_3a_2f_2fghemon.cnaf.infn.it_3a9000_2fTuhKg/output
-   string httppath = FILE_SEP + to_filename(jobid::JobId(jid), 0) + extra;
-   string path = getenv(DOCUMENT_ROOT) + httppath;
+   string httppath = to_filename(jobid::JobId(jid), 0) + extra;
+   string path = getenv(DOCUMENT_ROOT) + FILE_SEP + httppath;
    string serverhost = getServerHost(); //e.g. "ghemon.cnaf.infn.it"
    vector<string> *returnvector = new vector<string>();
    vector<pair<string, int> > returnprotocols;  // Empty vectory
@@ -586,9 +578,8 @@ string
 getJobDelegatedProxyPath(jobid::JobId jid, int level)
 {
    GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
-   //TBD Check path
-   return string(getenv(DOCUMENT_ROOT)
-                 + FILE_SEP + to_filename(jid, level)
+   return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+                 + to_filename(jid, level)
                  + FILE_SEP + USER_PROXY_NAME);
    GLITE_STACK_CATCH();
 }
@@ -598,8 +589,8 @@ getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
 {
    GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
    //TBD Check path
-   return string(getenv(DOCUMENT_ROOT)
-                 + FILE_SEP + to_filename(jid, level)
+   return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+                 + to_filename(jid, level)
                  + FILE_SEP + USER_PROXY_NAME_BAK);
    GLITE_STACK_CATCH();
 }
@@ -610,8 +601,8 @@ getJobJDLOriginalPath(jobid::JobId jid, bool isrelative, int level)
    GLITE_STACK_TRY("getJobJDLOriginalPath(JobId jid)");
    //TBD Check path
    if (!isrelative) {
-      return string(getenv(DOCUMENT_ROOT)
-                    + FILE_SEP + to_filename(jid, level)
+      return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+                    + to_filename(jid, level)
                     + FILE_SEP + JDL_ORIGINAL_FILE_NAME);
    } else {
       return string(to_filename(jid, level)
@@ -626,9 +617,9 @@ getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
    GLITE_STACK_TRY("getJobJDLToStartPath(JobId jid)");
    //TBD Check path
    if (!isrelative) {
-      return string(getenv(DOCUMENT_ROOT)
-                    + FILE_SEP + to_filename(jid, level)
-                    + FILE_SEP + JDL_TO_START_FILE_NAME);
+      return string(getenv(DOCUMENT_ROOT)) + FILE_SEP
+                    + to_filename(jid, level)
+                    + FILE_SEP + JDL_TO_START_FILE_NAME;
    } else {
       return string(to_filename(jid, level)
                     + FILE_SEP + JDL_TO_START_FILE_NAME);
@@ -643,7 +634,7 @@ getJobJDLStartedPath(jobid::JobId jid, bool isrelative, int level)
    //TBD Check path
    if (!isrelative) {
       return string(getenv(DOCUMENT_ROOT)
-                    + FILE_SEP + to_filename(jid, level)
+                    + to_filename(jid, level)
                     + FILE_SEP + JDL_STARTED_FILE_NAME);
    } else {
       return string(to_filename(jid, level)
@@ -1635,7 +1626,6 @@ isNull(string field)
    return is_null;
    GLITE_STACK_CATCH();
 }
-#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 /*
 * Removes white spaces form the begininng and from the end of the input string
@@ -1643,9 +1633,7 @@ isNull(string field)
 const string
 cleanString(string str)
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
    GLITE_STACK_TRY("cleanString()");
-#endif
    int len = 0;
    string ws = " "; //white space char
    len = str.size( );
@@ -1674,9 +1662,8 @@ cleanString(string str)
       }
    }
    return str;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 }
 
 /**
@@ -1685,15 +1672,13 @@ cleanString(string str)
 const string
 toLower(const string& src)
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
    GLITE_STACK_TRY("toLower()");
-#endif
+
    string result(src);
    transform(result.begin(), result.end(), result.begin(), ::tolower);
    return result;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 }
 
 /**
@@ -1703,9 +1688,8 @@ toLower(const string& src)
 void
 split(const string& field, string& label, string& value)
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
    GLITE_STACK_TRY("split()");
-#endif
+
    unsigned int size = field.size();
    if (size > 0) {
       std::string::size_type p = field.find("=") ;
@@ -1719,18 +1703,17 @@ split(const string& field, string& label, string& value)
          value = toLower(cleanString(value));
       }
    }
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 };
 
 
 bool
 hasElement(const std::vector<std::string> &vect, const std::string& elem)
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_TRY("hasElement()");
-#endif
+
    bool result = false;
    int size = vect.size();
    for (int i=0; i < size; i++) {
@@ -1740,9 +1723,8 @@ hasElement(const std::vector<std::string> &vect, const std::string& elem)
       }
    }
    return result;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 };
 
 /**
@@ -1751,9 +1733,8 @@ hasElement(const std::vector<std::string> &vect, const std::string& elem)
 const std::string
 normalizePath( const std::string& fpath )
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
    GLITE_STACK_TRY("normalizePath()");
-#endif
+
    string                   modified;
    string::const_iterator   last, next;
    string::reverse_iterator check;
@@ -1777,9 +1758,8 @@ normalizePath( const std::string& fpath )
    }
 
    return modified;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 }
 
 /*
@@ -1788,9 +1768,8 @@ normalizePath( const std::string& fpath )
 const std::string
 getAbsolutePath(const string& file)
 {
-#ifndef GLITE_WMS_WMPROXY_TOOLS
    GLITE_STACK_TRY("getAbsolutePath()");
-#endif
+
    string path = file;
    char* pwd = getenv ("PWD");
    if (path.find("./")==0 || path.compare(".")==0) {
@@ -1817,9 +1796,8 @@ getAbsolutePath(const string& file)
       }
    }
    return path;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+
    GLITE_STACK_CATCH();
-#endif
 }
 
 glite::jobid::JobId getParent(glite::lb::JobStatus status)
