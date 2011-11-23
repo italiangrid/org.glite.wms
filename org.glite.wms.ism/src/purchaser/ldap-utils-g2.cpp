@@ -216,7 +216,9 @@ void process_glue2_service_info(
     std::make_pair(service_id, ServiceInfo())
   );
   cleanup_glue2_info(ad,
-    bas::list_of("CreationTime")("AdminDomainForeignKey")
+    bas::list_of("CreationTime")
+      ("AdminDomainForeignKey")
+      ("OtherInfo")
   );
   it->second.ad.reset(new classad::ClassAd());
   it->second.ad->Insert(
@@ -246,6 +248,7 @@ void process_glue2_manager_info(
     bas::list_of("CreationTime")
       ("ComputingServiceForeignKey")
       ("ServiceForeignKey")
+      ("OtherInfo")
   );
   manager_it->second.ad.reset(new classad::ClassAd());
   manager_it->second.ad->Insert(
@@ -273,7 +276,7 @@ struct is_a_literal_node_starting_with
   }
   std::string prefix;
 };
-
+template<typename T>
 void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::string const& what)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
@@ -289,7 +292,7 @@ void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::strin
     classad::Value v;
     std::string s;
     (*it)->Evaluate(v) && v.IsStringValue(s);
-    ad->InsertAttr(what,s.substr(s.find("=")+1));
+    ad->InsertAttr(what,boost::lexical_cast<T>(s.substr(s.find("=")+1)));
   }
 }
 
@@ -372,6 +375,7 @@ void process_glue2_share_info(
   cleanup_glue2_info(ad,
     bas::list_of("CreationTime")
       ("ComputingEndpointForeignKey")
+      ("ComputingServiceForeignKey")
       ("EndpointForeignKey")
       ("ResourceForeignKey")
       ("ServiceForeignKey")
@@ -402,11 +406,15 @@ void process_glue2_endpoint_info(
   boost::tie(endpoint_it, insert) = bdii_info.endpoints.insert(
     std::make_pair(endpoint_id, EndpointInfo())
   );
+  extract_glue2_info_value<std::string>(ad, "OtherInfo", "HostDN");
+  extract_glue2_info_value<std::string>(ad, "OtherInfo", "MiddlewareName");
+  extract_glue2_info_value<std::string>(ad, "OtherInfo", "MiddlewareVersion");
 
   cleanup_glue2_info(ad,
     bas::list_of("CreationTime")
       ("ComputingServiceForeignKey")
       ("ServiceForeignKey")
+      ("OtherInfo")
   );
  
   endpoint_it->second.ad.reset(new classad::ClassAd());
@@ -439,11 +447,15 @@ void process_glue2_resource_info(
   boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
     std::make_pair(resource_id, ExecEnvInfo())
   );
-
+  
+  extract_glue2_info_value<short>(ad, "OtherInfo", "SmpSize");
+  extract_glue2_info_value<short>(ad, "OtherInfo", "Cores");
+  
   cleanup_glue2_info(ad,
     bas::list_of("CreationTime")
       ("ComputingManagerForeignKey")
       ("ManagerForeignKey")
+      ("OtherInfo")
   );
  
   execenv_it->second.ad.reset(new classad::ClassAd());
@@ -501,6 +513,7 @@ void process_glue2_benchmark_info(
     bas::list_of("CreationTime")
       ("ComputingManagerForeignKey")
       ("ExecutionEnvironmentForeignKey")
+      ("OtherInfo")
   );
 
   bmark_it->second.ad = ad;
@@ -563,6 +576,7 @@ void process_glue2_access_policy_info(
     bas::list_of("CreationTime")
       ("UserDomainForeignKey")
       ("EndpointForeignKey")
+      ("OtherInfo")
   );
 
   policy_it->second.ad = ad;
