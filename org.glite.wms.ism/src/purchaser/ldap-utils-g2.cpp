@@ -40,13 +40,15 @@ limitations under the License.
 #include <boost/shared_array.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/progress.hpp>
+#include <boost/any.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/list_of.hpp>
-
+#include <boost/assign/std/vector.hpp>
+#include <boost/assign/list_inserter.hpp>
 #include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/classads/classad_utils.h"
@@ -54,8 +56,9 @@ limitations under the License.
 #include "ldap-dn-utils-g2.h"
 #include "schema_utils-g2.h"
 
-namespace cu = glite::wmsutils::classads;
-namespace ba = boost::algorithm;
+namespace cu  = glite::wmsutils::classads;
+namespace ba  = boost::algorithm;
+namespace bas = boost::assign;
 namespace ism = glite::wms::ism;
 
 namespace glite {
@@ -111,11 +114,19 @@ struct EndpointInfo
 };
 typedef std::map<std::string, EndpointInfo> EndpointInfoMap;
 
+struct BenchMarkInfo
+{
+  ClassAdPtr ad;
+};
+typedef std::map<std::string, BenchMarkInfo> BenchMarkInfoMap;
+
 struct ExecEnvInfo
 {
   ClassAdPtr ad;
   std::set<std::string> applications;
+  std::vector<BenchMarkInfoMap::iterator> bmarks_lnk;
 };
+
 typedef std::map<std::string, ExecEnvInfo> ExecEnvInfoMap;
 
 struct ServiceInfo
@@ -178,6 +189,7 @@ struct BDIICEInfo
   EndpointInfoMap endpoints;
   AccessPolicyInfoMap policies;
   ExecEnvInfoMap execenvs;
+  BenchMarkInfoMap benchmarks;
 };
 
 inline void cleanup_glue2_info(ClassAdPtr ad, std::list<std::string> a)
@@ -204,7 +216,7 @@ void process_glue2_service_info(
     std::make_pair(service_id, ServiceInfo())
   );
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")("AdminDomainForeignKey")
+    bas::list_of("CreationTime")("AdminDomainForeignKey")
   );
   it->second.ad.reset(new classad::ClassAd());
   it->second.ad->Insert(
@@ -231,7 +243,7 @@ void process_glue2_manager_info(
     std::make_pair(manager_id, ManagerInfo())
   );
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")
+    bas::list_of("CreationTime")
       ("ComputingServiceForeignKey")
       ("ServiceForeignKey")
   );
@@ -358,7 +370,7 @@ void process_glue2_share_info(
   process_glue2_endpoint_fk(share_it, ad, bdii_info);
   
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")
+    bas::list_of("CreationTime")
       ("ComputingEndpointForeignKey")
       ("EndpointForeignKey")
       ("ResourceForeignKey")
@@ -392,7 +404,7 @@ void process_glue2_endpoint_info(
   );
 
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")
+    bas::list_of("CreationTime")
       ("ComputingServiceForeignKey")
       ("ServiceForeignKey")
   );
@@ -429,7 +441,7 @@ void process_glue2_resource_info(
   );
 
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")
+    bas::list_of("CreationTime")
       ("ComputingManagerForeignKey")
       ("ManagerForeignKey")
   );
@@ -442,10 +454,10 @@ void process_glue2_resource_info(
 }
 
 void process_glue2_application_env_info(
-  std::vector<std::string> const& ldap_dn_tokens, 
-  ClassAdPtr ad, 
+  std::vector<std::string> const& ldap_dn_tokens,
+  ClassAdPtr ad,
   BDIICEInfo& bdii_info
-) 
+)
 {
   std::string const appenv_id(
    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
@@ -462,8 +474,42 @@ void process_glue2_application_env_info(
   boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
     std::make_pair(resource_id, ExecEnvInfo())
   );
- 
+
   execenv_it->second.applications.insert(application);
+}
+
+void process_glue2_benchmark_info(
+  std::vector<std::string> const& ldap_dn_tokens, 
+  ClassAdPtr ad, 
+  BDIICEInfo& bdii_info
+) 
+{
+  std::string const bmark_id(
+   ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
+  );
+  std::string const resource_id(
+   ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+  );
+
+  bool insert;
+  BenchMarkInfoMap::iterator bmark_it;
+  boost::tie(bmark_it, insert) = bdii_info.benchmarks.insert(
+    std::make_pair(bmark_id, BenchMarkInfo())
+  );
+
+  cleanup_glue2_info(ad,
+    bas::list_of("CreationTime")
+      ("ComputingManagerForeignKey")
+      ("ExecutionEnvironmentForeignKey")
+  );
+
+  bmark_it->second.ad = ad;
+
+  ExecEnvInfoMap::iterator execenv_it;
+  boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
+    std::make_pair(resource_id, ExecEnvInfo())
+  );
+  execenv_it->second.bmarks_lnk.push_back(bmark_it);
 }
 
 
@@ -514,7 +560,7 @@ void process_glue2_access_policy_info(
   );
 
   cleanup_glue2_info(ad,
-    boost::assign::list_of("CreationTime")
+    bas::list_of("CreationTime")
       ("UserDomainForeignKey")
       ("EndpointForeignKey")
   );
@@ -639,6 +685,68 @@ inline classad::ExprTree* parse_expression(std::string const& s)
   classad::ClassAdParser parser;
   return parser.ParseExpression(s);
 }
+inline classad::ExprTree* copy_benchmark_info(BenchMarkInfoMap::const_iterator bi)
+{
+  return dynamic_cast<classad::ExprTree*>(bi->second.ad->Copy());
+}
+ 
+typedef std::list<std::string> glue2_stripping_prefix;
+typedef boost::function<
+  bool(std::vector<std::string> const&)
+> glue2_dn_test_predicate;
+
+typedef boost::function<void(
+  std::vector<std::string> const&, 
+  ClassAdPtr,
+  BDIICEInfo&
+)> glue2_info_processing_fn;
+
+typedef boost::tuple<
+  glue2_dn_test_predicate,
+  glue2_stripping_prefix,
+  glue2_info_processing_fn
+> glue2_info_processor_tuple;
+
+const glue2_stripping_prefix 
+  service_pfx  = bas::list_of("GLUE2Entity")("GLUE2Service"),
+  manager_pfx  = bas::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager"),
+  share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare"),
+  endpoint_pfx = bas::list_of("GLUE2Entity")("GLUE2Endpoint")("GLUE2ComputingEndpoint"),
+  resource_pfx = bas::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment"),
+  mpolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy"),
+  apolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2AccessPolicy"),
+  appenv_pfx   = bas::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment"),
+  bmark_pfx    = bas::list_of("GLUE2Entity")("GLUE2Benchmark");
+
+std::list<glue2_info_processor_tuple> glue2_info_processors =
+  bas::tuple_list_of(
+    is_glue2_service_dn, service_pfx,
+    process_glue2_service_info
+  )(
+    is_glue2_manager_dn, manager_pfx,
+    process_glue2_manager_info
+  )(
+    is_glue2_share_dn, share_pfx,
+    process_glue2_share_info
+  )(
+    is_glue2_endpoint_dn, endpoint_pfx,
+    process_glue2_endpoint_info
+  )(
+    is_glue2_resource_dn, resource_pfx,
+    process_glue2_resource_info
+  )(
+    is_glue2_mapping_policy_dn, mpolicy_pfx,
+    process_glue2_mapping_policy_info
+  )(
+    is_glue2_access_policy_dn, apolicy_pfx,
+    process_glue2_access_policy_info
+  )(
+    is_glue2_application_env_dn, appenv_pfx,
+    process_glue2_application_env_info
+  )(
+    is_glue2_benchmark_dn, bmark_pfx,
+    process_glue2_benchmark_info
+  );
 
 } // anonymous namespace
 
@@ -719,7 +827,7 @@ fetch_bdii_ce_info_g2(
 
   BDIICEInfo bdii_info;
 
-  time_t const t0 = std::time(0);
+    time_t const t0 = std::time(0);
   size_t n_entries = 0;
   for (
     LDAPMessage* lde = ldap_first_entry(ld, ldresult);
@@ -733,76 +841,29 @@ fetch_bdii_ce_info_g2(
     ++n_entries;
     std::vector<std::string> ldap_dn_tokens;
     tokenize_ldap_dn(dn_str.get(), ldap_dn_tokens);
+    for (
+      std::list<glue2_info_processor_tuple>::const_iterator p_it = glue2_info_processors.begin() ;
+      p_it != glue2_info_processors.end() ; ++p_it ) {
     
-    if (is_glue2_service_dn(ldap_dn_tokens)) {
-        
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-          ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Service")
-      ));
-      process_glue2_service_info(
-        ldap_dn_tokens, ad, bdii_info
-      );
-    } 
-    else if (is_glue2_manager_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-          ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager")
-      ));
-      process_glue2_manager_info(ldap_dn_tokens, ad, bdii_info);
+      glue2_dn_test_predicate check = p_it->get<0>();
       
+      if (check(ldap_dn_tokens)) {
+        
+        ClassAdPtr ad(
+          create_classad_from_ldap_entry(
+            ld, lde, p_it->get<1>()
+        ));
+        glue2_info_processing_fn process = p_it->get<2>();
+        process(ldap_dn_tokens, ad, bdii_info);
+        break ; 
+      } 
     }
-    else if (is_glue2_share_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-          ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare")
-      ));
-      process_glue2_share_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    else if (is_glue2_endpoint_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-          ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Endpoint")("GLUE2ComputingEndpoint")
-      ));
-      process_glue2_endpoint_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    else if (is_glue2_resource_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-          ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment")
-      ));
-      process_glue2_resource_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    else if (is_glue2_mapping_policy_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-        ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy")
-      ));
-      process_glue2_mapping_policy_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    else if (is_glue2_access_policy_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-        ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2AccessPolicy")
-      ));
-      process_glue2_access_policy_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    else if (is_glue2_application_env_dn(ldap_dn_tokens)) {
-      ClassAdPtr ad(
-        create_classad_from_ldap_entry(
-        ld, lde, boost::assign::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment")
-      ));
-      process_glue2_application_env_info(ldap_dn_tokens, ad, bdii_info);
-    }
-    
-
-
   }
   Debug("#" << n_entries << " LDAP entries received in " << std::time(0) - t0 << " seconds");
 
   EndpointInfoMap::const_iterator ep_it(bdii_info.endpoints.begin());
   EndpointInfoMap::const_iterator const ep_e(bdii_info.endpoints.end());
-
+  Debug(bdii_info.endpoints.size());
   time_t const t1 = std::time(0);
   size_t n_shares = 0;
   for( ; ep_it != ep_e; ++ep_it) { 
@@ -822,7 +883,7 @@ fetch_bdii_ce_info_g2(
        ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
     ); 
 
-    std::vector<ShareInfoMap::iterator>::const_iterator sh_it(
+   std::vector<ShareInfoMap::iterator>::const_iterator sh_it(
       ep_it->second.shares_lnk.begin()
     );
     std::vector<ShareInfoMap::iterator>::const_iterator const sh_e(
@@ -845,8 +906,18 @@ fetch_bdii_ce_info_g2(
       ); 
       classad::ClassAd* appenvAd = new classad::ClassAd();
       appenvAd->Insert("AppName", classad::ExprList::MakeExprList(apps_el));
-      
+
+      std::vector<classad::ExprTree*> bmark_ets;
+      std::transform(
+        (*sh_it)->second.execenv_lnk->second.bmarks_lnk.begin(),
+        (*sh_it)->second.execenv_lnk->second.bmarks_lnk.end(),
+        std::back_inserter(bmark_ets),
+        copy_benchmark_info
+       ); 
+
       classad::ClassAd* g2Ad = new classad::ClassAd;
+
+      g2Ad->Insert("Benchmark", classad::ExprList::MakeExprList(bmark_ets));
       g2Ad->Insert("ApplicationEnvironment", appenvAd);
       g2Ad->Update(*(*sh_it)->second.execenv_lnk->second.ad);
       g2Ad->Insert("Computing", computingAd_copy);
