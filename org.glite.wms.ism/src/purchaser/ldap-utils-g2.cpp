@@ -515,7 +515,14 @@ void process_glue2_benchmark_info(
       ("ExecutionEnvironmentForeignKey")
       ("OtherInfo")
   );
-
+  // The schema defines the BenchmarkValue to be a 32-bit float
+  // However LDAP is rather deficient in data types and the only 
+  // numeric type is integer, so it has to be stored as a string. 
+  try {
+    std::string v = cu::evaluate_attribute(*ad, "Value");
+    ad->InsertAttr("Value", boost::lexical_cast<float>(v));
+  } catch(boost::bad_lexical_cast &) {}
+  
   bmark_it->second.ad = ad;
 
   ExecEnvInfoMap::iterator execenv_it;
