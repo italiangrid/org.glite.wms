@@ -48,9 +48,8 @@ glite_wms_wmproxy_server_SOURCES = \
 	configuration.cpp \
 	wmp2wm.cpp \
 	structconverter.cpp \
-	gsoap-core.cpp \
+	stdsoap2-2_7_13.cpp \
 	signalhandler.cpp
-
 
 bin_PROGRAMS = glite_wms_wmproxy_server
 
@@ -98,10 +97,11 @@ glite_wms_wmproxy_server_LDADD = \
 	$(XSLT_LIBS) \
 	$(ARGUS_PEP_API_C_LIBS)
 
+# -DWITH_FASTCGI missing in gsoap macro
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src/server \
-	$(GSOAP_CFLAGS) \
+	$(GSOAP_CFLAGS) -DWITH_FASTCGI \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	$(VOMS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
@@ -111,9 +111,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(FCGI_CFLAGS) \
 	$(XSLT_CPPFLAGS) \
 	$(JSDL_CFLAGS) \
-	-DWMP_SOFTWARE_VERSION=\"@VERSION@\"
-	-DWANT_NAMESPACES \
-	-DDEBUG -DSOAP_DEBUG -DWITH_FASTCGI \
-	-DWITH_IPV6
+	-DWMP_SOFTWARE_VERSION=\"@VERSION@\" \
+	-DWANT_NAMESPACES
 
 MAINTAINERCLEANFILES = Makefile.in
