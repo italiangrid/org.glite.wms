@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: glue2 bdii purchaser
+Description: Glue2 BDII purchaser for WMS information supermarket
+Version: @VERSION@
+Requires: wms-common-conf, wms-common-logger
+Libs: -L${libdir} -lglite_wms_ism_ii_g2_purchaser
+Cflags: -I${includedir}
+

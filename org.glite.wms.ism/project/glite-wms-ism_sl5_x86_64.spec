@@ -45,6 +45,8 @@ sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc > %
 mv %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-ism.pc
 sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc > %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc.new
 mv %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-g2-purchaser.pc > %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-g2-purchaser.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-g2-purchaser.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-ism-ii-g2-purchaser.pc
 rm -f %{buildroot}%{_libdir}/libglite_wms_ism*.la
 chrpath --delete %{buildroot}%{_libdir}/libglite_wms_*.so.0.0.0
  
@@ -84,8 +86,7 @@ Development files for the WMS information superkmarket
 %dir /usr/include/glite/wms/ism/purchaser/
 /usr/include/glite/wms/ism/*.h
 /usr/include/glite/wms/ism/purchaser/*.h
-%{_libdir}/pkgconfig/wms-ism-ii-purchaser.pc
-%{_libdir}/pkgconfig/wms-ism.pc
+%{_libdir}/pkgconfig/*.pc
 %{_libdir}/libglite_wms_*.so
 
 
