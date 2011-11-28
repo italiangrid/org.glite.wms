@@ -649,19 +649,31 @@ WMPAuthorizer::authorize()
                   action_,
                   userdn_,
                   userproxypath_);
-            if (ans.get<1>() == XACML_DECISION_PERMIT) {
-               // set the mapping
-               uid_ = ans.get<2>();
-               gid_ = ans.get<3>();
-               edglog(debug) << "Argus returned XACML_DECISION_PERMIT"
-                  " with mapping uid: " << uid_ << ", gid: " << gid_ << endl;
-               return;
+            if (ans.get<0>()) {
+               if (ans.get<1>() == XACML_DECISION_PERMIT) {
+                  // set the mapping
+                  uid_ = ans.get<2>();
+                  gid_ = ans.get<3>();
+                  edglog(debug) << "Argus returned XACML_DECISION_PERMIT"
+                   " with mapping uid: " << uid_ << ", gid: " << gid_ << endl;
+                  return;
+               } else {
+                  throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                     "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+                     "Argus denied authorization on " + action_ +
+                     " requested by " + userdn_);
+               }
             } else {
+                  throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                     "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+                     "Argus request on " + action_ +
+                     " requested by " + userdn_ +
+                     " failed for some reason");
+            }
+         } else {
                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                   "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-                  "Argus denied authorization on " + action_ +
-                  " requested by " + userdn_);
-            }
+                  "no Argus endpoint was specified");
          }
       }
    } else {
