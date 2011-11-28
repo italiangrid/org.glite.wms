@@ -199,7 +199,7 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
       sp->msg = new string(description);
 
       // Sending fault
-      soap_receiver_fault(soap, error_stack.c_str(), NULL);
+      soap_receiver_fault(soap, description.c_str(), NULL);
       // crashes in gSOAP 2.7.13
       // setFaultDetails(soap, SOAP_TYPE__delegationns__DelegationException, sp);
 
@@ -215,7 +215,7 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
       sp->FaultCause = *convertStackVector(stack);
 
       // Sending fault
-      soap_receiver_fault(soap, error_stack.c_str(), NULL);
+      soap_receiver_fault(soap, description.c_str(), NULL);
       // crashes in gSOAP 2.7.13
       //setFaultDetails(soap, getServiceFaultType(code), sp);
    }
