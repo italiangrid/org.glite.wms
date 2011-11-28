@@ -861,12 +861,12 @@ copyEnvironment(char** sourceEnv)
       ;
 
    targetEnv = (char **)malloc (env_vars_num * sizeof(char **));
-   char **retEnv = targetEnv;
+   char **tmpEnv = targetEnv;
    for (oldEnv = sourceEnv; *oldEnv; ++oldEnv) {
-      *targetEnv++ = strdup(*oldEnv);
+      *tmpEnv++ = strdup(*oldEnv);
    }
-   *targetEnv = 0;
-   return retEnv;
+   *tmpEnv = 0;
+   return targetEnv;
 }
 
 /**

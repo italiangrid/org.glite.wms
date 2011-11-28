@@ -200,7 +200,9 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
 
       // Sending fault
       soap_receiver_fault(soap, error_stack.c_str(), NULL);
-      setFaultDetails(soap, SOAP_TYPE__delegationns__DelegationException, sp);
+      // crashes in gSOAP 2.7.13
+      // setFaultDetails(soap, SOAP_TYPE__delegationns__DelegationException, sp);
+
    } else {
       // Generating a fault
       ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
@@ -214,8 +216,8 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
 
       // Sending fault
       soap_receiver_fault(soap, error_stack.c_str(), NULL);
-
-      setFaultDetails(soap, getServiceFaultType(code), sp);
+      // crashes in gSOAP 2.7.13
+      //setFaultDetails(soap, getServiceFaultType(code), sp);
    }
 }
 
@@ -224,5 +226,5 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
              int error_code, const string& description)
 {
    setSOAPFault(soap, code, method_name, time_stamp, error_code, description,
-                *(new vector<string>));
+                vector<string>());
 }

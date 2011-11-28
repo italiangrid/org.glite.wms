@@ -23,7 +23,7 @@ wm.h : $(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
-	-I$(GSOAP_LOCATION)/include:/usr/share/gsoap/import \
+	-I$(GSOAP_LOCATION)/include \
 	-t $(GLITE_WMS_WSDL_PATH)/wmptypemap.dat \
 	$(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
 

@@ -77,6 +77,7 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
                || soap_body_begin_in(soap)
                || soap_serve_request(soap)
                || (soap->fserveloop && soap->fserveloop(soap))) {
+
             soap_send_fault(soap);
          }
       } else {

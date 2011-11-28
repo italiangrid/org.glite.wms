@@ -233,23 +233,25 @@ try
       } else {
          execDN = false;
       }
-
    } else {
       // user proxy does not have FQAN
       // any-user authorization
       if (existAU) {
          execAU = gacl.checkAllowPermission(
                      GaclManager::WMPGACL_ANYUSER_TYPE,
-                     "",GaclManager::WMPGACL_EXEC);
+                     "",
+                     GaclManager::WMPGACL_EXEC);
       }
       // DN authorization
       if (existDN) {
          execDN = gacl.checkAllowPermission(
-                     GaclManager::WMPGACL_PERSON_TYPE,dn,
+                     GaclManager::WMPGACL_PERSON_TYPE,
+                     dn,
                      GaclManager::WMPGACL_EXEC )
                   ||
                   gacl.checkAllowPermission(
-                     GaclManager::WMPGACL_PERSON_TYPE,dn,
+                     GaclManager::WMPGACL_PERSON_TYPE,
+                     dn,
                      GaclManager::WMPGACL_EXEC );
          // overrides any-user authorization if DN auth is fine
          if (execDN) {
@@ -630,7 +632,6 @@ void
 WMPAuthorizer::authorize()
 {
    edglog_fn("WMPAuthorizer::authorize");
-//throw wmputilities::AuthorizationException(__FILE__, __LINE__, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()", wmputilities::WMS_AUTHORIZATION_ERROR, "Authorization error: user not authorized");
 
    bool use_argus =
       configuration::Configuration::instance()->wp()->argus_authz();
@@ -665,7 +666,11 @@ WMPAuthorizer::authorize()
       }
    } else {
       edglog(debug) << "Gridsite authZ and mapping" << endl;
-      checkGaclUserAuthZ(fqans_.front(), userdn_);
+      if (fqans_.empty()) {
+         checkGaclUserAuthZ("", userdn_);
+      } else {
+         checkGaclUserAuthZ(fqans_.front(), userdn_);
+      }
       map_user_lcmaps();
    }
 }
