@@ -658,7 +658,7 @@ regist(
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
    wmplogger.setUserProxy(delegatedproxy);
-   wmplogger.setBulkMM(configuration::Configuration::instance()->wm()->enable_bulk_mm());
+   wmplogger.setBulkMM(true);
 
    // Setting job identifier
    edglog(debug)<<"Setting attribute WMPExpDagAd::EDG_JOBID "<< stringjid << endl;
