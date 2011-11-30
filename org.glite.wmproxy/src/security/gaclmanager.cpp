@@ -16,6 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <boost/regex.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
 //Logger
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -79,9 +82,12 @@ namespace {
 bool
 compareFQAN(std::string const& gacl_fqan, std::string const& user_fqan)
 {
-   bool ret = false;
-
-   return ret;
+   std::string gacl_regex(gacl_fqan);
+   // replace . with [.] and * with .*, to form a valid regular expression
+   boost::replace_all(gacl_regex, ".", "[.]");
+   boost::replace_all(gacl_regex, "*", ".*");
+   boost::regex wildcard_match('^' + gacl_regex + '$', boost::regex::basic);
+   return regex_match(user_fqan, wildcard_match);
 }
 
 }
