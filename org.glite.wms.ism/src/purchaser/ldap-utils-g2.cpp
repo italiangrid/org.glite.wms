@@ -277,6 +277,25 @@ struct is_a_literal_node_starting_with
   std::string prefix;
 };
 template<typename T>
+void extract_glue2_info_value_in(ClassAdPtr ad, std::string const& from, std::string const& what, classad::ClassAd* in)
+{
+  classad::ExprList* el = dynamic_cast<classad::ExprList*>(
+    ad->Lookup(from)
+  );
+  std::vector<classad::ExprTree*>::const_iterator it(
+    std::find_if(
+      el->begin(), el->end(),
+      is_a_literal_node_starting_with(what+"=")
+    )
+  );
+  if (it != el->end()) {
+    classad::Value v;
+    std::string s;
+    (*it)->Evaluate(v) && v.IsStringValue(s);
+    in->InsertAttr(what,boost::lexical_cast<T>(s.substr(s.find("=")+1)));
+  }
+}
+template<typename T>
 void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::string const& what)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
@@ -295,6 +314,7 @@ void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::strin
     ad->InsertAttr(what,boost::lexical_cast<T>(s.substr(s.find("=")+1)));
   }
 }
+
 
 void process_glue2_resource_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, BDIICEInfo& bdii_info)
 {
@@ -406,15 +426,16 @@ void process_glue2_endpoint_info(
   boost::tie(endpoint_it, insert) = bdii_info.endpoints.insert(
     std::make_pair(endpoint_id, EndpointInfo())
   );
-  extract_glue2_info_value<std::string>(ad, "OtherInfo", "HostDN");
-  extract_glue2_info_value<std::string>(ad, "OtherInfo", "MiddlewareName");
-  extract_glue2_info_value<std::string>(ad, "OtherInfo", "MiddlewareVersion");
+  classad::ClassAd* oi = new classad::ClassAd;
+  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "HostDN", oi);
+  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "MiddlewareName", oi);
+  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "MiddlewareVersion", oi);
+  ad->Insert("OtherInfo", oi);
 
   cleanup_glue2_info(ad,
     bas::list_of("CreationTime")
       ("ComputingServiceForeignKey")
       ("ServiceForeignKey")
-      ("OtherInfo")
   );
  
   endpoint_it->second.ad.reset(new classad::ClassAd());
@@ -447,15 +468,15 @@ void process_glue2_resource_info(
   boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
     std::make_pair(resource_id, ExecEnvInfo())
   );
-  
-  extract_glue2_info_value<short>(ad, "OtherInfo", "SmpSize");
-  extract_glue2_info_value<short>(ad, "OtherInfo", "Cores");
-  
+  classad::ClassAd* oi = new classad::ClassAd;
+  extract_glue2_info_value_in<short>(ad, "OtherInfo", "SmpSize", oi);
+  extract_glue2_info_value_in<short>(ad, "OtherInfo", "Cores", oi);
+  ad->Insert("OtherInfo", oi);
+
   cleanup_glue2_info(ad,
     bas::list_of("CreationTime")
       ("ComputingManagerForeignKey")
       ("ManagerForeignKey")
-      ("OtherInfo")
   );
  
   execenv_it->second.ad.reset(new classad::ClassAd());
@@ -992,6 +1013,19 @@ fetch_bdii_ce_info_g2(
       );
       std::string policy = cu::evaluate_expression(*result,"GLUE2.Computing.Share.Policy[0]");
       std::string glue13Id = id+"/"+policy.substr(policy.find(":")+1);
+
+      // Required for backward compatibility by Helper
+      result->Insert(
+        "QueueName", 
+        parse_expression("GLUE2.Computing.Share.MappingQueue")
+      );
+      result->Insert(
+        "LRMSType",
+        parse_expression("GLUE2.Computing.Manager.ProductName")
+      );
+      result->InsertAttr(
+        "CEid", glue13Id
+      );
       ce_info_container.insert(std::make_pair(glue13Id, result));
     }   
   }
