@@ -74,6 +74,18 @@ const char* GaclManager::WMPGACL_DEFAULT_FILE = GRST_ACL_FILE;
 const int GaclManager::WMPGACL_SUCCESS = 0;
 const int GaclManager::WMPGACL_ERROR = -1;
 
+namespace {
+
+bool
+compareFQAN(std::string const& gacl_fqan, std::string const& user_fqan)
+{
+   bool ret = false;
+
+   return ret;
+}
+
+}
+
 /*
  *
  * Constructor.
@@ -232,7 +244,7 @@ int GaclManager::removeEntry (const WMPgaclCredType& type,
                      if (strcmp (rawname, nv->name ) == 0 ) {
                         edglog(debug) << "rawvalue found" << endl;
                         if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ) {
-                           found = authorizer::compareFQAN( rawvalue, nv->value);
+                           found = compareFQAN(rawvalue, nv->value);
                         } else {
                            if ( strcmp (rawvalue.c_str(), nv->value ) == 0) {
                               edglog(debug) << "rawvalue found" << endl;
@@ -833,6 +845,7 @@ int GaclManager::loadCredential ( )
          while ( cred != NULL ) {
             // credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
 #ifndef GRST_VERSION
+            // delegation 1
             if ( strcmp( cred->type, (char*)credType.c_str()) == 0 ) {
                // comparison between input and gacl credentials:
                // nv =  < nv->name, nv->value>
@@ -843,7 +856,7 @@ int GaclManager::loadCredential ( )
                   if (nv) {
                      if (strcmp (rawname, nv->name ) == 0 ) {
                         if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ) {
-                           found = authorizer::compareFQAN(nv->value, rawvalue);
+                           found = compareFQAN(nv->value, rawvalue);
                         } else {
                            if ( strcmp (rawvalue, nv->value ) == 0) {
                               found = true;
@@ -854,6 +867,7 @@ int GaclManager::loadCredential ( )
                } // if (ANY_CRED)
             }
 #else
+            // delegation 2
             {
                GRSTgaclCred *cred_tmp;
 

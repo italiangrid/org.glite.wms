@@ -660,14 +660,13 @@ WMPAuthorizer::authorize()
                } else {
                   throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                      "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-                     "Argus denied authorization on " + action_ +
-                     " requested by " + userdn_);
+                     "Argus denied authorization on " + action_ + " by " + userdn_);
                }
             } else {
+
                   throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                      "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-                     "Argus request on " + action_ +
-                     " requested by " + userdn_ +
+                     "Argus request on " + action_ + " by " + userdn_ +
                      " failed for some reason");
             }
          } else {

@@ -336,6 +336,7 @@ argus_authZ(
    std::string const& dn,
    std::string const& userproxypath)
 {
+
    edglog_fn("argus_authZ");
 
    boost::tuple<bool, xacml_decision_t, uid_t, gid_t> error(
@@ -349,16 +350,16 @@ argus_authZ(
       return error;
    }
 
-   pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_DEBUG); // PEP_LOGLEVEL_INFO
-   char* log_dir = 0;
-   log_dir = getenv("GLITE_LOCATION_LOG");
-   FILE* log = 0;
-   if (!log_dir) {
-      log = fopen("/var/log/glite/argus.log", "a");
-   } else {
-      log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "a");
-   }
-   pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
+   pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_INFO); // PEP_LOGLEVEL_DEBUG
+   //char* log_dir = 0;
+   //log_dir = getenv("GLITE_LOCATION_LOG");
+   //FILE* log = 0;
+   //if (!log_dir) {
+   //   log = fopen("/var/log/glite/argus.log", "w");
+   //} else {
+   //   log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "w");
+   //}
+   //pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
 
    // endpoint urls
    pep_error_t pep_rc;
@@ -368,7 +369,6 @@ argus_authZ(
          edglog(error) << "failed to set PEPd url: "
                        << pepds[i] << ": " << pep_strerror(pep_rc) << std::endl;
          pep_destroy(pep);
-         fclose(log);
          return error;
       }
    }
@@ -377,21 +377,18 @@ argus_authZ(
    if (pep_rc != PEP_OK) {
       edglog(error) << "failed to set client key " << userproxypath << '('
          << std::string(pep_strerror(pep_rc)) << ')' << std::endl;
-      fclose(log);
       return error;
    }   
    pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_CLIENT_CERT, userproxypath.c_str());
    if (pep_rc != PEP_OK) {
       edglog(error) << "failed to set client cert " << userproxypath << '('
          << std::string(pep_strerror(pep_rc)) << ')' << std::endl;
-      fclose(log);
       return error;
    }   
    pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_SERVER_CAPATH, "/etc/grid-security/certificates");
    if (pep_rc != PEP_OK) {
       edglog(error) << "failed to set server CA path /etc/grid-security/certificates ("
          << std::string(pep_strerror(pep_rc)) << ')' << std::endl;
-     fclose(log);
      return error;
    }   
 
@@ -410,19 +407,16 @@ argus_authZ(
       || !merge_xacml_subject_attrs_into(subject_id, subject)
    ) {
       pep_destroy(pep);
-      fclose(log);
       return error;
    }
 
    xacml_subject_t* subject_voms_fqan = create_xacml_subject_voms_fqans(fqans);
    if (!subject_voms_fqan) {
       pep_destroy(pep);
-      fclose(log);
       return error;
    }
    if (!merge_xacml_subject_attrs_into(subject_voms_fqan, subject)) {
       pep_destroy(pep);
-      fclose(log);
       return error;
    }
 
@@ -434,7 +428,6 @@ argus_authZ(
    if (!request) {
       edglog(error) << "failed to create XACML request" << std::endl;
       pep_destroy(pep);
-      fclose(log);
       return error;
    }
 
@@ -445,7 +438,6 @@ argus_authZ(
       edglog(error) << "failed to authorize XACML request: "
                     << pep_strerror(pep_rc) << std::endl;
       pep_destroy(pep);
-      fclose(log);
       return error;
    }
 
@@ -456,7 +448,6 @@ argus_authZ(
    xacml_request_delete(request);
    xacml_response_delete(response);
 
-   fclose(log);
    return boost::tuple<bool, xacml_decision_t, uid_t, gid_t>(
              true,
              decision.get<0>(),
