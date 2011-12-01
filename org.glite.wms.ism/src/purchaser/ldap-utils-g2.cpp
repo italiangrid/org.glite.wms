@@ -769,7 +769,26 @@ std::list<glue2_info_processor_tuple> glue2_info_processors =
     is_glue2_benchmark_dn, bmark_pfx,
     process_glue2_benchmark_info
   );
+ 
+  // The Helper expects to find some attribute 
+  // required to support LCGCE and GLUE13
+  
+  typedef std::pair< std::string, std::string > str_pair;
+  struct parse_expression_and_insert
+  {
+    parse_expression_and_insert(ClassAdPtr _ad) : ad(_ad) {}
+    inline void operator()(str_pair const& p) {
+      ad->Insert(p.first, parse_expression(p.second));
+    } 
+    ClassAdPtr ad;
+  };
+  std::vector<str_pair> glue13_attr_refs = bas::list_of<str_pair>
+    ("QueueName","GLUE2.Computing.Share.MappingQueue")
+    ("LRMSType", "GLUE2.Computing.Share.MappingQueue")
+    ("GlueCEInfoHostName", "GLUE2.Computing.Share.OtherInfo.InfoProviderHost")
+    ("GlueHostApplicationSoftwareRunTimeEnvironment","GLUE2.ApplicationEnvironment.AppName");
 
+ 
 } // anonymous namespace
 
 void 
@@ -1014,18 +1033,11 @@ fetch_bdii_ce_info_g2(
       std::string const glue13Id = id+"/"+policy.substr(policy.find(":")+1);
       result->InsertAttr("CEid", glue13Id);
 
-      // The Helper expects to find some attribute 
-      // required to support LCGCE
-      // Do we still need this in EMI ???? 
-      result->Insert(
-        "QueueName", 
-        parse_expression("GLUE2.Computing.Share.MappingQueue")
+     std::for_each(
+        glue13_attr_refs.begin(), glue13_attr_refs.end(),
+        parse_expression_and_insert(result)
       );
-      result->Insert(
-        "LRMSType",
-        parse_expression("GLUE2.Computing.Manager.ProductName")
-      );
-      ce_info_container.insert(std::make_pair(glue13Id, result));
+     ce_info_container.insert(std::make_pair(glue13Id, result));
     }   
   }
   Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
