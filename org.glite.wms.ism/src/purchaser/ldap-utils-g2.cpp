@@ -740,35 +740,17 @@ const glue2_stripping_prefix
   appenv_pfx   = bas::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment"),
   bmark_pfx    = bas::list_of("GLUE2Entity")("GLUE2Benchmark");
 
-std::list<glue2_info_processor_tuple> glue2_info_processors =
-  bas::tuple_list_of(
-    is_glue2_service_dn, service_pfx,
-    process_glue2_service_info
-  )(
-    is_glue2_manager_dn, manager_pfx,
-    process_glue2_manager_info
-  )(
-    is_glue2_share_dn, share_pfx,
-    process_glue2_share_info
-  )(
-    is_glue2_endpoint_dn, endpoint_pfx,
-    process_glue2_endpoint_info
-  )(
-    is_glue2_resource_dn, resource_pfx,
-    process_glue2_resource_info
-  )(
-    is_glue2_mapping_policy_dn, mpolicy_pfx,
-    process_glue2_mapping_policy_info
-  )(
-    is_glue2_access_policy_dn, apolicy_pfx,
-    process_glue2_access_policy_info
-  )(
-    is_glue2_application_env_dn, appenv_pfx,
-    process_glue2_application_env_info
-  )(
-    is_glue2_benchmark_dn, bmark_pfx,
-    process_glue2_benchmark_info
-  );
+std::list<glue2_info_processor_tuple> 
+glue2_info_processors = bas::tuple_list_of
+  (is_glue2_service_dn, service_pfx, process_glue2_service_info)
+  (is_glue2_manager_dn, manager_pfx, process_glue2_manager_info)
+  (is_glue2_share_dn, share_pfx, process_glue2_share_info)
+  (is_glue2_endpoint_dn, endpoint_pfx, process_glue2_endpoint_info)
+  (is_glue2_resource_dn, resource_pfx, process_glue2_resource_info)
+  (is_glue2_mapping_policy_dn, mpolicy_pfx, process_glue2_mapping_policy_info)
+  (is_glue2_access_policy_dn, apolicy_pfx, process_glue2_access_policy_info)
+  (is_glue2_application_env_dn, appenv_pfx, process_glue2_application_env_info)
+  (is_glue2_benchmark_dn, bmark_pfx, process_glue2_benchmark_info);
  
   // The Helper expects to find some attribute 
   // required to support LCGCE and GLUE13
@@ -786,8 +768,8 @@ std::list<glue2_info_processor_tuple> glue2_info_processors =
     ("QueueName","GLUE2.Computing.Share.MappingQueue")
     ("LRMSType", "GLUE2.Computing.Share.MappingQueue")
     ("GlueCEInfoHostName", "GLUE2.Computing.Share.OtherInfo.InfoProviderHost")
+    ("GlueCEUniqueID", "CEId")
     ("GlueHostApplicationSoftwareRunTimeEnvironment","GLUE2.ApplicationEnvironment.AppName");
-
  
 } // anonymous namespace
 
@@ -1033,7 +1015,7 @@ fetch_bdii_ce_info_g2(
       std::string const glue13Id = id+"/"+policy.substr(policy.find(":")+1);
       result->InsertAttr("CEid", glue13Id);
 
-     std::for_each(
+      std::for_each(
         glue13_attr_refs.begin(), glue13_attr_refs.end(),
         parse_expression_and_insert(result)
       );
