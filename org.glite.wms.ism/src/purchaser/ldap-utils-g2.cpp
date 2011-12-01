@@ -277,10 +277,10 @@ struct is_a_literal_node_starting_with
   std::string prefix;
 };
 template<typename T>
-void extract_glue2_info_value_in(ClassAdPtr ad, std::string const& from, std::string const& what, classad::ClassAd* in)
+void extract_glue2_info_value_in(classad::ClassAd const& ad, std::string const& from, std::string const& what, classad::ClassAd* in)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
-    ad->Lookup(from)
+    ad.Lookup(from)
   );
   std::vector<classad::ExprTree*>::const_iterator it(
     std::find_if(
@@ -295,26 +295,6 @@ void extract_glue2_info_value_in(ClassAdPtr ad, std::string const& from, std::st
     in->InsertAttr(what,boost::lexical_cast<T>(s.substr(s.find("=")+1)));
   }
 }
-template<typename T>
-void extract_glue2_info_value(ClassAdPtr ad, std::string const& from, std::string const& what)
-{
-  classad::ExprList* el = dynamic_cast<classad::ExprList*>(
-    ad->Lookup(from)
-  );
-  std::vector<classad::ExprTree*>::const_iterator it(
-    std::find_if(
-      el->begin(), el->end(),
-      is_a_literal_node_starting_with(what+"=")
-    )
-  );
-  if (it != el->end()) {
-    classad::Value v;
-    std::string s;
-    (*it)->Evaluate(v) && v.IsStringValue(s);
-    ad->InsertAttr(what,boost::lexical_cast<T>(s.substr(s.find("=")+1)));
-  }
-}
-
 
 void process_glue2_resource_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, BDIICEInfo& bdii_info)
 {
@@ -427,9 +407,9 @@ void process_glue2_endpoint_info(
     std::make_pair(endpoint_id, EndpointInfo())
   );
   classad::ClassAd* oi = new classad::ClassAd;
-  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "HostDN", oi);
-  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "MiddlewareName", oi);
-  extract_glue2_info_value_in<std::string>(ad, "OtherInfo", "MiddlewareVersion", oi);
+  extract_glue2_info_value_in<std::string>(*ad, "OtherInfo", "HostDN", oi);
+  extract_glue2_info_value_in<std::string>(*ad, "OtherInfo", "MiddlewareName", oi);
+  extract_glue2_info_value_in<std::string>(*ad, "OtherInfo", "MiddlewareVersion", oi);
   ad->Insert("OtherInfo", oi);
 
   cleanup_glue2_info(ad,
@@ -469,8 +449,8 @@ void process_glue2_resource_info(
     std::make_pair(resource_id, ExecEnvInfo())
   );
   classad::ClassAd* oi = new classad::ClassAd;
-  extract_glue2_info_value_in<short>(ad, "OtherInfo", "SmpSize", oi);
-  extract_glue2_info_value_in<short>(ad, "OtherInfo", "Cores", oi);
+  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "SmpSize", oi);
+  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "Cores", oi);
   ad->Insert("OtherInfo", oi);
 
   cleanup_glue2_info(ad,
@@ -971,11 +951,14 @@ fetch_bdii_ce_info_g2(
       std::string interface_name = cu::evaluate_expression(
         *ep_it->second.ad, "EndPoint.InterfaceName"
       );
+ 
+      classad::ClassAd* shareAd = dynamic_cast<classad::ClassAd*>(
+        computingAd_copy->Lookup("Share")
+      );
       
       classad::ExprList* el;
-      dynamic_cast<classad::ClassAd*>(computingAd_copy->Lookup("Share"))->
-        EvaluateAttrList("OtherInfo", el);
-
+      shareAd->EvaluateAttrList("OtherInfo", el);
+      // Find the CREAMCEId bound to the relevant EndPoint via InterfaceName
       std::vector<classad::ExprTree*>::const_iterator oi_it(
         std::find_if(el->begin(), el->end(),
           is_a_literal_node_starting_with(
@@ -983,16 +966,30 @@ fetch_bdii_ce_info_g2(
           )
         )
       );
+      // Handling OtherInfo conversion to ClassAd for the Share
+      classad::ClassAd* oi = new classad::ClassAd;
+
       if (oi_it != el->end()) {
         classad::Value v;
         std::string s;
         (*oi_it)->Evaluate(v) && v.IsStringValue(s);
-        g2Ad->DeepInsertAttr(
-          computingAd_copy->Lookup("Share"),
-          "CREAMCEId",
-          s.substr(s.find("=")+1)
-        );
+        oi->InsertAttr("CREAMCEId", s.substr(s.find("=")+1));
+        
       }
+      extract_glue2_info_value_in<std::string>(
+        *shareAd  , "OtherInfo", "InfoProviderName", oi
+      );
+      extract_glue2_info_value_in<std::string>(
+        *shareAd, "OtherInfo", "InfoProviderVersion", oi
+      );
+      extract_glue2_info_value_in<std::string>(
+        *shareAd, "OtherInfo", "InfoProviderHost", oi
+      );
+      g2Ad->DeepInsert(
+        computingAd_copy->Lookup("Share"),
+        "OtherInfo", oi
+      );
+
       ClassAdPtr result( new classad::ClassAd );
       result->Insert("GLUE2", g2Ad);
       result->Insert("AuthorizationCheck", parse_expression(
@@ -1003,18 +1000,23 @@ fetch_bdii_ce_info_g2(
         ") && "
         "! FQANmember(strcat(\"DENY:\",other.VOMS_FQAN),GLUE2.Computing.Endpoint.Policy)"
       ));
-      result->Insert("requirements", parse_expression(
-        "AuthorizationCheck"
-      ));
+      result->Insert("requirements", parse_expression("AuthorizationCheck"));
       n_shares++;
-      std::string id = cu::evaluate_expression(*result,
-       "IsUndefined(GLUE2.Computing.Share.CREAMCEId) ?"
-        "    GLUE2.Computing.Share.ID :  GLUE2.Computing.Share.CREAMCEId"
-      );
-      std::string policy = cu::evaluate_expression(*result,"GLUE2.Computing.Share.Policy[0]");
-      std::string glue13Id = id+"/"+policy.substr(policy.find(":")+1);
 
-      // Required for backward compatibility by Helper
+      std::string const id = cu::evaluate_expression(*result,
+        "IsUndefined(GLUE2.Computing.Share.OtherInfo.CREAMCEId) ?"
+        "    GLUE2.Computing.Share.ID : GLUE2.Computing.Share.OtherInfo.CREAMCEId"
+      );
+      std::string const policy = cu::evaluate_expression(*result,
+        "GLUE2.Computing.Share.Policy[0]"
+      );
+
+      std::string const glue13Id = id+"/"+policy.substr(policy.find(":")+1);
+      result->InsertAttr("CEid", glue13Id);
+
+      // The Helper expects to find some attribute 
+      // required to support LCGCE
+      // Do we still need this in EMI ???? 
       result->Insert(
         "QueueName", 
         parse_expression("GLUE2.Computing.Share.MappingQueue")
@@ -1022,9 +1024,6 @@ fetch_bdii_ce_info_g2(
       result->Insert(
         "LRMSType",
         parse_expression("GLUE2.Computing.Manager.ProductName")
-      );
-      result->InsertAttr(
-        "CEid", glue13Id
       );
       ce_info_container.insert(std::make_pair(glue13Id, result));
     }   
