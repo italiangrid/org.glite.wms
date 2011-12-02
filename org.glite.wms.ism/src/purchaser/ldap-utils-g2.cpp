@@ -44,6 +44,7 @@ limitations under the License.
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/list_of.hpp>
@@ -768,6 +769,11 @@ glue2_info_processors = bas::tuple_list_of
     ("GlueCEInfoHostName", "GLUE2.Computing.Share.OtherInfo.InfoProviderHost")
     ("GlueHostApplicationSoftwareRunTimeEnvironment","GLUE2.ApplicationEnvironment.AppName")
     ("GlueCEAccessControlBaseRule","GLUE2.Computing.Endpoint.Policy")
+    ("QueueName","GLUE2.Computing.Share.MappingQueue")
+    ("LRMSType","GLUE2.Computing.Manager.ProductName")
+    
+    ("GlueCEUniqueID","CEid")
+    ("GlobusResourceContactString","CEid")
     ("AuthorizationCheck","("
      "  member(other.CertificateSubject,GLUE2.Computing.Endpoint.Policy) ||  "
      "  member(strcat(\"VO:\",other.VirtualOrganisation),GLUE2.Computing.Endpoint.Policy) || "
@@ -1017,14 +1023,15 @@ fetch_bdii_ce_info_g2(
         "GLUE2.Computing.Share.Policy[0]"
       );
 
-      std::string const glue13Id = id+"/"+policy.substr(policy.find(":")+1);
-      result->InsertAttr("CEid", glue13Id);
-
+      std::string const glue13Id(
+        id + "/" + ba::erase_regex_copy(policy, boost::regex(".+:"))
+      );
       std::for_each(
         glue13_attr_refs.begin(), glue13_attr_refs.end(),
         parse_expression_and_insert(result)
       );
-     ce_info_container.insert(std::make_pair(glue13Id, result));
+      result->InsertAttr("CEid", id); 
+      ce_info_container.insert(std::make_pair(glue13Id, result));
     }   
   }
   Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
