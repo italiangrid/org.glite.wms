@@ -128,16 +128,24 @@ void populate_ism(
 
   // no locking is needed here (before the switch)
   int dark_side = ism::dark_side();
+
+  bool insert = false;
+  ism_type::iterator ism_entry;
+
   for ( ; it != e; ++it ) {
-    get_ism(the_ism_index, dark_side).insert( 
-      make_ism_entry(
-        (*it)->first,
-        std::time(0),
-        (*it)->second,
-        ism_ii_g2_purchaser_entry_update(),
-        expiry_time
-      )
-    );
+    boost::tie(ism_entry, insert) = 
+      get_ism(the_ism_index, dark_side).insert( 
+        make_ism_entry(
+          (*it)->first,
+          std::time(0),
+          (*it)->second,
+          ism_ii_g2_purchaser_entry_update(),
+          expiry_time
+        )
+      );
+    if(!insert) { // glue13 entry already inserted merging info
+      ism_entry->second.get<2>()->Update(*(*it)->second);
+    }
     Debug((*it)->first << " added to ISM ");
   } 
 }

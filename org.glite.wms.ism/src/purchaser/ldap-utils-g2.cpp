@@ -765,11 +765,16 @@ glue2_info_processors = bas::tuple_list_of
     ClassAdPtr ad;
   };
   std::vector<str_pair> glue13_attr_refs = bas::list_of<str_pair>
-    ("QueueName","GLUE2.Computing.Share.MappingQueue")
-    ("LRMSType", "GLUE2.Computing.Share.MappingQueue")
     ("GlueCEInfoHostName", "GLUE2.Computing.Share.OtherInfo.InfoProviderHost")
-    ("GlueCEUniqueID", "CEId")
-    ("GlueHostApplicationSoftwareRunTimeEnvironment","GLUE2.ApplicationEnvironment.AppName");
+    ("GlueHostApplicationSoftwareRunTimeEnvironment","GLUE2.ApplicationEnvironment.AppName")
+    ("GlueCEAccessControlBaseRule","GLUE2.Computing.Endpoint.Policy")
+    ("AuthorizationCheck","("
+     "  member(other.CertificateSubject,GLUE2.Computing.Endpoint.Policy) ||  "
+     "  member(strcat(\"VO:\",other.VirtualOrganisation),GLUE2.Computing.Endpoint.Policy) || "
+     "  FQANmember(strcat(\"VOMS:\",other.VOMS_FQAN ),GLUE2.Computing.Endpoint.Policy) "
+     ") && "
+     "! FQANmember(strcat(\"DENY:\",other.VOMS_FQAN),GLUE2.Computing.Endpoint.Policy)")
+    ;
  
 } // anonymous namespace
 
