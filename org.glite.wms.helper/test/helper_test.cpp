@@ -111,14 +111,21 @@ void load_dump(string const& filename)
         else
         if(info->Lookup("GlueCEUniqueID")) {
 
-          insert_aux_requirements(info);
-          expand_glueceid_info(info);
-          ism_type* the_ce_ism = &get_ism(ce); 
+         ism_type* the_ce_ism = &get_ism(ce); 
           // Check the type of puchaser which has generated the info
           string purchased_by;
           info->EvaluateAttrString("PurchasedBy",purchased_by);
           if (purchased_by==string("ism_ii_purchaser")) {
+
+            insert_aux_requirements(info);
+            expand_glueceid_info(info);
+
             the_ce_ism->insert(
+              make_ism_entry(id, ut, info, boost::function<bool(int&, ad_ptr)>())
+            );
+          }
+          else if (purchased_by==string("ism_ii_g2_purchaser")) {
+             the_ce_ism->insert(
               make_ism_entry(id, ut, info, boost::function<bool(int&, ad_ptr)>())
             );
           }
