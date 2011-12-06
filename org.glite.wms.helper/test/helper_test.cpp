@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-g2-purchaser.h"
+#include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 
 //#include "Helper_matcher.h"
 
@@ -16,6 +17,7 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 
@@ -206,13 +208,28 @@ int main(int argc, char* argv[])
         req_file.assign(options['j'].getStringValue());
 
      if(!options.is_present('d')) {
-       ism_ii_g2_purchaser icp(
-          ns_config->ii_contact(), ns_config->ii_port(),
-          ns_config->ii_dn(), ns_config->ii_timeout(), std::string(), false, once
-       );
-//    rgma_purchaser icp(ce_mt_slice, se_mt_slice);
 
-      icp();
+       bool const glue20_purchasing_is_enabled(
+         wm_config->enable_ism_ii_glue20_purchasing()
+       );
+       bool const glue13_purchsing_is_enabled(
+         wm_config->enable_ism_ii_glue13_purchasing()
+       );
+
+       if (glue13_purchsing_is_enabled) {
+         ism_ii_purchaser icp_g13(
+            ns_config->ii_contact(), ns_config->ii_port(),
+            ns_config->ii_dn(), ns_config->ii_timeout(), std::string(), false, once
+         );
+         icp_g13();
+       }
+       if (glue20_purchasing_is_enabled) {
+         ism_ii_g2_purchaser icp_g20(
+            ns_config->ii_contact(), ns_config->ii_port(),
+            "o=glue", ns_config->ii_timeout(), std::string(), false, once
+         );
+         icp_g20();
+       }
     }
     else{
        string dump_file(
