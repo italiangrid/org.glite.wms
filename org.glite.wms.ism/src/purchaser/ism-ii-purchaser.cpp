@@ -147,6 +147,15 @@ void populate_ism(
 
 void ism_ii_purchaser::operator()()
 {
+  static glite::wms::common::configuration::Configuration const& config(
+    *glite::wms::common::configuration::Configuration::instance()
+  );
+
+  static bool const glue20_purchsing_is_enabled(
+    config.wm()->enable_ism_ii_glue20_purchasing()
+  );
+
+
   do {
 
     // do not populate until the existing ism has threads still matching against it
@@ -215,8 +224,10 @@ void ism_ii_purchaser::operator()()
      // against the current dark side have all flushed
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
-
-     ism::switch_active_side();
+     
+     // If both glue13 and glue20 purchasing is enabled the switch should 
+     // be preveted here since the purcasing actually continues
+     if(!glue20_purchsing_is_enabled) ism::switch_active_side();
     } catch (LDAPException& e) {
 
       Error(

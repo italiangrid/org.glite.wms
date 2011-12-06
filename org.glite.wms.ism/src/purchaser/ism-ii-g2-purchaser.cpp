@@ -20,12 +20,14 @@
 #include <boost/timer.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
+
 #include <classad_distribution.h>
 
 #include "ldap-utils-g2.h"
 #include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-g2-purchaser.h"
 #include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -41,6 +43,41 @@ namespace {
 
 boost::condition f_purchasing_cycle_run_condition;
 boost::mutex     f_purchasing_cycle_run_mutex;
+
+std::string const glue13_mapping_str(
+
+);
+boost::shared_ptr<classad::ClassAd> glue13_mapping_ad(
+   glite::wmsutils::classads::parse_classad(
+    "["
+	"GlueCECapability = GLUE2.Computing.Endpoint.Capability;"
+	"GlueCEImplementationName = GLUE2.Computing.Endpoint.ImplementationName;"
+	"GlueCEImplementationVersion = GLUE2.Computing.Endpoint.ImplementationVersion;"
+	"GlueCEInfoLRMSVersion = GLUE2.Manager.ProductVersion;"
+	"GlueCEPolicyMaxWallClockTime = GLUE2.Computing.Share.MaxWallTime;"
+	"GlueCEPolicyMaxCPUTime = GLUE2.Computing.Share.MaxCPUTime;"
+	"GlueCEPolicyMaxRunningJobs  = GLUE2.Computing.Share.MaxRunningJobs;"
+	"GlueCEStateStatus = GLUE2.Computing.Share.ServingState;"
+	"GlueCEStateWaitingJobs = GLUE2.Computing.Share.WaitingJobs;"
+	"GlueCEStateTotalJobs = GLUE2.Computing.Share.TotalJobs;"
+	"GlueCEStateFreeJobSlots  = GLUE2.Computing.Share.FreeSlots;"
+	"GlueCEStateRunningJobs = GLUE2.Computing.Share.RunningJobs;"
+	"GlueCEStateEstimatedResponseTime = GLUE2.Computing.Share.EstimatedAverageWaitingTime;"
+	"GlueCEStateWorstResponseTime = GLUE2.Computing.Share.EstimatedWorstWaitingTime;"
+	"GlueHostArchitecturePlatformType = GLUE2.ExecutionEnvironment.Platform;"
+	"GlueHostArchitectureSMPSize = GLUE2.ExecutionEnvironment.OtherInfo.SmpSize;"
+	"GlueHostProcessorModel = GLUE2.ExecutionEnvironment.CPUModel;"
+	"GlueHostProcessorVendor = GLUE2.ExecutionEnvironment.CPUVendor;"
+	"GlueHostProcessorClockSpeed = GLUE2.ExecutionEnvironment.CPUClockSpeed;"
+	"GlueHostOperatingSystemName = GLUE2.ExecutionEnvironment.OSName;"
+	"GlueHostMainMemoryRAMSize = GLUE2.ExecutionEnvironment.MainMemorySize;"
+	"GlueHostMainMemoryVirtualSize = GLUE2.ExecutionEnvironment.VirtualMemorySize;"
+	"GlueHostNetworkAdapterInboundIP = GLUE2.ExecutionEnvironment.ConnectivityIn;"
+	"GlueHostNetworkAdapterOutboundIP = GLUE2.ExecutionEnvironment.ConnectivityOut;"
+	"GlueSubClusterLogicalCPUs = GLUE2.ExecutionEnvironment.LogicalCPUs;"
+	"GlueSubClusterPhysicalCPUs = GLUE2.ExecutionEnvironment.PhysicalCPUs;"
+    "]")
+);
 
 } // {anonymous}
 
@@ -119,6 +156,7 @@ void populate_ism(
     config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
   );
 
+
   vector<gluece_info_iterator>::const_iterator it(
     gluece_info_container_updated_entries.begin()
   );
@@ -145,15 +183,29 @@ void populate_ism(
       );
     if(!insert) { // glue13 entry already inserted merging info
       ism_entry->second.get<2>()->Update(*(*it)->second);
+      ism_entry->second.get<2>()->Update(*(glue13_mapping_ad));
+
+      Debug((*it)->first << " updated with GLUE2.0");
     }
-    Debug((*it)->first << " added to ISM ");
+    else {
+       Debug((*it)->first << " added to ISM ");
+    }
   } 
 }
 
 }
 
 void ism_ii_g2_purchaser::operator()()
-{
+{ 
+
+  static glite::wms::common::configuration::Configuration const& config(
+    *glite::wms::common::configuration::Configuration::instance()
+  ); 
+    
+  static bool const glue13_purchsing_is_enabled(
+    config.wm()->enable_ism_ii_glue13_purchasing()
+  );
+ 
   do {
 
     // do not populate until the existing ism has threads still matching against it
@@ -169,8 +221,9 @@ void ism_ii_g2_purchaser::operator()()
     }
 
     // free this memory _before_ another huge allocation made by the purchaser
-    ism::get_ism(ism::ce, ism::dark_side()).clear();
-    ism::get_ism(ism::se, ism::dark_side()).clear();
+   
+    if(!glue13_purchsing_is_enabled) ism::get_ism(ism::ce, ism::dark_side()).clear();
+    if(!glue13_purchsing_is_enabled) ism::get_ism(ism::se, ism::dark_side()).clear();
 
     try {
 
