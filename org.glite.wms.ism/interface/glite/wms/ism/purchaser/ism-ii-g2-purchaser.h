@@ -71,6 +71,7 @@ public:
 };
 
 namespace ii {
+namespace g2 {
 // the types of the class factories
 typedef ism_ii_g2_purchaser* create_t(std::string const& hostname,
     int port,
@@ -88,6 +89,7 @@ typedef void destroy_t(ism_ii_g2_purchaser*);
 
 // type of the entry update function factory
 typedef boost::function<bool(int&, boost::shared_ptr<classad::ClassAd>)> create_entry_update_fn_t();
+}
 }
 
 }}}}
