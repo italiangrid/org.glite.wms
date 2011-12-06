@@ -82,76 +82,70 @@ namespace {
 bool
 compareFQAN(std::string const& gacl_fqan, std::string const& user_fqan)
 {
-   std::string gacl_regex(gacl_fqan);
-   // replace . with [.] and * with .*, to form a valid regular expression
-   boost::replace_all(gacl_regex, ".", "[.]");
-   boost::replace_all(gacl_regex, "*", ".*");
+   std::string gacl_regex(
+      gacl_fqan.substr(
+         std::string(std::string(GaclManager::WMPGACL_VOMS_TAG) + ':').size()
+      )
+   );
+   // gacl_fqan is sort of URL encoded
+   boost::replace_all(gacl_regex, ".", "[.]"); // . is reserved
+   boost::replace_all(gacl_regex, "%2A", ".*"); // wildcard *
+   boost::replace_all(gacl_regex, "+", " "); // space, not sure why it's not a %20
    boost::regex wildcard_match('^' + gacl_regex + '$', boost::regex::basic);
    return regex_match(user_fqan, wildcard_match);
 }
 
 }
 
-/*
- *
- * Constructor.
- * @param file path location of the gacl file
- *
- */
-GaclManager::GaclManager (const string& file, const bool& create)
+GaclManager::GaclManager(const string& file, bool create)
+   : gaclFile(file)
 {
-   // file location
-   gaclFile = gaclFile.assign(file) ;
-   // init
    credType = "";
-   gaclAcl = NULL ;
-   gaclCred = NULL ;
-   gaclUser = NULL ;
-   gaclEntry = NULL;
+   gaclAcl = 0;
+   gaclCred = 0;
+   gaclUser = 0;
+   gaclEntry = 0;
    gaclAllowed = WMPGACL_NOPERM;
-   gaclDenied =WMPGACL_NOPERM;
+   gaclDenied = WMPGACL_NOPERM;
    if ( ! create ) {
       // checks if file exists
-      if ( gaclExists (  ) ) {
+      if (gaclExists()) {
          // loads the existing file
          GRSTgaclInit();
-         GaclManager::loadFromFile (gaclFile);
+         GaclManager::loadFromFile(gaclFile);
       } else {
          // exception: no such file
          std::ostringstream oss;
          oss <<  "gacl file not found (" << file << ")\n";
-         throw GaclException (__FILE__, __LINE__,  "GaclManager::GaclManager" ,
-                              WMS_GACL_ERROR,  oss.str() );
+         throw GaclException (__FILE__, __LINE__,  "GaclManager::GaclManager",
+                              WMS_GACL_ERROR, oss.str());
       }
    } else {
       // creates a new file
-      newGacl ( );
+      newGacl();
    }
 };
 
-/*
-* Destructor
-*/
-GaclManager::~GaclManager( )
+GaclManager::~GaclManager()
 {
    if (gaclCred) {
-      delete (gaclCred);
+      delete gaclCred;
    }
    if (gaclUser) {
-      delete(gaclUser);
+      delete gaclUser;
    }
    if (gaclEntry) {
-      delete(gaclEntry);
+      delete gaclEntry;
    }
    if (gaclAcl) {
-      delete(gaclAcl );
+      delete gaclAcl;
    }
 };
 
 /**
 * Free the memory used by an existing ACL, and the memory used by any entries and credentials it may contain.
 */
-void GaclManager::gaclFreeMemory( )
+void GaclManager::gaclFreeMemory()
 {
    edglog_fn("GaclManager::gaclFreeMemory");
    edglog(debug) << "cleaning memory by gaclFreeMemory"<< endl;
@@ -167,14 +161,14 @@ void GaclManager::gaclFreeMemory( )
 *  @param type credential type
 *  @param rawvalue credential raw (user-dn, fqan, etc...)
 */
-void GaclManager::addEntry (const WMPgaclCredType& type, const string& rawvalue,const WMPgaclPerm& permission)
+void GaclManager::addEntry(const WMPgaclCredType& type, const string& rawvalue,const WMPgaclPerm& permission)
 {
    // sets the credential attributes
-   setCredentialType (type,rawvalue);
+   setCredentialType(type,rawvalue);
    // checks if the credential already exist into the file
-   if ( loadCredential() ==WMPGACL_SUCCESS) {
+   if (loadCredential() == WMPGACL_SUCCESS) {
       std::ostringstream oss;
-      oss <<  "unable to  add the new credential entry to the gacl" ;
+      oss <<  "unable to add the new credential entry to the gacl" ;
       oss << " (" << gaclFile << ")\n";
       oss << "reason: the entry already exists\ncredential type : " << getCredentialTypeString(type)  << "\n";
       oss <<"Input " << rawCred.first << ": " << rawvalue << "\n";
@@ -182,40 +176,42 @@ void GaclManager::addEntry (const WMPgaclCredType& type, const string& rawvalue,
       throw GaclException (__FILE__, __LINE__,  "GaclManager::addEntry" ,
                            WMS_GACL_ERROR,  oss.str() );
    };
-   // creates the new entry
-   newCredential( );
-   //sets permission
+
+   newCredential();
    setAllowPermission(type, rawvalue, permission);
 };
+
 /**
 * Check whther the gacl file contains the specified entry
 */
 bool GaclManager::hasEntry(const WMPgaclCredType& type, const string rawvalue)
 {
-   if (loadCredential(type,rawvalue)== WMPGACL_SUCCESS) {
-      return true ;
+   if (loadCredential(type, rawvalue) == WMPGACL_SUCCESS) {
+      return true;
    } else {
-      return false ;
+      return false;
    }
 
 
 };
+
 /*
 *  adds a set of credential entries to the gacl
 *  @param vect vector of credential (credential type , rawvalue )
 */
-void GaclManager::addEntries (const vector<pair<WMPgaclCredType, string> > &vect )
+void GaclManager::addEntries (const vector<pair<WMPgaclCredType, string> > &vect)
 {
    for (unsigned int i = 0; i < vect.size() ; i++) {
       addEntry( (WMPgaclCredType)vect[i].first,
                 (string)vect[i].second);
    }
 };
+
 /*
-*  removes from the gacl file the entry of the specified credential
+*  removes from the gacl file the entry with the specified credential
 */
 int GaclManager::removeEntry (const WMPgaclCredType& type,
-                              const string& rawvalue, string& errors )
+                              const string& rawvalue, string& errors)
 {
    edglog_fn("GaclManager::removeEntry");
    std::ostringstream oss;
@@ -235,35 +231,6 @@ int GaclManager::removeEntry (const WMPgaclCredType& type,
          cred = entry->firstcred ;
          // scanning of the credentials in the selected entry
          while ( cred != NULL ) {
-#ifndef GRST_VERSION
-            // credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
-            edglog(debug)<< "cred-type:" << cred->type<< endl;
-            if ( strcmp( cred->type, (char*)credType.c_str()) == 0 ) {
-               edglog(debug)<< "entry found" <<endl;
-               // comparison between input and gacl credentials:
-               // nv =  < nv->name, nv->value>
-               if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_ANYUSER_CRED) == 0 ) {
-                  found = true;
-               } else {
-                  nv = cred->firstname;
-                  if (nv) {
-                     if (strcmp (rawname, nv->name ) == 0 ) {
-                        edglog(debug) << "rawvalue found" << endl;
-                        if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ) {
-                           found = compareFQAN(rawvalue, nv->value);
-                        } else {
-                           if ( strcmp (rawvalue.c_str(), nv->value ) == 0) {
-                              edglog(debug) << "rawvalue found" << endl;
-                              found = true;
-                           }
-
-                        } // if(VOMS_CRED)
-                     } // if (name)
-                  } // if (nv)
-               } // if (ANY_CRED)
-            }
-#else
-            {
                GRSTgaclCred *cred_tmp;
 
                cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
@@ -274,8 +241,6 @@ int GaclManager::removeEntry (const WMPgaclCredType& type,
                }
 
                GRSTgaclCredFree(cred_tmp);
-            }
-#endif
             if ( !found ) {
                prev_cred = cred ;
                cred = (GRSTgaclCred*) cred->next;
@@ -324,7 +289,7 @@ int GaclManager::removeEntry (const WMPgaclCredType& type,
  * @param permission permission  (WMPGACL_xxxxx)
  *
  */
-bool GaclManager::checkAllowPermission (const WMPgaclCredType& type,
+bool GaclManager::checkAllowPermission(const WMPgaclCredType& type,
                                         const string& rawvalue,
                                         const WMPgaclPerm& permission)
 {
@@ -340,7 +305,7 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType& type,
    edglog(debug)<<"CredType/Permission = "<< type << "/"<< permission << endl ;
 
    // load Credential
-   if (  loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
+   if (loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
       std::ostringstream oss;
       oss <<  "unable to check credential permission " ;
       oss << " (" << gaclFile << ")\n";
@@ -376,7 +341,7 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType& type,
 /*
  * Checks if permission is denied
  */
-bool GaclManager::checkDenyPermission (const WMPgaclCredType& type,
+bool GaclManager::checkDenyPermission(const WMPgaclCredType& type,
                                        const string& rawvalue, const WMPgaclPerm& permission)
 {
    string errmsg = "";
@@ -389,16 +354,14 @@ bool GaclManager::checkDenyPermission (const WMPgaclCredType& type,
 
 /*
  * allows permission to the user
- * @param permission permission  (WMPGACL_xxxxx)
+ * @param permission permission (WMPGACL_xxxxx)
 */
 void GaclManager::allowPermission(const WMPgaclCredType& type,
                                   const string& rawvalue,
                                   const WMPgaclPerm& permission,
                                   const bool& unset_perm)
 {
-
-   // load Credential
-   if (  loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
+   if (loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
       std::ostringstream oss;
       oss <<  "unable to set \"allow\" permission" ;
       oss << " (" << gaclFile << ")\n";
@@ -426,9 +389,9 @@ void GaclManager::allowPermission(const WMPgaclCredType& type,
 void GaclManager::denyPermission(const WMPgaclCredType& type,
                                  const string& rawvalue,
                                  const WMPgaclPerm& permission,
-                                 const bool& unset_perm  )
+                                 const bool& unset_perm)
 {
-   if (  loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
+   if (loadCredential(type, rawvalue) != WMPGACL_SUCCESS) {
       std::ostringstream oss;
       oss <<  "unable to set \"deny\" permission" ;
       oss << " (" << gaclFile << ")\n";
@@ -719,57 +682,38 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType& type)
    setCredentialType(type, "");
    // looks for the specified credential
    if (gaclAcl !=NULL) {
-      entry = gaclAcl-> firstentry ;
+      entry = gaclAcl-> firstentry;
       // scanning of the entries
-      while  (entry != NULL ) {
-         cred = entry->firstcred ;
+      while (entry) {
+         cred = entry->firstcred;
          // scanning of the credentials in the selected entry
-         while ( cred != NULL ) {
+         while (cred) {
             // credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
-#ifndef GRST_VERSION
-            edglog(debug)<< "cred-type:" << cred->type<< endl;
-            if ( strcmp( cred->type, (char*)credType.c_str()) == 0 ) {
-               edglog(debug)<< "entry found" <<endl;
-               // comparison between input and gacl credentials:
-               // nv =  < nv->name, nv->value>
-               nv = cred->firstname;
-               if (nv && nv->name) {
-                  if (strcmp (rawname, nv->name ) == 0 ) {
-                     if (nv->value) {
-                        items.push_back (nv->value);
-                     }
-                  } // if (name)
-               } // if (nv)
-            } // if(strcmp)
-#else
-            {
-               char *auri, *decoded;
+            char *auri, *decoded;
 
-               if ((auri = GRSTgaclCredGetAuri(cred)) != NULL) {
-                  if      ((strcmp((char*)credType.c_str(), "person") == 0) &&
-                           (strncmp(auri, "dn:", 3) == 0)) {
-                     decoded = GRSThttpUrlDecode(&auri[3]);
-                     items.push_back(decoded);
-                     free(decoded);
-                  } else if ((strcmp((char*)credType.c_str(), "voms") == 0) &&
-                             (strncmp(auri, "fqan:", 5) == 0)) {
-                     decoded = GRSThttpUrlDecode(&auri[5]);
-                     items.push_back(decoded);
-                     free(decoded);
-                  } else if ((strcmp((char*)credType.c_str(), "dn-list") == 0) &&
-                             (strncmp(auri, "url:", 4) == 0)) {
-                     decoded = GRSThttpUrlDecode(&auri[4]);
-                     items.push_back(decoded);
-                     free(decoded);
-                  } else if ((strcmp((char*)credType.c_str(), "hostname") == 0) &&
-                             (strncmp(auri, "dns:", 4) == 0)) {
-                     decoded = GRSThttpUrlDecode(&auri[4]);
-                     items.push_back(decoded);
-                     free(decoded);
-                  }
+            if ((auri = GRSTgaclCredGetAuri(cred)) != NULL) {
+               if      ((strcmp((char*)credType.c_str(), "person") == 0) &&
+                        (strncmp(auri, "dn:", 3) == 0)) {
+                  decoded = GRSThttpUrlDecode(&auri[3]);
+                  items.push_back(decoded);
+                  free(decoded);
+               } else if ((strcmp((char*)credType.c_str(), "voms") == 0) &&
+                          (strncmp(auri, "fqan:", 5) == 0)) {
+                  decoded = GRSThttpUrlDecode(&auri[5]);
+                  items.push_back(decoded);
+                  free(decoded);
+               } else if ((strcmp((char*)credType.c_str(), "dn-list") == 0) &&
+                          (strncmp(auri, "url:", 4) == 0)) {
+                  decoded = GRSThttpUrlDecode(&auri[4]);
+                  items.push_back(decoded);
+                  free(decoded);
+               } else if ((strcmp((char*)credType.c_str(), "hostname") == 0) &&
+                          (strncmp(auri, "dns:", 4) == 0)) {
+                  decoded = GRSThttpUrlDecode(&auri[4]);
+                  items.push_back(decoded);
+                  free(decoded);
                }
             }
-#endif
             cred = (GRSTgaclCred*) cred->next;
          } // while(cred)
          // next entry .
@@ -784,9 +728,9 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType& type)
 */
 void GaclManager::setCredentialType(const WMPgaclCredType& type, const string& rawvalue)
 {
-   switch ( type ) {
+   switch (type) {
    case WMPGACL_ANYUSER_TYPE : {
-      credType =GaclManager::WMPGACL_ANYUSER_CRED ;
+      credType = GaclManager::WMPGACL_ANYUSER_CRED ;
       rawCred = make_pair(GaclManager::WMPGACL_ANYUSER_TAG, rawvalue);
       break;
    }
@@ -820,99 +764,78 @@ void GaclManager::setCredentialType(const WMPgaclCredType& type, const string& r
    }
 };
 
-int GaclManager::loadCredential ( const WMPgaclCredType& type,
+int GaclManager::loadCredential(const WMPgaclCredType& type,
                                   const string& rawvalue)
 {
    edglog_fn("GaclManager::loadCredential");
-   // sets attributes related to the type of creddential
+   // sets attributes related to the type of credential
    setCredentialType (type,rawvalue);
-   return loadCredential( );
+   return loadCredential();
 };
 
-/*
- * loads credential
-*/
-int GaclManager::loadCredential ( )
+int GaclManager::loadCredential()
 {
    edglog_fn("GaclManager::loadCredential");
-   GRSTgaclCred  *cred = NULL;
-   GRSTgaclEntry *entry = NULL;
-   GRSTgaclNamevalue *nv = NULL;
+   GRSTgaclCred *cred = 0;
+   GRSTgaclEntry *entry = 0;
+   GRSTgaclNamevalue *nv = 0;
    bool found = false;
-   char* rawname =(char*) rawCred.first.c_str();
-   char* rawvalue =(char*)  rawCred.second.c_str();
+   char* rawname = const_cast<char *>(rawCred.first.c_str());
+   char* rawvalue = const_cast<char *>(rawCred.second.c_str()); // the user's fqan
 
-   if (gaclAcl !=NULL) {
-      entry = gaclAcl-> firstentry ;
+   if (gaclAcl) {
+      entry = gaclAcl->firstentry;
       // scanning of the entries
-      while  (entry != NULL ) {
-         cred = entry->firstcred ;
+      while (entry) {
+         cred = entry->firstcred;
          // scanning of the credentials in the selected entry
-         while ( cred != NULL ) {
-            // credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
-#ifndef GRST_VERSION
-            // delegation 1
-            if ( strcmp( cred->type, (char*)credType.c_str()) == 0 ) {
-               // comparison between input and gacl credentials:
-               // nv =  < nv->name, nv->value>
-               if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_ANYUSER_CRED) == 0 ) {
-                  found = true;
-               } else {
-                  nv = cred->firstname;
-                  if (nv) {
-                     if (strcmp (rawname, nv->name ) == 0 ) {
-                        if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ) {
-                           found = compareFQAN(nv->value, rawvalue);
-                        } else {
-                           if ( strcmp (rawvalue, nv->value ) == 0) {
-                              found = true;
-                           }
-                        } // if(VOMS_CRED)
-                     } // if (name)
-                  } // if (nv)
-               } // if (ANY_CRED)
-            }
-#else
+         while (cred) {
             // delegation 2
+            if (strcmp(
+               (char*)credType.c_str(),
+               GaclManager::WMPGACL_ANYUSER_CRED) == 0)
             {
+               found = true;
+            } else if (strcmp(
+               (char*)credType.c_str(),
+               GaclManager::WMPGACL_PERSON_CRED) == 0) {
                GRSTgaclCred *cred_tmp;
 
-               // Creating a new grst gacl credential
                cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
+               GRSTgaclCredAddValue(cred_tmp, rawname, rawvalue);
 
-               // No need to add value if ANY-USER
-               if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_ANYUSER_CRED) != 0 ) {
-                  GRSTgaclCredAddValue(cred_tmp, rawname, rawvalue);
-               }
-
-               // Comparing the two credentials
                if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) {
                   found = true;
                }
 
-               // Releasing allocated credential memory
                GRSTgaclCredFree(cred_tmp);
+            } else if (strcmp(
+               (char*)credType.c_str(),
+               GaclManager::WMPGACL_VOMS_CRED) == 0)
+            { // Comparing the two fqans, using wildards
+               if (compareFQAN(string(cred->auri), string(rawvalue))) {
+                  found = true;
+               }
             }
-#endif
-            if ( !found ) {
-               cred = (GRSTgaclCred*) cred->next;
+
+            if (!found) {
+               cred = (GRSTgaclCred *)cred->next;
             } else {
                break;
             }
          } // while(cred)
 
-         if ( !found ) {
-            entry = (GRSTgaclEntry*) entry->next;
+         if (!found) {
+            entry = (GRSTgaclEntry *)entry->next;
          } else {
             break;
          }
-      } //while(entry)
-   } //if
-   else {
-      edglog(debug) << "ACL is null" << "\n";
+      } // while(entry)
+   } else {
+      edglog(debug) << "ACL is null\n";
    }
 
-   if (entry != NULL ) {
+   if (entry) {
       // main pointers
       gaclEntry = entry ;
       gaclCred = cred ;
@@ -921,59 +844,61 @@ int GaclManager::loadCredential ( )
       gaclAllowed = entry->allowed ;
       gaclDenied = entry->denied;
    }
-   // resturn values
    if (found) {
-      return WMPGACL_SUCCESS ;
+      return WMPGACL_SUCCESS;
    } else {
-      return WMPGACL_ERROR ;
+      return WMPGACL_ERROR;
    }
 };
+
 /*
  * creates the credential
 */
-void GaclManager::newCredential ( )
+void GaclManager::newCredential()
 {
-   string errmsg = "";
    // <rawname><rawvalue></rawname>
-   char* rawname =(char*) rawCred.first.c_str();
-   char* rawvalue =(char*)  rawCred.second.c_str();
+   char* rawname = const_cast<char*>(rawCred.first.c_str());
+   char* rawvalue = const_cast<char*>(rawCred.second.c_str());
    // new acl
-   if ( gaclAcl  == NULL ) {
-      GRSTgaclInit ( ) ;
-      gaclAcl = GRSTgaclAclNew ();
+   if (!gaclAcl) {
+      GRSTgaclInit();
+      gaclAcl = GRSTgaclAclNew();
    }
-   if ( gaclAcl == NULL ) {
-      errmsg = "Fatal error: unable to create new gacl";
+   if (!gaclAcl) {
+      string const errmsg("Fatal error: unable to create new gacl");
       throw GaclException (__FILE__, __LINE__,  "newCredential (WMPgaclCredType,string, string, string)" ,
                            WMS_GACL_ERROR, errmsg);
    }
    // new entry
    gaclEntry = GRSTgaclEntryNew ( );
    if ( gaclEntry == NULL ) {
-      errmsg ="Fatal error; unable to create a new gacl entry";
-      throw GaclException (__FILE__, __LINE__,  "newCredential (WMPgaclCredType, string, string, string)" ,
+      string errmsg = "Fatal error; unable to create a new gacl entry";
+      throw GaclException(__FILE__, __LINE__,  "newCredential (WMPgaclCredType, string, string, string)" ,
                            WMS_GACL_ERROR, errmsg);
    }
    gaclCred = GRSTgaclCredNew ((char *)credType.c_str());
-   if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_ANYUSER_CRED) != 0 ) {
+   if (strcmp(
+      (char*)credType.c_str(),
+      GaclManager::WMPGACL_ANYUSER_CRED) != 0)
+   {
       GRSTgaclCredAddValue(gaclCred,rawname, rawvalue);
    }
-   if ( gaclCred == NULL ) {
-      errmsg ="Fatal error: unable to create new credential";
+   if (!gaclCred) {
+      string errmsg = "Fatal error: unable to create new credential";
       throw GaclException (__FILE__, __LINE__,  "newCredential (string, string, string)" ,
                            WMS_GACL_ERROR, errmsg );
    }
    // new user
-   gaclUser  = GRSTgaclUserNew (gaclCred) ;
-   if ( gaclUser == NULL ) {
-      errmsg ="Fatal error: unable to create new user credential";
-      throw GaclException (__FILE__, __LINE__,  "newCredential (string, string, string)" ,
+   gaclUser = GRSTgaclUserNew(gaclCred);
+   if (!gaclUser) {
+      string const errmsg("Fatal error: unable to create new user credential");
+      throw GaclException(__FILE__, __LINE__, "newCredential (string, string, string)" ,
                            WMS_GACL_ERROR, errmsg);
    }
    // adds the created credential to the entry
-   GRSTgaclEntryAddCred (gaclEntry, gaclCred);
+   GRSTgaclEntryAddCred(gaclEntry, gaclCred);
    // adds the entry to the gacl
-   GRSTgaclAclAddEntry (gaclAcl, gaclEntry);
+   GRSTgaclAclAddEntry(gaclAcl, gaclEntry);
 };
 
 }}}}

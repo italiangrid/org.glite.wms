@@ -47,7 +47,6 @@ void checkProxyValidity(const std::string& proxypath);
 void checkProxyExistence(const std::string& proxypath, const std::string& jobid);
 std::vector<std::pair<std::string, std::string> > parseFQAN(const std::string& fqan);
 bool checkJobDrain();
-void setGridsiteJobGacl(const std::string& jobid);
 void setGridsiteJobGacl(std::vector<std::string> &jobids);
 
 class WMPAuthorizer
@@ -55,11 +54,6 @@ class WMPAuthorizer
 public:
    WMPAuthorizer(std::string const& operation);
    WMPAuthorizer(std::string const& operation, std::string const& proxycert);
-   WMPAuthorizer(
-      std::string const& action,
-      std::string const& userproxypath,
-      std::string const& userdn);
-
    ~WMPAuthorizer() { }
 
    std::vector<std::string> getFQANs();

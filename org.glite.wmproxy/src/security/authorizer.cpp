@@ -19,6 +19,7 @@ limitations under the License. */
 // Giuseppe Avellino
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <pwd.h> // to build on IA64
@@ -113,21 +114,9 @@ getNotBefore(const string& pxfile)
 }
 
 auth_info
-authorize_and_map(
-   std::string const& action,
-   std::string const& delegatedproxy,
-   std::string const& dn)
-{
-   checkProxyValidity(delegatedproxy);
-   WMPAuthorizer auth(action, delegatedproxy, dn);
-   auth.authorize(); // throws
-   return auth_info(auth.getUserId(), auth.getUserGroup(), auth.getFQANs());
-}
-
-auth_info
 authorize_and_map(std::string const& action, std::string const& delegatedproxy)
 {
-   edglog_fn("WMPAuthorizer::authorize_and_map(std::string const& action, std::string const& delegatedproxy)");
+   edglog_fn("WMPAuthorizer::authorize_and_map()");
    checkProxyValidity(delegatedproxy);
    WMPAuthorizer auth(action, delegatedproxy);
    auth.authorize(); // throws
@@ -297,7 +286,7 @@ do_authZ(std::string const& action, std::string const& delegation_id)
 {
    std::string dn = wmputilities::getDN_SSL();
    std::string delegatedproxy = getDelegatedProxyPath(delegation_id, dn);
-   return authorize_and_map(action, delegatedproxy, dn);
+   return authorize_and_map(action, delegatedproxy);
 }
 
 std::string
@@ -331,7 +320,7 @@ WMPAuthorizer::map_user_lcmaps()
    // Send user mapping request to LCMAPS
    int mapcounter = 0; // single mapping result
    int fqan_num = 1; // N.B. Considering only one FQAN inside the list
-   char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
+   char* fqan_list[1]; // N.B. Considering only one FQAN inside the list
    fqan_list[0] = const_cast<char*>(fqans_.front().c_str());
    retval = lcmaps_return_account_without_gsi(const_cast<char*>(userdn_.c_str()),
             fqan_list, fqan_num, mapcounter, &plcmaps_account);
@@ -389,7 +378,7 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
       string errmsg = "";
 
       // Creates a gacl file in the job directory
-      WMPgaclPerm permission =
+      WMPgaclPerm permissions =
          GaclManager::WMPGACL_LIST |
          GaclManager::WMPGACL_WRITE |
          GaclManager::WMPGACL_READ;
@@ -404,12 +393,10 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
          gacl.addEntry(GaclManager::WMPGACL_PERSON_TYPE, user_dn.c_str());
          // allow permission
          gacl.allowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-                              user_dn.c_str(), permission);
+                              user_dn.c_str(), permissions);
          gacl.saveGacl();
       } catch (wmputilities::GaclException& exc) {
-         errmsg = "internal server error: unable to set the gacl user properties";
-         errmsg += "\n(please contact server administrator)\n";
-         errmsg += "please report the following message:\n" ;
+         errmsg = "internal server error: unable to set the gacl permissions to user dn: ";
          errmsg += exc.what();
          throw wmputilities::GaclException(__FILE__, __LINE__, "setGridsiteJobGacl()",
                                            wmputilities::WMS_GACL_FILE, errmsg);
@@ -417,8 +404,8 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
       ifstream infile(filename.c_str());
       if (!infile.good()) {
          throw wmputilities::FileSystemException(__FILE__, __LINE__,
-                                                 "setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
-                                                 "input file\n(please contact server administrator)");
+                                           "setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
+                                           "input file\n(please contact server administrator)");
       }
       string gacltext = "";
       string s;
@@ -437,47 +424,12 @@ setGridsiteJobGacl(std::vector<std::string> &jobids)
          outfile.open(filename.c_str(), ios::out);
          if (!outfile.good()) {
             throw wmputilities::FileSystemException(__FILE__, __LINE__,
-                                                    "setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
-                                                    "output file\n(please contact server administrator)");
+                                           "setGridsiteJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
+                                           "output file\n(please contact server administrator)");
          }
          outfile<<gacltext;
          outfile.close();
       }
-   }
-}
-
-void
-setGridsiteJobGacl(const string& jobid)
-{
-   edglog_fn("WMPAuthorizer::setGridsiteJobGacl string");
-
-   string user_dn = wmputilities::getDN_SSL(); // taken from ssl
-
-   // Creates a gacl file in the job directory
-   WMPgaclPerm permission =
-      GaclManager::WMPGACL_LIST |
-      GaclManager::WMPGACL_WRITE |
-      GaclManager::WMPGACL_READ;
-
-   // main user job directory
-   string filename = wmputilities::getJobDirectoryPath(jobid) + "/"
-                     + GaclManager::WMPGACL_DEFAULT_FILE;
-
-   try {
-      GaclManager gacl(filename, true);
-      // adds the new user credential entry
-      gacl.addEntry(GaclManager::WMPGACL_PERSON_TYPE, user_dn.c_str());
-      // allow permission
-      gacl.allowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-                           user_dn.c_str(), permission);
-      gacl.saveGacl( );
-   } catch (wmputilities::GaclException& exc) {
-      string errmsg = "internal server error: unable to set the gacl user properties";
-      errmsg += " (please contact server administrator)\n";
-      errmsg += "please report the following message:\n" ;
-      errmsg += exc.what ( );
-      throw wmputilities::GaclException(__FILE__, __LINE__, "setGridsiteJobGacl()",
-                                        wmputilities::WMS_GACL_FILE, errmsg);
    }
 }
 
@@ -590,15 +542,6 @@ WMPAuthorizer::WMPAuthorizer(std::string const& action, std::string const& userp
    VOMSAuthN authn(userproxypath);
    userdn_ = authn.getDN();
    fqans_ = authn.getFQANs();
-}
-
-WMPAuthorizer::WMPAuthorizer(
-   std::string const& action,
-   std::string const& userproxypath,
-   std::string const& userdn)
-   : uid_(0), gid_(0), userdn_(userdn), action_(action), userproxypath_(userproxypath)
-{
-   fqans_ = VOMSAuthN(userproxypath).getFQANs();
 }
 
 std::vector<std::string>

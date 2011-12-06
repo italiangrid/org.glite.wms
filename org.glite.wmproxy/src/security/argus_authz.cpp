@@ -351,15 +351,15 @@ argus_authZ(
    }
 
    pep_setoption(pep, PEP_OPTION_LOG_LEVEL, PEP_LOGLEVEL_INFO); // PEP_LOGLEVEL_DEBUG
-   //char* log_dir = 0;
-   //log_dir = getenv("GLITE_LOCATION_LOG");
-   //FILE* log = 0;
-   //if (!log_dir) {
-   //   log = fopen("/var/log/glite/argus.log", "w");
-   //} else {
-   //   log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "w");
-   //}
-   //pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
+   char* log_dir = 0;
+   log_dir = getenv("WMS_LOCATION_LOG");
+   FILE* log = 0;
+   if (!log_dir) {
+      log = fopen("/var/log/glite/argus.log", "w");
+   } else {
+      log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "w");
+   }
+   pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
 
    // endpoint urls
    pep_error_t pep_rc;

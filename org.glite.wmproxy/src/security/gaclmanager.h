@@ -66,7 +66,7 @@ public:
    *  @param create creates a new file if it is true
    *  @throw GaclException if  the "create" input paramater is set to false and the gacl file doesn't exist
    */
-   GaclManager (const std::string& file, const bool& create=false );
+   GaclManager (const std::string& file, bool create=false);
    /**
    * destructor
    */

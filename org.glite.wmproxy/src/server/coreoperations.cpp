@@ -456,7 +456,9 @@ setJobFileSystem(
    wmputilities::fileCopy(delegatedproxy, proxybak);
 
    // Creating gacl file in the private job directory for eventual later use by htcp
-   security::setGridsiteJobGacl(jobid);
+   std::vector<std::string> jobid_v;
+   jobid_v.push_back(jobid);
+   security::setGridsiteJobGacl(jobid_v);
 
    // Creating sub jobs directories
    if (jobids.size()) {
