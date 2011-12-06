@@ -19,7 +19,6 @@ limitations under the License. */
 // Giuseppe Avellino
 
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <string>
 #include <pwd.h> // to build on IA64
@@ -304,8 +303,13 @@ WMPAuthorizer::map_user_lcmaps()
    int retval;
 
    setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
+   std::string log_file("/var/log/glite/lcmaps.log");
+   char* log_dir = getenv("WMS_LOCATION_LOG");
+   if (log_dir) {
+      log_file = std::string(log_dir) + "/lcmaps.log";
+   }
    lcmaps_init_and_logfile(
-      "/var/log/glite/lcmaps.log",
+      const_cast<char *>(log_file.c_str()),
       0 /* no FILE* provided */,
       (unsigned short)1 /* user logging */);
    lcmaps_account_info_t plcmaps_account;
