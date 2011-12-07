@@ -1,13 +1,12 @@
 Summary: Python libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-python
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: noarch
 BuildRequires: python-fpconst, PyXML, SOAPpy, python-devel
 Requires: python-fpconst, PyXML, SOAPpy
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -25,7 +24,7 @@ Python libraries for the WM Proxy service
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -55,5 +54,9 @@ rm -rf %{buildroot}
 %{python_sitearch}/*.pyc
 %{python_sitearch}/*.pyo
 
+
+
 %changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
  
