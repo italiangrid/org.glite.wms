@@ -177,18 +177,18 @@ setSOAPFault(struct soap *soap, int code, const string& method_name, time_t time
              int error_code, const string& description, vector<string> stack)
 {
 
-   edglog(debug) <<"------------------------------- Fault Description "
+   edglog(info) <<"------------------------------- Fault description "
                  "--------------------------------" <<endl;
-   edglog(debug)<<"Method: "<<method_name<<endl;
-   edglog(debug)<<"Code: "<<boost::lexical_cast<std::string>(code)<<endl;
-   edglog(debug)<<"Description: "<<description<<endl;
+   edglog(info)<<"Method: "<<method_name<<endl;
+   edglog(info)<<"Code: "<<boost::lexical_cast<std::string>(code)<<endl;
+   edglog(info)<<"Description: "<<description<<endl;
    edglog(debug)<<"Stack: "<<endl;
    std::string error_stack;
    for (unsigned int i = 0; i < stack.size(); i++) {
       error_stack += std::string(stack[i]) + '\n';
    }
    edglog(debug)<< error_stack << endl;
-   edglog(debug) <<"----------------------------------------"
+   edglog(info) <<"----------------------------------------"
                  "------------------------------------------" <<endl;
 
    if (code == SOAP_TYPE__delegationns__DelegationException) {
