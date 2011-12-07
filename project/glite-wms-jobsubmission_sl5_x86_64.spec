@@ -1,13 +1,12 @@
 Summary: Condor-G connector for the Workload Management System
 Name: glite-wms-jobsubmission
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: Applications/Internet
-BuildArch:
+BuildArch: %{_arch}
 Requires: glite-wms-configuration
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -29,7 +28,7 @@ Condor-G connector for the Workload Management System
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -134,4 +133,10 @@ Condor-G connector for the WMS (Development files)
 %dir /usr/include/glite/wms/
 %dir /usr/include/glite/wms/jobsubmission/
 /usr/include/glite/wms/jobsubmission/SubmitAdapter.h
+
+
+
+%changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
