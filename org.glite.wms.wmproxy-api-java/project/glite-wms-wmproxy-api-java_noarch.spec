@@ -1,13 +1,12 @@
 Summary: Java libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-java
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: noarch
 Requires: vomsjapi
 Requires: emi-trustmanager-axis
 Requires: emi-delegation-java
@@ -24,7 +23,7 @@ Java libraries for the WM Proxy service
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -63,7 +62,6 @@ rm -rf %{buildroot}
 %dir /usr/share/doc/glite-wms-wmproxy-api-java-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-api-java-%{version}/LICENSE
 
-%changelog
 
 
 %package doc
@@ -90,4 +88,9 @@ Documentation files for dealing with Job Description Language
 %doc %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/*.html
 %dir %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/
 %doc %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/*.html
+
+
+%changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
