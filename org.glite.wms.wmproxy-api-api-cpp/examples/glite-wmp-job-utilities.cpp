@@ -286,22 +286,10 @@ const char *str2md5base64(const char *s)
 */
 string* makeAutomaticDelegation (ConfigContext *cfs, const bool &verbose){
 
-	struct hostent* he;
-    	struct timeval tv;
-
-	int skip;
-	char hostname[200]; /* used to hold string for encrypt */
+	char hostname[1000]; /* used to hold string for encrypt */
 	char *del_id ;
 	//automatic generation of delegation string
 	gethostname(hostname, 100);
-	he = gethostbyname(hostname);
-	assert(he->h_length > 0);
-	gettimeofday(&tv, NULL);
-	srandom(tv.tv_usec);
-    	skip = strlen(hostname);
-    	skip += sprintf(hostname + skip, "-IP:0x%x-pid:%d-rnd:%d-time:%d:%d",
-		    *((int*)he->h_addr_list[0]), getpid(), (int)random(),
-		    (int)tv.tv_sec, (int)tv.tv_usec);
 	del_id = (char*)str2md5base64(hostname);
 	if (verbose){
 		cout << "\nautomatic proxy delegation ....\n";
