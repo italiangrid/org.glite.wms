@@ -1,13 +1,12 @@
 Summary: C/C++ libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-cpp
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
 URL: http://glite.cern.ch/
-Packager: WMS group <wms-support@lists.infn.it>
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool, doxygen
 BuildRequires: %{!?extbuilddir: glite-wms-utils-exception-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} gsoap-devel
@@ -23,7 +22,7 @@ C/C++ libraries for the WM Proxy service
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -65,7 +64,6 @@ rm -rf %{buildroot}
 /usr/lib64/libglite_wms_wmproxy_api_cpp.so.0
 /usr/lib64/libglite_wms_wmproxy_api_cpp.so.0.0.0
 
-%changelog
 
 %package devel
 Summary: C/C++ libraries for the WM Proxy service (development files)
@@ -102,4 +100,10 @@ Documentation files for the WM Proxy service API
 %doc %{_docdir}/%{name}/html/*.css
 %doc %{_docdir}/%{name}/html/*.png
 %doc %{_docdir}/%{name}/html/*.gif
+
+
+
+%changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
