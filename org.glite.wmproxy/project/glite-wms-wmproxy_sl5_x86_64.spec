@@ -1,13 +1,12 @@
 Summary: Workload Management Proxy service
 Name: glite-wms-wmproxy
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: Applications/Internet
-BuildArch:
+BuildArch: %{_arch}
 Requires: mod_fcgid
 Requires: httpd
 Requires: mod_ssl
@@ -101,6 +100,10 @@ fi
 %{_libdir}/libglite_wms_wmproxy_*.so
 /usr/libexec/glite_wms_wmproxy_dirmanager
 
+
+
 %changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
  
