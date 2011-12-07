@@ -1,13 +1,12 @@
 Summary: Helper module for the Workload Management System
 Name: glite-wms-helper
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-broker-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp,} libtool
 BuildRequires: %{!?extbuilddir: glite-wms-matchmaking-devel,} boost-devel
@@ -24,7 +23,7 @@ Helper module for the Workload Management System
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -69,7 +68,6 @@ rm -rf %{buildroot}
 /usr/lib64/libglite_wms_helper*.so.0.0.0
 /usr/lib64/libglite_wms_helper*.so.0
 
-%changelog
 
 
 
@@ -97,4 +95,9 @@ Development files for the WMS helper module
 /usr/lib64/pkgconfig/wms-helper-broker-ism.pc
 /usr/lib64/pkgconfig/wms-helper.pc
 /usr/lib64/libglite_wms_helper*.so
+
+
+%changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
