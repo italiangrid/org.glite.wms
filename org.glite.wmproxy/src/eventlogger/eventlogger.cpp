@@ -245,7 +245,8 @@ WMPEventLogger::incrementSequenceCode()
 
 char *
 WMPEventLogger::registerProxyRenewal(const string& proxy_path,
-                                     const string& my_proxy_server)
+                                     const string& my_proxy_server,
+                                     glite::jobid::JobId const *id)
 {
    GLITE_STACK_TRY("registerProxyRenewal()");
    edglog_fn("WMPEventLogger::registerProxyRenewal");
@@ -255,14 +256,19 @@ WMPEventLogger::registerProxyRenewal(const string& proxy_path,
 
    char *renewal_proxy_path = NULL;
    int i = LOG_RETRY_COUNT;
-   // calling glite_renewal_RegisterProxy (sleep)
+   std::string jobid;
+   if (id) {
+      jobid = id->toString();
+   } else {
+      jobid = id_->toString();
+   }
 
    int register_result=1;
    for (; (i > 0) && register_result; i--) {
       register_result = glite_renewal_RegisterProxy(
                            (char*)proxy_path.c_str(),
                            (char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
-                           id_->toString().c_str(), EDG_WLPR_FLAG_UNIQUE,
+                           jobid.c_str(), EDG_WLPR_FLAG_UNIQUE,
                            &renewal_proxy_path);
       if (register_result) {
          edglog(severe)

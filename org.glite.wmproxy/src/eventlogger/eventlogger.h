@@ -81,7 +81,8 @@ public:
 
    // Proxy renewal
    char * registerProxyRenewal(const std::string& proxy_path,
-                               const std::string& my_proxy_server);
+                               const std::string& my_proxy_server,
+                               glite::jobid::JobId const *id = 0);
    void unregisterProxyRenewal();
 
    // Register methods

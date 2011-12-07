@@ -711,17 +711,25 @@ regist(
    // It is used also for attribute inheritance
    //dag->toString(ExpDagAd::SUBMISSION);
 
-   // Registering for Proxy renewal
-   char* renewalproxy = 0;
-   if (dag->hasAttribute(JDL::MYPROXY)) {
-      edglog(debug)<<"Registering Proxy renewal..."<<endl;
-      renewalproxy = wmplogger.registerProxyRenewal(delegatedproxy,
-                     (dag->getAttribute(WMPExpDagAd::MYPROXY_SERVER)));
+   // Registering subjobs for proxy renewal (to be unregistered
+   // by LM and ICE)
+   std::vector<string>::const_iterator const end(jobids.end());
+   for (std::vector<string>::const_iterator it = jobids.begin;
+      it != end; ++it) {
+
+     char* renewalproxypath = 0;
+     if (dag->hasAttribute(JDL::MYPROXY)) {
+        edglog(debug)<<"Registering Proxy renewal for subjob " << *it << endl;
+        renewalproxy = wmplogger.registerProxyRenewal(delegatedproxy,
+                       dag->getAttribute(WMPExpDagAd::MYPROXY_SERVER),
+                        *it);
+        edglog(debug) << "Registered proxy path: " << renewalproxypath << endl;
+      
    }
 
    // Creating private job directory with delegated Proxy
    // Sub jobs directory MUST be created now
-   setJobFileSystem(uid, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
+   setJobFileSystem(uid, delegatedproxy, stringjid, jobids, jdl, renewalproxypath);
 
    string dagjdl = dag->toString(ExpDagAd::MULTI_LINES);
    pair<string, string> returnpair(pair<string, string>(stringjid,  dagjdl));
