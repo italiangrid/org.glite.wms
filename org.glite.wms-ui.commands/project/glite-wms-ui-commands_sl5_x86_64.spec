@@ -1,13 +1,12 @@
 Summary: Command line user interface for the WMS
 Name: glite-wms-ui-commands
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, libtool
 BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp, glite-jdl-api-cpp-devel,} boost-devel
@@ -32,7 +31,7 @@ Command line user interface for the WMS
 %prep
  
 
-%setup -c
+%setup -c -q
 
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
@@ -70,5 +69,9 @@ rm -rf %{buildroot}
 %doc /usr/share/doc/glite-wms-ui-commands-%{version}/LICENSE
 %doc /usr/share/man/man1/*.1.gz
 
+
 %changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
+
  
