@@ -1,13 +1,12 @@
 Summary: Integrated CREAM Environment
 Name: glite-wms-ice
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
 URL: http://glite.cern.ch/
-Packager: WMS group <wms-support@lists.infn.it>
 Group: Applications/Internet
-BuildArch:
+BuildArch: %{_arch}
 Requires: glite-wms-configuration
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -94,5 +93,8 @@ fi
 %{_libdir}/libglite_wms_*.so.0
 %{_libdir}/libglite_wms_*.so
 
+
 %changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
