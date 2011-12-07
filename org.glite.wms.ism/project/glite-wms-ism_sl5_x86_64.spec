@@ -1,13 +1,12 @@
 Summary: Information Supermarket for the Workload Management System
 Name: glite-wms-ism
-Version:
-Release:
+Version: %{extversion}
+Release: %{extage}.%{extdist}
 License: Apache Software License
 Vendor: EMI
-Packager: WMS group <wms-support@lists.infn.it>
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
-BuildArch:
+BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-wms-utils-classad-devel,} libtool
 BuildRequires: boost-devel, classads-devel
@@ -66,7 +65,6 @@ rm -rf %{buildroot}
 %{_libdir}/libglite_wms_ism*.so.0.0.0
 %{_libdir}/libglite_wms_ism*.so.0
 
-%changelog
 
 %package devel
 Summary: Development files for the WMS information superkmarket
@@ -90,4 +88,7 @@ Development files for the WMS information superkmarket
 %{_libdir}/libglite_wms_*.so
 
 
+%changelog
+* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+- %{extclog}
 
