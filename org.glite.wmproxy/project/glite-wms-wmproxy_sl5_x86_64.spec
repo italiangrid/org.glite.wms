@@ -64,8 +64,6 @@ rm -rf %{buildroot}
 %post
 /sbin/ldconfig
 /sbin/chkconfig --add glite-wms-wmproxy
-chown root.root /usr/libexec/glite_wms_wmproxy_dirmanager
-chmod u+s /usr/libexec/glite_wms_wmproxy_dirmanager
 
 %preun
 if [ $1 -eq 0 ] ; then
@@ -87,18 +85,15 @@ fi
 %config(noreplace) /etc/glite-wms/wmproxy_logrotate.conf.template
 %config(noreplace) /etc/lcmaps/lcmaps.db.template
 /etc/rc.d/init.d/glite-wms-wmproxy
-/usr/sbin/glite_wms_wmproxy_load_monitor
-/usr/bin/glite_wms_wmproxy_server
-/usr/bin/glite-wms-wmproxy-purge-proxycache
-#/usr/bin/glite-wms-wmproxy-gacladmin
-#/usr/bin/glite-wms-wmproxy-purge-proxycache-binary
-#/usr/bin/glite-wms-wmproxy-gridmapfile2gacl
+%attr(4755, -, -) /usr/sbin/glite_wms_wmproxy_load_monitor
+%attr(0755, -, -) /usr/bin/glite_wms_wmproxy_server
+%attr(0755, -, -) /usr/bin/glite-wms-wmproxy-purge-proxycache
 %dir /usr/share/doc/glite-wms-wmproxy-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-%{version}/LICENSE
 %{_libdir}/libglite_wms_wmproxy_*.so.0.0.0
 %{_libdir}/libglite_wms_wmproxy_*.so.0
 %{_libdir}/libglite_wms_wmproxy_*.so
-/usr/libexec/glite_wms_wmproxy_dirmanager
+%attr(4755, -, -) /usr/libexec/glite_wms_wmproxy_dirmanager
 
 
 
