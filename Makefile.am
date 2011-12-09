@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3.28.1.2.2  2011/12/09 15:22:11  pandreet
+#       man pages for jc+lm
+#
 #       Revision 1.3.28.1.2.1  2011/06/24 14:16:20  pandreet
 #       New packaging style for jobsubmission
 #
@@ -42,7 +45,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@PVER@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = config src test interface 
+SUBDIRS = config src test interface doc
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

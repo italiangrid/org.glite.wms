@@ -59,7 +59,7 @@ sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-common
 mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc
 rm %{buildroot}/usr/lib64/*.la
 chrpath --delete %{buildroot}/usr/lib64/libglite_wms_jss_*.so.0.0.0
-
+strip -s %{buildroot}/usr/lib64/libglite_wms_jss_*.so.0.0.0
 
 %clean
  
@@ -85,6 +85,7 @@ fi
 /usr/bin/glite-wms-job_controller
 /usr/libexec/glite-wms-lm-job_status
 /usr/libexec/glite-wms-clean-lm-recycle.sh
+%doc /usr/share/man/man1/glite-wms-*.1.gz
 
 %changelog
 

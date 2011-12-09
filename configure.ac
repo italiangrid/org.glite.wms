@@ -60,6 +60,7 @@ AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 
 GLITE_CHECK_LIBDIR
 GLITE_CHECK_INITDIR
+AC_GLITE_DOCBOOK
 
 AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
@@ -113,6 +114,7 @@ AC_CONFIG_FILES([src/logmonitor/processer/Makefile])
 AC_CONFIG_FILES([src/daemons/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([doc/Makefile])
 
 AC_OUTPUT
 
