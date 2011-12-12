@@ -713,18 +713,21 @@ regist(
 
    // Registering subjobs for proxy renewal (to be unregistered
    // by LM and ICE)
+   char* renewalproxypath = 0;
    std::vector<string>::const_iterator const end(jobids.end());
-   for (std::vector<string>::const_iterator it = jobids.begin;
-      it != end; ++it) {
-
-     char* renewalproxypath = 0;
+   for (std::vector<string>::const_iterator it = jobids.begin();
+      it != end; ++it)
+   {
      if (dag->hasAttribute(JDL::MYPROXY)) {
+        JobId id(*it);
         edglog(debug)<<"Registering Proxy renewal for subjob " << *it << endl;
-        renewalproxy = wmplogger.registerProxyRenewal(delegatedproxy,
+        renewalproxypath = wmplogger.registerProxyRenewal(delegatedproxy,
                        dag->getAttribute(WMPExpDagAd::MYPROXY_SERVER),
-                        *it);
-        edglog(debug) << "Registered proxy path: " << renewalproxypath << endl;
-      
+                       &id);
+        if (renewalproxypath) {
+           edglog(debug) << "Registered proxy path: " << renewalproxypath << endl;
+        }
+     }
    }
 
    // Creating private job directory with delegated Proxy
