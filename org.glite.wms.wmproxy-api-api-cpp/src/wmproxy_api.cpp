@@ -74,10 +74,25 @@ void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
         jsdl__JobDescription_USCOREType *JobDescription;
         jsdl__JobIdentification_USCOREType *JobIdentification;
         jsdl__Application_USCOREType *Application;
+#if (GSOAP_VERSION_NUM > 020713)
+        if (jsdl != NULL){
+                JobDescription = jsdl->JobDescription;
+                JobIdentification = JobDescription->JobIdentification;
+                Application = JobDescription->Application;
+        } else {
+                 cout << "JSDL is empty" << endl;
+        }
+        // Print out JOB IDENTIFICATION
+        cout << "JobIdentification JobName " << JobIdentification->JobName->c_str() << endl;
 
+        // Print out APPLICATION
+        cout << "Application ApplicationName " << Application->ApplicationName->c_str() << endl;
+        cout << "Application ApplicationVersion " << Application->ApplicationVersion->c_str() << endl;
+        cout << "Application ApplicationDescription " << Application->Description->c_str() << endl;
+#else
         if (jsdl != NULL){
                 JobDescription = jsdl->jsdl__JobDescription;
-                JobIdentification = JobDescription->jsdl__JobIdentification;;
+                JobIdentification = JobDescription->jsdl__JobIdentification;
                 Application = JobDescription->jsdl__Application;
         } else {
                  cout << "JSDL is empty" << endl;
@@ -89,6 +104,7 @@ void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
         cout << "Application ApplicationName " << Application->jsdl__ApplicationName->c_str() << endl;
         cout << "Application ApplicationVersion " << Application->jsdl__ApplicationVersion->c_str() << endl;
         cout << "Application ApplicationDescription " << Application->jsdl__Description->c_str() << endl;
+#endif
 }
 
 
