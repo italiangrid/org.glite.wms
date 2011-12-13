@@ -27,12 +27,15 @@ limitations under the License.
   <property name="docs-installdir" value="${dist.location}/usr/share/doc/${pkg-name}"/>
   <property name="pkg-jarname" value="${pkg-name}.jar"/>
 
-  <property name="axis.location" value="/usr/local/axis1.4"/>
   <property name="util-java.location" value="${stage.location}"/>
   <property name="org.glite.wms.wsdl.location" value="${stage.location}"/>
 
+  <path id="axis2.classpath">
+    <fileset dir="/usr/share/java/axis2" includes="**/*.jar"/>
+  </path>
+  
   <path id="compile.classpath">
-    <fileset dir="${axis.location}/lib" includes="**/*.jar" />
+    <path refid="axis2.classpath"/>
     <fileset dir="${util-java.location}/usr/share/java">
         <include name="trustmanager.jar"/>
         <include name="trustmanager-axis.jar"/>
@@ -57,27 +60,41 @@ limitations under the License.
   </target>
   
   <target name="compile" depends="check" unless="alreadyCompiled">
-    <taskdef name="wsdl2java" 
-             classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
-             loaderref="axis" >
-      <classpath>
-        <fileset dir="${axis.location}/lib" includes="**/*.jar" />
-      </classpath>
-    </taskdef>
+	
+	<mkdir dir="autogen/src" />
+	
+	<macrodef name="buildWSDL">
+      <attribute name="serviceWSDL"/>
+      <attribute name="resourceDir"/>
+      <attribute name="packageName"/>
+      <attribute name="mapping"/>
+      <attribute name="portName"/>
+      <attribute name="binding"/>
+      <attribute name="options" default="-s -ss -ssi -sd -sp -uw -g"/>
+      <sequential>
+        <echo>Building port @{portName} ....</echo>
+        <java classname="org.apache.axis2.wsdl.WSDL2Java" fork="true">
+          <arg line="-uri @{serviceWSDL} -o autogen -R @{resourceDir} -S src -p @{packageName} -ns2p @{mapping} -pn @{portName} -d @{binding} @{options}"/>
+          <classpath refid="axis2.classpath"/>
+        </java>
+      </sequential>
+    </macrodef>
+    
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+               resourceDir="resources/wmproxy"
+               packageName="org.glite.wms.wmproxy"
+               mapping="http://www.gridsite.org/namespaces/delegation-2=org.glite.ce.security.delegation"
+               portName="WMProxy_PortType"
+               binding="adb"/>
 
-    <wsdl2java url="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
-               output="src/autogen"
-               deployscope="application"
-               serverSide="no"
-	           debug="no"
-               skeletonDeploy="false"
-               noimports="false"
-               verbose="false"
-               typeMappingVersion="1.2"
-               testcase="no"
-	           namespacemappingfile="project/NStoPkg.properties"/>
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+               resourceDir="resources/delegation"
+               packageName="org.gridsite.www.namespaces.delegation_2"
+               mapping="http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
+               portName="WMProxyDelegation2_PortType"
+               binding="adb"/>    
 
-    <javac srcdir="src" destdir="bin/classes" source="1.5" 
+    <javac srcdir="autogen/src" destdir="bin/classes" source="1.5" 
            target="1.5" debug="true" debuglevel="lines,vars,source">
       <classpath refid="compile.classpath" />
     </javac>
@@ -116,8 +133,7 @@ limitations under the License.
             <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
             <classpath refid="compile.classpath"/>
         <sourcepath>
-            <pathelement path="src"/>
-            <pathelement path="src/autogen"/>
+            <pathelement path="autogen/src"/>
         </sourcepath>
     </javadoc>
   </target>
@@ -142,6 +158,7 @@ limitations under the License.
     <delete dir="lib" />
     <delete dir="bin" />
     <delete dir="src/autogen" />
+    <delete dir="autogen"/>
     <delete dir="doc/autogen" />		
   </target>
   

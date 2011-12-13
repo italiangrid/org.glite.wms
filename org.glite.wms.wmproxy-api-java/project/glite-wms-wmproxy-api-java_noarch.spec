@@ -8,10 +8,10 @@ URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: noarch
 Requires: vomsjapi
-Requires: emi-trustmanager-axis
+#Requires: emi-trustmanager-axis
 Requires: emi-delegation-java
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface, emi-delegation-java,} ant
-BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, vomsjapi,} axis1.4
+BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, vomsjapi,} axis2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -46,8 +46,6 @@ else
   cp %{extbuilddir}/usr/share/java/*.jar %{buildroot}/usr/share/java
   mkdir -p %{buildroot}/usr/share/doc/glite-wms-wmproxy-api-java-%{version}
   cp %{extbuilddir}/usr/share/doc/glite-wms-wmproxy-api-java-%{version}/LICENSE %{buildroot}/usr/share/doc/glite-wms-wmproxy-api-java-%{version}
-  #mkdir -p %{buildroot}/%{_javadocdir}/%{name}
-  #cp -R %{extbuilddir}/usr/share/doc/glite-wms-wmproxy-api-java/html %{buildroot}/%{_javadocdir}/%{name}
   mkdir -p %{buildroot}/%{_javadocdir}/%{name}
   ln -s %{extbuilddir}/usr/share/doc/glite-wms-wmproxy-api-java/html %{buildroot}/%{_javadocdir}/%{name}/html
 fi
