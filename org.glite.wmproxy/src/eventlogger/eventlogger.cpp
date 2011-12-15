@@ -356,9 +356,8 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
       }
    }
    if (register_result) {
-      string msg = error_message("Register job failed to LB server: "
-                                 + id_->server()
-                                 + "\nedg_wll_RegisterJobProxy/Sync", register_result);
+      string msg = error_message("Register job failed to LB server."
+                                 "nedg_wll_RegisterJobProxy/Sync", register_result);
 
       if (register_result == EAGAIN) {
          msg += "\nLBProxy could be down.\n"
