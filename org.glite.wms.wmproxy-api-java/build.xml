@@ -70,7 +70,7 @@ limitations under the License.
       <attribute name="mapping"/>
       <attribute name="portName"/>
       <attribute name="binding"/>
-      <attribute name="options" default="-s -ss -ssi -sd -sp -uw -g"/>
+      <attribute name="options" default="-s -sp -uw"/>
       <sequential>
         <echo>Building port @{portName} ....</echo>
         <java classname="org.apache.axis2.wsdl.WSDL2Java" fork="true">
@@ -82,19 +82,19 @@ limitations under the License.
     
     <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
                resourceDir="resources/wmproxy"
-               packageName="org.glite.wms.wmproxy"
-               mapping="http://www.gridsite.org/namespaces/delegation-2=org.glite.ce.security.delegation"
+               packageName="org.glite.wms.wmproxy.ws"
+               mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
                portName="WMProxy_PortType"
                binding="adb"/>
 
     <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
                resourceDir="resources/delegation"
                packageName="org.gridsite.www.namespaces.delegation_2"
-               mapping="http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
+               mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
                portName="WMProxyDelegation2_PortType"
                binding="adb"/>    
 
-    <javac srcdir="autogen/src" destdir="bin/classes" source="1.5" 
+    <javac srcdir="src:autogen/src" destdir="bin/classes" source="1.5" 
            target="1.5" debug="true" debuglevel="lines,vars,source">
       <classpath refid="compile.classpath" />
     </javac>
@@ -133,6 +133,7 @@ limitations under the License.
             <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
             <classpath refid="compile.classpath"/>
         <sourcepath>
+            <pathelement path="src"/>
             <pathelement path="autogen/src"/>
         </sourcepath>
     </javadoc>
