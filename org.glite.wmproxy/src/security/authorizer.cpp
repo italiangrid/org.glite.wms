@@ -26,9 +26,11 @@ limitations under the License. */
 #include <sys/types.h>
 
 #include <openssl/pem.h>
+
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMPConfiguration.h"
@@ -589,6 +591,7 @@ WMPAuthorizer::authorize()
             configuration::Configuration::instance()->wp()->argus_pepd_endpoints();
          if (!endpoints.empty()) {
             boost::tuple<bool, xacml_decision_t, uid_t, gid_t> ans;
+            boost::replace_all(userdn_, "/", ","); // MUST be RFC 2253 compliant
             ans = argus_authZ(
                   endpoints,
                   fqans_,
