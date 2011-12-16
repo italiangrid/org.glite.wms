@@ -74,7 +74,7 @@ void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
         jsdl__JobDescription_USCOREType *JobDescription;
         jsdl__JobIdentification_USCOREType *JobIdentification;
         jsdl__Application_USCOREType *Application;
-#if (GSOAP_VERSION_NUM > 020713)
+#if (GSOAP_VERSION_NUM > 20713)
         if (jsdl != NULL){
                 JobDescription = jsdl->JobDescription;
                 JobIdentification = JobDescription->JobIdentification;
