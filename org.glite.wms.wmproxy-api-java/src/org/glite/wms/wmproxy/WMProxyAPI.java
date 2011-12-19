@@ -30,7 +30,6 @@ import java.net.URL;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
@@ -70,10 +69,6 @@ import org.gridsite.www.namespaces.delegation_2.DelegationException_Fault;
  * <LI>Collection - a set of independent jobs
  * <LI>Parametric - jobs with JDL's containing some parameters
  * </UL>
- * 
- * @author Marco Sottilaro <marco.sottilaro@datamat.it>
- * @version $Id: WMProxyAPI.java,v 1.20.2.2.2.3 2011/04/01 14:45:42 pandreet Exp
- *          $
  * 
  */
 
@@ -259,7 +254,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getProxyReq(java.lang.String delegationId)
+    public String getProxyReq(String delegationId)
         throws AuthenticationFaultException, AuthorizationFaultException, ServiceException,
         ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
@@ -297,7 +292,7 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      * @since 1.2.0
      */
-    public java.lang.String grstGetProxyReq(java.lang.String delegationId)
+    public String grstGetProxyReq(String delegationId)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
@@ -356,7 +351,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getServiceMetadata(java.lang.String key)
+    public String getServiceMetadata(String key)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getServiceMetadata(key);
@@ -383,7 +378,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getInterfaceVersion()
+    public String getInterfaceVersion()
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getInterfaceVersion();
@@ -413,7 +408,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.util.Calendar getTerminationTime(java.lang.String delegationId)
+    public java.util.Calendar getTerminationTime(String delegationId)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getTerminationTime(delegationId);
@@ -441,7 +436,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public void destroy(java.lang.String delegationId)
+    public void destroy(String delegationId)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             this.grstStub.destroy(delegationId);
@@ -472,7 +467,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String renewProxyReq(java.lang.String delegationId)
+    public String renewProxyReq(String delegationId)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.renewProxyReq(delegationId);
@@ -496,8 +491,8 @@ public class WMProxyAPI {
      * 
      * @param delegationId
      *            the id used to identify the delegation
-     * @param cert
-     *            the input certificate
+     * @param certReq
+     *            the certificate request
      * @throws CredentialException
      *             if any error occurs during the creation of the proxy from the
      *             input certificate
@@ -513,15 +508,11 @@ public class WMProxyAPI {
      * @see #getVersion
      * 
      */
-    public void putProxy(java.lang.String delegationId, java.lang.String cert)
+    public void putProxy(String delegationId, String certReq)
         throws AuthenticationFaultException, AuthorizationFaultException, CredentialException, ServiceException,
         ServerOverloadedFaultException {
 
-        logger.debug("INPUT: cert=[" + cert + "]");
-        logger.debug("INPUT: delegationId=[" + delegationId + "]");
-        logger.debug("Creating proxy from certificate (CreateProxyfromCertReq)");
-
-        String proxy = this.createProxyfromCertReq(cert);
+        String proxy = this.createProxyfromCertReq(certReq);
         try {
 
             logger.debug("Delegating credential (putProxy)");
@@ -550,8 +541,8 @@ public class WMProxyAPI {
      * 
      * @param delegationId
      *            the id used to identify the delegation
-     * @param cert
-     *            the input certificate
+     * @param certReq
+     *            the certificate request
      * @throws CredentialException
      *             a problem occurred during the operations of delegation
      * @throws ServiceException
@@ -562,12 +553,11 @@ public class WMProxyAPI {
      * @since 1.2.0
      * @see #getVersion
      */
-    public void grstPutProxy(java.lang.String delegationId, java.lang.String cert)
+    public void grstPutProxy(String delegationId, String certReq)
         throws CredentialException, ServiceException, ServerOverloadedFaultException {
-        logger.debug("INPUT: cert=[" + cert + "]");
-        logger.debug("INPUT: delegationId=[" + delegationId + "]");
-        logger.debug("Creating proxy from certificate (CreateProxyfromCertReq)");
-        String proxy = this.createProxyfromCertReq(cert);
+
+        String proxy = this.createProxyfromCertReq(certReq);
+
         logger.debug("Delegating credential (putProxy)");
         try {
             this.serviceStub.putProxy(delegationId, proxy);
@@ -613,7 +603,7 @@ public class WMProxyAPI {
      * @see #grstPutProxy
      * @since 1.5.3
      */
-    public WMProxyStub.ProxyInfoStructType getDelegatedProxyInfo(java.lang.String delegationId)
+    public WMProxyStub.ProxyInfoStructType getDelegatedProxyInfo(String delegationId)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
@@ -660,7 +650,7 @@ public class WMProxyAPI {
      * @see #putProxy
      * @see BaseException
      */
-    public WMProxyStub.ProxyInfoStructType getJobProxyInfo(java.lang.String jobId)
+    public WMProxyStub.ProxyInfoStructType getJobProxyInfo(String jobId)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "]");
@@ -693,7 +683,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getVersion()
+    public String getVersion()
         throws AuthenticationFaultException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.serviceStub.getVersion();
@@ -725,7 +715,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.JobStatusStructType getJobStatus(java.lang.String jobId)
+    public WMProxyStub.JobStatusStructType getJobStatus(String jobId)
         throws AuthenticationFaultException, AuthorizationFaultException, ServiceException,
         ServerOverloadedFaultException {
         try {
@@ -777,8 +767,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.JobIdStructType jobRegister(java.lang.String jdl,
-            java.lang.String delegationId)
+    public WMProxyStub.JobIdStructType jobRegister(String jdl, String delegationId)
         throws AuthenticationFaultException, InvalidArgumentFaultException, ServiceException,
         ServerOverloadedFaultException {
         logger.debug("INPUT: JDL=[" + jdl + "]");
@@ -833,7 +822,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public void jobStart(java.lang.String jobId)
+    public void jobStart(String jobId)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "]");
@@ -892,8 +881,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.JobIdStructType jobSubmit(java.lang.String jdl,
-            java.lang.String delegationId)
+    public WMProxyStub.JobIdStructType jobSubmit(String jdl, String delegationId)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
 
@@ -943,7 +931,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public void jobCancel(java.lang.String jobId)
+    public void jobCancel(String jobId)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "]");
@@ -1088,13 +1076,12 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public String[] getSandboxDestURI(java.lang.String jobId, java.lang.String protocol)
+    public String[] getSandboxDestURI(String jobId, String protocol)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
         try {
-            WMProxyStub.StringList resList = this.serviceStub.getSandboxDestURI(jobId,
-                    protocol);
+            WMProxyStub.StringList resList = this.serviceStub.getSandboxDestURI(jobId, protocol);
             return resList.getItem();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
             throw new AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -1165,8 +1152,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId,
-            java.lang.String protocol)
+    public WMProxyStub.DestURIsStructType getSandboxBulkDestURI(String jobId, String protocol)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
@@ -1282,7 +1268,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public void jobPurge(java.lang.String jobId)
+    public void jobPurge(String jobId)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
 
@@ -1336,8 +1322,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.StringAndLongList getOutputFileList(java.lang.String jobId,
-            java.lang.String protocol)
+    public WMProxyStub.StringAndLongList getOutputFileList(String jobId, String protocol)
         throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
         InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
@@ -1386,8 +1371,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public WMProxyStub.StringAndLongList jobListMatch(java.lang.String jdl,
-            java.lang.String delegationId)
+    public WMProxyStub.StringAndLongList jobListMatch(String jdl, String delegationId)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         NoSuitableResourcesFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
@@ -1438,7 +1422,7 @@ public class WMProxyAPI {
      * @see #getPerusalFiles
      * @see #getVersion
      */
-    public void enableFilePerusal(java.lang.String jobId, String[] fileList)
+    public void enableFilePerusal(String jobId, String[] fileList)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "]");
@@ -1508,16 +1492,14 @@ public class WMProxyAPI {
      * @see #enableFilePerusal
      * @see #getVersion
      */
-    public String[] getPerusalFiles(java.lang.String jobId, java.lang.String file, boolean allchunks,
-            java.lang.String protocol)
+    public String[] getPerusalFiles(String jobId, String file, boolean allchunks, String protocol)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "] - file=[" + file + "] - allchunck=[" + allchunks + "] - protocol ["
                 + protocol + "]");
         try {
 
-            WMProxyStub.StringList response = this.serviceStub.getPerusalFiles(jobId, file,
-                    allchunks, protocol);
+            WMProxyStub.StringList response = this.serviceStub.getPerusalFiles(jobId, file, allchunks, protocol);
 
             return response.getItem();
 
@@ -1564,9 +1546,8 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getJobTemplate(WMProxyStub.JobType[] jobType,
-            java.lang.String executable, java.lang.String arguments, java.lang.String requirements,
-            java.lang.String rank)
+    public String getJobTemplate(WMProxyStub.JobType[] jobType, String executable, String arguments,
+            String requirements, String rank)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
 
@@ -1618,8 +1599,7 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      * 
      */
-    public java.lang.String getDAGTemplate(WMProxyStub.GraphStructType dependencies,
-            java.lang.String requirements, java.lang.String rank)
+    public String getDAGTemplate(WMProxyStub.GraphStructType dependencies, String requirements, String rank)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
@@ -1664,7 +1644,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getCollectionTemplate(int jobNumber, java.lang.String requirements, java.lang.String rank)
+    public String getCollectionTemplate(int jobNumber, String requirements, String rank)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
@@ -1728,8 +1708,8 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getIntParametricJobTemplate(String[] attributes, int param, int parameterStart,
-            int parameterStep, java.lang.String requirements, java.lang.String rank)
+    public String getIntParametricJobTemplate(String[] attributes, int param, int parameterStart, int parameterStep,
+            String requirements, String rank)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: param=[" + param + "] - parameterStart=[" + parameterStart + "] - parameterStep=["
@@ -1791,8 +1771,7 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getStringParametricJobTemplate(String[] attributes, String[] param,
-            java.lang.String requirements, java.lang.String rank)
+    public String getStringParametricJobTemplate(String[] attributes, String[] param, String requirements, String rank)
 
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
@@ -1844,7 +1823,7 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      * @since 1.5.3
      */
-    public java.lang.String getJDL(java.lang.String jobId, WMProxyStub.JdlType type)
+    public String getJDL(String jobId, WMProxyStub.JdlType type)
         throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
         ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "] - JdlType=[" + type + "]");
@@ -1877,7 +1856,7 @@ public class WMProxyAPI {
      *             in case of any error with the local user proxy
      */
 
-    private String createProxyfromCertReq(java.lang.String certReq)
+    private String createProxyfromCertReq(String certReq)
         throws CredentialException {
 
         int lifetime = 0;
@@ -1924,50 +1903,55 @@ public class WMProxyAPI {
     private String createExceptionMessage(Exception exc) {
 
         StringBuffer message = new StringBuffer();
-        String description = null;
-        String errCode = null;
-        String[] causes = null;
-        String method = null;
-        Calendar calendar = null;
 
-        /*
-         * TODO Solve for every faults
-         */
+        WMProxyStub.BaseFaultType fault = null;
+
         if (exc instanceof org.glite.wms.wmproxy.ws.AuthenticationFaultException) {
-            org.glite.wms.wmproxy.ws.AuthenticationFaultException authExc = (org.glite.wms.wmproxy.ws.AuthenticationFaultException) exc;
-            WMProxyStub.AuthenticationFaultType fault = authExc.getFaultMessage()
+            fault = ((org.glite.wms.wmproxy.ws.AuthenticationFaultException) exc).getFaultMessage()
                     .getAuthenticationFault();
-
-            description = fault.getDescription();
-            errCode = fault.getErrorCode();
-            causes = fault.getFaultCause();
-            method = fault.getMethodName();
-            calendar = fault.getTimestamp();
-
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.JobUnknownFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.JobUnknownFaultException) exc).getFaultMessage().getJobUnknownFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.NoSuitableResourcesFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.NoSuitableResourcesFaultException) exc).getFaultMessage()
+                    .getNoSuitableResourcesFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.AuthorizationFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.AuthorizationFaultException) exc).getFaultMessage()
+                    .getAuthorizationFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.GetQuotaManagementFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.GetQuotaManagementFaultException) exc).getFaultMessage()
+                    .getGetQuotaManagementFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException) exc).getFaultMessage()
+                    .getOperationNotAllowedFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.GenericFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.GenericFaultException) exc).getFaultMessage().getGenericFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.InvalidArgumentFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.InvalidArgumentFaultException) exc).getFaultMessage()
+                    .getInvalidArgumentFault();
+        } else if (exc instanceof org.glite.wms.wmproxy.ws.ServerOverloadedFaultException) {
+            fault = ((org.glite.wms.wmproxy.ws.ServerOverloadedFaultException) exc).getFaultMessage()
+                    .getServerOverloadedFault();
         }
 
-        if (description != null) {
-            message.append("Description: ").append(description).append("\n");
-        }
-
-        if (errCode != null) {
-            message.append("Error code : ").append(errCode).append("\n");
-        }
-
-        if (causes != null && causes.length > 0) {
+        if (fault != null) {
+            message.append("Description: ").append(fault.getDescription()).append("\n");
+            message.append("Error code : ").append(fault.getErrorCode()).append("\n");
             message.append("Cause:\n");
-            for (String cause : causes) {
+            for (String cause : fault.getFaultCause()) {
                 message.append("  ").append(cause).append("\n");
             }
-        }
-
-        if (method != null) {
-            message.append("Method: ").append(method).append("\n");
-        }
-
-        if (calendar != null) {
+            message.append("Method: ").append(fault.getMethodName()).append("\n");
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-            message.append("TimeStamp: ").append(sdf.format(calendar.getTime())).append("\n");
+            message.append("TimeStamp: ").append(sdf.format(fault.getTimestamp().getTime())).append("\n");
+        }
+
+        if (exc instanceof DelegationException_Fault) {
+            DelegationException_Fault dfException = (DelegationException_Fault) exc;
+            org.gridsite.www.namespaces.delegation_2.WMProxyStub.DelegationException dFault = dfException
+                    .getFaultMessage();
+
+            message.append("Description: ").append(dFault.getMsg()).append("\n");
+
         }
 
         return message.toString();
