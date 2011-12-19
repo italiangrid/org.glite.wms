@@ -36,6 +36,7 @@ limitations under the License.
   
   <path id="compile.classpath">
     <path refid="axis2.classpath"/>
+    <fileset file="/usr/share/java/bcprov.jar"/>
     <fileset dir="${util-java.location}/usr/share/java">
         <include name="trustmanager.jar"/>
         <include name="trustmanager-axis.jar"/>

@@ -18,6 +18,7 @@
 
 package org.glite.wms.wmproxy;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -26,15 +27,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.security.cert.CertificateFactory;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Vector;
 
 import org.apache.axis2.AxisFault;
 import org.apache.log4j.Logger;
-import org.glite.security.delegation.GrDProxyGenerator;
+import org.bouncycastle.jce.PKCS10CertificationRequest;
+import org.glite.security.util.FileCertReader;
+import org.glite.security.util.PrivateKeyReader;
+import org.glite.security.util.proxy.ProxyCertificateGenerator;
 
 /**
  * Allows sending requests to the Workload Manager Proxy (WMProxy) server
@@ -76,7 +81,7 @@ public class WMProxyAPI {
 
     private URL serviceURL = null;
 
-    private String proxyFile = null;
+    private String proxyPEM = null;
 
     private String certsPath = null;
 
@@ -219,7 +224,7 @@ public class WMProxyAPI {
                 s2 += s + "\n";
             in.close();
             String proxyString = s2;
-            this.proxyFile = proxyString;
+            this.proxyPEM = proxyString;
         } catch (FileNotFoundException e) {
             logger.error("Failed retrieving proxy:" + e.toString());
         } catch (IOException ioe) {
@@ -227,7 +232,17 @@ public class WMProxyAPI {
         }
 
         this.certsPath = certsPath;
-        this.setUpService();
+
+        try {
+
+            this.serviceStub = new org.glite.wms.wmproxy.ws.WMProxyStub(serviceURL.toString());
+
+            this.grstStub = new org.gridsite.www.namespaces.delegation_2.WMProxyStub(serviceURL.toString());
+
+        } catch (AxisFault fault) {
+            throw new org.glite.wms.wmproxy.ServiceException(fault.getMessage());
+        }
+
     }
 
     /**
@@ -1905,85 +1920,46 @@ public class WMProxyAPI {
 
     private String createProxyfromCertReq(java.lang.String certReq)
         throws org.glite.wms.wmproxy.CredentialException {
-        byte[] proxy = null;
-        ByteArrayInputStream stream = null;
-        CertificateFactory cf = null;
-        X509Certificate cert = null;
-        long lifetime = 0;
-        try {
-            // generator object
-            /*
-             * TODO investigate the usage of
-             * org.glite.security.delegation.DelegationHandler instead of
-             * GrDProxyGenerator
-             */
-            GrDProxyGenerator generator = new GrDProxyGenerator();
-            // user proxy file
-            String proxyStream = System.getProperty("gridProxyStream");
-            if (proxyStream == null) {
-                throw new org.glite.wms.wmproxy.CredentialException("proxy file not found at: " + this.proxyFile);
-            }
-            try {
-                // gets the local proxy as array of byte
-                // proxy = GrDPX509Util.getFileBytes( File );
-                proxy = proxyStream.getBytes();
-                // reads the proxy time-left
-                stream = new ByteArrayInputStream(proxy);
-                cf = CertificateFactory.getInstance("X.509");
-                cert = (X509Certificate) cf.generateCertificate(stream);
-                stream.close();
-                Date now = new Date();
-                lifetime = (cert.getNotAfter().getTime() - now.getTime()) / 3600000;
 
-            } catch (Exception exc) {
-                String errmsg = "an error occured while loading the local proxy  (" + this.proxyFile + "): \n";
-                errmsg += exc.toString();
-                throw new org.glite.wms.wmproxy.CredentialException(errmsg);
-            }
-            // checks if the proxy is still valid
+        int lifetime = 0;
+        X509Certificate[] parentCertChain = null;
+        PrivateKey userKey = null;
+
+        try {
+
+            FileCertReader certReader = new FileCertReader();
+            ByteArrayInputStream inStr = new ByteArrayInputStream(this.proxyPEM.getBytes());
+            BufferedInputStream buffInStr = new BufferedInputStream(inStr);
+            Vector<X509Certificate> vCerts = certReader.readCertChain(buffInStr);
+            parentCertChain = new X509Certificate[vCerts.size()];
+            vCerts.toArray(parentCertChain);
+            buffInStr.close();
+
+            inStr = new ByteArrayInputStream(this.proxyPEM.getBytes());
+            buffInStr = new BufferedInputStream(inStr);
+            userKey = PrivateKeyReader.read(buffInStr);
+
+            Date now = new Date();
+            lifetime = (int) (parentCertChain[0].getNotAfter().getTime() - now.getTime()) / 3600000;
             if (lifetime < 0) {
-                throw new org.glite.wms.wmproxy.CredentialException("the local proxy has expired (" + this.proxyFile
-                        + ")");
+                throw new org.glite.wms.wmproxy.CredentialException("the local proxy has expired ");
             }
-            // sets the lifetime
-            generator.setLifetime((int) lifetime);
-            // creates the new proxy
-            proxy = generator.x509MakeProxyCert(certReq.getBytes(), proxy);
-            // converts the proxy from byte[] to String
-            return new String(proxy);
+
+            /*
+             * TODO PEM to DER conversion
+             */
+            byte[] derPKCS10 = null;
+            PKCS10CertificationRequest pkcs10 = new PKCS10CertificationRequest(derPKCS10);
+
+            ProxyCertificateGenerator generator = new ProxyCertificateGenerator(parentCertChain, pkcs10);
+            generator.setLifetime(lifetime);
+            generator.generate(userKey);
+            return generator.getProxyAsPEM();
+
         } catch (Exception exc) {
             throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
         }
-    }
 
-    /**
-     * Sets up the service
-     */
-    private void setUpService()
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.CredentialException {
-        String protocol = "";
-        try {
-            this.serviceStub = new org.glite.wms.wmproxy.ws.WMProxyStub(serviceURL.toString());
-            this.grstStub = new org.gridsite.www.namespaces.delegation_2.WMProxyStub(serviceURL.toString());
-        } catch (AxisFault fault) {
-            throw new org.glite.wms.wmproxy.ServiceException(fault.getMessage());
-        }
-
-        protocol = serviceURL.getProtocol().trim();
-        logger.debug(protocol);
-
-        /*
-         * TODO switch to trustman for axis2
-         */
-        if (protocol.compareTo("https") == 0) {
-            System.setProperty("axis.socketSecureFactory", "org.glite.security.trustmanager.axis.AXISSocketFactory");
-            System.setProperty("gridProxyStream", proxyFile);
-            System.setProperty("crlUpdateInterval", "0 seconds");
-        }
-
-        if (certsPath.length() > 0) {
-            System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, certsPath);
-        }
     }
 
     private String createExceptionMessage(Exception exc) {
