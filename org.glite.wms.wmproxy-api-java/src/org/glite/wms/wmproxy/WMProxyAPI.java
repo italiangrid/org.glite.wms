@@ -40,6 +40,8 @@ import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.glite.security.util.FileCertReader;
 import org.glite.security.util.PrivateKeyReader;
 import org.glite.security.util.proxy.ProxyCertificateGenerator;
+import org.glite.wms.wmproxy.ws.WMProxyStub;
+import org.gridsite.www.namespaces.delegation_2.DelegationException_Fault;
 
 /**
  * Allows sending requests to the Workload Manager Proxy (WMProxy) server
@@ -85,7 +87,7 @@ public class WMProxyAPI {
 
     private String certsPath = null;
 
-    private org.glite.wms.wmproxy.ws.WMProxyStub serviceStub = null;
+    private WMProxyStub serviceStub = null;
 
     private org.gridsite.www.namespaces.delegation_2.WMProxyStub grstStub = null;
 
@@ -103,9 +105,7 @@ public class WMProxyAPI {
      * @throws CredentialException
      *             in case of any error with the user proxy file
      */
-    public WMProxyAPI(String url, String proxyFile)
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServiceURLException,
-        org.glite.wms.wmproxy.CredentialException {
+    public WMProxyAPI(String url, String proxyFile) throws ServiceException, ServiceURLException, CredentialException {
 
         FileInputStream proxyStream = null;
         try {
@@ -135,8 +135,7 @@ public class WMProxyAPI {
      *             malformed service URL specified as input
      */
     public WMProxyAPI(String url, String proxyFile, String certsPath)
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServiceURLException,
-        org.glite.wms.wmproxy.CredentialException {
+        throws ServiceException, ServiceURLException, CredentialException {
         FileInputStream proxyStream = null;
         try {
             proxyStream = new FileInputStream(proxyFile);
@@ -161,8 +160,7 @@ public class WMProxyAPI {
      *             malformed service URL specified as input
      */
     public WMProxyAPI(String url, InputStream proxyFile)
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServiceURLException,
-        org.glite.wms.wmproxy.CredentialException {
+        throws ServiceException, ServiceURLException, CredentialException {
         String certsPath = "";
         this.WMProxyAPIConstructor(url, proxyFile, certsPath);
     }
@@ -184,8 +182,7 @@ public class WMProxyAPI {
      *             malformed service URL specified as input
      */
     public WMProxyAPI(String url, InputStream proxyFile, String certsPath)
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServiceURLException,
-        org.glite.wms.wmproxy.CredentialException {
+        throws ServiceException, ServiceURLException, CredentialException {
         this.WMProxyAPIConstructor(url, proxyFile, certsPath);
     }
 
@@ -206,15 +203,14 @@ public class WMProxyAPI {
      *             malformed service URL specified as input
      */
     private void WMProxyAPIConstructor(String url, InputStream proxyFile, String certsPath)
-        throws org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServiceURLException,
-        org.glite.wms.wmproxy.CredentialException {
+        throws ServiceException, ServiceURLException, CredentialException {
 
         logger.debug("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile.toString() + "] - certsPath=[" + certsPath
                 + "]");
         try {
             this.serviceURL = new URL(url);
         } catch (java.net.MalformedURLException exc) {
-            throw new org.glite.wms.wmproxy.ServiceURLException(exc.getMessage());
+            throw new ServiceURLException(exc.getMessage());
         }
 
         try {
@@ -235,12 +231,12 @@ public class WMProxyAPI {
 
         try {
 
-            this.serviceStub = new org.glite.wms.wmproxy.ws.WMProxyStub(serviceURL.toString());
+            this.serviceStub = new WMProxyStub(serviceURL.toString());
 
             this.grstStub = new org.gridsite.www.namespaces.delegation_2.WMProxyStub(serviceURL.toString());
 
         } catch (AxisFault fault) {
-            throw new org.glite.wms.wmproxy.ServiceException(fault.getMessage());
+            throw new ServiceException(fault.getMessage());
         }
 
     }
@@ -264,21 +260,21 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String getProxyReq(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.AuthorizationFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, AuthorizationFaultException, ServiceException,
+        ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
             return this.serviceStub.getProxyReq(delegationId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.ServerOverloadedFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(this.createExceptionMessage(exc));
+            throw new ServerOverloadedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -302,15 +298,14 @@ public class WMProxyAPI {
      * @since 1.2.0
      */
     public java.lang.String grstGetProxyReq(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
             return this.grstStub.getProxyReq(delegationId);
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -333,14 +328,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public org.gridsite.www.namespaces.delegation_2.WMProxyStub.NewProxyReq getNewProxyReq()
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getNewProxyReq();
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -363,14 +357,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String getServiceMetadata(java.lang.String key)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getServiceMetadata(key);
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -391,14 +384,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String getInterfaceVersion()
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getInterfaceVersion();
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -422,14 +414,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.util.Calendar getTerminationTime(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.getTerminationTime(delegationId);
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -451,14 +442,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void destroy(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             this.grstStub.destroy(delegationId);
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -483,14 +473,13 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String renewProxyReq(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.grstStub.renewProxyReq(delegationId);
-        } catch (org.gridsite.www.namespaces.delegation_2.DelegationException_Fault exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+        } catch (DelegationException_Fault exc) {
+            throw new CredentialException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -525,9 +514,8 @@ public class WMProxyAPI {
      * 
      */
     public void putProxy(java.lang.String delegationId, java.lang.String cert)
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.AuthorizationFaultException,
-        org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, AuthorizationFaultException, CredentialException, ServiceException,
+        ServerOverloadedFaultException {
 
         logger.debug("INPUT: cert=[" + cert + "]");
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
@@ -540,13 +528,13 @@ public class WMProxyAPI {
             this.serviceStub.putProxy(delegationId, proxy);
 
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -575,8 +563,7 @@ public class WMProxyAPI {
      * @see #getVersion
      */
     public void grstPutProxy(java.lang.String delegationId, java.lang.String cert)
-        throws org.glite.wms.wmproxy.CredentialException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws CredentialException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: cert=[" + cert + "]");
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         logger.debug("Creating proxy from certificate (CreateProxyfromCertReq)");
@@ -585,15 +572,15 @@ public class WMProxyAPI {
         try {
             this.serviceStub.putProxy(delegationId, proxy);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+            throw new CredentialException(exc.getMessage());
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+            throw new CredentialException(exc.getMessage());
         } catch (org.glite.wms.wmproxy.ws.ServerOverloadedFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(exc.getMessage());
+            throw new ServerOverloadedFaultException(exc.getMessage());
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -626,23 +613,22 @@ public class WMProxyAPI {
      * @see #grstPutProxy
      * @since 1.5.3
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.ProxyInfoStructType getDelegatedProxyInfo(java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+    public WMProxyStub.ProxyInfoStructType getDelegatedProxyInfo(java.lang.String delegationId)
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
             return this.serviceStub.getDelegatedProxyInfo(delegationId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -674,23 +660,22 @@ public class WMProxyAPI {
      * @see #putProxy
      * @see BaseException
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.ProxyInfoStructType getJobProxyInfo(java.lang.String jobId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+    public WMProxyStub.ProxyInfoStructType getJobProxyInfo(java.lang.String jobId)
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "]");
         try {
             return this.serviceStub.getJobProxyInfo(jobId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -709,16 +694,15 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String getVersion()
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.serviceStub.getVersion();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -741,21 +725,21 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.JobStatusStructType getJobStatus(java.lang.String jobId)
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.AuthorizationFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+    public WMProxyStub.JobStatusStructType getJobStatus(java.lang.String jobId)
+        throws AuthenticationFaultException, AuthorizationFaultException, ServiceException,
+        ServerOverloadedFaultException {
         try {
             return this.serviceStub.getJobStatus(jobId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.ServerOverloadedFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(this.createExceptionMessage(exc));
+            throw new ServerOverloadedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -793,22 +777,22 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.JobIdStructType jobRegister(java.lang.String jdl,
+    public WMProxyStub.JobIdStructType jobRegister(java.lang.String jdl,
             java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, InvalidArgumentFaultException, ServiceException,
+        ServerOverloadedFaultException {
         logger.debug("INPUT: JDL=[" + jdl + "]");
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
             return this.serviceStub.jobRegister(jdl, delegationId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -850,27 +834,25 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void jobStart(java.lang.String jobId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "]");
         try {
             this.serviceStub.jobStart(jobId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -910,26 +892,25 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.JobIdStructType jobSubmit(java.lang.String jdl,
+    public WMProxyStub.JobIdStructType jobSubmit(java.lang.String jdl,
             java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
 
         logger.debug("INPUT: JDL=[" + jdl + "]\n");
         logger.debug("INPUT: delegationId=[" + delegationId + "]");
         try {
             return this.serviceStub.jobSubmit(jdl, delegationId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -963,37 +944,35 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void jobCancel(java.lang.String jobId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "]");
         try {
             this.serviceStub.jobCancel(jobId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
             // AuthenticationFault
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
             // AuthorizationFault
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
             // OperationNotAllowedFault
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
             // InvalidArgumentFault
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
             // JobUnknownFault
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
             // GenericFault ->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (java.rmi.RemoteException exc) {
             // RemoteException->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
             // Exception->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1013,22 +992,21 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public double getMaxInputSandboxSize()
-        throws org.glite.wms.wmproxy.AuthenticationFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, ServiceException, ServerOverloadedFaultException {
         try {
             return this.serviceStub.getMaxInputSandboxSize();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
             // AuthenticationFault
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
             // GenericFault ->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (java.rmi.RemoteException exc) {
             // RemoteException->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
             // Exception->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1048,19 +1026,19 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public String[] getTransferProtocols()
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, ServiceException,
+        ServerOverloadedFaultException {
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList resList = this.serviceStub.getTransferProtocols();
+            WMProxyStub.StringList resList = this.serviceStub.getTransferProtocols();
             return resList.getItem();
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1111,29 +1089,27 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public String[] getSandboxDestURI(java.lang.String jobId, java.lang.String protocol)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList resList = this.serviceStub.getSandboxDestURI(jobId,
+            WMProxyStub.StringList resList = this.serviceStub.getSandboxDestURI(jobId,
                     protocol);
             return resList.getItem();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1189,29 +1165,27 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId,
+    public WMProxyStub.DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId,
             java.lang.String protocol)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
         try {
             return this.serviceStub.getSandboxBulkDestURI(jobId, protocol);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1237,19 +1211,18 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void getTotalQuota()
-        throws org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.GetQuotaManagementFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, GetQuotaManagementFaultException, ServiceException,
+        ServerOverloadedFaultException {
         try {
             this.serviceStub.getTotalQuota();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GetQuotaManagementFaultException exc) {
-            throw new org.glite.wms.wmproxy.GetQuotaManagementFaultException(this.createExceptionMessage(exc));
+            throw new GetQuotaManagementFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1269,19 +1242,18 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void getFreeQuota()
-        throws org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.GetQuotaManagementFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthenticationFaultException, GetQuotaManagementFaultException, ServiceException,
+        ServerOverloadedFaultException {
         try {
             this.serviceStub.getFreeQuota();
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GetQuotaManagementFaultException exc) {
-            throw new org.glite.wms.wmproxy.GetQuotaManagementFaultException(this.createExceptionMessage(exc));
+            throw new GetQuotaManagementFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1311,28 +1283,26 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public void jobPurge(java.lang.String jobId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
 
         logger.debug("INPUT: jobid=[" + jobId + "]");
         try {
             this.serviceStub.jobPurge(jobId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1366,29 +1336,27 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.StringAndLongList getOutputFileList(java.lang.String jobId,
+    public WMProxyStub.StringAndLongList getOutputFileList(java.lang.String jobId,
             java.lang.String protocol)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.OperationNotAllowedFaultException, org.glite.wms.wmproxy.InvalidArgumentFaultException,
-        org.glite.wms.wmproxy.JobUnknownFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, OperationNotAllowedFaultException,
+        InvalidArgumentFaultException, JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
         try {
             return this.serviceStub.getOutputFileList(jobId, protocol);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.OperationNotAllowedFaultException exc) {
-            throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+            throw new OperationNotAllowedFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1418,26 +1386,25 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public org.glite.wms.wmproxy.ws.WMProxyStub.StringAndLongList jobListMatch(java.lang.String jdl,
+    public WMProxyStub.StringAndLongList jobListMatch(java.lang.String jdl,
             java.lang.String delegationId)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.NoSuitableResourcesFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        NoSuitableResourcesFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
         try {
             return this.serviceStub.jobListMatch(jdl, delegationId);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.NoSuitableResourcesFaultException exc) {
-            throw new org.glite.wms.wmproxy.NoSuitableResourcesFaultException(this.createExceptionMessage(exc));
+            throw new NoSuitableResourcesFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1472,29 +1439,28 @@ public class WMProxyAPI {
      * @see #getVersion
      */
     public void enableFilePerusal(java.lang.String jobId, String[] fileList)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.JobUnknownFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "]");
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList fList = new org.glite.wms.wmproxy.ws.WMProxyStub.StringList();
+            WMProxyStub.StringList fList = new WMProxyStub.StringList();
             for (String item : fileList) {
                 fList.addItem(item);
             }
 
             this.serviceStub.enableFilePerusal(jobId, fList);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1544,30 +1510,29 @@ public class WMProxyAPI {
      */
     public String[] getPerusalFiles(java.lang.String jobId, java.lang.String file, boolean allchunks,
             java.lang.String protocol)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.JobUnknownFaultException,
-        org.glite.wms.wmproxy.ServiceException, org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        JobUnknownFaultException, ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "] - file=[" + file + "] - allchunck=[" + allchunks + "] - protocol ["
                 + protocol + "]");
         try {
 
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList response = this.serviceStub.getPerusalFiles(jobId, file,
+            WMProxyStub.StringList response = this.serviceStub.getPerusalFiles(jobId, file,
                     allchunks, protocol);
 
             return response.getItem();
 
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.JobUnknownFaultException exc) {
-            throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+            throw new JobUnknownFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1599,33 +1564,32 @@ public class WMProxyAPI {
      * @throws ServerOverloadedFaultException
      *             the server is too much busy to attend the requested operation
      */
-    public java.lang.String getJobTemplate(org.glite.wms.wmproxy.ws.WMProxyStub.JobType[] jobType,
+    public java.lang.String getJobTemplate(WMProxyStub.JobType[] jobType,
             java.lang.String executable, java.lang.String arguments, java.lang.String requirements,
             java.lang.String rank)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
 
         logger.debug("INPUT: executable=[" + executable + "] - arguments=[" + arguments + "]");
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.JobTypeList jList = new org.glite.wms.wmproxy.ws.WMProxyStub.JobTypeList();
-            for (org.glite.wms.wmproxy.ws.WMProxyStub.JobType item : jobType) {
+            WMProxyStub.JobTypeList jList = new WMProxyStub.JobTypeList();
+            for (WMProxyStub.JobType item : jobType) {
                 jList.addJobType(item);
             }
 
             return this.serviceStub.getJobTemplate(jList, executable, arguments, requirements, rank);
 
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1654,24 +1618,23 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      * 
      */
-    public java.lang.String getDAGTemplate(org.glite.wms.wmproxy.ws.WMProxyStub.GraphStructType dependencies,
+    public java.lang.String getDAGTemplate(WMProxyStub.GraphStructType dependencies,
             java.lang.String requirements, java.lang.String rank)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
         try {
             return this.serviceStub.getDAGTemplate(dependencies, requirements, rank);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1702,30 +1665,29 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      */
     public java.lang.String getCollectionTemplate(int jobNumber, java.lang.String requirements, java.lang.String rank)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
         try {
             return this.serviceStub.getCollectionTemplate(jobNumber, requirements, rank);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
             // AuthenticationFault
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
             // AuthorizationFault
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
             // InvalidArgumentFault
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
             // GenericFault ->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (java.rmi.RemoteException exc) {
             // RemoteException->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         } catch (Exception exc) {
             // Exception->ServiceException
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1768,14 +1730,13 @@ public class WMProxyAPI {
      */
     public java.lang.String getIntParametricJobTemplate(String[] attributes, int param, int parameterStart,
             int parameterStep, java.lang.String requirements, java.lang.String rank)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: param=[" + param + "] - parameterStart=[" + parameterStart + "] - parameterStep=["
                 + parameterStep + "]");
         logger.debug("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList attrList = new org.glite.wms.wmproxy.ws.WMProxyStub.StringList();
+            WMProxyStub.StringList attrList = new WMProxyStub.StringList();
             for (String item : attributes) {
                 attrList.addItem(item);
             }
@@ -1784,15 +1745,15 @@ public class WMProxyAPI {
                     requirements, rank);
 
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1833,16 +1794,15 @@ public class WMProxyAPI {
     public java.lang.String getStringParametricJobTemplate(String[] attributes, String[] param,
             java.lang.String requirements, java.lang.String rank)
 
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         try {
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList attrList = new org.glite.wms.wmproxy.ws.WMProxyStub.StringList();
+            WMProxyStub.StringList attrList = new WMProxyStub.StringList();
             for (String item : attributes) {
                 attrList.addItem(item);
             }
 
-            org.glite.wms.wmproxy.ws.WMProxyStub.StringList pList = new org.glite.wms.wmproxy.ws.WMProxyStub.StringList();
+            WMProxyStub.StringList pList = new WMProxyStub.StringList();
             for (String item : param) {
                 pList.addItem(item);
             }
@@ -1850,15 +1810,15 @@ public class WMProxyAPI {
             return this.serviceStub.getStringParametricJobTemplate(attrList, pList, requirements, rank);
 
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1884,23 +1844,22 @@ public class WMProxyAPI {
      *             the server is too much busy to attend the requested operation
      * @since 1.5.3
      */
-    public java.lang.String getJDL(java.lang.String jobId, org.glite.wms.wmproxy.ws.WMProxyStub.JdlType type)
-        throws org.glite.wms.wmproxy.AuthorizationFaultException, org.glite.wms.wmproxy.AuthenticationFaultException,
-        org.glite.wms.wmproxy.InvalidArgumentFaultException, org.glite.wms.wmproxy.ServiceException,
-        org.glite.wms.wmproxy.ServerOverloadedFaultException {
+    public java.lang.String getJDL(java.lang.String jobId, WMProxyStub.JdlType type)
+        throws AuthorizationFaultException, AuthenticationFaultException, InvalidArgumentFaultException,
+        ServiceException, ServerOverloadedFaultException {
         logger.debug("INPUT: jobId=[" + jobId + "] - JdlType=[" + type + "]");
         try {
             return this.serviceStub.getJDL(jobId, type);
         } catch (org.glite.wms.wmproxy.ws.AuthenticationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+            throw new AuthenticationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.AuthorizationFaultException exc) {
-            throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+            throw new AuthorizationFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.InvalidArgumentFaultException exc) {
-            throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+            throw new InvalidArgumentFaultException(this.createExceptionMessage(exc));
         } catch (org.glite.wms.wmproxy.ws.GenericFaultException exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+            throw new ServiceException(this.createExceptionMessage(exc));
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+            throw new ServiceException(exc.getMessage());
         }
     }
 
@@ -1919,7 +1878,7 @@ public class WMProxyAPI {
      */
 
     private String createProxyfromCertReq(java.lang.String certReq)
-        throws org.glite.wms.wmproxy.CredentialException {
+        throws CredentialException {
 
         int lifetime = 0;
         X509Certificate[] parentCertChain = null;
@@ -1942,7 +1901,7 @@ public class WMProxyAPI {
             Date now = new Date();
             lifetime = (int) (parentCertChain[0].getNotAfter().getTime() - now.getTime()) / 3600000;
             if (lifetime < 0) {
-                throw new org.glite.wms.wmproxy.CredentialException("the local proxy has expired ");
+                throw new CredentialException("the local proxy has expired ");
             }
 
             /*
@@ -1957,7 +1916,7 @@ public class WMProxyAPI {
             return generator.getProxyAsPEM();
 
         } catch (Exception exc) {
-            throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+            throw new CredentialException(exc.getMessage());
         }
 
     }
@@ -1976,7 +1935,7 @@ public class WMProxyAPI {
          */
         if (exc instanceof org.glite.wms.wmproxy.ws.AuthenticationFaultException) {
             org.glite.wms.wmproxy.ws.AuthenticationFaultException authExc = (org.glite.wms.wmproxy.ws.AuthenticationFaultException) exc;
-            org.glite.wms.wmproxy.ws.WMProxyStub.AuthenticationFaultType fault = authExc.getFaultMessage()
+            WMProxyStub.AuthenticationFaultType fault = authExc.getFaultMessage()
                     .getAuthenticationFault();
 
             description = fault.getDescription();
