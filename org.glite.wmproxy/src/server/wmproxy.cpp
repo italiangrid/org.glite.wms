@@ -60,7 +60,6 @@ limitations under the License.  */
 WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
-std::string sandboxdir_global;
 std::string dispatcher_type_global;
 std::string filelist_global;
 
@@ -123,9 +122,6 @@ main(int argc, char* argv[])
          conf.wmp_config->log_rotation_max_file_number());
       edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
                    <<endl;
-
-      extern string sandboxdir_global;
-      sandboxdir_global = "";
 
       extern string dispatcher_type_global;
       dispatcher_type_global

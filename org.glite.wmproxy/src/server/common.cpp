@@ -53,21 +53,7 @@ limitations under the License.
 extern WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
-extern std::string sandboxdir_global;
 extern std::string dispatcher_type_global;
-
-// Document root variable
-const char * DOC_ROOT = "DOCUMENT_ROOT";
-
-// Defining File Separator
-#ifdef WIN
-// Windows File Separator
-const std::string FILE_SEPARATOR = "\\";
-#else
-// Linux File Separator
-const std::string FILE_SEPARATOR = "/";
-#endif
-
 
 using namespace std;
 using namespace glite::jdl; // Ad
@@ -77,6 +63,20 @@ namespace logger = glite::wms::common::logger;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 namespace server = glite::wms::wmproxy::server;
 namespace jobid = glite::jobid;
+
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
+
+std::string sandboxdir_global;
+
+namespace {
+
+const char* DOC_ROOT = "DOCUMENT_ROOT";
+const std::string FILE_SEPARATOR = "/";
+
+} // anonymous namespace
 
 /**
 * check for filelist/jobdir
@@ -174,10 +174,6 @@ string displayENV(const string& title, char* envNAME)
    return msg;
 }
 
-
-/**
-* Display information on Request
-**/
 void
 initWMProxyOperation(const std::string& operation)
 {
@@ -361,3 +357,4 @@ callLoadScriptFile(const string& operation)
 
    GLITE_STACK_CATCH();
 }
+}}}}

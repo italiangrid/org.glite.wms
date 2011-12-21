@@ -96,8 +96,9 @@ WMPEventLogger::WMPEventLogger(const string& endpoint)
 
    id_ = NULL;
    m_subjobs = NULL;
-   this->server = endpoint;
-   this->delegatedproxy = "";
+   lb_host = "";
+   server = endpoint;
+   delegatedproxy = "";
    m_lbProxy_b = conf.isLBProxyAvailable();
    m_bulkMM_b = DEFAULT_BULK_MM;
 
@@ -1210,7 +1211,7 @@ WMPEventLogger::error_message(const string& message, int exitcode)
    if (!m_lbProxy_b) {
       if (getenv(GLITE_WMS_LOG_DESTINATION)) {
          lb = "LB server (ENV): " + string(getenv(GLITE_WMS_LOG_DESTINATION)) + "\n";
-      } else {
+      } else if (!lb_host.empty()) {
          lb = "LB server: " + this->lb_host + ":"
               + boost::lexical_cast<string>(this->lb_port) + "\n";
       }

@@ -34,7 +34,12 @@ namespace jobid
 {
 class JobId;
 }
-}
+
+namespace wms {
+namespace wmproxy {
+namespace server {
+
+extern std::string sandboxdir_global;
 
 // Possible values for jdl type attribute
 enum type {
@@ -53,3 +58,4 @@ void callLoadScriptFile(const std::string& operation);
 void checkConfiguration();
 int  getType(std::string jdl, glite::jdl::Ad * ad = NULL);
 void checkJobDirectoryExistence(glite::jobid::JobId jid,int level = 0);
+}}}}

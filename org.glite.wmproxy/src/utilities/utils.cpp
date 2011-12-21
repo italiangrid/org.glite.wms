@@ -66,6 +66,8 @@ limitations under the License.
 #include "wmpexceptions.h"
 #include "wmpexception_codes.h"
 
+#include "server/common.h"
+
 // ISB compression functionalities
 #include "zlib.h"
 #include "libtar.h"
@@ -73,7 +75,6 @@ limitations under the License.
 #define local
 
 // Global variables for configuration attributes
-extern std::string sandboxdir_global;
 extern bool globusDNS_global;
 
 namespace logger = glite::wms::common::logger;
@@ -929,7 +930,7 @@ string
 to_filename(glite::jobid::JobId j, int level, bool extended_path)
 {
    GLITE_STACK_TRY("to_filename()");
-   string path(sandboxdir_global + string(FILE_SEP)
+   string path(glite::wms::wmproxy::server::sandboxdir_global + string(FILE_SEP)
                + glite::wms::common::utilities::get_reduced_part(j, level));
    if (extended_path) {
       path.append(string(FILE_SEP) + glite::wms::common::utilities::to_filename(j));
