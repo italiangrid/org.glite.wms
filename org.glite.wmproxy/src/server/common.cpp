@@ -196,12 +196,13 @@ initWMProxyOperation(const std::string& operation)
    edglog(info) << displayENV("Remote CLIENT S DN","SSL_CLIENT_S_DN")<<endl;
    edglog(info) << displayENV("Remote GRST CRED","GRST_CRED_2")<<endl;
    edglog(info) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
-   // Manage static WMProxy  instance serving request number
    edglog(info)<<"WMProxy instance serving core request N.: " <<++server::servedrequestcount_global<<endl;
 
    checkConfiguration(); // throws
    setGlobalSandboxDir(); // throws
-   callLoadScriptFile(operation);
+   if (operation != "jobStart") { // bug # 40370
+      callLoadScriptFile(operation);
+   }
 
    GLITE_STACK_CATCH();
 }
