@@ -184,7 +184,6 @@ initWMProxyOperation(const std::string& operation)
    GLITE_STACK_TRY("initWMProxyOperation()");
    edglog_fn("wmpcommon::initWMProxyOperation");
 
-   edglog(info)<< "================== Incoming Request =================="<<endl;
    edglog(info)<< "Called Operation: "<< operation <<endl;
    // Logging Remote Host Info
    edglog(info) << displayENV("Remote Host Address","REMOTE_ADDR");

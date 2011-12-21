@@ -236,12 +236,10 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse& getSandboxBulkDestURI_respo
    edglog(debug) << "getSandboxBulkDestURI requested for job: " << jid << endl;
    // Initializing logger
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
    JobId jobid(jid);
-   wmplogger.setUserProxy(  wmputilities::getJobDelegatedProxyPath(jobid));
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.setUserProxy(wmputilities::getJobDelegatedProxyPath(jobid));
+   wmplogger.init_and_set_logging_job("", 0, &jobid);
 
    DestURIsStructType *destURIsStruct = new DestURIsStructType();
    destURIsStruct->Item = new vector<DestURIStructType*>(0);
@@ -343,11 +341,8 @@ getOutputFileList(getOutputFileListResponse& getOutputFileList_response,
          // MARADONA file NOT found
          // Initializing logger
          WMPEventLogger wmplogger(wmputilities::getEndpoint());
-         std::pair<std::string, int> lbaddress_port
-            = conf.getLBLocalLoggerAddressPort();
          wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
-         wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
-                        conf.getDefaultProtocol(), conf.getDefaultPort());
+         wmplogger.init_and_set_logging_job("", 0, &jobid);
 
          string userProxyJob =  wmputilities::getJobDelegatedProxyPath(jobid);
          long timeleft = security::getProxyTimeLeft(userProxyJob);
@@ -848,11 +843,9 @@ checkPerusalFlag(JobId *jid, string& delegatedproxy, bool checkremotepeek)
    // not exposed: no security checks
 
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
    wmplogger.setUserProxy(delegatedproxy);
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jid);
 
    string jdlpath;
    jdlpath = wmputilities::getJobJDLExistingStartPath(*jid);

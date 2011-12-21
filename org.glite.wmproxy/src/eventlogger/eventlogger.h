@@ -61,10 +61,8 @@ public:
    WMPEventLogger(const std::string& endpoint);
    virtual ~WMPEventLogger() throw();
    // Initializer
-   void init(const std::string& nsHost, int nsPort,
-             glite::jobid::JobId *id,
-             const std::string& desturiprotocol = "gridftp",
-             int desturiport = 0);
+   void init_and_set_logging_job(const std::string& nsHost, int nsPort,
+             glite::jobid::JobId *id);
 
    // Enable/Disable/Retrieve settings for  LB Proxy
    void setLBProxy(bool value, std::string dn = "");
@@ -86,8 +84,8 @@ public:
    void unregisterProxyRenewal();
 
    // Register methods
-   void registerJob(glite::jdl::JobAd *ad, glite::jobid::JobId const* const id, const std::string& path);
-   void registerDag(glite::jobid::JobId const* const id, WMPExpDagAd *ad, const std::string& path);
+   bool registerJob(glite::jdl::JobAd *ad, glite::jobid::JobId const* const id, const std::string& path);
+   bool registerDag(glite::jobid::JobId const* const id, WMPExpDagAd *ad, const std::string& path);
    void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
    std::vector<std::string> generateSubjobsIds(glite::jobid::JobId const* const j, int res_num);
    void logListener(const char* host, int port);
@@ -132,8 +130,6 @@ private:
    std::string server;
    std::string delegatedproxy;
 
-   std::string m_desturiprotocol;
-   int m_desturiport;
    bool m_lbProxy_b;
    bool m_bulkMM_b;
 

@@ -159,19 +159,13 @@ public:
     * Returns the value of the configuration attribute LBAddresses
     * @return the attribute value
     */
-   std::vector<std::pair<std::string, int> > getLBServerAddressesPorts();
+   std::vector<std::pair<std::string, int> > getLBServerEndpoints();
 
    /**
     * Returns the value of the configuration attribute LBServer
     * @return the attribute value
     */
    std::pair<std::string, int> getLBServerAddressPort();
-
-   /**
-    * Returns the value of the configuration attribute LBLocalLogger
-    * @return the attribute value
-    */
-   std::pair<std::string, int> getLBLocalLoggerAddressPort();
 
    /**
     * Returns the value of the configuration attribute AsyncJobStart

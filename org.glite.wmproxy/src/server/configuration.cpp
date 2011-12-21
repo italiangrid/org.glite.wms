@@ -234,12 +234,6 @@ WMProxyConfiguration::loadConfiguration()
    this->lbserverpair.first = this->lbserver;
    this->lbserverpair.second = this->lbservers[0].second;
 
-   parseAddressPort(wmp_config->lblocal_logger(), this->lblocallogger,
-                    this->lblocalloggerpair);
-   if (this->lblocalloggerpair.second == 0) {
-      this->lblocalloggerpair.second = LB_LOCAL_LOGGER_DEFAULT_PORT;
-   }
-
    // If attribute GridFTPPort not present in configuration file then
    // wmp_config->grid_ftpport() returns 0
    //pair<string, int> gsiprotocol(string("gsiftp"), wmp_config->grid_ftpport());
@@ -357,7 +351,7 @@ WMProxyConfiguration::getListMatchRootPath()
 }
 
 vector<pair<string, int> >
-WMProxyConfiguration::getLBServerAddressesPorts()
+WMProxyConfiguration::getLBServerEndpoints()
 {
    return this->lbservers;
 }
@@ -365,27 +359,10 @@ WMProxyConfiguration::getLBServerAddressesPorts()
 pair<string, int>
 WMProxyConfiguration::getLBServerAddressPort()
 {
-   GLITE_STACK_TRY("getLBServerAddressPort()");
-
    if (this->lbserverpair.first == DEFAULT_SERVER_ADDRESS) {
       this->lbserverpair.first = utilities::getServerHost();
    }
    return this->lbserverpair;
-
-   GLITE_STACK_CATCH();
-}
-
-pair<string, int>
-WMProxyConfiguration::getLBLocalLoggerAddressPort()
-{
-   GLITE_STACK_TRY("getLBLocalLoggerAddressPort()");
-
-   if (this->lblocalloggerpair.first == DEFAULT_SERVER_ADDRESS) {
-      this->lblocalloggerpair.first = utilities::getServerHost();
-   }
-   return this->lblocalloggerpair;
-
-   GLITE_STACK_CATCH();
 }
 
 bool

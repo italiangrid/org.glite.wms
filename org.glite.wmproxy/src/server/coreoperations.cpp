@@ -25,7 +25,9 @@ limitations under the License.
 #include <boost/lexical_cast.hpp>
 #include <boost/pool/detail/singleton.hpp>
 #include <boost/scoped_ptr.hpp>
-
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/mersenne_twister.hpp> // mt19937
 #include <fcgi_stdio.h>
 #include <fstream>
 #include <errno.h>
@@ -47,7 +49,6 @@ limitations under the License.
 // Eventlogger
 #include "eventlogger/expdagad.h"
 #include "eventlogger/eventlogger.h"
-#include "eventlogger/lbselector.h" // lbselector
 
 // Logger
 #include "utilities/logging.h"
@@ -91,11 +92,32 @@ limitations under the License.
 
 extern char **environ; // the system variable environ points to an array
                        // of strings called the 'environment'
-
-// Global variables for configuration
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
-extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
+
+using namespace std;
+using namespace glite::lb; // JobStatus
+using namespace glite::jdl; // DagAd, AdConverter
+using namespace glite::jobid; //JobId
+
+using namespace glite::wms::wmproxy::server;  //Exception codes
+using namespace glite::wms::wmproxy::utilities; //Exception
+using namespace glite::wms::wmproxy::eventlogger;
+using namespace glite::wms::common::configuration; // Configuration
+
+namespace logger         = glite::wms::common::logger;
+namespace wmpmanager  = glite::wms::wmproxy::server;
+namespace wmputilities   = glite::wms::wmproxy::utilities;
+namespace security    = glite::wms::wmproxy::security;
+namespace eventlogger    = glite::wms::wmproxy::eventlogger;
+namespace configuration  = glite::wms::common::configuration;
+namespace wmsutilities   = glite::wms::common::utilities;
+
+namespace {
+
+// Flag file to check for start operation fault causes
+const std::string FLAG_FILE_UNZIP = ".unzipok";
+const std::string FLAG_FILE_REGISTER_SUBJOBS = ".registersubjobsok";
 
 // Perusal functionality
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
@@ -122,31 +144,21 @@ const std::string FILE_SEPARATOR = "\\";
 const std::string FILE_SEPARATOR = "/";
 #endif
 
-// Flag file to check for start operation fault causes
-const std::string FLAG_FILE_UNZIP = ".unzipok";
-const std::string FLAG_FILE_REGISTER_SUBJOBS = ".registersubjobsok";
-
-using namespace std;
-using namespace glite::lb; // JobStatus
-using namespace glite::jdl; // DagAd, AdConverter
-using namespace glite::jobid; //JobId
-
-using namespace glite::wms::wmproxy::server;  //Exception codes
-using namespace glite::wms::wmproxy::utilities; //Exception
-using namespace glite::wms::wmproxy::eventlogger;
-using namespace glite::wms::common::configuration; // Configuration
-
-namespace logger         = glite::wms::common::logger;
-namespace wmpmanager  = glite::wms::wmproxy::server;
-namespace wmputilities   = glite::wms::wmproxy::utilities;
-namespace security    = glite::wms::wmproxy::security;
-namespace eventlogger    = glite::wms::wmproxy::eventlogger;
-namespace configuration  = glite::wms::common::configuration;
-namespace wmsutilities   = glite::wms::common::utilities;
-
-namespace {
-
 char** targetEnv = 0;
+boost::mt19937 rand_gen(std::time(0)); // Mersenne Twister:
+// A 623-dimensionally equidistributed uniform pseudo-random number generator,
+// Makoto Matsumoto and Takuji Nishimura,
+// ACM Transactions on Modeling and Computer Simulation:
+// Special Issue on Uniform Random Number Generation, Vol. 8, No. 1, January 1998, pp. 3-30. 
+
+std::pair<std::string, int>
+selectLBServer(vector<std::pair<std::string, int> > const& lbaddresses)
+{
+   boost::uniform_int<> uniform_dist(0, lbaddresses.size() - 1);
+   boost::variate_generator<boost::mt19937&, boost::uniform_int<> > 
+      get_rand(rand_gen, uniform_dist);
+   return lbaddresses[get_rand()];
+}
 
 void
 setAttributes(JobAd *jad, JobId *jid, const string& dest_uri, const string& delegatedproxyfqan)
@@ -475,10 +487,7 @@ setJobFileSystem(
    GLITE_STACK_CATCH();
 }
 
-/*
-* Registering for jobs ( jobtype = Job) , called by jobregister)
-* JDL paramters:   string jdl, JobAd* jad
-*/
+// Register for single jobs (jobtype = Job), called by jobregister
 string
 regist(
    jobRegisterResponse& jobRegister_response,
@@ -531,57 +540,55 @@ regist(
                                   "regist()", wmputilities::WMS_JDL_PARSING,msg);
    }
 
-   std::pair<std::string, int> lbaddress_port;
-
-   // Checking for attribute JDL::LB_ADDRESS
-   if (jad->hasAttribute(JDL::LB_ADDRESS)) {
-      string lbaddressport = jad->getString(JDL::LB_ADDRESS);
-      wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
-   } else {
-      //lbaddress_port = conf.getLBServerAddressPort();
-      lbaddress_port = lbselector.selectLBServer();
-   }
-   std::auto_ptr<JobId> jid;
-   if (lbaddress_port.second == 0) {
-      jid.reset(new JobId(lbaddress_port.first));
-   } else {
-      jid.reset(new JobId(lbaddress_port.first, lbaddress_port.second));
-   }
-   string stringjid = jid->toString();
-   edglog(info)<<"Registering id: "<<stringjid<<endl;
-
-   // Getting Input Sandbox Destination URI
-   string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
-                     conf.getDefaultPort());
-   edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
-
-   setAttributes(jad, jid.get(), dest_uri, delegatedproxyfqan);
-
-   edglog(debug)<<"Endpoint: "<<wmputilities::getEndpoint()<<endl;
-   // Initializing logger
+   // Initializing LB logger
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
-
-   // Setting user proxy
    wmplogger.setUserProxy(delegatedproxy);
-   wmplogger.registerJob(jad, jid.get(), wmputilities::getJobJDLToStartPath(*jid, true));
-   wmplogger.init(
-      lbaddress_port.first,
-      lbaddress_port.second,
-      jid.get(),
-      conf.getDefaultProtocol(),
-      conf.getDefaultPort());
+
+   std::pair<std::string, int> lbaddress;
+   vector<std::pair<std::string, int> > lbaddresses(conf.getLBServerEndpoints());
+   bool ret = false;
+   boost::shared_ptr<JobId> jid;
+   do {
+      if (jad->hasAttribute(JDL::LB_ADDRESS)) { // user provided LB
+         lbaddress = wmputilities::parseLBAddress(jad->getString(JDL::LB_ADDRESS));
+      } else {
+         lbaddress = selectLBServer(lbaddresses);
+      }
+      edglog(debug)<<"LB Address: " << lbaddress.first << ", port: " << lbaddress.second << endl;
+
+      if (lbaddress.second == 0) {
+         jid.reset(new JobId(lbaddress.first));
+      } else {
+         jid.reset(new JobId(lbaddress.first, lbaddress.second));
+      }
+      ret = wmplogger.registerJob(jad, jid.get(), wmputilities::getJobJDLToStartPath(*jid, true));
+      lbaddresses.erase(std::find(lbaddresses.begin(), lbaddresses.end(), lbaddress));
+   } while (!jad->hasAttribute(JDL::LB_ADDRESS) && !ret && lbaddresses.size()>0);
+
+   if (!ret) {
+      throw LBException(__FILE__, __LINE__, "regist()",
+                        WMS_LOGGING_ERROR, "job registration failed");
+   }
+   wmplogger.init_and_set_logging_job(
+      lbaddress.first,
+      lbaddress.second,
+      jid.get());
+
+   string stringjid = jid->toString();
+   edglog(info)<<"Registered job id: " << stringjid << endl;
+   string dest_uri = wmputilities::getDestURI(stringjid,
+      conf.getDefaultProtocol(), conf.getDefaultPort());
+   edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
+   setAttributes(jad, jid.get(), dest_uri, delegatedproxyfqan);
+   edglog(debug)<<"Endpoint: "<<wmputilities::getEndpoint()<<endl;
    char* seqcode = wmplogger.getSequence();
    if (seqcode) {
       jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
    }
-
-   // Registering the job
    jad->check();
 
-   // Registering for Proxy renewal
-   char * renewalproxy = NULL;
+   char* renewalproxy = 0;
    if (jad->hasAttribute(JDL::MYPROXY)) {
       edglog(debug)<<"Registering Proxy renewal..."<<endl;
       renewalproxy = wmplogger.registerProxyRenewal(delegatedproxy,
@@ -590,7 +597,6 @@ regist(
 
    // Creating private job directory with delegated Proxy
    vector<string> jobids;
-
    setJobFileSystem(uid, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
 
    // Writing registered JDL (to start)
@@ -617,10 +623,9 @@ regist(
 }
 
 /*
-* Registering for dags, collections, parametric and partitionables ( jobtype = Job) , called by jobregister)
+* Registering for dags, collections, parametric and partitionables (jobtype = Job), called by jobregister
 * JDL paramters:   string jdl, WMPExpDagAd *dag, JobAd *jad
 * calls WMPeventlogger::registerDag
-* NB: Partitionable jobs are deprecated
 */
 pair<string, string>
 regist(
@@ -633,46 +638,48 @@ regist(
    GLITE_STACK_TRY("regist()");
    edglog_fn("wmpcoreoperations::regist DAG");
 
-   std::pair<std::string, int> lbaddress_port;
-
-   if (dag->hasAttribute(JDL::LB_ADDRESS)) {
-      string lbaddressport = dag->getString(JDL::LB_ADDRESS);
-      wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
-   } else {
-      //lbaddress_port = conf.getLBServerAddressPort();
-      lbaddress_port = lbselector.selectLBServer();
-   }
-
-   edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
-   edglog(debug)<<"LB Port: "
-                <<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
-   // Creating unique identifier
-   std::auto_ptr<JobId> jid;
-
-   if (lbaddress_port.second == 0) {
-      jid.reset(new JobId(lbaddress_port.first));
-   } else {
-      jid.reset(new JobId(lbaddress_port.first, lbaddress_port.second));
-   }
-   string stringjid = jid->toString();
-   edglog(info)<<"Registering job id: "<<stringjid<<endl;
-
+   // Initializing LB logger
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
    wmplogger.setUserProxy(delegatedproxy);
    wmplogger.setBulkMM(true);
 
-   // Setting job identifier
-   edglog(debug)<<"Setting attribute WMPExpDagAd::EDG_JOBID "<< stringjid << endl;
-   if (dag->hasAttribute(JDL::JOBID)) {
-      //dag->delAttribute(JDL::JOBID);
+   std::pair<std::string, int> lbaddress;
+   vector<std::pair<std::string, int> > lbaddresses(conf.getLBServerEndpoints());
+   bool ret = false;
+   boost::shared_ptr<JobId> jid;
+   do {
+      if (dag->hasAttribute(JDL::LB_ADDRESS)) { // user provided LB
+         lbaddress = wmputilities::parseLBAddress(dag->getString(JDL::LB_ADDRESS));
+      } else {
+         lbaddress = selectLBServer(lbaddresses);
+      }
+      edglog(debug)<<"LB Address: " << lbaddress.first << ", port: " << lbaddress.second << endl;
+
+      if (lbaddress.second == 0) {
+         jid.reset(new JobId(lbaddress.first));
+      } else {
+         jid.reset(new JobId(lbaddress.first, lbaddress.second));
+      }
+
+      ret = wmplogger.registerDag(jid.get(), dag, wmputilities::getJobJDLToStartPath(*jid, true));
+      lbaddresses.erase(std::find(lbaddresses.begin(), lbaddresses.end(), lbaddress));
+   } while (!dag->hasAttribute(JDL::LB_ADDRESS) && !ret && lbaddresses.size()>0);
+
+   if (!ret) {
+      throw LBException(__FILE__, __LINE__, "regist()",
+                        WMS_LOGGING_ERROR, "DAG job registration failed");
    }
+
+   wmplogger.init_and_set_logging_job(lbaddress.first, lbaddress.second, jid.get());
+   string stringjid = jid->toString();
+   edglog(info)<<"Registered job id: " << stringjid << endl;
+   edglog(debug)<<"Setting attribute WMPExpDagAd::EDG_JOBID "<< stringjid << endl;
    dag->setAttribute(WMPExpDagAd::EDG_JOBID, stringjid);
 
-   // Inserting Proxy VO if not present in original jdl file
-   edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
-   if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
-      dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getGridsiteVO());
+   char* seqcode = wmplogger.getSequence();
+   if (seqcode) {
+      dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(seqcode));
    }
 
    vector<string> jobids(wmplogger.generateSubjobsIds(jid.get(), dag->size()));
@@ -693,19 +700,16 @@ regist(
       dag->replaceNode(dag_nodes[i], nodead);
    }
 
-   wmplogger.registerDag(jid.get(), dag, wmputilities::getJobJDLToStartPath(*jid, true));
-   lbaddress_port = conf.getLBLocalLoggerAddressPort();
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
-   char* seqcode = wmplogger.getSequence();
-   if (seqcode) {
-      dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(seqcode));
+   // Inserting Proxy VO if not present in original jdl file
+   edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
+   if (!dag->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
+      dag->setReserved(JDL::VIRTUAL_ORGANISATION, wmputilities::getGridsiteVO());
    }
 
    // Getting Input Sandbox Destination URI
    string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
                      conf.getDefaultPort());
-   edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
+   edglog(debug) << "Destination uri: " << dest_uri << endl;
    setAttributes(dag, jid.get(), dest_uri, delegatedproxyfqan);
 
    // It is used also for attribute inheritance
@@ -974,9 +978,7 @@ jobpurge(jobPurgeResponse& jobPurge_response, JobId *jobid, bool checkstate = fa
 
    // Initializing logger
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jobid);
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
 
    wmplogger.setUserProxy(delegatedproxy);
@@ -1713,13 +1715,11 @@ submit(
                             exc.what(), true, true);
 
          // Forcing Abort log for each node of the DAG/Collection bug 40982
-         // TODO: what if the exception is raised before the subjobids have been registered?
-         std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
          unsigned int size = dag.getNodes().size();
          for (unsigned int i = 0; i < size; ++i) {
             JobId subjobid(dag.getNodeAttribute(dag.getNodes()[i], JDL::JOBID));
-            wmplogger.init(lbaddress_port.first, lbaddress_port.second,
-                           &subjobid, conf.getDefaultProtocol(), conf.getDefaultPort());
+            wmplogger.init_and_set_logging_job("", 0, &subjobid);
+            wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
             wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT, exc.what(), true, true);
          }
 
@@ -1900,13 +1900,10 @@ jobStart(jobStartResponse& jobStart_response, const string& job_id, struct soap 
       edglog(debug)<<"No drain"<<endl;
    }
 
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
    std::string delegatedproxy = wmputilities::getJobDelegatedProxyPath(job_id);
    wmplogger.setUserProxy(delegatedproxy);
-
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jid.get());
 
    pair<string, regJobEvent> startpair = wmplogger.isStartAllowed();
    if (startpair.first == "") { // seqcode
@@ -2015,11 +2012,9 @@ jobSubmit(struct ns1__jobSubmitResponse& response,
    // Starting job submission
    boost::scoped_ptr<JobId> jid(new JobId(jobid));
 
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), vomsproxy.getDN());
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jid.get());
 
    // Getting delegated proxy inside job directory
    string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -2116,10 +2111,8 @@ jobSubmitJSDL
    JobId *jid = new JobId(jobid);
 
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), authn.getDN());
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jid);
 
    // Getting delegated proxy inside job directory
    string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -2236,10 +2229,8 @@ jobCancel(jobCancelResponse& jobCancel_response, const string& job_id)
    string jobpath = wmputilities::getJobDirectoryPath(*jid);
    // Initializing logger
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
-   std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
    wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getDN_SSL());
-   wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid.get(),
-                  conf.getDefaultProtocol(), conf.getDefaultPort());
+   wmplogger.init_and_set_logging_job("", 0, jid.get());
 
    wmplogger.setUserProxy(delegatedproxy);
    // Getting job status to check if cancellation is possible

@@ -19,15 +19,12 @@ lib_LTLIBRARIES = \
 
 
 noinst_HEADERS = \
-	eventlogger.h \
 	expdagad.h \
-	lbselector.h
+	eventlogger.h
 
 libglite_wms_wmproxy_eventlogger_la_SOURCES = \
-	eventlogger.cpp \
 	expdagad.cpp \
-	lbselector.cpp
-
+	eventlogger.cpp
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \

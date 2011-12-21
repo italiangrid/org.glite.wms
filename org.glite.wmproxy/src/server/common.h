@@ -29,10 +29,7 @@ namespace jdl
 {
 class Ad;
 }
-}
 
-namespace glite
-{
 namespace jobid
 {
 class JobId;

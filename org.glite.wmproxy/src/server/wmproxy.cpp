@@ -50,7 +50,6 @@ limitations under the License.  */
 
 
 #include "utilities/utils.h" // waitForSeconds()
-#include "eventlogger/lbselector.h" // lbselectioninfo struct
 
 // Exceptions
 #include "glite/wmsutils/exception/Exception.h"
@@ -64,12 +63,10 @@ WMProxyConfiguration conf;
 std::string sandboxdir_global;
 std::string dispatcher_type_global;
 std::string filelist_global;
-glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 
 namespace logger        = glite::wms::common::logger;
 namespace wmsexception  = glite::wmsutils::exception;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
-namespace eventlogger   = glite::wms::wmproxy::eventlogger;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
@@ -138,14 +135,6 @@ main(int argc, char* argv[])
       extern string filelist_global;
       filelist_global
          = configuration::Configuration::instance()->wm()->input();
-
-      extern eventlogger::WMPLBSelector lbselector;
-      lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
-                                              conf.getWeightsCachePath(),
-                                              conf.getWeightsCacheValidity(),
-                                              conf.isServiceDiscoveryEnabled(),
-                                              conf.getServiceDiscoveryInfoValidity(),
-                                              conf.getLBServiceDiscoveryType());
 
       server::servedrequestcount_global = 0;
 

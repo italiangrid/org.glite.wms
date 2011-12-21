@@ -291,10 +291,12 @@ getGridsiteFQANs()
    GLITE_STACK_CATCH();
 }
 
-void
-parseAddressPort(const string& addressport, pair<string, int> &addresspair)
+std::pair<std::string, int>
+parseLBAddress(const string& addressport)
 {
    GLITE_STACK_TRY("parseAddressPort()");
+
+   std::pair<std::string, int> addresspair;
    string addressportarg = addressport;
    std::string::size_type pos;
    unsigned int addressportsize = addressportarg.size();
@@ -326,6 +328,8 @@ parseAddressPort(const string& addressport, pair<string, int> &addresspair)
       addresspair.first = "";
       addresspair.second = 0;
    }
+
+   return addresspair;
    GLITE_STACK_CATCH();
 }
 

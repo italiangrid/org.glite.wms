@@ -134,8 +134,7 @@ std::string resolveIPv4_IPv6(std::string h_tbr);
  */
 std::string getEndpoint();
 
-void parseAddressPort(const std::string& addressport,
-                      std::pair<std::string, int> &addresspair);
+std::pair<std::string, int> parseLBAddress(const std::string& addressport);
 
 /**
 * Check whether globus installed version allow DNS direct mapping

@@ -22,8 +22,6 @@ limitations under the License. */
 #include "eventlogger.h"
 #include "server/configuration.h"
 
-#include "lbselector.h"
-
 // Boost
 #include <boost/lexical_cast.hpp>
 
@@ -49,7 +47,6 @@ limitations under the License. */
 
 #include "security/authorizer.h"
 
-extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 extern WMProxyConfiguration conf;
 
 namespace glite {
@@ -90,7 +87,7 @@ const int QUERY_RETRY_COUNT = 3;
 const int LB_LOG_RETRY_LOWER_LIMIT = 30;
 const int LB_LOG_RETRY_UPPER_LIMIT = 60;
 const int LB_PROXY_LOG_RETRY_LOWER_LIMIT = 5;
-const int LB_PROXY_LOG_RETRY_UPPER_LIMIT = 15;
+const int LB_PROXY_LOG_RETRY_UPPER_LIMIT = 10;
 
 
 WMPEventLogger::WMPEventLogger(const string& endpoint)
@@ -123,8 +120,10 @@ WMPEventLogger::~WMPEventLogger() throw()
 }
 
 void
-WMPEventLogger::init(const string& lb_host, int lb_port,
-                     jobid::JobId *id, const string& desturiprotocol, int desturiport)
+WMPEventLogger::init_and_set_logging_job(
+   const string& lb_host,
+   int lb_port,
+   jobid::JobId *id)
 {
    GLITE_STACK_TRY("init()");
    edglog_fn("WMPEventlogger::init");
@@ -135,16 +134,21 @@ WMPEventLogger::init(const string& lb_host, int lb_port,
    this->lb_host = lb_host;
    this->lb_port = lb_port;
 
-   m_desturiport = desturiport;
-   m_desturiprotocol = desturiprotocol;
-
    if (!getenv(GLITE_WMS_LOG_DESTINATION)) {
-      edglog(debug)<<"Setting LB log destination to: "<<lb_host<<endl;
-      if (edg_wll_SetParamString(ctx_, EDG_WLL_PARAM_DESTINATION,
-                                 lb_host.c_str())) {
-         string msg = error_message("Parameter setting "
-                                    "EDG_WLL_PARAM_DESTINATION failed\nedg_wll_SetParamString");
-         throw LBException(__FILE__, __LINE__, "init", WMS_IS_FAILURE, msg);
+      if (!lb_host.empty()) {
+         edglog(debug)<<"Setting LB log destination to: "<<lb_host<<endl;
+         if (edg_wll_SetParamString(ctx_, EDG_WLL_PARAM_DESTINATION,
+            lb_host.c_str())) {
+
+            string msg = error_message("Setting parameter "
+               "EDG_WLL_PARAM_DESTINATION failed");
+            throw LBException(__FILE__, __LINE__, "init", WMS_IS_FAILURE, msg);
+         }
+         if (edg_wll_SetParam(ctx_, EDG_WLL_PARAM_DESTINATION_PORT, lb_port)) {
+            string msg = error_message("Setting parameter "
+               "EDG_WLL_PARAM_DESTINATION_PORT failed");
+            throw LBException(__FILE__, __LINE__, "init", WMS_IS_FAILURE, msg);
+         }
       }
    } else {
       edglog(debug)<<"GLITE_WMS_LOG_DESTINATION is set to: "
@@ -241,8 +245,6 @@ WMPEventLogger::incrementSequenceCode()
 /*********************
 * LB  LOG/REGISTER METHODS
 **********************/
-
-
 char *
 WMPEventLogger::registerProxyRenewal(const string& proxy_path,
                                      const string& my_proxy_server,
@@ -320,7 +322,7 @@ WMPEventLogger::unregisterProxyRenewal()
    GLITE_STACK_CATCH();
 }
 
-void
+bool
 WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, const string& path)
 {
    GLITE_STACK_TRY("registerJob()");
@@ -335,10 +337,10 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
       edglog(debug)<<"Registering job to LB Proxy..."<<endl;
       for (; (i > 0) && register_result; i--) {
          register_result = edg_wll_RegisterJobProxy(ctx_, jid->c_jobid(),
-                           EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+            EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
          if (register_result) {
             edglog(severe)
-                  <<error_message("Register job failed\nedg_wll_RegisterJobProxy",
+               <<error_message("Register job failed\nedg_wll_RegisterJobProxy",
                                   register_result)<<endl;
             randomsleep();
          }
@@ -347,34 +349,21 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
       edglog(debug)<<"Registering job to LB..."<<endl;
       for (; (i > 0) && register_result; i--) {
          register_result = edg_wll_RegisterJobSync(ctx_, jid->c_jobid(),
-                           EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+            EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
          if (register_result) {
             edglog(severe)<<error_message("Register job failed\n"
-                                          "edg_wll_RegisterJobSync", register_result)<<endl;
+               "edg_wll_RegisterJobSync", register_result)<<endl;
             randomsleep();
          }
       }
    }
    if (register_result) {
-      string msg = error_message("Register job failed to LB server."
-                                 " edg_wll_RegisterJobProxy/Sync", register_result);
-
-      if (register_result == EAGAIN) {
-         msg += "\nLBProxy could be down.\n"
-                "(please contact server administrator)";
-      } else {
-         // Updating selected LB weight -> FAILURE
-         lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
-      }
-      throw LBException(__FILE__, __LINE__, "registerJob()",
-                        WMS_LOGGING_ERROR, msg);
+      return false;
    } else {
-      // Updating selected LB weight -> SUCCESS
-      lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);
-   }
-
-   if (jad->hasAttribute(JDL::USERTAGS)) {
-      logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
+      if (jad->hasAttribute(JDL::USERTAGS)) {
+         logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
+      }
+      return true;
    }
 
    GLITE_STACK_CATCH();
@@ -385,8 +374,6 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
    GLITE_STACK_TRY("registerSubJobs()");
    edglog_fn("WMPEventlogger::registerSubJobs");
-
-   edglog(debug)<<"Server address: "<<server.c_str()<<endl;
 
    // Prepare both jdls and subjobs for registering
    vector<string> jobids;
@@ -481,7 +468,8 @@ WMPEventLogger::generateSubjobsIds(glite::jobid::JobId const* const j, int res_n
    GLITE_STACK_CATCH();
 }
 
-void WMPEventLogger::registerDag(
+bool
+WMPEventLogger::registerDag(
    glite::jobid::JobId const* const id,
    WMPExpDagAd *dag,
    const string& path)
@@ -552,35 +540,19 @@ void WMPEventLogger::registerDag(
          }
       }
    }
+
    if (register_result) {
-      string msg = error_message("Register "+ registration_type_s +"failed to LB server:"
-                                 + id->server()
-                                 + "\nedg_wll_RegisterJobProxy/Sync", register_result);
-
-      if (register_result == EAGAIN) {
-         msg += "\nLBProxy could be down.\n"
-                "(please contact server administrator)";
-      } else {
-
-         // Updating selected LB weight -> FAILURE
-         lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
-
-      }
-
-
-      throw LBException(__FILE__, __LINE__, "registerDag()",
-                        WMS_LOGGING_ERROR, msg);
+      return false;
    } else {
-      lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);
-   }
+      // Logging parent user tags
+      if (dag->hasAttribute(JDL::USERTAGS)) {
+         logUserTags(dag->getAttributeAd(JDL::USERTAGS).ad());
+      }
+      // Logging children user tags
+      //logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 
-   // Logging parent user tags
-   if (dag->hasAttribute(JDL::USERTAGS)) {
-      logUserTags(dag->getAttributeAd(JDL::USERTAGS).ad());
+      return true;
    }
-
-   // Logging children user tags
-   //logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 
    GLITE_STACK_CATCH();
 }

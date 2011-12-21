@@ -282,7 +282,7 @@ VOMSAuthN::VOMSAuthN(const string& proxypath)
          if (!cert_) {
             BIO_free(in);
             throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-                  "VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
+                  "VOMSAuthZ::VOMSAuthN", wmputilities::WMS_AUTHORIZATION_ERROR,
                   "Proxy file doesn't exist or has bad permissions");
          }
 
@@ -295,7 +295,7 @@ VOMSAuthN::VOMSAuthN(const string& proxypath)
          if (!data_) {
             BIO_free(in);
             throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-                  "VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
+                  "VOMSAuthZ::VOMSAuthN", wmputilities::WMS_AUTHORIZATION_ERROR,
                   data_->ErrorMessage());
          }
          chain = load_chain(proxypath.c_str());
@@ -303,7 +303,7 @@ VOMSAuthN::VOMSAuthN(const string& proxypath)
             BIO_free(in);
             throw wmputilities::AuthorizationException(
                __FILE__, __LINE__,
-               "VOMSAuthZ::parseVoms",
+               "VOMSAuthZ::VOMSAuthN",
                wmputilities::WMS_AUTHORIZATION_ERROR,
                data_->ErrorMessage());
          }
@@ -318,13 +318,13 @@ VOMSAuthN::VOMSAuthN(const string& proxypath)
          edglog(severe)<<"Error in BIO_read_filename: Proxy file doesn't "
                        "exist or has bad permissions"<<endl;
          throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-               "VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
+               "VOMSAuthZ::VOMSAuthN", wmputilities::WMS_AUTHORIZATION_ERROR,
                "Proxy file doesn't exist or has bad permissions");
       }
    } else {
       edglog(severe) << "Error in BIO_new" << endl;
       throw wmputilities::AuthorizationException(__FILE__, __LINE__,
-            "VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
+            "VOMSAuthZ::VOMSAuthN", wmputilities::WMS_AUTHORIZATION_ERROR,
             "Unable to get information from Proxy file");
    }
 
