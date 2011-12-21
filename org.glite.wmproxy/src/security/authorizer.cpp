@@ -250,9 +250,9 @@ try
       }
 
       // gacl file has no valid entries for user proxy without fqan
-      if (!(execDN || execAU)) {
-         exec = false;
-      }
+      if (execDN || execAU){
+         exec = execDN = execAU = true;
+      } 
    }
 
    // Final exec authorization value
