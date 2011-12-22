@@ -7,11 +7,9 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: noarch
-Requires: vomsjapi
-#Requires: emi-trustmanager-axis
 Requires: emi-delegation-java
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface, emi-delegation-java,} ant
-BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, vomsjapi,} axis2
+BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, } axis2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
