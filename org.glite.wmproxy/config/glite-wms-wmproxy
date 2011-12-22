@@ -76,6 +76,7 @@ case "$1" in
 	sleep 1
 	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
 	$httpdpath -k $@ -f $config
+   sleep 1
 	RETVAL=$?
 	;;
   graceful)
