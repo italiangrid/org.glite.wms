@@ -6,7 +6,7 @@ includedir=@includedir@
 Name: wmproxy api cpp
 Description: WMProxy C/C++ APIs
 Version: @VERSION@
-Requires: jobman-exception
+Requires: emi-gridsite-openssl
 Libs: -L${libdir} -lglite_wms_wmproxy_api_cpp
 Cflags: -I${includedir}
 

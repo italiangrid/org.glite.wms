@@ -61,11 +61,8 @@ AC_GLITE_WMS_WSDL
 PKG_CHECK_MODULES(GSOAP, gsoapssl++, , AC_MSG_ERROR(["GSOAP not found"]))
 AC_GSOAP_EXTRAS
 
-AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
-
-#AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
-
-AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
+#AC_GRIDSITE([], AC_MSG_RESULT(["GRIDSITE ok"]), AC_MSG_ERROR(["GRIDSITE not found"]))
+PKG_CHECK_MODULES(GRIDSITE_OPENSSL, emi-gridsite-openssl, , AC_MSG_ERROR(["GRIDSITE_OPENSSL not found"]))
 
 DX_DOXYGEN_FEATURE(ON)
 DX_DOT_FEATURE(OFF)
@@ -87,7 +84,6 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/wmproxy-api-cpp.pc])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([examples/Makefile])
-#AC_CONFIG_FILES([wmproxy-api-cpp.dox])
 
 AC_OUTPUT
 

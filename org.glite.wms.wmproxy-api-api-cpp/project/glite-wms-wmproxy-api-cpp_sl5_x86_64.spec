@@ -8,7 +8,6 @@ URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool, doxygen
-BuildRequires: %{!?extbuilddir: glite-wms-utils-exception-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} gsoap-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
@@ -68,8 +67,7 @@ rm -rf %{buildroot}
 %package devel
 Summary: C/C++ libraries for the WM Proxy service (development files)
 Group: System Environment/Libraries
-Requires: gridsite-devel, glite-wms-utils-exception-devel
-Requires: boost-devel, gsoap-devel
+Requires: gridsite-devel, gsoap-devel
 
 %description devel
 C/C++ libraries for the WM Proxy service (development files)

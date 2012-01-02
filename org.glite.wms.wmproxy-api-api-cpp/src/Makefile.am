@@ -11,11 +11,7 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
-#
-# WARNING: work in progress
 
-#vpath stdsoap2.cpp $(GSOAP_LOCATION)
 
 
 wm.h : $(GLITE_WMS_WSDL_PATH)/WMProxy.wsdl
@@ -43,12 +39,11 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	wmproxy_api_utilities.cpp \
 	dom.cpp
 
+libglite_wms_wmproxy_api_cpp_la_LIBADD = $(GRIDSITE_OPENSSL_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(GSOAP_LOCATION)/include \
+	$(GSOAP_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
-	$(GRIDSITE_CFLAGS) \
-	$(BOOST_CFLAGS)  \
 	-I$(top_srcdir)/interface \
 	-DWITH_OPENSSL \
 	-DWITH_IPV6 \
