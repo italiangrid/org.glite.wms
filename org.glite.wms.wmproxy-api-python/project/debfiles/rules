@@ -9,8 +9,8 @@ build-stamp:
 	
 build:build-stamp
 ifndef extbuilddir
-	./configure --prefix=$(INSTALLDIR)/usr PVER=$(version)
-	make
+	printf "[global]
+pkgversion=$(version)" > setup.cfg
 endif
 
 clean:
@@ -29,7 +29,7 @@ install: build
 ifdef extbuilddir
 	mkdir -p $(INSTALLDIR) && cp -R $(extbuilddir)/* $(INSTALLDIR)
 else
-	make install
+	python setup.py install -O1 --prefix $(INSTALLDIR)/usr --install-data $(INSTALLDIR)
 endif
 
 binary-indep: build install
