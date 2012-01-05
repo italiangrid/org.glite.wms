@@ -29,8 +29,8 @@ Python libraries for the WM Proxy service
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr PVER=%{version}
-  make
+  printf "[global]
+pkgversion=$(version)" > setup.cfg
 fi
 
 %install
@@ -38,7 +38,7 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
-  make install
+  python setup.py install -O1 --prefix %{buildroot}/usr --install-data %{buildroot}
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
@@ -50,9 +50,9 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 %dir /usr/share/doc/glite-wms-wmproxy-api-python-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-api-python-%{version}/LICENSE
-%{python_sitearch}/*.py
-%{python_sitearch}/*.pyc
-%{python_sitearch}/*.pyo
+%{python_sitelib}/*.py
+%{python_sitelib}/*.pyc
+%{python_sitelib}/*.pyo
 
 
 
