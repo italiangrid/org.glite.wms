@@ -47,19 +47,19 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-adapter.pc > %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-adapter.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-adapter.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-adapter.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller.pc > %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc > %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-logmonitor.pc > %{buildroot}/usr/lib64/pkgconfig/wms-jss-logmonitor.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-logmonitor.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-logmonitor.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc > %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-jss-common.pc
-rm %{buildroot}/usr/lib64/*.la
-chrpath --delete %{buildroot}/usr/lib64/libglite_wms_jss_*.so.0.0.0
-strip -s %{buildroot}/usr/lib64/libglite_wms_jss_*.so.0.0.0
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-adapter.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-adapter.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-adapter.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-adapter.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-wrapper.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-wrapper.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-wrapper.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-controller-wrapper.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc
+rm %{buildroot}%{_libdir}/*.la
+chrpath --delete %{buildroot}%{_libdir}/libglite_wms_jss_*.so.0.0.0
+strip -s %{buildroot}%{_libdir}/libglite_wms_jss_*.so.0.0.0
 
 %clean
  
@@ -103,8 +103,8 @@ Condor-G connector for the WMS (libraries)
 
 %files lib
 %defattr(-,root,root)
-/usr/lib64/libglite_wms_jss_*.so.0.0.0
-/usr/lib64/libglite_wms_jss_*.so.0
+%{_libdir}/libglite_wms_jss_*.so.0.0.0
+%{_libdir}/libglite_wms_jss_*.so.0
 %dir /usr/share/doc/glite-wms-jobsubmission-%{version}/
 %doc /usr/share/doc/glite-wms-jobsubmission-%{version}/LICENSE
 
@@ -124,12 +124,12 @@ Condor-G connector for the WMS (Development files)
 
 %files devel
 %defattr(-,root,root)
-/usr/lib64/pkgconfig/wms-jss-controller-adapter.pc
-/usr/lib64/pkgconfig/wms-jss-controller.pc
-/usr/lib64/pkgconfig/wms-jss-controller-wrapper.pc
-/usr/lib64/pkgconfig/wms-jss-logmonitor.pc
-/usr/lib64/pkgconfig/wms-jss-common.pc
-/usr/lib64/libglite_wms_jss_*.so
+%{_libdir}/pkgconfig/wms-jss-controller-adapter.pc
+%{_libdir}/pkgconfig/wms-jss-controller.pc
+%{_libdir}/pkgconfig/wms-jss-controller-wrapper.pc
+%{_libdir}/pkgconfig/wms-jss-logmonitor.pc
+%{_libdir}/pkgconfig/wms-jss-common.pc
+%{_libdir}/libglite_wms_jss_*.so
 %dir /usr/include/glite/
 %dir /usr/include/glite/wms/
 %dir /usr/include/glite/wms/jobsubmission/
