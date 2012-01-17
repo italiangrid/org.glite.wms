@@ -41,14 +41,14 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-helper.pc > %{buildroot}/usr/lib64/pkgconfig/wms-helper.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-helper.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-helper.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-helper-jobadapter.pc > %{buildroot}/usr/lib64/pkgconfig/wms-helper-jobadapter.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-helper-jobadapter.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-helper-jobadapter.pc
-sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wms-helper-broker-ism.pc > %{buildroot}/usr/lib64/pkgconfig/wms-helper-broker-ism.pc.new
-mv %{buildroot}/usr/lib64/pkgconfig/wms-helper-broker-ism.pc.new %{buildroot}/usr/lib64/pkgconfig/wms-helper-broker-ism.pc
-rm %{buildroot}/usr/lib64/*.la
-chrpath --delete %{buildroot}/usr/lib64/libglite_wms_helper_*.so.0.0.0
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-helper.pc > %{buildroot}%{_libdir}/pkgconfig/wms-helper.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-helper.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-helper.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-helper-jobadapter.pc > %{buildroot}%{_libdir}/pkgconfig/wms-helper-jobadapter.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-helper-jobadapter.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-helper-jobadapter.pc
+sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-helper-broker-ism.pc > %{buildroot}%{_libdir}/pkgconfig/wms-helper-broker-ism.pc.new
+mv %{buildroot}%{_libdir}/pkgconfig/wms-helper-broker-ism.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-helper-broker-ism.pc
+rm %{buildroot}%{_libdir}/*.la
+chrpath --delete %{buildroot}%{_libdir}/libglite_wms_helper_*.so.0.0.0
 
 
 %clean
@@ -65,8 +65,8 @@ rm -rf %{buildroot}
 /usr/share/glite-wms/jobwrapper.template.sh
 %dir /usr/share/doc/glite-wms-helper-%{version}/
 /usr/share/doc/glite-wms-helper-%{version}/LICENSE
-/usr/lib64/libglite_wms_helper*.so.0.0.0
-/usr/lib64/libglite_wms_helper*.so.0
+%{_libdir}/libglite_wms_helper*.so.0.0.0
+%{_libdir}/libglite_wms_helper*.so.0
 
 
 
@@ -91,10 +91,10 @@ Development files for the WMS helper module
 %dir /usr/include/glite/wms/helper/jobadapter/
 /usr/include/glite/wms/helper/*.h
 /usr/include/glite/wms/helper/jobadapter/*.h
-/usr/lib64/pkgconfig/wms-helper-jobadapter.pc
-/usr/lib64/pkgconfig/wms-helper-broker-ism.pc
-/usr/lib64/pkgconfig/wms-helper.pc
-/usr/lib64/libglite_wms_helper*.so
+%{_libdir}/pkgconfig/wms-helper-jobadapter.pc
+%{_libdir}/pkgconfig/wms-helper-broker-ism.pc
+%{_libdir}/pkgconfig/wms-helper.pc
+%{_libdir}/libglite_wms_helper*.so
 
 
 %changelog
