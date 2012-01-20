@@ -82,6 +82,8 @@ END LICENSE */
  * ICE and WMS Headers
  *
  */
+
+
 #include "ice/IceCore.h"
 #include "IceUtils.h"
 #include "Url.h"
@@ -95,6 +97,8 @@ END LICENSE */
  * Cream Client API C++ Headers
  *
  */
+#include "gssapi.h"
+
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"

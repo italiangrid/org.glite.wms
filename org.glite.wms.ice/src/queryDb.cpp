@@ -203,9 +203,18 @@ int main( int argc, char* argv[] )
     }
   }
 
-  
+  /**
+   * Load valid job states strings
+   */
+  set<string> valid_states;
+  for( int i=0; i<=11; ++i)
+    valid_states.insert(glite::ce::cream_client_api::job_statuses::job_status_str[i]);
+    
+  /**
+   * Check options
+   */
   if(verbose) {
-    bool at_least_one = curl || myurl || status || ccid || seq_code || lease || did || modif_jdl || userdn || pxfile;
+    bool at_least_one = curl || myurl || status || ccid || seq_code || lease || did || modif_jdl || userdn || pxfile || gid || wn || seq_code;
   
     if( !at_least_one) {
       cerr << "Options --verbose|-v requires at least one of the options "
@@ -238,26 +247,34 @@ int main( int argc, char* argv[] )
   vector<string> SplitVec;
   boost::split( SplitVec, states, boost::is_any_of(","), boost::token_compress_on );
   
+  //cout << "len=" << SplitVec.size() << endl;
+  
+  if(!states.empty()) {
   for(vector<string>::const_iterator sit = SplitVec.begin();
       sit != SplitVec.end();
       ++sit )
       {
+        if(valid_states.find( *sit )==valid_states.end() ) {
+	  cerr << "Invalid status name [" << *sit << "]."<<endl<<endl<<"Valid status names are: REGISTERED, PENDING, IDLE, RUNNING, REALLY-RUNNING, CANCELLED, HELD, DONE-OK, DONE-FAILED, PURGED, ABORTED, UNKNOWN"<<endl;
+	  exit(1);
+	}      
         filter_states.insert( *sit );
       }
-  
+  }
   
   if(states.empty()) {
     filtered = result;
   } else {
     
-    list< util::CreamJob >::const_iterator it=result.begin();
+    list< util::CreamJob >::const_iterator it = result.begin();
     for( ; it!=result.end(); ++it ) {
       string currentStatus = glite::ce::cream_client_api::job_statuses::job_status_str[it->status( )];
-      if(filter_states.find( currentStatus )!=filter_states.end()) {
+      if(filter_states.find( currentStatus ) != filter_states.end()) {
         filtered.push_back( *it );
       }
     }
   }
+  //bool at_least_one = curl || myurl || status || ccid || seq_code || lease || did || modif_jdl || userdn || pxfile || gid || wn || seq_code;
   
   if(verbose) {
     for( list< util::CreamJob >::const_iterator it=filtered.begin();
@@ -290,6 +307,7 @@ int main( int argc, char* argv[] )
 	  cout << "[" << it->user_proxyfile( ) << "]" ;
 	if( wn )
 	  cout << "[" << it->worker_node( ) << "]";
+	
 	cout << endl;
       }
     cout << endl << "------------------------------------------------" << endl;

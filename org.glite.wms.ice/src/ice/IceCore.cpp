@@ -19,6 +19,7 @@ limitations under the License.
 END LICENSE */
 
 
+
 #include "IceCore.h"
 #include "iceUtils/IceConfManager.h"
 #include "iceUtils/iceLBLogger.h"
@@ -39,7 +40,7 @@ END LICENSE */
 #include "iceUtils/RequestParser.h"
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/CreamJob.h"
-
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "iceDb/GetJobsToPoll.h"
 #include "iceDb/CheckGridJobID.h"
 #include "iceDb/GetTerminatedJobs.h"
@@ -54,7 +55,7 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
+
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
 #include "glite/wms/purger/purger.h"

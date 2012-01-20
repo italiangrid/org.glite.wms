@@ -29,7 +29,6 @@ END LICENSE */
 #include "iceUtils/CreamProxyMethod.h"
 #include "iceUtils/DelegationManager.h"
 #include "iceUtils/BlackListFailJob_ex.h"
-//#include "iceThreads/eventStatusListener.h"
 #include "Request_source_purger.h"
 
 #include "iceDb/RemoveJobByGid.h"
