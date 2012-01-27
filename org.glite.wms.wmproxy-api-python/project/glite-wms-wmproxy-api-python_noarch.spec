@@ -40,7 +40,7 @@ mkdir -p %{buildroot}
 if test "x%{extbuilddir}" == "x--" ; then
   python setup.py install -O1 --prefix %{buildroot}/usr --install-data %{buildroot}
 else
-  cp -R %{extbuilddir}/* %{buildroot}
+  cp -pR %{extbuilddir}/* %{buildroot}
 fi
 
 %clean
