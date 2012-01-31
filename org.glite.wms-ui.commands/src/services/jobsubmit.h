@@ -224,6 +224,7 @@ class JobSubmit : public Job {
 		* @param destURI the destinationURI of the job where the gzip file has to be transferred
 		 */
 		void createZipFile (std::string filename, std::vector<JobFileAd> fileads, std::vector<std::pair<glite::jdl::FileAd, std::string > > &to_btransferred);
+  void createZipFile2 (std::string filename, std::vector<JobFileAd> fileads, std::vector<std::pair<glite::jdl::FileAd, std::string > > &to_btransferred);
 		/*
 		* 	Performs the transfer a set of local files to one(more) remote machine(s) by globus-url-copy (gsiftp protocol)
  		*	@param paths list of files to be transferred (each pair is <source,destination>)
@@ -235,7 +236,7 @@ class JobSubmit : public Job {
 		void gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths,std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
                 /*
                 * 	Performs the transfer a set of local files to one(more) remote machine(s) by htcp (https protocol)
-                *	@param paths list of files to be transferred (each pair is <source,destination>)
+                *	@Param paths list of files to be transferred (each pair is <source,destination>)
 		*	@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
 		*	@param errros this parameter is filled with the description of the errors occuring during the file transfer opertions (if any)
                 *	@throw WmsClientException if any error occurs during the operations

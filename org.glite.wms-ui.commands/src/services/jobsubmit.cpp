@@ -812,16 +812,14 @@ void JobSubmit::toBCopiedZippedFileList() {
 */
 
 void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > > &tob_transferred) {
-	vector<ExtractedAd*> children;
-	vector<FileAd> fileads;
-	string destURI = "";
-	string jobid = "";
+	vector<ExtractedAd*> children; vector<FileAd> fileads;
+	string destURI = ""; string jobid = "";
 	int size = 0;
 	if (zipAllowed) {
 		vector<ZipFileAd>::iterator it1 = zippedFiles.begin() ;
 		vector<ZipFileAd>::iterator const end1 = zippedFiles.end();
 		for ( ; it1 != end1; it1++){
-			createZipFile(it1->filename, it1->fileads, tob_transferred);
+			createZipFile2(it1->filename, it1->fileads, tob_transferred);
 		}
 	} else {
 		if (extractAd==NULL) {
@@ -832,6 +830,10 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 		}
 		// ROOT =========
 		fileads = extractAd->getFiles( );
+		vector<FileAd>::const_iterator it = fileads.begin();
+// 		for( ; it != fileads.end(); ++it )
+// 		  cout << "FILEADS: " << it->file << endl;
+
 		// JobId (root)
 		jobid = this->getJobId( );
 		// DestinationURI (root)
@@ -1151,10 +1153,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		AdUtils::setDefaultValuesAd(adObj,wmcConf, m_defJdlOpt);
 		// Checking the ALLOW_ZIPPED_ISB attribute
 		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-			zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+		  zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 		} else {
 			// Default value if the JDL attribute is not present
-			zipAllowed = false;
+		  zipAllowed = false;
 			logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
 					"adding the attribute to the JDL with the default value (FALSE)");
 			adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
@@ -1208,10 +1210,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				// JDL string
 				collectAd = collectAd->check();
 				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				  zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 				} else {
 					// Default value if the JDL attribute is not present
-					zipAllowed = false;
+				  zipAllowed = false;
 					logInfo->print (WMS_DEBUG, "The user JDL does not contain the " +
 							JDL::ALLOW_ZIPPED_ISB + " attribute: ",
 							"adding the attribute to the JDL with the default value (FALSE)");
@@ -1235,10 +1237,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				// expands the DAG loading all JDL files
 				dagAd->getSubmissionStrings();
 				if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-						zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				  zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 				} else {
 					// Default value if the JDL attribute is not present
-					zipAllowed = false;
+				  zipAllowed = false;
 					logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
 							"adding the attribute to the JDL with the default value (FALSE)");
 					adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
@@ -1829,79 +1831,138 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 /**
 * Archives and compresses the InputSandbox files
 */
-void JobSubmit::createZipFile (
-	const std::string filename,
-	std::vector<JobFileAd> fileads,
-	std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred){
-	int r = 0;
-	TAR *t =NULL;
-	tartype_t *type = NULL ;
-	string file = "";
-	string path = "";
-	string jobpath = "";
-	string tar = "";
-	string gz = "";
-	string jobPath = "";
-	string jobid = "";
-	// path of the tar file is being created
-	// zipAd : ZIPPEDFILEAD={std::string filename; FILEAD files;}
-	tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
-	logInfo->print(WMS_DEBUG,"Archiving the ISB files:", tar);
-	// opens the tar file
-	r = tar_open ( &t,  (char*)tar.c_str(), type,
-		O_CREAT|O_WRONLY,
-		S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
-	if ( r != 0 ){
-		throw WmsClientException(__FILE__,__LINE__,
-		"tar_open",  DEFAULT_ERR_CODE,
-		"File i/o Error",
-		"Unable to create tar file for InputSandbox: " + tar );
-	}
-	// files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
-	// RootFiles
-	vector <JobFileAd>::iterator it1 = fileads.begin( );
-	vector <JobFileAd>::iterator const end1 = fileads.end( );
-	for ( ; it1 != end1; it1++ ) {
-		jobpath = this->getJobPath(it1->node);
-		vector <FileAd>::iterator it2 = (it1->files).begin( );
-		vector <FileAd>::iterator const end2 = (it1->files).end( );
-		for ( ; it2 != end2; it2++ ) {
-			file = it2->file;
-			path = jobpath + "/" + Utils::getFileName(it2->file);
-			logInfo->print(WMS_DEBUG, "tar - Archiving the local file: " + file,
-				"with the following path: " + path, false);
-			r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
-			if (r!=0){
-				string m = "Error in adding the file "+ file+ " to " + tar ;
-				char* em = strerror(errno);
-				if (em) { m += string("\n(") + string(em) + ")"; }
-				throw WmsClientException(__FILE__,__LINE__,
-					"archiveFiles",  DEFAULT_ERR_CODE,
-					"File i/o Error",
-					"Unable to create tar file - " + m);
-			}
-		}
-	}
-	if (t) {
-		// close the file
-		tar_append_eof(t);
-		tar_close (t);
-		logInfo->print(WMS_DEBUG,
-				"This archive file has been successfully created:", tar);
-		logInfo->print(WMS_DEBUG,
-			"Compressing the file (" +Utils::getZipExtension() +"):", tar);
-		gz = wmcUtils->fileCompression(tar);
-		logInfo->print(WMS_DEBUG,
-			"ISB ZIPPED file successfully created:", gz);
-	}
-	FileAd source(FILE_PROTOCOL, gz, Utils::getFileSize(gz));
-	string dest = this->getDestinationURI(this->getJobId( )) + "/" + filename;
-	logInfo->print(WMS_DEBUG,
-			"ISB Zipped File: " + source.file, "DestURI: " + dest, false);
-	to_btransferred.push_back(make_pair(source, dest) );
-}
+  void JobSubmit::createZipFile2(
+				 const std::string filename,
+				 std::vector<JobFileAd> fileads,
+				 std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred			 
+				 )
+  {
+    vector<string> filesToTAR;
+    string jobpath = "";
+    string file = "";
+    string path = "";
+    vector <JobFileAd>::iterator it1 = fileads.begin( );
+    vector <JobFileAd>::iterator const end1 = fileads.end( );
+    for ( ; it1 != end1; it1++ ) {
+      jobpath = this->getJobPath(it1->node);
+      system((string("mkdir -p ")+jobpath).c_str());
+      filesToTAR.push_back( jobpath );
+      
+      vector <FileAd>::iterator it2 = (it1->files).begin( );
+      vector <FileAd>::iterator const end2 = (it1->files).end( );
+      for ( ; it2 != end2; it2++ ) {
+ 	file = it2->file;
+  	//path = jobpath + "/" + Utils::getFileName(it2->file);
 
+	//	logInfo->print(WMS_DEBUG, "tar - Copying local file: " + file,
+	//		       " into directory: " + jobpath, false);
 
+	string basenameFile = ::basename( file.c_str() );
+	boost::filesystem::path srcPath(file);
+	boost::filesystem::path dstPath(jobpath+"/"+basenameFile);
+	boost::filesystem::copy_file( srcPath, dstPath );
+	//filesToTAR.push_back( file );
+      }
+    }
+    string tarfile = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
+    string command = string("tar cf ") + tarfile + " ";
+    command += join(filesToTAR, " ");
+    system(command.c_str());
+    system((string("gzip -9 ")+tarfile).c_str());
+    system((string("\rm -rf ")+join(filesToTAR, " ")).c_str());
+
+    string gz = tarfile + ".gz";
+
+    FileAd source(FILE_PROTOCOL, gz, Utils::getFileSize(gz));
+    string dest = this->getDestinationURI(this->getJobId( )) + "/" + filename;
+    logInfo->print(WMS_DEBUG,
+		   "ISB Zipped File: " + source.file, "DestURI: " + dest, false);
+    to_btransferred.push_back(make_pair(source, dest) );
+  }
+  
+  void JobSubmit::createZipFile (
+				 const std::string filename,
+				 std::vector<JobFileAd> fileads,
+				 std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred
+				 )
+  {
+    return;
+    int r = 0;
+    TAR *t =NULL;
+    tartype_t *type = NULL ;
+    string file = "";
+    string path = "";
+    string jobpath = "";
+    string tar = "";
+    string gz = "";
+    string jobPath = "";
+    string jobid = "";
+    // path of the tar file is being created
+    // zipAd : ZIPPEDFILEAD={std::string filename; FILEAD files;}
+    tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
+    logInfo->print(WMS_DEBUG,"Archiving the ISB files:", tar);
+    // opens the tar file
+    r = tar_open ( &t,  (char*)tar.c_str(), type,
+		   O_CREAT|O_WRONLY,
+		   S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
+    if ( r != 0 ){
+      throw WmsClientException(__FILE__,__LINE__,
+			       "tar_open",  DEFAULT_ERR_CODE,
+			       "File i/o Error",
+			       "Unable to create tar file for InputSandbox: " + tar );
+    }
+    // files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
+    // RootFiles
+    vector <JobFileAd>::iterator it1 = fileads.begin( );
+    vector <JobFileAd>::iterator const end1 = fileads.end( );
+    for ( ; it1 != end1; it1++ ) {
+      jobpath = this->getJobPath(it1->node);
+      vector <FileAd>::iterator it2 = (it1->files).begin( );
+      vector <FileAd>::iterator const end2 = (it1->files).end( );
+      for ( ; it2 != end2; it2++ ) {
+	file = it2->file;
+
+	//	cout << "***** Handling file [" << file << "]" << endl;
+
+	path = jobpath + "/" + Utils::getFileName(it2->file);
+	logInfo->print(WMS_DEBUG, "tar - Archiving the local file: " + file,
+		       "with the following path: " + path, false);
+
+	//cout << "***** tar - Archiving the local file: "<<file<<" with the following path: "<< path<<endl;
+
+	r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
+	if (r!=0){
+	  string m = "Error in adding the file "+ file+ " to " + tar ;
+	  char* em = strerror(errno);
+	  if (em) { m += string("\n(") + string(em) + ")"; }
+	  throw WmsClientException(__FILE__,__LINE__,
+				   "archiveFiles",  DEFAULT_ERR_CODE,
+				   "File i/o Error",
+				   "Unable to create tar file - " + m);
+	}
+      }
+    }
+    if (t) {
+      // close the file
+      tar_append_eof(t);
+      tar_close (t);
+      logInfo->print(WMS_DEBUG,
+		     "This archive file has been successfully created:", tar);
+      logInfo->print(WMS_DEBUG,
+		     "Compressing the file (" +Utils::getZipExtension() +"):", tar);
+      gz = wmcUtils->fileCompression(tar);
+      logInfo->print(WMS_DEBUG,
+		     "ISB ZIPPED file successfully created:", gz);
+    }
+    FileAd source(FILE_PROTOCOL, gz, Utils::getFileSize(gz));
+    string dest = this->getDestinationURI(this->getJobId( )) + "/" + filename;
+    logInfo->print(WMS_DEBUG,
+		   "ISB Zipped File: " + source.file, "DestURI: " + dest, false);
+    to_btransferred.push_back(make_pair(source, dest) );
+    //exit(1);
+  }
+  
+  
 /**
 * File transfer by globus-url-copy (gsiftp protocol)
 */
@@ -1938,6 +1999,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		params.push_back(string (protocol+source));
 		params.push_back(destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+		//		cout << "TRANSFERRING: " << params[0] << " TO " << params[1] << endl;
 		string errormsg = "";
 
 		// Set the default value;
@@ -2095,7 +2157,7 @@ std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::jdl
 		info << "- no local file in the InputSandbox files to be transferred\n";
 		info << "- ";
 	} else {
-		// Creates a zip file with the ISB files to be transferred if file compression is allowed
+		// s a zip file with the ISB files to be transferred if file compression is allowed
 		if (zipAllowed && zip) {
 			if (size==1) {
 				header = "To complete the operation, the following file containing the InputSandbox of the job needs to be transferred:";
@@ -2169,6 +2231,11 @@ void JobSubmit::jobPostProcessing( ){
 	if (extractAd->hasFiles( )) {
 		this->toBCopiedFileList(to_bcopied);
 		// if the vector is not empty, file transfer is performed
+		vector <pair<FileAd, string> >::const_iterator it = to_bcopied.begin();
+// 		for( ; it != to_bcopied.end( ); ++it )
+// 		  cout << "TO BE COPIED: " << it->first.file << " - " 
+// 		       << it->second << endl;
+
 		if (to_bcopied.empty( )==false){
 			if (registerOnly) {
 				// If --register-only: message with ISB files list to be printed out
