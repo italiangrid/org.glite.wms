@@ -66,7 +66,6 @@ limitations under the License.
 #include "zlib.h"
 #include "libtar.h"
 
-
 extern char *optarg;
 extern int optind, opterr, optopt;
 
@@ -493,8 +492,27 @@ int main(int argc, char *argv[])
             //fprintf(stderr,"Group after set: %d\n", getgid());
             //fprintf(stderr,"User after set: %d\n", getuid());
             //summary_status |= uncompressFile(argv[i], starting_path);
-            if ((summary_status = uncompressFile(argv[i], starting_path))) {
-               exit(summary_status);
+            #define BUF 1024
+            char cmdline[BUF], arg1[BUF], arg2[BUF];
+            snprintf(arg1, sizeof(arg1),"%s", starting_path);
+            snprintf(arg2, sizeof(arg2),"%s", argv[i]);
+            if (fileExists(argv[i])) {
+               if ((summary_status =
+                  execl(
+                     "/bin/tar",
+                     "tar",
+                     "--directory",
+                     arg1,
+                     "-xzf",
+                     arg2,
+                     (char *)0
+                  )
+               )) {
+                  exit(errno);
+               }
+            } else {
+               fprintf(stderr,"Cannot read nor find file %s\n", argv[i]);
+               exit(UNTAR_ERR_OPEN_FILE);
             }
          }
       }
