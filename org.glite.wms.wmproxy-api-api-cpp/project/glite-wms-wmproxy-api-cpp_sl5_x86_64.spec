@@ -7,8 +7,9 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
-BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool, doxygen
+BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} gsoap-devel
+BuildRequires: %{!?extbuilddir: glite-build-common-cpp,} doxygen
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
