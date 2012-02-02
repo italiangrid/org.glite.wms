@@ -18,9 +18,10 @@
 #########
 
 
-#
-# Startup script for the WMProxy Service Apache Web Server
-#
+# chkconfig: 345 95 06 
+# description: Startup script for the WMProxy Service Apache Web Server
+
+
 #############
 # processname: httpd
 # pidfile: ${WMS_LOCATION_VAR}/httpd-wmproxy.pid 
