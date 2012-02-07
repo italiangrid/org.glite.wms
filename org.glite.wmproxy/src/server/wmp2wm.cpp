@@ -140,7 +140,7 @@ WMP2WM::init(const string& filename, eventlogger::WMPEventLogger *wmpeventlogger
 
    this->wmpeventlogger = wmpeventlogger;
    // filename is the base_dir
-   boost::filesystem::path base(filename,  boost::filesystem::native);
+   boost::filesystem::path base(filename, boost::filesystem::native);
    m_jobdir.reset(new wmsutilities::JobDir(base));
    edglog(debug)<<"wmp2wm initialization done"<<endl;
    GLITE_STACK_CATCH();

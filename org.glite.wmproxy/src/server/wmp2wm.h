@@ -31,10 +31,6 @@ limitations under the License.
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-// FileList
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileListLock.h"
-
 // Jobdir
 #include "glite/wms/common/utilities/jobdir.h"
 
@@ -61,12 +57,6 @@ namespace server
 {
 
 
-typedef boost::scoped_ptr<glite::wms::common::utilities::FileList<std::string> >
-FileListPtr;
-typedef boost::scoped_ptr<glite::wms::common::utilities::FileListMutex>
-FileListMutexPtr;
-
-
 /**
  * WMP2WM class
  *
@@ -76,9 +66,6 @@ FileListMutexPtr;
 */
 class WMP2WM
 {
-
-   FileListPtr m_filelist;
-   FileListMutexPtr m_mutex;
 
 public:
    /**
@@ -92,8 +79,8 @@ public:
    virtual ~WMP2WM();
 
    /**
-   * Initialized the WMP to WM Proxy using the given FileList.
-   * @param filename the pathname of FileList file.
+   * Initialized the WMP to WM Proxy using the given Jobdir.
+   * @param filename the pathname of JobDir.
    * @param wmpeventlogger
    */
    void init(const std::string& filename,
