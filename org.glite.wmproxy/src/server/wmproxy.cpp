@@ -60,7 +60,6 @@ limitations under the License.  */
 WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
-std::string dispatcher_type_global;
 std::string filelist_global;
 
 namespace logger        = glite::wms::common::logger;
@@ -122,11 +121,6 @@ main(int argc, char* argv[])
          conf.wmp_config->log_rotation_max_file_number());
       edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
                    <<endl;
-
-      extern string dispatcher_type_global;
-      dispatcher_type_global
-         = configuration::Configuration::instance()->wm()->dispatcher_type();
-      edglog(debug)<<"DispatcherType: "<<dispatcher_type_global<<endl;
 
       extern string filelist_global;
       filelist_global

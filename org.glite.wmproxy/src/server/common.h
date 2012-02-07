@@ -55,7 +55,6 @@ void setGlobalSandboxDir();
 */
 void initWMProxyOperation (const std::string& operation);
 void callLoadScriptFile(const std::string& operation);
-void checkConfiguration();
 int  getType(std::string jdl, glite::jdl::Ad * ad = NULL);
 void checkJobDirectoryExistence(glite::jobid::JobId jid,int level = 0);
 }}}}

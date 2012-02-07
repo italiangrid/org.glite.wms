@@ -81,26 +81,6 @@ namespace
 {
 
 void
-f_forward(wmsutilities::FileList<string>& filelist,
-          wmsutilities::FileListMutex& mutex, string const& ad)
-{
-   GLITE_STACK_TRY("f_forward()");
-   edglog_fn("wmp2wm::f_forward");
-
-   edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
-   wmsutilities::FileListLock lock(mutex);
-   try {
-      filelist.push_back(ad);
-   } catch (exception& ex) {
-      throw wmputilities::FileSystemException(__FILE__, __LINE__,
-                                              "wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-                                              ex.what());
-   }
-
-   GLITE_STACK_CATCH();
-}
-
-void
 f_forward(wmsutilities::JobDir jd, string const& ad)
 {
    GLITE_STACK_TRY("f_forward()");
@@ -159,19 +139,9 @@ WMP2WM::init(const string& filename, eventlogger::WMPEventLogger *wmpeventlogger
    edglog_fn("wmp2wm::init");
 
    this->wmpeventlogger = wmpeventlogger;
-   if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-      edglog(debug)<<"Request Queue: "<<filename<<endl;
-      m_filelist.reset(new wmsutilities::FileList<string>(filename));
-      m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
-   } else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
-      // filename is the base_dir
-      boost::filesystem::path base(filename,  boost::filesystem::native);
-      //wmsutilities::JobDir::create(base);
-      m_jobdir.reset(new wmsutilities::JobDir(base));
-   } else {
-      // Dispatcher type not known
-      edglog(fatal)<<"FATAL ERROR: dispatcher type not known"<<endl;
-   }
+   // filename is the base_dir
+   boost::filesystem::path base(filename,  boost::filesystem::native);
+   m_jobdir.reset(new wmsutilities::JobDir(base));
    edglog(debug)<<"wmp2wm initialization done"<<endl;
    GLITE_STACK_CATCH();
 }
@@ -193,26 +163,15 @@ WMP2WM::submit(const string& jdl, const string& jdlpath)
                 <<toFormattedString(convertedAd)<<endl;
    string regjdl = (jdlpath != "") ? jdlpath : jdl;
    try {
-      if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-         f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
-         wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-                                  true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
-      } else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
-         f_forward(*m_jobdir, command_str);
-         wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-                                  true, true, filelist_global.c_str(), regjdl.c_str());
-      }
+      f_forward(*m_jobdir, command_str);
+      wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
+                               true, true, filelist_global.c_str(), regjdl.c_str());
       edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
       edglog(debug)<<"Submit EnQueued OK"<<endl;
    } catch (exception& e) {
       // LogEnQueued FAIL if exception occurs
-      if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-         wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-                                  e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
-      } else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
-         wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-                                  e.what(), true, true, "", regjdl.c_str());
-      }
+      wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+                               e.what(), true, true, "", regjdl.c_str());
       edglog(critical)<<"Submit EnQueued FAIL"<< e.what() << endl;
    }
    edglog(debug)<<"Submit Forwarded"<<endl;
@@ -236,13 +195,7 @@ WMP2WM::cancel(const string& jobid, const string& seq_code)
                 <<toFormattedString(jdlAd)<<endl;
 
    string command_ad(convertedString);
-
-   if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-      f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-   } else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
-      f_forward(*m_jobdir, command_ad);
-   }
-
+   f_forward(*m_jobdir, command_ad);
    edglog(debug)<<"Cancel Forwarded"<<endl;
 
    GLITE_STACK_CATCH();
@@ -328,12 +281,7 @@ WMP2WM::match(const string& jdl, const string& filel, const string& proxy,
                 <<toFormattedString(convertedAd)<<endl;
    string command_ad(convertedString);
 
-   if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-      f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-   } else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
-      f_forward(*m_jobdir, command_ad);
-   }
-
+   f_forward(*m_jobdir, command_ad);
    edglog(debug)<<"Match Forwarded"<<endl;
 
    string resultlist = commands::listjobmatchex(local_path, pipepath);

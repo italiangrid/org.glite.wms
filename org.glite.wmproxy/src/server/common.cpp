@@ -79,29 +79,6 @@ const std::string FILE_SEPARATOR = "/";
 } // anonymous namespace
 
 /**
-* check for filelist/jobdir
-**/
-void
-checkConfiguration()
-{
-   if (dispatcher_type_global == "") {
-      dispatcher_type_global = "filelist";
-   } else {
-      if ((dispatcher_type_global != "filelist")
-            && (dispatcher_type_global != "jobdir")) {
-         edglog(error)<<"Configuration error: dispatcher type not known"
-                      "\nThe value \""<<dispatcher_type_global<<"\" is not possible "
-                      "for configuration attribute DispatcherType\n"
-                      "Please try with \"filelist\" or \"jobdir\""<<endl;
-         throw ConfigurationException(__FILE__, __LINE__,
-                                      "checkConfiguration()", wmputilities::WMS_CONFIGURATION_ERROR,
-                                      "Configuration error: dispatcher type not known"
-                                      "\n(please contact server administrator)");
-      }
-   }
-}
-
-/**
 * check Document Root & Staging path
 */
 void
@@ -194,7 +171,6 @@ initWMProxyOperation(const std::string& operation)
    edglog(info) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
    edglog(info)<<"WMProxy instance serving core request N.: " <<++server::servedrequestcount_global<<endl;
 
-   checkConfiguration(); // throws
    setGlobalSandboxDir(); // throws
    if (operation != "jobStart") { // bug # 40370
       callLoadScriptFile(operation);
