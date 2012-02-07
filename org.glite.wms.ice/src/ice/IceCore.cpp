@@ -34,8 +34,8 @@ END LICENSE */
 #include "iceCommands/iceCommandReschedule.h"
 #include "iceCommands/iceCommandSubmit.h"
 #include "iceCommands/iceCommandCancel.h"
-#include "iceUtils/Request_source_factory.h"
-#include "iceUtils/Request_source.h"
+//#include "iceUtils/Request_source_factory.h"
+#include "iceUtils/Request_source_jobdir.h"
 #include "iceUtils/Request.h"
 #include "iceUtils/RequestParser.h"
 #include "iceUtils/DNProxyManager.h"
@@ -47,6 +47,11 @@ END LICENSE */
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/RemoveJobByUserDN.h"
+#include "iceUtils/IceConfManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -217,8 +222,8 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
     m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
     m_job_killer_thread( "Job Killer" ),
-    m_wms_input_queue( util::Request_source_factory::make_source_input_wm() ),
-    m_ice_input_queue( util::Request_source_factory::make_source_input_ice() ),
+    m_wms_input_queue( new Request_source_jobdir( IceConfManager::instance()->getConfiguration()->wm()->input(), true ) /*util::Request_source_factory::make_source_input_wm()*/ ),
+    m_ice_input_queue( new Request_source_jobdir( IceConfManager::instance()->getConfiguration()->ice()->input(), true ) /*util::Request_source_factory::make_source_input_ice()*/ ),
     m_reqnum(util::IceConfManager::instance()->getConfiguration()->ice()->max_ice_threads()),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( util::iceLBLogger::instance() ),

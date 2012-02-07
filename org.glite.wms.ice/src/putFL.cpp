@@ -18,35 +18,31 @@ limitations under the License.
 
 END LICENSE */
 
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileLocker.h"
-#include "glite/wms/common/utilities/FileListLock.h"
 #include "classad_distribution.h"
 #include "iceUtils/IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-#include "iceUtils/Request_source_factory.h"
+#include "iceUtils/Request_source_jobdir.h"
 #include "iceUtils/Request_source.h"
 #include "iceUtils/Request.h"
+#include "iceUtils/IceConfManager.h"
 
+#include <fstream>
 #include <string>
 #include <iostream>
 #include <cstdlib>
 #include <sys/time.h>
 #include <unistd.h>
 #include <exception>
-//#include <fstream>
 #include <sys/time.h>
 
 #include <boost/program_options.hpp>
 #include <boost/format.hpp>
-//#include <boost/algorithm/string.hpp>
 
 /* workaround for gsoap 2.7.13 */
 #include "glite/ce/cream-client-api-c/cream_client_soapH.h"
 SOAP_NMAC struct Namespace namespaces[] = {};
 
-namespace utils = glite::wms::common::utilities;
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 namespace po = boost::program_options;
@@ -116,7 +112,7 @@ int main(int argc, char* argv[]) {
     // int j, howmany;
     //    utils::FileList<string> fl;
 
-    iceUtil::Request_source* input_queue( iceUtil::Request_source_factory::make_source_input_ice() );
+    iceUtil::Request_source* input_queue = new iceUtil::Request_source_jobdir( iceUtil::IceConfManager::instance()->getConfiguration()->ice()->input(), true);// /*iceUtil::Request_source_factory::make_source_input_ice()*/ );
 
     ifstream is( opt_ad.c_str() );
     string a_line;

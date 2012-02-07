@@ -25,9 +25,9 @@ END LICENSE */
 #include "iceUtils/IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-#include "iceUtils/Request_source_factory.h"
 #include "iceUtils/Request_source.h"
 #include "iceUtils/Request.h"
+#include "iceUtils/Request_source_jobdir.h"
 
 #include <string>
 #include <iostream>
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
     // int j, howmany;
     //    utils::FileList<string> fl;
 
-    iceUtil::Request_source* input_queue( iceUtil::Request_source_factory::make_source_input_ice() );
+    iceUtil::Request_source* input_queue = new iceUtil::Request_source_jobdir( iceUtil::IceConfManager::instance()->getConfiguration()->ice()->input(), true);//( iceUtil::Request_source_factory::make_source_input_ice() );
 
     ifstream is( opt_ad.c_str() );
     string a_line;

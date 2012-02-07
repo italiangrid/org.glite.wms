@@ -33,8 +33,6 @@ libglite_wms_iceUtils_la_SOURCES = \
 				IceLBEvent.cpp \
 				iceLBLogger.cpp \
 				Request_jobdir.cpp \
-				Request_source_factory.cpp \
-				Request_source_filelist.cpp \
 				Request_source_jobdir.cpp \
 				RequestParser.cpp \
 				Url.cpp
