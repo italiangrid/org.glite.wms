@@ -24,15 +24,10 @@ limitations under the License. */
 // $Id$
 
 #include <memory>
-
 #include <classad_distribution.h>
-
 #include <boost/shared_ptr.hpp>
 
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wms/common/utilities/jobdir.h"
-
 #include "jobcontrol_namespace.h"
 
 typedef  struct _edg_wll_Context  *edg_wll_Context;
@@ -60,8 +55,6 @@ public:
   void createQueue();
 
 private:
-  boost::shared_ptr<utilities::FileListMutex>               jcf_mutex;
-  boost::shared_ptr<utilities::FileList<classad::ClassAd> > jcf_queue;
   boost::shared_ptr<utilities::JobDir>                      jcf_jobdir;
 
   static JobControllerFactory *jcf_s_instance;

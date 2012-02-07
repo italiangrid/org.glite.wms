@@ -28,6 +28,19 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace controller {
 
+class JobControllerClientUnknown : public JobControllerClientImpl {
+public:
+  JobControllerClientUnknown( void );
+  virtual ~JobControllerClientUnknown( void );
+
+  virtual void release_request( void );
+  virtual void extract_next_request( void );
+  virtual const Request *get_current_request( void );
+
+private:
+  Request    jccu_request;
+};
+
 class JobControllerClientJD : public JobControllerClientImpl {
 public:
   JobControllerClientJD( void );

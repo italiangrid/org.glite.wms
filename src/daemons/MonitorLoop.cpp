@@ -36,7 +36,6 @@ limitations under the License. */
 #include <signal.h>
 
 #include "glite/wms/common/utilities/LineParser.h"
-#include "glite/wms/common/utilities/filecontainer.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
@@ -297,7 +296,7 @@ MonitorLoop::MonitorLoop( const utilities::LineParser &options ) : ml_verbose( o
 
     throw CannotStart( err.what() );
   }
-  catch( utilities::FileContainerError &err ) {
+  catch( utilities::JobDirError const& err ) {
     string     error( "Cannot create container: " );
     error.append( err.string_error() );
 
@@ -476,13 +475,12 @@ try {
 	      }
 
 	      if( this->ml_abContainer->inserted() >= comthr ) {
-		this->ml_stream << logger::setlevel( logger::medium )
-				<< "AbortedContainer size exceeded, compacting." << endl;
+		     this->ml_stream << logger::setlevel( logger::medium )
+				 << "AbortedContainer size exceeded, compacting." << endl;
 
-		this->ml_abContainer->compact();
+		      this->ml_abContainer->compact();
 	      }
-	    }
-	    catch( utilities::FileContainerError &error ) {
+	    } catch(utilities::JobDirError const& error) {
 	      this->ml_stream << logger::setlevel( logger::null )
 			      << "Cannot compact container." << endl
 			      << "Reason: " << error.string_error() << endl;

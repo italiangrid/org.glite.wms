@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.1.34.1.2.1  2012/02/07 14:36:29  mcecchi
+#       removed support for filelist - work in progress
+#
 #       Revision 1.1.34.1  2011/01/05 11:10:57  pandreet
 #       Pkg-config support for jss
 #
@@ -24,7 +27,7 @@
 #       Insert jobcontrol_namespace and Makefile
 #
 
-SUBDIRS = common controller logmonitor daemons
+SUBDIRS = common controller daemons
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = wms-jss-controller-adapter.pc \

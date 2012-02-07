@@ -15,6 +15,7 @@
 #define EDG_WORKLOAD_JOBCONTROL_COMMON_JOBFILEPURGE_H
 
 #include "glite/jobid/JobId.h"
+#include "jobcontrol_namespace.h"
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
@@ -45,7 +46,3 @@ private:
 } JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_JOBFILEPURGE_H */
-
-// Local Variables:
-// mode: c++
-// End:

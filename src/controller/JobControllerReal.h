@@ -49,14 +49,7 @@ public:
 private:
   JobControllerReal( const JobControllerReal &rhs );
   JobControllerReal &operator=( const JobControllerReal &rhs );
-
-  void readRepository( void );
-
-  int                                      jcr_threshold;
-  std::auto_ptr<jccommon::RamContainer>    jcr_repository;
   jccommon::EventLogger                    jcr_logger;
-
-  static const int        jcr_s_threshold = 10;
 };
 
 } // namespace controller

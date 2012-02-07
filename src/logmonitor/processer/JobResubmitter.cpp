@@ -25,7 +25,6 @@
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/common/utilities/FileListLock.h"
 #include "jobcontrol_namespace.h"
 #include "common/ProxyUnregistrar.h"
 #include "common/EventLogger.h"
@@ -48,39 +47,21 @@ namespace logmonitor { namespace processer {
 
 typedef  JobWrapperOutputParser   JWOP;
 
-JobResubmitter::JobResubmitter( jccommon::EventLogger *logger ) : jr_list(), jr_jobdir(), jr_logger( logger )
+JobResubmitter::JobResubmitter( jccommon::EventLogger *logger ) : jr_jobdir(), jr_logger( logger )
 {
   const configuration::WMConfiguration       *config = configuration::Configuration::instance()->wm();
   logger::StatePusher                         pusher( elog::cedglog, "JobResubmitter::JobResubmitter(...)" );
 
-  if ( config->dispatcher_type() == "filelist") {
+  try {
+    boost::filesystem::path base( config->input(),  boost::filesystem::native);
+    this->jr_jobdir = new utilities::JobDir( base );
+  } catch( utilities::JobDirError &error) {
+    elog::cedglog << logger::setlevel( logger::fatal )
+                    << "Cannot open JobDir to WM." << endl
+                    << "Error: \"" << error.what() << "\"." << endl;
 
-    try {
-      this->jr_list.open( config->input() );
-
-      elog::cedglog << logger::setlevel( logger::info )
-     		    << "FileList to WM initialized." << endl;
-    }
-    catch( utilities::FileContainerError &error ) {
-      elog::cedglog << logger::setlevel( logger::fatal )
-		    << "Cannot open FileList to WM." << endl
-		    << "Error: \"" << error.string_error() << "\"." << endl;
-
-      throw CannotOpenFile( config->input() );
-    }
-  } else { // jobdir
-    try {
-     boost::filesystem::path base( config->input(),  boost::filesystem::native);
-     this->jr_jobdir = new utilities::JobDir( base );
-  }
-    catch( utilities::JobDirError &error) {
-        elog::cedglog << logger::setlevel( logger::fatal )
-                      << "Cannot open JobDir to WM." << endl
-                      << "Error: \"" << error.what() << "\"." << endl;
-
-        throw CannotOpenFile( config->input() );
-    }  
-  }
+    throw CannotOpenFile( config->input() );
+  }  
 }
 
 JobResubmitter::~JobResubmitter( void )
@@ -158,33 +139,16 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
     this->jr_logger->job_resubmitting_event();
     this->jr_logger->job_wm_enqueued_start_event( config->input(), command );
    
-    if ( config->dispatcher_type() == "filelist") { 
+    try {
+      std::string req;
+      classad::ClassAdUnParser unparser;
+      unparser.Unparse(req, &command);
 
-      try {
-        utilities::FileListDescriptorMutex  flmutex( this->jr_list );
-        utilities::FileListLock             lock( flmutex );
-        this->jr_list.push_back( command );
-      }
-      catch( utilities::FileContainerError &error ) {
-        this->jr_logger->job_wm_enqueued_failed_event( config->input(), command, error.string_error() );
+      this->jr_jobdir->deliver(req);
+    } catch (utilities::JobDirError const& error) {
+      this->jr_logger->job_wm_enqueued_failed_event( config->input(), command, error.what() );
 
-        throw CannotExecute( error.string_error() );
-      }
-    } else { // jobdir
-      
-      try {
-        std::string req;
-        classad::ClassAdUnParser  unparser;
-        unparser.Unparse( req, &command );
-
-        this->jr_jobdir->deliver( req );
-      }
-      catch ( utilities::JobDirError &error) {
-        this->jr_logger->job_wm_enqueued_failed_event( config->input(), command, error.what() );
-
-        throw CannotExecute( error.what() );
-      }
-
+      throw CannotExecute( error.what() );
     }
     this->jr_logger->job_wm_enqueued_ok_event( config->input(), command );
     break;

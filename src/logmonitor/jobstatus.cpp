@@ -19,6 +19,10 @@ limitations under the License. */
 #include <vector>
 #include <memory>
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <cerrno>
+
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
@@ -29,7 +33,6 @@ limitations under the License. */
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
-#include "glite/wms/common/utilities/fstreamlock.h"
 #include "glite/wms/common/utilities/streamdescriptor.h"
 #include "glite/wms/common/utilities/LineParser.h"
 #include "glite/wms/common/utilities/LineParserExceptions.h"
@@ -42,6 +45,8 @@ USING_JOBCONTROL_NAMESPACE;
 using namespace std;
 namespace fs = boost::filesystem;
 
+namespace {
+
 RenameLogStreamNS_ts( ts );
 RenameLogStreamNS( elog );
 
@@ -51,6 +56,108 @@ utilities::LineOption options[] = {
   { 'e', 1, "job-id",        "\t\tSelects the job based on its job id." },
   { 'C', 1, "configuration", "\t\tUse an alternate configuration file." },
 };
+
+inline int signal_aware_fcntl( int fd, int cmd, struct flock *fl )
+{
+  int    res;
+
+  do {
+    res = fcntl(fd, cmd, fl);
+  } while( (res == -1) && (errno == EINTR) ); // We have been interrupted by a signal, just retry...
+
+  return res;
+}
+
+class DescriptorLock {
+public:
+  DescriptorLock( int fd, bool lock = true );
+
+  ~DescriptorLock( void );
+
+  int lock( void );
+  int unlock( void );
+
+  inline bool locked( void ) { return( this->dl_locked ); }
+
+protected:
+  bool     dl_locked;
+  int      dl_fd;
+};
+
+class FstreamLock : public DescriptorLock {
+public:
+  FstreamLock( const std::fstream &fs, bool lock = true );
+  FstreamLock( const std::ifstream &ifs, bool lock = true );
+  FstreamLock( const std::ofstream &ofs, bool lock = true );
+  FstreamLock( const std::filebuf &fb, bool lock = true );
+
+  ~FstreamLock( void );
+
+  inline int descriptor( void ) { return( this->dl_fd ); }
+};
+
+DescriptorLock::DescriptorLock( int fd, bool lock ) : dl_locked( false ), dl_fd( fd )
+{
+  if( lock ) this->lock();
+}
+
+DescriptorLock::~DescriptorLock( void )
+{
+  if( this->dl_locked ) this->unlock();
+}
+
+FstreamLock::FstreamLock( const fstream &fs, bool lock ) : DescriptorLock( utilities::streamdescriptor(fs), lock )
+{}
+
+FstreamLock::FstreamLock( const ifstream &fs, bool lock ) : DescriptorLock( utilities::streamdescriptor(fs), lock )
+{}
+
+FstreamLock::FstreamLock( const ofstream &fs, bool lock ) : DescriptorLock( utilities::streamdescriptor(fs), lock )
+{}
+
+FstreamLock::FstreamLock( const filebuf &fb, bool lock ) : DescriptorLock( utilities::bufferdescriptor(fb), lock )
+{}
+
+FstreamLock::~FstreamLock( void )
+{}
+
+int DescriptorLock::lock( void )
+{
+  int             res = 0;
+  struct flock    fc;
+
+  if( !this->dl_locked ) {
+    fc.l_whence = SEEK_SET;
+    fc.l_start = 0;
+    fc.l_len = 0;
+
+    fc.l_type = F_WRLCK;
+    res = signal_aware_fcntl( this->dl_fd, F_SETLKW, &fc );
+
+    this->dl_locked = (res == 0);
+  }
+
+  return( res );
+}
+
+int DescriptorLock::unlock( void )
+{
+  int              res = 0;
+  struct flock     fc;
+
+  if( this->dl_locked ) {
+    fc.l_whence = SEEK_SET;
+    fc.l_start = fc.l_len = 0;
+
+    fc.l_type = F_UNLCK;
+    res = signal_aware_fcntl( this->dl_fd, F_SETLKW, &fc );
+
+    this->dl_locked = (res != 0);
+  }
+
+  return( res );
+}
+}
 
 int main( int argn, char *argv[] )
 {
@@ -94,7 +201,7 @@ int main( int argn, char *argv[] )
     else {
       logfile.open( logpath.native_file_string().c_str(), ios::app );
       if( logfile.good() ) {
-	utilities::FstreamLock  loglock( logfile ); // Lock the "external" log file againist other LM-parts
+	     FstreamLock loglock( logfile ); // Lock the "external" log file againist other LM-parts
 
 	elog::cedglog.open( logfile );
 	ts::edglog.unsafe_attach( elog::cedglog ); // Attach edglog to the right stream

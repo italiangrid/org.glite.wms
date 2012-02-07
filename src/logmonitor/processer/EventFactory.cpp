@@ -24,7 +24,6 @@ limitations under the License. */
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/streamdescriptor.h"
-#include "common/IdContainer.h"
 #include "jobcontrol_namespace.h"
 #include "logmonitor/SizeFile.h"
 

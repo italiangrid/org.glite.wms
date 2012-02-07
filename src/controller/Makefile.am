@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.2.2.1  2012/02/07 14:36:30  mcecchi
+#       removed support for filelist - work in progress
+#
 #       Revision 1.2.28.2.6.2  2011/03/11 15:00:04  pandreet
 #       Removed with-glite-location
 #
@@ -52,7 +55,6 @@ noinst_HEADERS = \
 	JobControllerReal.h \
 	JobControllerClient.h \
 	JobControllerClientImpl.h \
-	JobControllerClientReal.h \
 	JobControllerClientJD.h \
 	Request.h \
 	RequestExceptions.h \
@@ -75,8 +77,7 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	JobControllerReal.cpp \
 	JobControllerFake.cpp \
 	JobControllerClient.cpp \
-	JobControllerClientJD.cpp \
-	JobControllerClientReal.cpp
+	JobControllerClientJD.cpp
 
 
 libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)

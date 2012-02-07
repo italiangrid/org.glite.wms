@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3.2.3.2.1  2012/02/07 14:36:29  mcecchi
+#       removed support for filelist - work in progress
+#
 #       Revision 1.11.2.1.4.3.2.3  2011/03/11 15:00:04  pandreet
 #       Removed with-glite-location
 #
@@ -87,19 +90,14 @@ noinst_HEADERS = \
 	constants.h \
 	files.h \
 	EventLogger.h \
-	PointerId.h \
 	IdCompare.h \
-	IdContainer.h \
-	RamContainer.h \
 	JobFilePurger.h \
 	ProxyUnregistrar.h \
 	LockFile.h \
 	SignalChecker.h \
 	handler.h
 
-libglite_wms_jss_common_la_SOURCES = IdContainer.cpp \
-	RamContainer.cpp \
-	PointerId.cpp \
+libglite_wms_jss_common_la_SOURCES = \
 	EventLogger.cpp \
 	JobFilePurger.cpp \
 	ProxyUnregistrar.cpp \

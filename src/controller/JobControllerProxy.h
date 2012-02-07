@@ -36,8 +36,6 @@ limitations under the License. */
 
 #include <classad_distribution.h>
 
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wms/common/utilities/jobdir.h"
 
 #include "common/EventLogger.h"
@@ -55,15 +53,11 @@ class JobControllerProxy: public JobControllerImpl {
 
   int                      jcp_source;
 
-  boost::shared_ptr<utils::FileListMutex>               jcp_mutex;
-  boost::shared_ptr<utils::FileList<classad::ClassAd> > jcp_queue;
   boost::shared_ptr<utils::JobDir>                      jcp_jobdir;
 
   jccommon::EventLogger    jcp_logger;
 public:
   JobControllerProxy(
-    boost::shared_ptr<utils::FileList<classad::ClassAd> >q,
-    boost::shared_ptr<utils::FileListMutex> m,
     boost::shared_ptr<utils::JobDir> jcp_jd,
     edg_wll_Context *cont
   );

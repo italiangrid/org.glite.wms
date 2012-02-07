@@ -22,7 +22,6 @@
 #include "JobControllerProxy.h"
 #include "JobControllerReal.h"
 #include "JobControllerFake.h"
-#include "JobControllerClientReal.h"
 #include "JobControllerClientJD.h"
 #include "JobControllerExceptions.h"
 
@@ -39,23 +38,11 @@ void JobControllerFactory::createQueue()
   const configuration::JCConfiguration *jc_config
     = configuration::Configuration::instance()->jc();
 
-  if (jc_config->input_type() == "filelist") {
-
-    try {
-      this->jcf_queue.reset(new utilities::FileList<classad::ClassAd>(jc_config->input()));
-      this->jcf_mutex.reset(new utilities::FileListMutex(*this->jcf_queue));
-    } catch( utilities::FileContainerError &error ) {
-      throw CannotCreate(error.string_error());
-    }
-  } else { // jobdir
-
-    try {
-     boost::filesystem::path base(jc_config->input(), boost::filesystem::native);
-     this->jcf_jobdir.reset(new utilities::JobDir(base));
-  }
-    catch(utilities::JobDirError &error) {
-      throw CannotCreate(error.what());
-    }
+  try {
+   boost::filesystem::path base(jc_config->input(), boost::filesystem::native);
+   this->jcf_jobdir.reset(new utilities::JobDir(base));
+  } catch(utilities::JobDirError &error) {
+    throw CannotCreate(error.what());
   }
 }
 
@@ -87,7 +74,7 @@ JobControllerImpl *JobControllerFactory::create_server( edg_wll_Context *cont )
   }
   else {
     if( configure->jc()->use_fake_for_proxy() ) result = new JobControllerFake;
-    else result = new JobControllerProxy(this->jcf_queue, this->jcf_mutex, this->jcf_jobdir, cont);
+    else result = new JobControllerProxy(this->jcf_jobdir, cont);
   }
 
   return result;
@@ -98,13 +85,11 @@ JobControllerClientImpl *JobControllerFactory::create_client( void )
   const configuration::Configuration      *configure = configuration::Configuration::instance();
   JobControllerClientImpl                 *result = NULL;
 
-  if( configure->get_module() == configuration::ModuleType::job_controller )
-    if ( configure->jc()->input_type() == "filelist" )
-      result = new JobControllerClientReal();
-    else
+  if( configure->get_module() == configuration::ModuleType::job_controller ) {
       result = new JobControllerClientJD();
-  else
+  } else {
     result = new JobControllerClientUnknown();
+  }
 
   return result;
 }

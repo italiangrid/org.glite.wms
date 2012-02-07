@@ -33,6 +33,7 @@
 #endif
 
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 
 namespace fs = boost::filesystem;
@@ -45,7 +46,6 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/common/utilities/filecontainer.h"
 
 #include "glite/jobid/JobId.h"
 
@@ -54,10 +54,10 @@ namespace fs = boost::filesystem;
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "common/IdContainer.h"
-#include "common/RamContainer.h"
+
 #include "common/JobFilePurger.h"
 #include "common/ProxyUnregistrar.h"
+#include "common/constants.h"
 
 #include "JobControllerReal.h"
 #include "JobControllerExceptions.h"
@@ -160,56 +160,9 @@ bool cancelJob( const string &condorid, string &info )
 
 } // Anonymous namespace
 
-void JobControllerReal::readRepository( void )
+JobControllerReal::JobControllerReal( edg_wll_Context *cont ) : jcr_logger( cont )
 {
-  const configuration::LMConfiguration   *lmconfig = configuration::Configuration::instance()->lm();
-  string                                  repname( lmconfig->id_repository_name() );
-  auto_ptr<jccommon::IdContainer>         repository;
-  fs::path                                repfile( lmconfig->monitor_internal_dir(), fs::native );
-  logger::StatePusher                     pusher( elog::cedglog, "JobControllerReal::readRepository()" );
-
-  repfile /= repname;
-
-  try {
-    elog::cedglog << logger::setlevel( logger::medium )
-		  << "Reading repository from LogMonitor file: " << repfile.native_file_string() << endl;
-
-    repository.reset( new jccommon::IdContainer(repfile.native_file_string().c_str()) );
-    this->jcr_repository->copy( *repository );
-  }
-  catch( utilities::FileContainerError &err ) {
-    elog::cedglog << logger::setlevel( logger::null ) << "File container error: " << err.string_error() << endl;
-
-    throw CannotCreate( err.string_error() );
-  }
-
-  return;
-}
-
-JobControllerReal::JobControllerReal( edg_wll_Context *cont ) : jcr_threshold( 0 ), jcr_repository(), jcr_logger( cont )
-{
-  const configuration::LMConfiguration   *lmconfig = configuration::Configuration::instance()->lm();
-  const configuration::JCConfiguration   *jcconfig = configuration::Configuration::instance()->jc();
-  string                                  repname( lmconfig->id_repository_name() );
-  auto_ptr<jccommon::IdContainer>         repository;
-  fs::path                                repfile( lmconfig->monitor_internal_dir(), fs::native);
   logger::StatePusher                     pusher( elog::cedglog, "JobControllerReal::JobControllerReal()" );
-
-  repfile /= repname;
-
-  try {
-    repository.reset( new jccommon::IdContainer(repfile.native_file_string().c_str()) );
-    this->jcr_repository.reset( new jccommon::RamContainer(*repository) );
-  }
-  catch( utilities::FileContainerError &err ) {
-    elog::cedglog << logger::setlevel( logger::null ) << "File container error: " << err.string_error() << endl;
-
-    throw CannotCreate( err.string_error() );
-  }
-
-  this->jcr_threshold = jcconfig->container_refresh_threshold( jcr_s_threshold );
-  if( this->jcr_threshold < jcr_s_threshold ) this->jcr_threshold = jcr_s_threshold;
-
   elog::cedglog << logger::setlevel( logger::ugly ) << "Controller created..." << endl;
 }
 
@@ -219,7 +172,7 @@ JobControllerReal::~JobControllerReal( void )
 int JobControllerReal::submit( const classad::ClassAd *pad )
 try {
   int                                result = 1;
-  int  															 numberId = -1;
+  int  										 numberId = -1;
   string                             rsl, parameters, info, condorid, seqcode;
   SubmitAdapter                      sad( *pad );
   logger::StatePusher                pusher( elog::cedglog, "JobControllerReal::submit(...)" );
@@ -230,8 +183,8 @@ try {
 #else
   ostrstream                         oss;
 #endif
-  bool const have_lbproxy = configuration::Configuration::instance()->common()->lbproxy();
 
+  bool const have_lbproxy = configuration::Configuration::instance()->common()->lbproxy();
   boost::match_results<string::const_iterator>    pieces;
   static boost::regex                             expr( "^.*[0-9]+ job\\(s\\) submitted to cluster ([0-9]+)\\.[0-9]*.*$" );
 
@@ -242,7 +195,7 @@ try {
 
   elog::cedglog << logger::setlevel( logger::verylow ) << "Submitting job \"" << sad->job_id() << "\"" << endl;
 
-  if( ad.get() != NULL ) {
+  if (ad.get()) {
     glite::jdl::to_submit_stream( oss, *ad );
 
 #ifndef HAVE_STRINGSTREAM
@@ -302,8 +255,7 @@ try {
 
 	jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
 	jccommon::JobFilePurger( sad->job_id(), have_lbproxy, sad->is_dag() ).do_purge( true );
-      }
-      else {
+      } else {
 	// The condor command worked fine... Do the right thing
 	condorid.assign( pieces[1].first, pieces[1].second );
 	numberId = boost::lexical_cast<int>( condorid );
@@ -311,14 +263,10 @@ try {
 	elog::cedglog << logger::setlevel( logger::verylow )
 		      << "Job submitted to Condor cluster: " << condorid << endl;
 
-	if( this->jcr_repository->inserted() >= this->jcr_threshold ) this->readRepository();
-
-	this->jcr_repository->insert( sad->job_id(), condorid );
 
 	this->jcr_logger.condor_submit_ok_event( "(unavailable)", condorid, sad->log_file() );
       }
-    }
-    else {
+    } else {
       elog::cedglog << logger::setlevel( logger::null ) << "Cannot open condor submit file for writing." << endl
 		    << "File: \"" << sad->submit_file() << "\"" << endl;
 
@@ -329,8 +277,7 @@ try {
 
       throw CannotExecute( "Cannot open condor submit file." );
     }
-  }
-  else { // Submit classad not good...
+  } else { // Submit classad not good...
     bool      good;
     string    id( glite::jdl::get_edg_jobid(*pad, good) ), type( glite::jdl::get_type(*pad, good) );
 
@@ -345,13 +292,9 @@ try {
   }
 
   return numberId;
+} catch( SubmitAdException &error ) {
+  throw CannotExecute( error.error() );
 }
-catch( utilities::FileContainerError &error ) {
-  elog::cedglog << logger::setlevel( logger::null ) << "Error during handling of internal FileList." << endl;
-
-  throw CannotExecute( error.string_error() );
-}
-catch( SubmitAdException &error ) { throw CannotExecute( error.error() ); }
 
 bool JobControllerReal::cancel( const glite::jobid::JobId &id, const char *logfile )
 {
@@ -363,14 +306,6 @@ bool JobControllerReal::cancel( const glite::jobid::JobId &id, const char *logfi
   elog::cedglog << logger::setlevel( logger::info )
 		<< "Asked to remove job: " << id.toString() << endl;
 
-  condorid.assign( this->jcr_repository->condor_id(sid) );
-
-  if ( condorid.size() == 0 ) { // syncronize the "ram" repository with the LM's one
-     this->readRepository();
-     condorid.assign( this->jcr_repository->condor_id(sid) );	
-  }
-
-  if( condorid.size() != 0 ) {
     // Comunicate to LM that this request comes from the user
 
     if( logfile ) icid = boost::lexical_cast<int>( condorid );
@@ -381,20 +316,7 @@ bool JobControllerReal::cancel( const glite::jobid::JobId &id, const char *logfi
       if( logfile ) logGenericEvent( jccommon::cancelled_event, icid, logfile );
 
       elog::cedglog << logger::setlevel( logger::verylow ) << "Job " << sid << " successfully marked for removal." << endl;
-      this->jcr_repository->remove_by_condor_id( condorid );
     }
-    else if( logfile ) {
-      logGenericEvent( jccommon::cannot_cancel_event, icid, logfile );
-
-      this->jcr_logger.job_cancel_refused_event( info );
-    }
-  }
-  else {
-    elog::cedglog << logger::setlevel( logger::null ) << "I'm not able to retrieve the condor ID." << endl;
-    this->jcr_logger.job_cancel_refused_event( "I'm not able to retrieve the condor ID." );
-    good = false;
-  }
-
   return good;
 }
 

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.2  2012/02/07 14:36:30  mcecchi
+#       removed support for filelist - work in progress
+#
 #       Revision 1.20.2.2.4.1.2.7.2.1  2011/09/12 09:25:38  pandreet
 #       Fixed conflict with lb macro
 #
@@ -141,7 +144,6 @@ lib_LTLIBRARIES = libglite_wms_jss_logmonitor.la
 noinst_HEADERS = \
 	JobStatusExtractor.h \
 	JobWrapperOutputParser.h \
-	AbortedContainer.h \
 	CondorMonitor.h \
 	EventAd.h \
 	exceptions.h \
@@ -184,7 +186,6 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
 	Timer.cpp \
 	SizeFile.cpp \
-	AbortedContainer.cpp \
 	JobWrapperOutputParser.cpp \
 	exceptions.cpp \
 	./processer/EventFactory.cpp \

@@ -40,6 +40,26 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace controller {
 
+JobControllerClientUnknown::JobControllerClientUnknown( void ) : jccu_request()
+{}
+
+JobControllerClientUnknown::~JobControllerClientUnknown( void ) {}
+
+void JobControllerClientUnknown::release_request( void )
+{
+  return;
+}
+
+void JobControllerClientUnknown::extract_next_request( void )
+{
+  return;
+}
+
+const Request *JobControllerClientUnknown::get_current_request( void )
+{
+  return &this->jccu_request;
+}
+
 JobControllerClientJD::JobControllerClientJD( void ) : JobControllerClientImpl(),
 						       jccjd_currentGood( false ), jccjd_current(), 
                                                        jccjd_request(), jccjd_queue()
