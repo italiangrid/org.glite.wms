@@ -16,9 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "boost/filesystem/operations.hpp"
 #include <iostream>
 
+#include "boost/filesystem/operations.hpp"
+#include "boost/version.hpp"
 
 #include "listfiles.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -44,10 +45,18 @@ void list_files( const fs::path& p, std::vector<std::string>& v)
             ++dir_itr ) {
          try {
             if ( !fs::is_directory( *dir_itr ) ) {
-               v.push_back( dir_itr->native_file_string() );
+#if BOOST_VERSION >= 103400
+               v.push_back(dir_itr->path().file_string());
+#else
+               v.push_back(dir_itr->native_file_string());
+#endif
             }
          } catch ( const std::exception& ex ) {
+#if BOOST_VERSION >= 103400
+            edglog(warning) << dir_itr->path().file_string() << ' ' << ex.what() << std::endl;
+#else
             edglog(warning) << dir_itr->native_file_string() << ' ' << ex.what() << std::endl;
+#endif
          }
       }
    }

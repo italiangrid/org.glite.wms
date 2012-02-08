@@ -42,9 +42,6 @@ limitations under the License.  */
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
-// File List
-#include "glite/wms/common/utilities/FileList.h"
-
 #include "configuration.h"
 #include "gsoapfaultmanipulator.h"
 
