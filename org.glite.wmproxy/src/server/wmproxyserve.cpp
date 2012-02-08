@@ -22,9 +22,8 @@ limitations under the License.
 
 #include <stdsoap2.h>
 #include <fcgi_stdio.h> 
-#include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
+#include "glite/wms/common/logger/edglog.h"
 #include "wmproxyserve.h"
 #include "configuration.h"
 #include "signalhandler.h"

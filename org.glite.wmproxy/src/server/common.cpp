@@ -41,7 +41,6 @@ limitations under the License.
 // Logger
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/logger_utils.h"
 
 #include "wmproxyserve.h"
 #include "security/delegation.h"
@@ -59,7 +58,7 @@ using namespace std;
 using namespace glite::jdl; // Ad
 using namespace glite::wms::wmproxy::utilities; //Exception
 
-namespace logger = glite::wms::common::logger;
+//namespace logger = glite::wms::common::logger;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 namespace server = glite::wms::wmproxy::server;
 namespace jobid = glite::jobid;
