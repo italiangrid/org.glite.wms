@@ -25,6 +25,7 @@ limitations under the License.
 
 #include "fcgios.h"
 #include <cxxabi.h>
+#include <cstring>
 #include <execinfo.h>
 
 #include "glite/wms/common/logger/edglog.h"
@@ -86,7 +87,7 @@ void handle_synch_signal(int signum, siginfo_t* info, void* ptr) {
 
 void setup_synch_signal_handler() {
   struct sigaction action;
-  memset(&action, 0, sizeof(action));
+  ::memset(&action, 0, sizeof(action));
   action.sa_sigaction = handle_synch_signal;
   action.sa_flags = SA_SIGINFO; // sa_sigaction instead of sa_handler
   int signum;
