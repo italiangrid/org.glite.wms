@@ -17,6 +17,8 @@
 // Author: Marco Cecchi <marco.cecchi@cnaf.infn.it>
 //
 
+#include<cstring>
+
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "utilities/logging.h"
@@ -261,7 +263,7 @@ get_response(xacml_response_t* response, std::string const& resourceid)
       xacml_statuscode_t* statuscode= xacml_status_getcode(status);
       char const * const status_value = xacml_statuscode_getvalue(statuscode);
       // show status value and message only if not OK
-      if (strcmp(XACML_STATUSCODE_OK, status_value)) {
+      if (::strcmp(XACML_STATUSCODE_OK, status_value)) {
          edglog(debug) << "status: " << status_value << std::endl;
          char const* const status_message = xacml_status_getmessage(status);
          if (status_message) {
@@ -282,7 +284,7 @@ get_response(xacml_response_t* response, std::string const& resourceid)
          //if (fulfillon == decision) {
          char const* const obligationid = xacml_obligation_getid(obligation);
          size_t attrs_l = xacml_obligation_attributeassignments_length(obligation);
-         if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_SECONDARY_GIDS, obligationid) && attrs_l > 0) {
+         if (!::strcmp(XACML_AUTHZINTEROP_OBLIGATION_SECONDARY_GIDS, obligationid) && attrs_l > 0) {
             edglog(debug) << "secondary GIDs=";
          } else if (!strcmp(X_POSIX_ACCOUNT_MAP, obligationid)) {
             edglog(debug) << "obligation("
@@ -295,7 +297,7 @@ get_response(xacml_response_t* response, std::string const& resourceid)
             size_t values_l = xacml_attributeassignment_values_length(attr);
             for (size_t l = 0; l < values_l; ++l) {
                char const* const value = xacml_attributeassignment_getvalue(attr, l);
-               if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_UIDGID, obligationid)) {
+               if (!::strcmp(XACML_AUTHZINTEROP_OBLIGATION_UIDGID, obligationid)) {
                   if (!strcmp(XACML_AUTHZINTEROP_OBLIGATION_ATTR_POSIX_UID, attrid)) {
                      ret.get<1>() = atoi(value);
                      edglog(debug) << "UID =" << value;
