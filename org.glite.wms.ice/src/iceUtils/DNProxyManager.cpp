@@ -321,57 +321,13 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
    string tmpTarget = target + ".tmp";
    ::unlink( tmpTarget.c_str( ) );
   
-//   // CASE 1: target file does not exist
-  
-//   if( !boost::filesystem::exists( boost::filesystem::path( target, boost::filesystem::native ) ) )
-//   {
-  
-//     try {
-//       boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
-//       				    boost::filesystem::path( target, boost::filesystem::native ) );
-//       return;
-//     } catch(exception& ex) {
-//        throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
-//     }
-//   }
-
-//   // CASE 2: target file already exists; them must rename it and then perform the copy; finally remove the renamed one
-//   try {
-//     boost::filesystem::rename( boost::filesystem::path( target, boost::filesystem::native ) ,
-//   			       boost::filesystem::path( tmpTarget, boost::filesystem::native ) );
-//   } catch(exception& ex) {
-//      throw CopyProxyException(string("Couldn't rename [")+target +"] to ["+tmpTarget + "]: " + ex.what());
-//   }
-  
-//   try {
-//     boost::filesystem::copy_file( boost::filesystem::path( source, boost::filesystem::native ) , 
-//       				  boost::filesystem::path( target, boost::filesystem::native ) );
-//   } catch(exception& ex) {
-//      // must restore original proxy file
-//      try {
-//        boost::filesystem::rename( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ,
-//   			          boost::filesystem::path( target, boost::filesystem::native ) );
-//      } catch(exception& ex) {
-//        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-// 		      << "DNProxyManager::copyProxy() - "
-// 		      << "Restore of the original proxy ["
-// 		      << target << "] has failed. It will be impossible to"
-// 		      << " query events for the current DN..."
-// 		     );
-//        //exit(1);
-//      }
-//      throw CopyProxyException(string("Couldn't copy [")+source +"] to ["+target + "]: " + ex.what());
-//   }
-  
-//   try{ boost::filesystem::remove( boost::filesystem::path( tmpTarget, boost::filesystem::native ) ); }
-//   catch(...) {} // can ignore because next time the ::unlink at the start of this func will be invoked.
-
    try {
-     std::ifstream in (source.c_str());
-     std::ofstream out(tmpTarget.c_str());
-     out << in.rdbuf();
-     out.close();
-     in.close();
+//      std::ifstream in (source.c_str());
+//      std::ofstream out(tmpTarget.c_str());
+//      out << in.rdbuf();
+//      out.close();
+//      in.close();
+     boost::filesystem::copy_file( boost::filesystem::path(source,boost::filesystem::native), boost::filesystem::path(tmpTarget,boost::filesystem::native) );
    } catch( exception& ex ) {
 
      ::unlink( tmpTarget.c_str( ) ); // actually this is redundant (see at the beginning of the func)

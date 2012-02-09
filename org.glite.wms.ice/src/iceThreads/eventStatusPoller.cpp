@@ -139,7 +139,7 @@ void eventStatusPoller::body( void )
           db::Transaction tnx(false, false);
           tnx.execute( &hasjob );
           if( !hasjob.found( ) ) {
-            CREAM_SAFE_LOG(m_log_dev->warnStream() << "eventStatusPoller::body - "
+            CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body - "
 		           << "DN [" 
 		           << *dnit << "] has not job on the CE ["
 			   << *ceit << "] in the ICE's database at the moment. Skipping query..."

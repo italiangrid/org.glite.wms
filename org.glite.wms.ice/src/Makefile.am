@@ -345,6 +345,7 @@ glite_wms_ice_proxy_renew_LDADD = \
 		$(GLOBUS_NOTHR_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
 		$(MYPROXY_LIBS) \
+		$(BOOST_FS_LIBS) \
 		$(RENEWAL_NOTHR_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \

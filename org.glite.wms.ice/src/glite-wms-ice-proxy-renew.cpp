@@ -35,7 +35,7 @@ END LICENSE */
 #include <globus_gsi_proxy.h>
 #include <globus_gsi_cert_utils_constants.h>
 
-//extern int errno;
+#include <boost/filesystem/operations.hpp>
 
 /* workaround for gsoap 2.7.13 */
 #include "glite/ce/cream-client-api-c/cream_client_soapH.h"
@@ -108,12 +108,17 @@ main(int argc, char *argv[])
      return 1;
    }
 
-  struct stat buf;
-  int rc = stat(proxy, &buf);
-  if( rc ) {
-    cerr << strerror( errno ) << endl;
-    return 1;
-  }
+//   struct stat buf;
+//   int rc = stat(proxy, &buf);
+//   if( rc ) {
+//     cerr << strerror( errno ) << endl;
+//     return 1;
+//   }
+
+   if(!boost::filesystem::exists( boost::filesystem::path(proxy,boost::filesystem::native) )) {
+     cerr << "Proxy file [" << proxy << " doest not exist" << endl;
+     return 1;
+   }
 
 
    ret = glite_renewal_core_init_ctx(&ctx);
