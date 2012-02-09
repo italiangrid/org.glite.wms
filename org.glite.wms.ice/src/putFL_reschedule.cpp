@@ -18,9 +18,6 @@ limitations under the License.
 
 END LICENSE */
 
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileLocker.h"
-#include "glite/wms/common/utilities/FileListLock.h"
 #include "classad_distribution.h"
 #include "iceUtils/IceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -35,7 +32,7 @@ END LICENSE */
 #include <sys/time.h>
 #include <unistd.h>
 #include <exception>
-//#include <fstream>
+#include <fstream>
 #include <sys/time.h>
 
 #include <boost/program_options.hpp>
@@ -162,22 +159,6 @@ int main(int argc, char* argv[]) {
 
     input_queue->put_request( request );
 
-//     try{
-//         fl.open( filelist_name );
-//     }
-//     catch(std::exception& ex) {
-//         cerr << ex.what()<<endl;
-//         exit(1);
-//     }
-
-//     utils::FileListMutex mx(fl);
-//     utils::FileListLock  lock(mx);
-//     try {
-//         fl.push_back(request);
-//     } catch(std::exception& ex) {
-//         cerr << ex.what() << endl;
-//         exit(1);
-//     }
 }
 
 

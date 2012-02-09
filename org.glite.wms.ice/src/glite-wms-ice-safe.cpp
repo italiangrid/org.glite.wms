@@ -141,7 +141,7 @@ int main( int argc, char *argv[]) {
   
 
   //----------------------------------------------
-  if( conf->ice( )->input_type( ) == "jobdir" ) {
+//  if( conf->ice( )->input( ) == "jobdir" ) {
     string jobdirpath( conf->ice( )->input( ) );
     string tmp = "/bin/mv ";
     tmp += jobdirpath + "/old/* " + jobdirpath + "/new/ >/dev/null 2>&1";
@@ -149,7 +149,7 @@ int main( int argc, char *argv[]) {
     cout << "Executing [" << tmp << "]" << endl;
     
     system( tmp.c_str() );
-  }
+//  }
  
   string BASEPATH = "/usr/bin";
 

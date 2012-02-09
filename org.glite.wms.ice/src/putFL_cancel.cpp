@@ -18,10 +18,6 @@ limitations under the License.
 
 END LICENSE */
 
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileLocker.h"
-#include "glite/wms/common/utilities/FileListLock.h"
-//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "classad_distribution.h"
 
 #include <string>
@@ -36,7 +32,6 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/cream_client_soapH.h"
 SOAP_NMAC struct Namespace namespaces[] = {};
 
-using namespace glite::wms::common::utilities;
 using namespace std;
 
 int main(int argc, char* argv[]) 
@@ -52,8 +47,7 @@ int main(int argc, char* argv[])
   
   string request = "[ protocol = \"1.0.0\"; command = \"cancel\"; arguments = [ jobid = \"" + string(argv[2]) + "\" ] ]";
   
-  FileList<string> fl;
-  
+ /* 
   cout << "Adding JDL <" 
        << request << "> to filelist..." << endl;
   {
@@ -72,5 +66,5 @@ int main(int argc, char* argv[])
       cerr << ex.what()<<endl;
       _exit(1);
     }
-  }
+  }*/
 }
