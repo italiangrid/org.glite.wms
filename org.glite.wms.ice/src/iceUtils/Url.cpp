@@ -19,6 +19,7 @@ limitations under the License.
 END LICENSE */
 
 #include "Url.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -63,7 +64,7 @@ glite::wms::ice::util::Url::Url( const string& url )
     m_hostname = m_endpoint.substr( 0, tcpport_pos );
     
     if( !restport.empty() ) {
-      m_port = atoi( restport.c_str() );
+      m_port = ::atoi( restport.c_str() );
       
       if (m_port <=0) {
         m_error = "Specified an zero or negative TCP port in the address [";
