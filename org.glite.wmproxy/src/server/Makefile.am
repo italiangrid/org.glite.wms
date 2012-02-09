@@ -48,7 +48,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	configuration.cpp \
 	wmp2wm.cpp \
 	structconverter.cpp \
-	stdsoap2-2_7_13.cpp \
+	stdsoap2.cpp \
 	signalhandler.cpp
 
 bin_PROGRAMS = glite_wms_wmproxy_server
