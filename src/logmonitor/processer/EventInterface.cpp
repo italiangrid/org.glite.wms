@@ -23,7 +23,6 @@
 #include "MonitorData.h"
 #include "SubmitReader.h"
 
-USING_COMMON_NAMESPACE;
 using namespace std;
 
 JOBCONTROL_NAMESPACE_BEGIN {

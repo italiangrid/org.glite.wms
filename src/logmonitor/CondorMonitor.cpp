@@ -14,19 +14,18 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
 #include <cstdio>
 #include <ctime>
-
 #include <string>
 #include <memory>
 
-#include <user_log.c++.h>
+#include <user_log.c++.h> // condor API for reading log file
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
@@ -37,11 +36,12 @@
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/streamdescriptor.h"
-#include "jobcontrol_namespace.h"
+
 #include "logmonitor/processer/EventFactory.h"
 #include "logmonitor/processer/EventInterface.h"
 #include "logmonitor/processer/MonitorData.h"
 
+#include "jobcontrol_namespace.h"
 #include "CondorMonitor.h"
 #include "Timer.h"
 #include "SizeFile.h"
@@ -186,7 +186,7 @@ CondorMonitor::CondorMonitor( const string &filename, MonitorData &data ) :
     elog::cedglog << logger::setlevel( logger::info ) << "Opened old log position file." << endl;
   }
   else {
-    utilities::create_file( logfile_name.c_str() );
+    glite::wms::common::utilities::create_file( logfile_name.c_str() );
     this->cm_shared_data->md_sizefile.reset( new SizeFile(logfile_name.c_str(), true) );
 
     elog::cedglog << logger::setlevel( logger::info ) << "Created new log position file." << endl;

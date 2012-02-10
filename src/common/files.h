@@ -69,12 +69,7 @@ private:
   static const std::string   f_s_prePrefix, f_s_postPrefix;
 };
 
-} // Namespace jccommon
-
+} // namespace jccommon
 } JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_FILES_H */
-
-// Local Variables:
-// mode: c++
-// End:

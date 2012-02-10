@@ -27,7 +27,7 @@ limitations under the License. */
 
 #include <classad_distribution.h>
 
-#include "glite/wms/common/utilities/FileList.h"
+#include "common/filelist.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -45,7 +45,7 @@ class TimeoutEvent {
   friend class Timer;
 
 private:
-  typedef glite::wms::common::utilities::FileList<classad::ClassAd>   FileContainer;
+  typedef glite::wms::jobsubmission::jccommon::FileList<classad::ClassAd> FileContainer;
 
 public:
   ~TimeoutEvent( void );
@@ -100,8 +100,8 @@ public:
   typedef  boost::shared_ptr<TimeoutEvent>   EventPointer;
 
 private:
-  typedef  std::multimap<std::time_t, EventPointer>                 EventMap;
-  typedef  glite::wms::common::utilities::FileList<classad::ClassAd>            FileContainer;
+  typedef std::multimap<std::time_t, EventPointer> EventMap;
+  typedef glite::wms::jobsubmission::jccommon::FileList<classad::ClassAd> FileContainer;
 
 public:
   typedef  EventMap::iterator                EventIterator;

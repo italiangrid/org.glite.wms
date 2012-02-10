@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.2.2.2  2012/02/10 16:17:07  mcecchi
+#       filelist in isolated JC/LM locations. possible future redesign
+#
 #       Revision 1.2.28.2.6.2.2.1  2012/02/07 14:36:30  mcecchi
 #       removed support for filelist - work in progress
 #
@@ -80,7 +83,8 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	JobControllerClientJD.cpp
 
 
-libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
+libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)  ../common/libglite_wms_jss_common.la
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \

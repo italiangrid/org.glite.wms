@@ -18,6 +18,8 @@ limitations under the License. */
 
 #include <boost/shared_ptr.hpp>
 
+#include "jobcontrol_namespace.h"
+
 class ULogEvent;
 
 JOBCONTROL_NAMESPACE_BEGIN {

@@ -17,6 +17,7 @@ limitations under the License. */
 #define EDG_WORKLOAD_JOBCONTROL_LOGMONITOR_PROCESSER_EVENTTERMINATED_H
 
 #include "EventInterface.h"
+#include "common/id_container.h"
 
 JOBCONTROL_NAMESPACE_BEGIN {
 

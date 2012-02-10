@@ -19,7 +19,7 @@ limitations under the License. */
 #include <classad_distribution.h>
 
 #include "glite/wms/common/utilities/jobdir.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 
 JOBCONTROL_NAMESPACE_BEGIN {
 

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.3  2012/02/10 16:17:07  mcecchi
+#       filelist in isolated JC/LM locations. possible future redesign
+#
 #       Revision 1.20.2.2.4.1.2.7.2.2  2012/02/07 14:36:30  mcecchi
 #       removed support for filelist - work in progress
 #
@@ -144,6 +147,7 @@ lib_LTLIBRARIES = libglite_wms_jss_logmonitor.la
 noinst_HEADERS = \
 	JobStatusExtractor.h \
 	JobWrapperOutputParser.h \
+	AbortedContainer.h \
 	CondorMonitor.h \
 	EventAd.h \
 	exceptions.h \
@@ -186,6 +190,7 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
 	Timer.cpp \
 	SizeFile.cpp \
+	AbortedContainer.cpp \
 	JobWrapperOutputParser.cpp \
 	exceptions.cpp \
 	./processer/EventFactory.cpp \
@@ -210,7 +215,7 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	./processer/SubmitReader.cpp \
 	./processer/JobResubmitter.cpp
 
-libglite_wms_jss_logmonitor_la_LIBADD = $(CONDORG_LIBS)
+libglite_wms_jss_logmonitor_la_LIBADD = $(CONDORG_LIBS) ../common/libglite_wms_jss_common.la
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_JOBID_CFLAGS) \

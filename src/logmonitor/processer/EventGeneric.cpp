@@ -28,7 +28,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "common/EventLogger.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "common/JobFilePurger.h"
 #include "common/ProxyUnregistrar.h"
 #include "controller/JobController.h"

@@ -36,7 +36,7 @@
 #include "glite/wms/common/utilities/manipulation.h"
 
 #include "common/EventLogger.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "controller/JobController.h"
 #include "logmonitor/exceptions.h"
 #include "logmonitor/AbortedContainer.h"

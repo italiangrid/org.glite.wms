@@ -28,7 +28,7 @@
 #include "jobcontrol_namespace.h"
 #include "common/ProxyUnregistrar.h"
 #include "common/EventLogger.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "logmonitor/exceptions.h"
 #include "logmonitor/JobWrapperOutputParser.h"
 

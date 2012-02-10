@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.1.34.1.2.2  2012/02/10 16:17:05  mcecchi
+#       filelist in isolated JC/LM locations. possible future redesign
+#
 #       Revision 1.1.34.1.2.1  2012/02/07 14:36:29  mcecchi
 #       removed support for filelist - work in progress
 #
@@ -27,7 +30,7 @@
 #       Insert jobcontrol_namespace and Makefile
 #
 
-SUBDIRS = common controller daemons
+SUBDIRS = common controller logmonitor daemons
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = wms-jss-controller-adapter.pc \

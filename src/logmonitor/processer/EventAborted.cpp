@@ -20,7 +20,7 @@
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "common/EventLogger.h"
 #include "common/JobFilePurger.h"
 #include "common/ProxyUnregistrar.h"

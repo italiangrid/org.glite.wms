@@ -25,7 +25,7 @@
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "common/EventLogger.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "logmonitor/exceptions.h"
 #include "logmonitor/SizeFile.h"
 #include "logmonitor/AbortedContainer.h"

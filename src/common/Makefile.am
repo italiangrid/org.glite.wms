@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3.2.3.2.2  2012/02/10 16:17:05  mcecchi
+#       filelist in isolated JC/LM locations. possible future redesign
+#
 #       Revision 1.11.2.1.4.3.2.3.2.1  2012/02/07 14:36:29  mcecchi
 #       removed support for filelist - work in progress
 #
@@ -88,9 +91,21 @@ lib_LTLIBRARIES = libglite_wms_jss_common.la
 
 noinst_HEADERS = \
 	constants.h \
+	fstreamlock.h \
+	extractor.h \
 	files.h \
-	EventLogger.h \
+	file_container.h \
+	file_locker.h \
+	filelist.h \
+	filelist_lock.h \
+	filelist_reader.h \
+	filelist_iterator.h \
+	filelist_extractor.h \
+	pointer_id.h \
 	IdCompare.h \
+	id_container.h \
+	ram_container.h \
+	EventLogger.h \
 	JobFilePurger.h \
 	ProxyUnregistrar.h \
 	LockFile.h \
@@ -98,6 +113,15 @@ noinst_HEADERS = \
 	handler.h
 
 libglite_wms_jss_common_la_SOURCES = \
+	fstreamlock.cpp \
+	id_container.cpp \
+	file_container.cpp \
+	ram_container.cpp \
+	pointer_id.cpp \
+	filelist.cpp \
+	filelist_iterator.cpp \
+	filelist_lock.cpp \
+	file_locker.cpp \
 	EventLogger.cpp \
 	JobFilePurger.cpp \
 	ProxyUnregistrar.cpp \
