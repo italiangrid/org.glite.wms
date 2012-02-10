@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <boost/version.hpp>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,7 +34,11 @@ FileMutex::~FileMutex( void )
 }
 
 FileLocker::FileLocker( FileMutex &fm, bool lock ) : fl_locked( &fm.fm_locked ), fl_filelock( fm.fm_descriptor, false ),
-						     fl_mutexlock( fm.fm_mutex)
+#if BOOST_VERSION >= 103500
+						     fl_mutexlock(fm.fm_mutex, boost::defer_lock)
+#else
+						     fl_mutexlock(fm.fm_mutex, false)
+#endif
 {
   if( lock ) {
     if( *this->fl_locked ) throw FileMutexLocked();

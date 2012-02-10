@@ -361,19 +361,18 @@ try {
 
       for( logIt = logBegin; logIt != logEnd; ++logIt ) {
 	name.assign( logIt->leaf() );
- 	if ( !fs::exists(*logIt) ) // see lcg2 bug 3807
+ 	if ( !fs::exists(*logIt) ) { // see lcg2 bug 3807
  	  ; // ignore
- 	else if( !fs::is_directory(*logIt) && !boost::regex_match(name, expr) && (filemap.count(name) == 0) ) {
-    #if BOOST_VERSION >= 103401 
-      std::string logItleaf = logIt->path().leaf();
-      std::string logItstring = logIt->path().native_file_string();
-    #else
-      std::string logItleaf = logIt->leaf();
-      std::string logItstring = logIt->native_file_string();
-    #endif
+ 	} else if( !fs::is_directory(*logIt) && !boost::regex_match(name, expr) && (filemap.count(name) == 0) ) {
+#if BOOST_VERSION >= 103400 
+          std::string logItleaf = logIt->path().leaf();
+          std::string logItstring = logIt->path().file_string();
+#else
+          std::string logItleaf = logIt->leaf();
+          std::string logItstring = logIt->native_file_string();
+#endif
 	  this->ml_stream << logger::setlevel( logger::low )
 			  << "Adding new condor log file: " << logItstring << endl;
-          
           try {
             tmp = new logmonitor::CondorMonitor( logItstring, data );
 	    filemap.insert( map<string, MonitorPtr>::value_type(logItleaf, MonitorPtr(tmp)) );
