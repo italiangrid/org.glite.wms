@@ -138,19 +138,19 @@ IceCore::IceThreadHelper::IceThreadHelper( const std::string& name ) :
 //____________________________________________________________________________
 IceCore::IceThreadHelper::~IceThreadHelper( ) 
 {
-    stop( );
-    delete m_thread;
+  stop( );
+  delete m_thread;
 }
 
 //____________________________________________________________________________
 void IceCore::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
 {
-    m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
-    try {
-        m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
-    } catch( boost::thread_resource_error& ex ) {
-        throw iceInit_ex( ex.what() );
-    }
+  m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
+  try {
+    m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
+  } catch( boost::thread_resource_error& ex ) {
+    throw iceInit_ex( ex.what() );
+  }
 }
 
 //____________________________________________________________________________
@@ -162,25 +162,22 @@ bool IceCore::IceThreadHelper::is_started( void ) const
 //____________________________________________________________________________
 void IceCore::IceThreadHelper::stop( void )
 {
-    if( m_thread && m_ptr_thread->isRunning() ) {
-        CREAM_SAFE_LOG( 
-                       m_log_dev->debugStream()
-                       << "IceCore::IceThreadHelper::stop() - Waiting for thread " 
-		       << m_name 
-                       << " termination..."
-                       
-                       );
-        m_ptr_thread->stop();
-        m_thread->join();
-        CREAM_SAFE_LOG(
-                       m_log_dev->debugStream()
-                       << "IceCore::IceThreadHelper::stop() - Thread " 
-		       << m_name << " finished"
-                       
-                       );
-    }
-    
-
+  if( m_thread && m_ptr_thread->isRunning() ) {
+    CREAM_SAFE_LOG( 
+		   m_log_dev->debugStream()
+		   << "IceCore::IceThreadHelper::stop() - Waiting for thread " 
+		   << m_name 
+		   << " termination..."
+                   
+		   );
+    m_ptr_thread->stop();
+    m_thread->join();
+    CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "IceCore::IceThreadHelper::stop() - Thread " 
+		   << m_name << " finished"
+		   );
+  }
 }
 
 //____________________________________________________________________________
@@ -209,7 +206,7 @@ IceCore* IceCore::instance( void )
                            );
             abort();
         }
-        s_instance->init();    
+        s_instance->init( );    
     }
     return s_instance;
 }
@@ -263,17 +260,6 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
                         );
         exit(1);
     }
-/*
-    try {
-      m_myname = util::IceUtils::getHostName();
-    } catch( runtime_error& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-                        << "IceCore::CTOR() - Couldn't determine hostname: ["
-                        << ex.what() << "]"		     
-                        );
-        exit(1);
-    }
-*/
 }
 
 //____________________________________________________________________________
@@ -322,20 +308,7 @@ void IceCore::init( void )
 
   Resubmit_Or_Purge checker( this ); 
   for_each( allJobs.begin(), allJobs.end(),  checker );
-/* 
-  for(list< glite::wms::ice::util::CreamJob >::iterator it = allJobs.begin();
-      it != allJobs.end();
-      ++it)
-    {
-      resubmit_or_purge_job( &(*it) );
-    }
-  */ 
-  /*if(m_configuration->ice()->start_lease_updater() ) {
-    util::iceCommandLeaseUpdater l( true );
-    l.execute( "" );
-  }*/
-  //util::iceCommandStatusPoller p( this, true );
-  //p.execute( );	
+	
 }
 
 //____________________________________________________________________________
@@ -830,25 +803,6 @@ void IceCore::purge_job( const util::CreamJob* theJob ,
 		     << "]. Reason is an unknown exception"
 		     );
     }
-
-    /**
-       The remote purge to the CE went OK OR
-       a fault has been raised by the CE
-       Let's remove the job from the ICE's database and
-       decrement the job counter of the 'super' better
-       proxy.
-    */
-//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		   << "Removing purged job [" << jobdesc
-// 		   << "] from ICE's database"
-// 		   );
-//     if(theJob.is_proxy_renewable())
-//       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
-//     {
-//       db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
-//       db::Transaction tnx(false, false);
-//       tnx.execute( &remover );
-//     }
 }
 
 

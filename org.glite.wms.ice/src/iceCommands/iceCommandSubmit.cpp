@@ -22,6 +22,7 @@ END LICENSE */
 #include "iceUtils/IceUtils.h"
 #include "ice/IceCore.h"
 #include "iceUtils/IceLBEvent.h"
+#include "iceUtils/iceLBEventFactory.h"
 #include "iceUtils/iceLBLogger.h"
 #include "iceUtils/DNProxyManager.h"
 #include "iceUtils/IceConfManager.h"
@@ -304,6 +305,21 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
       // this throw triggers the ICE's DB job removal
       throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.cream_address() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
 
+    } catch( BlackListFailJob_ex& ex ) {
+      
+      // TODO: Fail immediately the job
+      m_theJob.set_failure_reason( string("Job scheduled to the blacklisted CE [") 
+				   + m_theJob.cream_address() 
+				   +"] will be aborted immediately as specified in the WMS configuration" );
+      m_theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
+      iceUtil::IceLBEvent* ev = iceUtil::iceLBEventFactory::mkEvent( m_theJob );
+      if ( ev ) {
+	//bool log_with_cancel_seqcode = (m_theJob.status( ) == glite::ce::cream_client_api::job_statuses::CANCELLED) && (!m_theJob.cancel_sequence_code( ).empty( ));
+	m_theJob = iceUtil::iceLBLogger::instance()->logEvent( ev, 
+							       false, //log_with_cancel_seqcode, 
+							       false );
+      }
+
     }
     
     remove_job_guard.dismiss(); // dismiss guard, job will NOT be removed from database
@@ -312,7 +328,8 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 //
 //
 //______________________________________________________________________________
-void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::try_to_submit( const bool only_start ) 
+  throw( BlackListFailJob_ex&, iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
   
   string _gid( m_theJob.grid_jobid() );
@@ -836,7 +853,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 				     bool& force_delegation,
 				     bool& force_lease,
 				     cream_api::AbsCreamProxy::RegisterArrayResult& res)
-  throw( iceCommandTransient_ex&, iceCommandFatal_ex& )
+  throw( BlackListFailJob_ex&, iceCommandTransient_ex&, iceCommandFatal_ex& )
 {
   const char* method_name = "iceCommandSubmit::register_job() - ";
 
@@ -885,7 +902,8 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 
   } catch( BlackListFailJob_ex& ex ) {
   
-    throw( iceCommandFatal_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+    //throw( iceCommandFatal_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+    throw ex;
   
   } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
     // Here CREAM tells us that the delegation ID is unknown.
