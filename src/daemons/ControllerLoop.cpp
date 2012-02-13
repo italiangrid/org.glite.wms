@@ -249,8 +249,6 @@ ControllerLoop::ControllerLoop( const utilities::LineParser &options ) : cl_verb
   this->createDirectories();
 
   this->cl_stream.open( logname.native_file_string(), (logger::level_t) config->log_level() );
-  this->cl_stream.activate_log_rotation( config->log_file_max_size(), config->log_rotation_base_file(),
-					 config->log_rotation_max_file_number() );
   if( this->cl_stream.good() ) {
     if( this->cl_verbose ) clog << "Opened log file: " << logname.native_file_string() << endl;
   }

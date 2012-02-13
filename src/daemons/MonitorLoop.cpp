@@ -239,8 +239,6 @@ MonitorLoop::MonitorLoop( const utilities::LineParser &options ) : ml_verbose( o
   this->createDirectories();
 
   this->ml_stream.open( logname.native_file_string(), (logger::level_t) config->log_level() );
-  this->ml_stream.activate_log_rotation( config->log_file_max_size(), config->log_rotation_base_file(),
-					 config->log_rotation_max_file_number() );
   if( this->ml_stream.good() ) {
     if( this->ml_verbose ) clog << "Opened log file: " << logname.native_file_string() << endl;
   }
