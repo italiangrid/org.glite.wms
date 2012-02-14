@@ -16,7 +16,7 @@ this_script_name=$0
 
 program_name=glite-wms-ice-safe
 binpath=${WMS_LOCATION_BIN}/${program_name}
-pid_file=${WMS_LOCATION_TMP}/${program_name}.pid
+pid_file=/var/run/${program_name}.pid
 
 running()
 {
