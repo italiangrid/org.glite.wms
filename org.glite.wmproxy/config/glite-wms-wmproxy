@@ -30,11 +30,12 @@ case "$1" in
     if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1; then
       # even if in dynamic configurations there can be no running glite_wms_wmproxy_server
       # processes, we know from $port in listen that the service is on
-      wmp_pids=`/sbin/pidof glite_wms_wmproxy_server`
+      wmp_exe=`basename $wmp`
+      wmp_pids=`/sbin/pidof $wmp_exe`
       if [ -z "$wmp_pids" ]; then
         echo $wmp is running...
       else
-        echo $wmp \(pid $httpd_pids\) is running...
+        echo $wmp \(pid $wmp_pids\) is running...
       fi
     else
       echo $wmp is not running
@@ -45,7 +46,7 @@ case "$1" in
       echo "$wmp already running"
     else
       echo -n "Starting $wmp... "
-      $httpdpath -k start -f $config
+      $httpdpath -k $@ -f $config > /dev/null 2>&1
       RETVAL=$?
       if [ $RETVAL -eq 0 ]; then
         echo "ok"
@@ -59,8 +60,9 @@ case "$1" in
     ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
     sleep 1
     ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
-    $httpdpath -k $@ -f $config
+    $httpdpath -k $@ -f $config > /dev/null 2>&1
     RETVAL=$?
+    sleep 3 # wait for the socket to be closed
     if [ $RETVAL -eq 0 ]; then
       echo "ok"
     else
@@ -72,7 +74,7 @@ case "$1" in
     ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
     sleep 1
     ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
-    $httpdpath -k $@ -f $config
+    $httpdpath -k $@ -f $config > /dev/null 2>&1
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
       echo "ok"
@@ -82,7 +84,7 @@ case "$1" in
     ;;
   graceful)
     echo -n "Gracefully restarting $httpd... "
-    $httpdpath -k $@ -f $config
+    $httpdpath -k $@ -f $config > /dev/null 2>&1
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
       echo "ok"
@@ -91,7 +93,7 @@ case "$1" in
     fi
     ;;
   configtest)
-    $httpdpath -t -f $config
+    $httpdpath -t -f $config > /dev/null 2>&1
     RETVAL=$?
     ;;
   *)
