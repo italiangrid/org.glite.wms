@@ -52,7 +52,6 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
 	$(GSOAP_LIBS)
 
@@ -76,7 +75,6 @@ glite_wms_job_info_LDADD = \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
@@ -96,7 +94,6 @@ glite_wms_job_list_match_LDADD = \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
@@ -120,7 +117,6 @@ glite_wms_job_submit_LDADD = \
         $(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(LIBTAR_LIBS) \
 	$(WSSE_LIBS) \
 	$(ZLIB_LIBS) \
@@ -148,7 +144,6 @@ glite_wms_job_cancel_LDADD = \
         $(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
@@ -172,7 +167,6 @@ glite_wms_job_output_LDADD = \
         $(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
@@ -196,7 +190,6 @@ glite_wms_job_perusal_LDADD = \
         $(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
@@ -205,7 +198,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GRIDSITE_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(LIBTAR_CFLAGS) \
