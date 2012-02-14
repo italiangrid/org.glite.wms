@@ -240,8 +240,8 @@ int main(int argc, char*argv[])
     log_dev->setPriority( conf->ice()->ice_log_level() );
     logger_instance->setLogfileEnabled( conf->ice()->log_on_file() );
     logger_instance->setConsoleEnabled( conf->ice()->log_on_console() );
-    logger_instance->setMaxLogFileSize( conf->ice()->max_logfile_size() );
-    logger_instance->setMaxLogFileRotations( conf->ice()->max_logfile_rotations() );
+    //logger_instance->setMaxLogFileSize( conf->ice()->max_logfile_size() );
+    //logger_instance->setMaxLogFileRotations( conf->ice()->max_logfile_rotations() );
     string logfile = conf->ice()->logfile();
     string hostcert = conf->ice()->ice_host_cert();
 
