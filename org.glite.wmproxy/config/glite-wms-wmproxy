@@ -1,6 +1,5 @@
-#!/bin/bash
-#
-######
+#!/bin/sh
+
 #	Copyright (c) Members of the EGEE Collaboration. 2004.
 #	See http://www.eu-egee.org/partners/ for details on the copyright holders.
 #
@@ -15,83 +14,89 @@
 #	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #	See the License for the specific language governing permissions and
 #	limitations under the License.
-#########
 
-
-# chkconfig: 345 95 06 
-# description: Startup script for the WMProxy Service Apache Web Server
-
-
-#############
-# processname: httpd
-# pidfile: ${WMS_LOCATION_VAR}/httpd-wmproxy.pid 
-# config: ${WMS_LOCATION_ETC}/glite_wms_wmproxy_httpd.conf 
-
-#########################################################
 . /opt/glite/yaim/etc/grid-env-funcs.sh
 . /etc/profile.d/grid-env.sh 
-#########################################################
-
 
 httpdpath=${GLITE_WMS_WMPROXY_HTTPD-/usr/sbin/httpd}
+wmp="$WMS_LOCATION_BIN/glite_wms_wmproxy_server"
 httpd=`basename $httpdpath`
 config=${GLITE_WMS_CONFIG_DIR}/glite_wms_wmproxy_httpd.conf
 port=${GLITE_WMS_WMPROXY_PORT-7443}
 RETVAL=0
-export HOSTNAME=`hostname -f`
 
-# See how we were called.
 case "$1" in
   status)
-        if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1 ;then
-         echo WMProxy $httpd listening on port $port
-         httpd_pids=`/sbin/pidof $httpdpath`
-         RETVAL=$?
-         if [ ${RETVAL} -eq 0 ]; then
-          echo $httpd \(pid $httpd_pids\) is running ....
-          echo "==="
-          echo WMProxy Server running instances:
-          echo "`ps -fC glite_wms_wmproxy_server`"
-         fi
-        else
-         echo WMProxy $httpd NOT listening on port $port
-         echo "==="
-         echo Checking for other $httpd running instances .....
-         if ( /sbin/pidof $httpd ) >/dev/null 2>&1 ; then
-          echo $httpd \(pid `/sbin/pidof $httpd`\) is running ....
-         else 
-          echo None found
-         fi
-         RETVAL=1
-        fi
-	;;
+    if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1; then
+      # even if in dynamic configurations there can be no running glite_wms_wmproxy_server
+      # processes, we know from $port in listen that the service is on
+      wmp_pids=`/sbin/pidof glite_wms_wmproxy_server`
+      if [ -z "$wmp_pids" ]; then
+        echo $wmp is running...
+      else
+        echo $wmp \(pid $httpd_pids\) is running...
+      fi
+    else
+      echo $wmp is not running
+    fi
+    ;;
   start)
-        if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1 ;then
-		echo "WMProxy already running"
-        else
-		$httpdpath -k start -f $config
-	fi
-	;;
-  stop|restart)
-	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
-	sleep 1
-	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
-	$httpdpath -k $@ -f $config
-   sleep 1
-	RETVAL=$?
-	;;
+    if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1; then
+      echo "$wmp already running"
+    else
+      echo -n "Starting $wmp... "
+      $httpdpath -k start -f $config
+      RETVAL=$?
+      if [ $RETVAL -eq 0 ]; then
+        echo "ok"
+      else
+        echo "failure"
+      fi
+    fi
+    ;;
+  stop)
+    echo -n "Stopping $wmp... "
+    ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
+    sleep 1
+    ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
+    $httpdpath -k $@ -f $config
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+      echo "ok"
+    else
+      echo "failure"
+    fi
+    ;;
+  restart)
+    echo -n "Restarting $wmp... "
+    ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
+    sleep 1
+    ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 2>/dev/null 
+    $httpdpath -k $@ -f $config
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+      echo "ok"
+    else
+      echo "failure"
+    fi
+    ;;
   graceful)
-	$httpdpath -k $@ -f $config
-	RETVAL=$?
-  ;;
+    echo -n "Gracefully restarting $httpd... "
+    $httpdpath -k $@ -f $config
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+      echo "ok"
+    else
+      echo "failure"
+    fi
+    ;;
   configtest)
-	$httpdpath -t -f $config
-	RETVAL=$?
-	;;
+    $httpdpath -t -f $config
+    RETVAL=$?
+    ;;
   *)
-	echo $"Usage: glite-wms-wmproxy {start|stop|restart|status|help|configtest}"
-	exit 1
+    echo $"Usage: glite-wms-wmproxy {start|stop|restart|status|help|configtest}"
+    exit 1
 esac
-
 exit $RETVAL
 
