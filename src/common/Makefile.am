@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3.2.3.2.3  2012/02/15 14:07:48  pandreet
+#       Removed header file
+#
 #       Revision 1.11.2.1.4.3.2.3.2.2  2012/02/10 16:17:05  mcecchi
 #       filelist in isolated JC/LM locations. possible future redesign
 #
@@ -92,7 +95,6 @@ lib_LTLIBRARIES = libglite_wms_jss_common.la
 noinst_HEADERS = \
 	constants.h \
 	fstreamlock.h \
-	extractor.h \
 	files.h \
 	file_container.h \
 	file_locker.h \
