@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5.2.3  2012/02/15 11:02:49  pandreet
+#       Removed variables for globus
+#
 #       Revision 1.17.2.3.4.1.2.5.2.2  2012/02/07 14:36:30  mcecchi
 #       removed support for filelist - work in progress
 #
@@ -138,9 +141,6 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_LB_COMMON_LIBS) \
-	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
-	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
@@ -166,9 +166,6 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 #	$(GLITE_LB_CLIENT_LIBS) \
 #	$(GLITE_LB_CLIENTPP_LIBS) \
 #	$(GLITE_LB_COMMON_LIBS) \
-#	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
-#	$(GLOBUS_GSS_NOTHR_LIBS) \
-#	$(GLOBUS_COMMON_NOTHR_LIBS) \
 #	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 #	$(ARES_LIBS) \
 #	$(CONDORG_LIBS) \
@@ -181,7 +178,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_JOBID_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
-	$(GLOBUS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(CONDORG_CFLAGS)
