@@ -51,7 +51,6 @@ queryDb_LDADD = \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -86,7 +85,6 @@ queryStats_LDADD = \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -120,7 +118,6 @@ putFL_LDADD =  \
 		$(GLITE_CREAM_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
  		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -154,7 +151,6 @@ putFL_reschedule_LDADD = \
 			$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 			$(GSOAP_LIBS) \
 			$(LOG4CPP_LIBS) \
-			$(GLOBUS_THR_LIBS) \
 			../src/iceUtils/libglite_wms_iceUtils.la \
 			../src/iceThreads/libglite_wms_iceThreads.la \
 			../src/iceCommands/libglite_wms_iceCommands.la \
@@ -208,7 +204,6 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -243,7 +238,6 @@ glite_wms_ice_rm_LDADD = \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -278,7 +272,6 @@ glite_wms_ice_db_rm_LDADD = \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -313,7 +306,6 @@ glite_wms_ice_LDADD = \
 		$(SEC_GSOAP_PLUGIN_THR_LIBS) \
 		$(GSOAP_LIBS) \
 		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
@@ -342,7 +334,9 @@ glite_wms_ice_LDADD = \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_proxy_renew_LDADD = \
-		$(GLOBUS_NOTHR_LIBS) \
+		$(GLOBUS_GSI_CRED_LIBS) \
+		$(GLOBUS_GSI_PROXY_LIBS) \
+		$(GLOBUS_GSI_UTILS_LIBS) \
 		$(GLITE_SECURITY_RENEWALCORE_NOTHR_LIBS) \
 		$(MYPROXY_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -356,10 +350,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
-		$(GLOBUS_GSI_CREDENTIAL_CFLAGS) \
-		$(GLOBUS_GSI_PROXY_SSL_CFLAGS) \
-		$(GLOBUS_GSI_PROXY_CORE_CFLAGS) \
-		$(GLOBUS_GSI_CERT_UTILS_CFLAGS) \
+		$(GLOBUS_GSI_CRED_CFLAGS) \
+		$(GLOBUS_GSI_PROXY_CFLAGS) \
+		$(GLOBUS_GSI_UTILS_CFLAGS) \
 		$(MYPROXY_CFLAGS) \
 		-pipe \
 		-DICE_VERSIONID=\""`date`"\"
