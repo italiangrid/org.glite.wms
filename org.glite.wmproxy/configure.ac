@@ -87,8 +87,6 @@ AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
 AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
-
 AC_EXPAT([], AC_MSG_RESULT(["EXPAT ok"]), AC_MSG_ERROR(["EXPAT not found"]))
 
 AC_FCGI([], AC_MSG_RESULT(["FCGI ok"]), AC_MSG_ERROR(["FCGI not found"]))

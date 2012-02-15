@@ -102,7 +102,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src/server \
 	$(GSOAP_CFLAGS) -DWITH_FASTCGI \
-	$(GLOBUS_NOTHR_CFLAGS) \
 	$(VOMS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(BOOST_CFLAGS) \
