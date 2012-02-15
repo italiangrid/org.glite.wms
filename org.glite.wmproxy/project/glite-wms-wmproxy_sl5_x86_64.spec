@@ -17,13 +17,13 @@ Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
-BuildRequires: %{!?extbuilddir: gridsite-devel, glite-jobid-api-cpp, voms-devel,} chrpath, boost-devel
+BuildRequires: %{!?extbuilddir: gridsite-devel, glite-jobid-api-cpp-devel, voms-devel,} chrpath
 BuildRequires: %{!?extbuilddir: argus-pep-api-c-devel, glite-wms-purger-devel,} libtool
 BuildRequires: %{!?extbuilddir: lcmaps-without-gsi, lcmaps-devel,} classads-devel
-BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-lb-client,} fcgi-devel
-BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal,} libxslt-devel
+BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-lb-client-devel,} fcgi-devel
+BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal-devel,} libxslt-devel
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} libtar-devel
-BuildRequires: gsoap-devel, httpd-devel, zlib-devel
+BuildRequires: gsoap-devel, httpd-devel, zlib-devel, boost-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
