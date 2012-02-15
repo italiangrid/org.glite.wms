@@ -96,7 +96,6 @@ void ControllerLoop::createDirectories( void )
   try {
     paths.push_back(fs::path(jcconfig->input(), fs::native));
     paths.push_back(fs::path(jcconfig->log_file(), fs::native));
-    paths.push_back(fs::path(jcconfig->log_rotation_base_file(), fs::native));
     paths.push_back(fs::path(jcconfig->submit_file_dir() + "/boh", fs::native));
     paths.push_back(fs::path(jcconfig->lock_file(), fs::native));
     paths.push_back(fs::path(lmconfig->monitor_internal_dir() + "/boh", fs::native));
