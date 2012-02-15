@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.4  2012/02/15 10:38:00  pandreet
+#       Replaced macro for globus
+#
 #       Revision 1.20.2.2.4.1.2.7.2.3  2012/02/10 16:17:07  mcecchi
 #       filelist in isolated JC/LM locations. possible future redesign
 #
@@ -173,9 +176,6 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(BOOST_FS_LIBS) $(BOOST_THREAD_LIBS) $(BOOST_REGEX_LIBS) \
-	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
-	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
 	$(ARES_LIBS) \
 	$(GLITE_LB_CLIENT_LIBS) \
@@ -221,7 +221,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_JOBID_CFLAGS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
-	$(GLOBUS_NOTHR_CFLAGS) \
+	$(GLOBUS_GRAM_PROT_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(CONDORG_CFLAGS)

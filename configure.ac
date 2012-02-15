@@ -66,7 +66,7 @@ AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
 AC_CLASSADS([], AC_MSG_RESULT(["CLASSADS ok"]), AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_GLOBUS([], AC_MSG_RESULT(["GLOBUS ok"]), AC_MSG_ERROR(["GLOBUS not found"]))
+PKG_CHECK_MODULES(GLOBUS_GRAM_PROT, globus-gram-protocol, , AC_MSG_ERROR(["GLOBUS_GRAM_PROT not found"]))
 
 AC_CONDORG(6.7.1, AC_MSG_RESULT(["CONDORG ok"]), AC_MSG_ERROR(["CONDORG not found"]))
 
