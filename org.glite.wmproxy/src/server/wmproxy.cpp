@@ -111,14 +111,6 @@ main(int argc, char* argv[])
             <<"------- Starting Server Instance -------"
             <<endl;
 
-      // Opening log file destination
-      logger::threadsafe::edglog.activate_log_rotation (
-         conf.wmp_config->log_file_max_size(),
-         conf.wmp_config->log_rotation_base_file(),
-         conf.wmp_config->log_rotation_max_file_number());
-      edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
-                   <<endl;
-
       extern string filelist_global;
       filelist_global
          = configuration::Configuration::instance()->wm()->input();
