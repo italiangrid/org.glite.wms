@@ -17,16 +17,14 @@ libglite_wms_ism_la_SOURCES = \
 libglite_wms_ism_la_LIBADD = $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(BOOST_LIBS) \
-        $(CLASSAD_LIBS) \
-        $(GLOBUS_THR_LIBS)
+        $(CLASSAD_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) 
+	$(CLASSAD_CFLAGS)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = wms-ism.pc \
