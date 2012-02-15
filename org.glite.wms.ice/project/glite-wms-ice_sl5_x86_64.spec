@@ -14,7 +14,7 @@ Requires(preun): initscripts
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-ce-cream-client-devel,} libtool, classads-devel
 BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
-BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal,} gsoap-devel
+BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal-devel,} gsoap-devel
 BuildRequires: %{!?extbuilddir: gridsite-devel,} log4cpp-devel
 BuildRequires: myproxy-devel, c-ares-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
