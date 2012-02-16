@@ -13,8 +13,7 @@ EXTRA_DIST = \
 
 wletcwmdir = $(sysconfdir)/glite-wms
 wletcwm_DATA = glite_wms_wmproxy_httpd.conf \
-		glite_wms_wmproxy.gacl \
-		wmproxy_logrotate.conf
+		glite_wms_wmproxy.gacl
 
 wletcwmsdir = $(sysconfdir)/lcmaps
 wletcwms_DATA = lcmaps.db 

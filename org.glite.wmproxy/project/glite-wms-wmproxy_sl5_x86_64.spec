@@ -82,7 +82,6 @@ fi
 %dir /etc/lcmaps/
 %config(noreplace) /etc/glite-wms/wmproxy_httpd.conf.template
 %config(noreplace) /etc/glite-wms/wmproxy.gacl.template
-%config(noreplace) /etc/glite-wms/wmproxy_logrotate.conf.template
 %config(noreplace) /etc/lcmaps/lcmaps.db.template
 /etc/rc.d/init.d/glite-wms-wmproxy
 %attr(4755, -, -) /usr/sbin/glite_wms_wmproxy_load_monitor

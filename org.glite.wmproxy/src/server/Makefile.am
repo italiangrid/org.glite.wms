@@ -71,7 +71,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(GLITE_LB_CLIENTPP_LIBS) \
-	$(RENEWAL_NOTHR_LIBS) \
+	-lglite_security_proxyrenewal_core -lglite_security_proxyrenewal \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	-lglite_jobid \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
