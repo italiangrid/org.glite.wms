@@ -76,7 +76,11 @@ private:
 
   bool *fl_locked;
   DescriptorLock fl_filelock;
+#if BOOST_VERSION >= 103400
   boost::unique_lock<boost::mutex> fl_mutexlock;
+#else
+  boost::mutex::scoped_lock   fl_mutexlock;
+#endif
 };
 
 } // namespace jccommon
