@@ -47,7 +47,7 @@ limitations under the License. */
 #include "glite/wms/common/process/process.h"
 #include "glite/wms/common/process/user.h"
 #include "common/EventLogger.h"
-#include "common/IdContainer.h"
+#include "common/id_container.h"
 #include "common/SignalChecker.h"
 #include "logmonitor/CondorMonitor.h"
 #include "logmonitor/AbortedContainer.h"
@@ -296,7 +296,7 @@ MonitorLoop::MonitorLoop( const utilities::LineParser &options ) : ml_verbose( o
   }
   catch( utilities::JobDirError const& err ) {
     string     error( "Cannot create container: " );
-    error.append( err.string_error() );
+    error.append( err.what() );
 
     this->ml_stream << logger::setlevel( logger::fatal ) << error << endl;
 
@@ -480,7 +480,7 @@ try {
 	    } catch(utilities::JobDirError const& error) {
 	      this->ml_stream << logger::setlevel( logger::null )
 			      << "Cannot compact container." << endl
-			      << "Reason: " << error.string_error() << endl;
+			      << "Reason: " << error.what() << endl;
 
 	      loop = false;
 	      ret = shutdown;
