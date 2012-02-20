@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.2
-
 ################
 #	Copyright (c) Members of the EGEE Collaboration. 2004.
 #	See http://www.eu-egee.org/partners/ for details on the
