@@ -82,6 +82,7 @@ fi
 /etc/rc.d/init.d/glite-wms-lm
 /etc/rc.d/init.d/glite-wms-jc
 /usr/bin/glite-wms-job_controller
+/usr/bin/glite-wms-log_monitor
 /usr/libexec/glite-wms-lm-job_status
 /usr/libexec/glite-wms-clean-lm-recycle.sh
 %doc /usr/share/man/man1/glite-wms-*.1.gz

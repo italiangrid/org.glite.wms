@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5.2.4  2012/02/20 10:27:09  mcecchi
+#       restored LM
+#
 #       Revision 1.17.2.3.4.1.2.5.2.3  2012/02/15 11:02:49  pandreet
 #       Removed variables for globus
 #
@@ -115,7 +118,7 @@
 #
 
 WL_JCTRL_DCTRL=glite-wms-job_controller
-#WL_JCTRL_DLOG=glite-wms-log_monitor
+WL_JCTRL_DLOG=glite-wms-log_monitor
 
 bin_PROGRAMS = $(WL_JCTRL_DCTRL) $(WL_JCTRL_DLOG)
 
@@ -148,31 +151,31 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
 
-#glite_wms_log_monitor_SOURCES = logmonitor.cpp \
-#	MonitorLoop.cpp \
-#	exceptions.cpp
-#glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
-#	../controller/libglite_wms_jss_controller_adapter.la \
-#	../logmonitor/libglite_wms_jss_logmonitor.la \
-#	../common/libglite_wms_jss_common.la \
-#	$(GLITE_WMS_COMMON_CONF_LIBS) \
-#	$(GLITE_JOBID_LIBS) \
-#	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-#	$(GLITE_JDL_LIBS)\
-#	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-#        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-#	$(GLITE_LB_CLIENT_LIBS) \
-#	$(GLITE_LB_CLIENTPP_LIBS) \
-#	$(GLITE_LB_COMMON_LIBS) \
-#	$(CLASSAD_LIBS) $(BOOST_LIBS) \
-#	$(ARES_LIBS) \
-#	$(CONDORG_LIBS) \
-#        $(RENEWAL_NOTHR_LIBS) \
-#	$(GLITE_WMS_PURGER_LIBS) \
-#	$(GLITE_JOBID_LIBS)
-#
+glite_wms_log_monitor_SOURCES = logmonitor.cpp \
+	MonitorLoop.cpp \
+	exceptions.cpp
+
+glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
+	../controller/libglite_wms_jss_controller_adapter.la \
+	../logmonitor/libglite_wms_jss_logmonitor.la \
+	../common/libglite_wms_jss_common.la \
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_JOBID_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_JDL_LIBS)\
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
+	$(CLASSAD_LIBS) $(BOOST_LIBS) \
+	$(ARES_LIBS) \
+	$(CONDORG_LIBS) \
+        $(RENEWAL_NOTHR_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS) \
+	$(GLITE_JOBID_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_JOBID_CFLAGS) \
