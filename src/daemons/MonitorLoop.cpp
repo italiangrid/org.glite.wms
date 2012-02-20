@@ -97,7 +97,6 @@ void MonitorLoop::createDirectories( void )
     paths.push_back(fs::path(lmconfig->condor_log_recycle_dir() + "/tmp", fs::native));
     paths.push_back(fs::path(lmconfig->log_file(), fs::native));
     paths.push_back(fs::path(lmconfig->external_log_file(), fs::native));
-    paths.push_back(fs::path(lmconfig->log_rotation_base_file(), fs::native));
     paths.push_back(fs::path(lmconfig->lock_file(), fs::native));
     paths.push_back(fs::path(wmconfig->input(), fs::native));
 
