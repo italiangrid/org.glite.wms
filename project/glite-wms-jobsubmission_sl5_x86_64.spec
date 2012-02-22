@@ -15,7 +15,7 @@ BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-lb-client-devel,} libtool
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
-BuildRequires: condor, globus-gram-protocol-devel
+BuildRequires: condor, globus-gram-protocol-devel, docbook-style-xsl, libxslt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
