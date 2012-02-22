@@ -23,7 +23,7 @@ BuildRequires: %{!?extbuilddir: lcmaps-without-gsi, lcmaps-devel,} classads-deve
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-lb-client-devel,} fcgi-devel
 BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal-devel,} libxslt-devel
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} libtar-devel
-BuildRequires: gsoap-devel, httpd-devel, zlib-devel, boost-devel
+BuildRequires: gsoap-devel, httpd-devel, zlib-devel, boost-devel, c-ares-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -97,7 +97,7 @@ fi
 
 
 %changelog
-* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+* %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
 
  
