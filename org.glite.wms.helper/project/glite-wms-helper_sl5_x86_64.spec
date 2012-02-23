@@ -10,7 +10,7 @@ BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-broker-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel,} libtool
 BuildRequires: %{!?extbuilddir: glite-wms-matchmaking-devel,} boost-devel
-BuildRequires: classads-devel
+BuildRequires: %{!?extbuilddir: glite-build-common-cpp, } classads-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -75,7 +75,7 @@ rm -rf %{buildroot}
 Summary: Development files for the WMS helper module
 Group: System Environment/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: glite-wms-broker-devel
+Requires: glite-wms-broker-devel, glite-build-common-cpp
 Requires: glite-jobid-api-cpp-devel
 Requires: glite-wms-matchmaking-devel
 
@@ -98,6 +98,6 @@ Development files for the WMS helper module
 
 
 %changelog
-* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+* %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
 
