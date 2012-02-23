@@ -14,7 +14,7 @@ Requires(preun): initscripts
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-lb-client-devel,} libtool
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel,} classads-devel
-BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
+BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel, c-ares-devel
 BuildRequires: %{!?extbuilddir: glite-build-common-cpp, } condor
 BuildRequires: globus-gram-protocol-devel, docbook-style-xsl, libxslt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
