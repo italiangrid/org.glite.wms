@@ -71,9 +71,9 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(GLITE_LB_CLIENTPP_LIBS) \
-	-lglite_security_proxyrenewal_core -lglite_security_proxyrenewal \
+	$(RENEWAL_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	-lglite_jobid \
+	$(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 	$(GLITE_JDL_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
@@ -89,7 +89,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(ARES_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
-	$(GRIDSITE_GLOBUS_LIBS) \
+	$(GRIDSITE_OPENSSL_LIBS) \
 	$(SEC_LCMAPS_WITHOUT_GSI_LIBS) \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_NOTHR_LIBS) \
@@ -105,7 +105,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(VOMS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GRIDSITE_GLOBUS_CFLAGS) \
+	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(FCGI_CFLAGS) \
 	$(XSLT_CPPFLAGS) \
