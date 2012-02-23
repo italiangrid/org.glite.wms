@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5.2.5  2012/02/23 13:38:30  pandreet
+#       Replaced macros with pkg files
+#
 #       Revision 1.17.2.3.4.1.2.5.2.4  2012/02/20 10:27:09  mcecchi
 #       restored LM
 #
@@ -147,7 +150,7 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
-	$(RENEWAL_NOTHR_LIBS) \
+	$(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
 
@@ -173,7 +176,7 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
 	$(CONDORG_LIBS) \
-        $(RENEWAL_NOTHR_LIBS) \
+        $(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
 

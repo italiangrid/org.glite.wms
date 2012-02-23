@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.5  2012/02/23 13:38:30  pandreet
+#       Replaced macros with pkg files
+#
 #       Revision 1.20.2.2.4.1.2.7.2.4  2012/02/15 10:38:00  pandreet
 #       Replaced macro for globus
 #
@@ -181,9 +184,9 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(GLITE_LB_CLIENTPP_LIBS) \
 	$(GLITE_LB_COMMON_LIBS) \
-	$(RENEWAL_NOTHR_LIBS) \
+	$(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
-        $(RENEWAL_NOTHR_LIBS) \
+        $(RENEWAL_LIBS) \
 	$(GLITE_JOBID_LIBS)
 
 libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
