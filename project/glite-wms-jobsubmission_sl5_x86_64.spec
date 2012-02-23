@@ -119,6 +119,7 @@ Requires: glite-jobid-api-cpp-devel, glite-lb-client-devel
 Requires: glite-jdl-api-cpp-devel, classads-devel
 Requires: glite-wms-purger-devel, boost-devel
 Requires: condor, globus-gram-protocol-devel
+Requires: c-ares-devel
 
 %description devel
 Condor-G connector for the WMS (Development files)
