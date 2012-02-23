@@ -9,7 +9,8 @@ Group: System Environment/Libraries
 BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
 BuildRequires: %{!?extbuilddir: glite-wms-utils-classad-devel,} libtool
-BuildRequires: boost-devel, classads-devel, openldap-devel
+BuildRequires: boost-devel, classads-devel
+BuildRequires: %{!?extbuilddir: glite-build-common-cpp, } openldap-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -72,6 +73,7 @@ Group: System Environment/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: glite-wms-utils-classad-devel, glite-wms-common-devel
 Requires: boost-devel, classads-devel, openldap-devel
+Requires: glite-build-common-cpp
 
 %description devel
 Development files for the WMS information superkmarket
