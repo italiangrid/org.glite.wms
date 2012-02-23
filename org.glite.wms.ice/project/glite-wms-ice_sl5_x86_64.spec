@@ -16,7 +16,7 @@ BuildRequires: %{!?extbuilddir: glite-ce-cream-client-devel,} libtool, classads-
 BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-px-proxyrenewal-devel,} gsoap-devel
 BuildRequires: %{!?extbuilddir: gridsite-devel,} log4cpp-devel
-BuildRequires: myproxy-devel, c-ares-devel
+BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } myproxy-devel, c-ares-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -95,6 +95,6 @@ fi
 
 
 %changelog
-* %(date +"%%a %%b %%d %%Y") WMS group <wms-support@lists.infn.it> - %{version}-%{release}
+* %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
 
