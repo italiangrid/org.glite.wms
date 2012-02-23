@@ -60,30 +60,28 @@ set_input()
 
 check_input()
 {
-  if [ ${type} = "jobdir" ]; then
-    if [ -d ${input} ]; then
-      set_input_ret=0
-      if [ ! -d ${input}/old -o ! -d ${input}/new -o ! -d ${input}/tmp ]; then
-        echo "input structure has changed, trying to (re)create it"
-        set_input
-        if [ $? != 0 ]; then
-          set_input_ret=1
-        fi
-      fi
-
-      if [ $set_input_ret -eq 0 ]; then
-        # mv of the whole dir would fail when too much populated
-        find ${input}/old/ -type f | xargs -I '{}' mv '{}' ${input}/new/ &>/dev/null
-        if [ $? != 0 ]; then
-          echo "error moving files from old to new dir, continuing"
-        fi
-        true
-      else
-        false
-      fi
-    else
+  if [ -d ${input} ]; then
+    set_input_ret=0
+    if [ ! -d ${input}/old -o ! -d ${input}/new -o ! -d ${input}/tmp ]; then
+      echo "input structure has changed, trying to (re)create it"
       set_input
+      if [ $? != 0 ]; then
+        set_input_ret=1
+      fi
     fi
+
+    if [ $set_input_ret -eq 0 ]; then
+      # mv of the whole dir would fail when too much populated
+      find ${input}/old/ -type f | xargs -I '{}' mv '{}' ${input}/new/ &>/dev/null
+      if [ $? != 0 ]; then
+        echo "error moving files from old to new dir, continuing"
+      fi
+      true
+    else
+      false
+    fi
+  else
+    set_input
   fi
 }
 
@@ -100,10 +98,6 @@ start()
   input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.input`
     if [ -z ${input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - JC section"
-    fi 
-  type=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.InputType | tr "[:upper:]" "[:lower:]"`
-    if [ -z ${type} ]; then
-      do_failure "Please set InputType parameter in ${CONFIGURATION_FILE} - JC section"
     fi 
 
   if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then

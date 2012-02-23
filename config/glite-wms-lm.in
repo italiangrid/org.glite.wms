@@ -43,15 +43,13 @@ init_variables()
 
 set_input() # first parameter is the input, second is the input type
 {
-  if [ "$2" = "jobdir" ]; then
-    mkdir -p $1/{tmp,new,old} 2>/dev/null
-    mkdir_ret=$?
-    chown -R ${GLITE_WMS_USER}:${GLITE_WMS_USER} "$1"
-    if [ $? -ne 0 -o $mkdir_ret -ne 0 ]; then
-      false
-    else
-      true
-    fi
+  mkdir -p $1/{tmp,new,old} 2>/dev/null
+  mkdir_ret=$?
+  chown -R ${GLITE_WMS_USER}:${GLITE_WMS_USER} "$1"
+  if [ $? -ne 0 -o $mkdir_ret -ne 0 ]; then
+    false
+  else
+    true
   fi
 }
 
@@ -78,12 +76,7 @@ start()
     if [ -z ${wm_input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - WM section"
     fi 
-    wm_input_type=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
-    if [ -z ${wm_input_type} ]; then
-      do_failure "Please set DispatcherType parameter in ${CONFIGURATION_FILE} - WM section"
-    fi 
-
-    set_input ${wm_input} ${wm_input_type}
+    set_input ${wm_input}
     if [ $? != 0 ]; then
         echo "error setting up input structure... failure"
     fi
