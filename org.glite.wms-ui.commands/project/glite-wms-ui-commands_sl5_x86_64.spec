@@ -17,7 +17,7 @@ BuildRequires: globus-openssl-module-devel, globus-gsi-callback-devel, globus-gs
 BuildRequires: globus-gsi-credential-devel, globus-gsi-openssl-error-devel, globus-gsi-proxy-core-devel
 BuildRequires: globus-gsi-proxy-ssl-devel, globus-gsi-sysconfig-devel,globus-gssapi-error-devel
 BuildRequires: globus-gssapi-gsi-devel, globus-gss-assist-devel
-BuildRequires: globus-ftp-client-devel, globus-ftp-control-devel
+BuildRequires: globus-ftp-client-devel, globus-ftp-control-devel, libxml2-devel
 Requires: glite-wms-ui-api-python
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
