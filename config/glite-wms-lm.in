@@ -93,7 +93,7 @@ start()
 	    echo "Check situation and try to start again."
 	    echo "Lock file path is: ${LOCKFILE}"
 	elif [ -n "${pid}" ]; then
-	    echo "LogMonitor yet running in pid ${pid}"
+	    echo "LogMonitor already running with pid ${pid}"
 	fi
     elif [ ${SCRIPT_UID} -eq 0 ]; then
 	echo `pidofproc ${LOGMONITOR}` > /var/run/${MONITORBASE}.pid
