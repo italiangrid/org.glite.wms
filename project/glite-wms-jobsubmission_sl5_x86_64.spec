@@ -12,11 +12,13 @@ Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
 BuildRequires: %{!?extbuilddir: glite-wms-common-devel,} chrpath
-BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-lb-client-devel,} libtool
+BuildRequires: %{!?extbuilddir: glite-jobid-api-c-devel,} globus-gram-protocol-devel
+BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel,} c-ares-devel
+BuildRequires: %{!?extbuilddir: glite-lb-client-devel,} libtool
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel,} classads-devel
-BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel, c-ares-devel
+BuildRequires: %{!?extbuilddir: glite-wms-purger-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-build-common-cpp, } condor
-BuildRequires: globus-gram-protocol-devel, docbook-style-xsl, libxslt
+BuildRequires: docbook-style-xsl, libxslt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -115,7 +117,8 @@ Summary: Condor-G connector for the WMS (Development files)
 Group: System Environment/Libraries
 Requires: %{name}-lib%{?_isa} = %{version}-%{release}
 Requires: glite-wms-common-devel, glite-build-common-cpp 
-Requires: glite-jobid-api-cpp-devel, glite-lb-client-devel
+Requires: glite-jobid-api-c-devel, glite-jobid-api-cpp-devel
+Requires: glite-lb-client-devel
 Requires: glite-jdl-api-cpp-devel, classads-devel
 Requires: glite-wms-purger-devel, boost-devel
 Requires: condor, globus-gram-protocol-devel
