@@ -17,7 +17,8 @@ Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
-BuildRequires: %{!?extbuilddir: gridsite-devel, glite-jobid-api-cpp-devel, voms-devel,} chrpath
+BuildRequires: %{!?extbuilddir: glite-jobid-api-c-devel, glite-jobid-api-cpp-devel, voms-devel,} chrpath
+BuildRequires: %{!?extbuilddir: gridsite-devel,} libxml2-devel
 BuildRequires: %{!?extbuilddir: argus-pep-api-c-devel, glite-wms-purger-devel,} libtool
 BuildRequires: %{!?extbuilddir: lcmaps-without-gsi-devel, lcmaps-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-lb-client-devel,} fcgi-devel
