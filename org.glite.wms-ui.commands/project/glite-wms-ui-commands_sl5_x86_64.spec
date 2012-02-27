@@ -10,7 +10,8 @@ BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, libtool
 BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-jdl-api-cpp-devel,} boost-devel
-BuildRequires: %{!?extbuilddir: glite-lb-client-devel, glite-wms-ui-api-python,} libtar-devel, zlib-devel
+BuildRequires: %{!?extbuilddir: glite-lb-client-devel, glite-wms-ui-api-python,} libtar-devel
+BuildRequires: %{!?extbuilddir: voms-devel, }  zlib-devel
 BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } docbook-style-xsl, libxslt, c-ares-devel
 BuildRequires: globus-common-devel, globus-callout-devel, globus-openssl-devel
 BuildRequires: globus-openssl-module-devel, globus-gsi-callback-devel, globus-gsi-cert-utils-devel
