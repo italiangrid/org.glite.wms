@@ -53,6 +53,9 @@ start()
         echo "ok (already running)"
     else
         rm -f ${pid_file}
+	touch ${pid_file}
+	chown ${GLITE_USER}:${GLITE_USER} ${pid_file}
+
         # FIXME: This is a temporary fix for setting up the correct
         # LD_LIBRARY_PATH value 
         if [ -z "$LD_LIBRARY_PATH" ]; then
