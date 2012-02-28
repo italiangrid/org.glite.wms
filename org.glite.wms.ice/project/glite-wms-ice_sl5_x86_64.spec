@@ -58,6 +58,7 @@ chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-rm
 chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-proxy-renew
 chrpath --delete %{buildroot}/usr/bin/queryDb
 chrpath --delete %{buildroot}/usr/bin/glite-wms-ice
+export QA_SKIP_BUILD_ROOT=yes
 
 %clean
 rm -rf %{buildroot}
