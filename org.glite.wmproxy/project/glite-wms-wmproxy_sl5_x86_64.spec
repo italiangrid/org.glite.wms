@@ -43,9 +43,18 @@ Workload Management Proxy service
 %build
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
+
+%if %{extdist} == "sl6"
+  ln -sf $PWD/src/server/stdsoap2-2_7_16.cpp $PWD/src/server/stdsoap2.cpp
+%else
+  ln -sf $PWD/src/server/stdsoap2-2_7_13.cpp $PWD/src/server/stdsoap2.cpp
+%endif
+
   ./configure --srcdir=$PWD --prefix=%{buildroot}/usr --sysconfdir=%{buildroot}/etc --disable-static PVER=%{version}
   make
 fi
+
+
 
 %install
 rm -rf %{buildroot}
@@ -59,6 +68,9 @@ fi
 rm %{buildroot}%{_libdir}/*.la
 chrpath --delete %{buildroot}%{_libdir}/*.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/glite_wms_wmproxy_server
+export QA_SKIP_BUILD_ROOT=yes
+
+
 
 %clean
 rm -rf %{buildroot}
