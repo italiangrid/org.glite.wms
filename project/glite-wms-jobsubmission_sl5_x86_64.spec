@@ -63,6 +63,7 @@ mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc.new %{buildroot}%{_libdir}
 rm %{buildroot}%{_libdir}/*.la
 chrpath --delete %{buildroot}%{_libdir}/libglite_wms_jss_*.so.0.0.0
 strip -s %{buildroot}%{_libdir}/libglite_wms_jss_*.so.0.0.0
+export QA_SKIP_BUILD_ROOT=yes
 
 %clean
  
