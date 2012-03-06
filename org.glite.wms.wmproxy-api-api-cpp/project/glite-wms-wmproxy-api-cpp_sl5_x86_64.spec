@@ -7,7 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
-BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool
+BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, libtool, openssl-devel
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface,} gsoap-devel
 BuildRequires: %{!?extbuilddir: glite-build-common-cpp,} doxygen, libxml2-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -68,7 +68,7 @@ rm -rf %{buildroot}
 %package devel
 Summary: C/C++ libraries for the WM Proxy service (development files)
 Group: System Environment/Libraries
-Requires: gridsite-devel, gsoap-devel, libxml2-devel
+Requires: gridsite-devel, gsoap-devel, libxml2-devel, openssl-devel
 
 %description devel
 C/C++ libraries for the WM Proxy service (development files)
