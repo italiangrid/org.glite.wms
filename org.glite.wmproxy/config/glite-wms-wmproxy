@@ -15,6 +15,9 @@
 #	See the License for the specific language governing permissions and
 #	limitations under the License.
 
+# chkconfig: 345 95 06
+# description: startup script for the WMProxy process
+
 . /opt/glite/yaim/etc/grid-env-funcs.sh
 . /etc/profile.d/grid-env.sh 
 
