@@ -128,7 +128,13 @@ struct ExecEnvInfo
   std::vector<BenchMarkInfoMap::iterator> bmarks_lnk;
 };
 
+struct DataStoreInfo
+{ 
+  ClassAdPtr ad;
+};
+
 typedef std::map<std::string, ExecEnvInfo> ExecEnvInfoMap;
+typedef std::map<std::string, boost::any> ResourceInfoMap;
 
 struct ServiceInfo
 {
@@ -140,9 +146,7 @@ struct ShareInfo
 {
   ClassAdPtr ad;
   std::vector<classad::ExprTree*> policy_rules;
-  ExecEnvInfoMap::iterator execenv_lnk; // We are assuming that a share is bound 
-					// to one execution environment
-					// This limitation should be removed asap
+  std::vector<ResourceInfoMap::iterator> resources_lnk;
 };
 
 //typedef std::map<std::string, ClassAdPtr> SubClusterInfoMap;
@@ -189,8 +193,37 @@ struct BDIICEInfo
   ManagerInfoMap managers;
   EndpointInfoMap endpoints;
   AccessPolicyInfoMap policies;
-  ExecEnvInfoMap execenvs;
+  ResourceInfoMap resources;
   BenchMarkInfoMap benchmarks;
+};
+
+struct is_a_literal_node_starting_with
+{
+  is_a_literal_node_starting_with(std::string const& p) : prefix(p) {}
+  bool operator()(classad::ExprTree* e) const {
+    classad::Value v;
+    std::string s;
+    return (
+      cu::is_literal(e) && 
+      e->Evaluate(v) && v.IsStringValue(s) && ba::starts_with(s,prefix)
+    );
+  }
+  std::string prefix;
+};
+
+struct is_a_literal_node_equals_to
+{
+  
+  is_a_literal_node_equals_to(std::string const& v) : value(v) {}
+  bool operator()(classad::ExprTree* e) const {
+    classad::Value v;
+    std::string s;
+    return (
+      cu::is_literal(e) && 
+      e->Evaluate(v) && v.IsStringValue(s) && ba::equals(s,value)
+    );
+  }
+  std::string value;
 };
 
 inline void cleanup_glue2_info(ClassAdPtr ad, std::list<std::string> a)
@@ -200,6 +233,35 @@ inline void cleanup_glue2_info(ClassAdPtr ad, std::list<std::string> a)
    a.begin(), a.end(),
    boost::bind(&classad::ClassAd::Delete, ad, _1)
   );
+}
+
+inline bool is_objectclass(std::string const& item, const classad::ClassAd& ad)
+{
+  bool result = false;
+  classad::ExprList* e = 0;
+  ad.EvaluateAttrList("objectClass",e);
+  if(e) result = std::find_if(e->begin(),e->end(), is_a_literal_node_equals_to(item)) != e->end();
+  return result;
+}
+
+inline bool is_glue2_computing_share(const classad::ClassAd& ad)
+{
+  return is_objectclass("GLUE2ComputingShare", ad);
+}
+
+inline bool is_glue2_storage_share(const classad::ClassAd& ad)
+{
+  return is_objectclass("GLUE2StorageShare", ad);
+}
+
+inline bool is_glue2_execenv_resource(const classad::ClassAd& ad)
+{
+  return is_objectclass("GLUE2ExecutionEnvironment", ad);
+}
+
+inline bool is_glue2_datastore_resource(const classad::ClassAd& ad)
+{
+  return is_objectclass("GLUE2DataStore", ad);
 }
 
 void process_glue2_service_info(
@@ -264,21 +326,12 @@ void process_glue2_manager_info(
   service_it->second.manager_lnk = manager_it;
 }
 
-struct is_a_literal_node_starting_with
-{
-  is_a_literal_node_starting_with(std::string const& p) : prefix(p) {}
-  bool operator()(classad::ExprTree* e) const {
-    classad::Value v;
-    std::string s;
-    return (
-      cu::is_literal(e) && 
-      e->Evaluate(v) && v.IsStringValue(s) && ba::starts_with(s,prefix)
-    );
-  }
-  std::string prefix;
-};
 template<typename T>
-void extract_glue2_info_value_in(classad::ClassAd const& ad, std::string const& from, std::string const& what, classad::ClassAd* in)
+void extract_glue2_info_value_in(
+  classad::ClassAd const& ad,
+  std::string const& from, 
+  std::string const& what, 
+  classad::ClassAd* in)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
     ad.Lookup(from)
@@ -297,7 +350,10 @@ void extract_glue2_info_value_in(classad::ClassAd const& ad, std::string const& 
   }
 }
 
-void process_glue2_resource_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, BDIICEInfo& bdii_info)
+void process_glue2_resource_fk(
+  ShareInfoMap::iterator& share_it, 
+  ClassAdPtr ad, 
+  BDIICEInfo& bdii_info)
 {
   classad::ExprList* el = dynamic_cast<classad::ExprList*>(
     ad->Lookup("ResourceForeignKey")
@@ -308,16 +364,26 @@ void process_glue2_resource_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, 
     (*el->begin())->Evaluate(v) && v.IsStringValue(s);
 
     bool insert;
-    ExecEnvInfoMap::iterator execenv_it;
-    boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
-      std::make_pair(s, ExecEnvInfo())
+    boost::any resource;
+    ResourceInfoMap::iterator resource_it;
+
+    if (is_glue2_computing_share(*ad)) resource = ExecEnvInfo();
+    else if (is_glue2_computing_share(*ad)) resource = DataStoreInfo();
+    else {
+      Error("Cannot discriminate between Computing or Storage share: " << *ad);
+      return ;
+    }
+    boost::tie(resource_it, insert) = bdii_info.resources.insert(
+      std::make_pair(s, resource)
     );
-    share_it->second.execenv_lnk = execenv_it;
+    share_it->second.resources_lnk.push_back(resource_it);
   }
 }
 
 EndpointInfoMap::iterator 
-process_glue2_endpoint_fk_entry(BDIICEInfo& bdii_info, classad::ExprTree* e)
+process_glue2_endpoint_fk_entry(
+  BDIICEInfo& bdii_info, 
+  classad::ExprTree* e)
 {
   classad::Value v;
   std::string s;
@@ -333,11 +399,20 @@ process_glue2_endpoint_fk_entry(BDIICEInfo& bdii_info, classad::ExprTree* e)
   return endpoint_it;
 }
 
-void process_glue2_endpoint_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, BDIICEInfo& bdii_info)
+void process_glue2_endpoint_fk(
+  ShareInfoMap::iterator& share_it, 
+  ClassAdPtr ad, 
+  BDIICEInfo& bdii_info)
 {
-  classad::ExprList* el = dynamic_cast<classad::ExprList*>(
-    ad->Lookup("ComputingEndpointForeignKey")
+  std::string const fk(
+    is_glue2_computing_share(*ad) ? 
+      "ComputingEndpointForeignKey" : "StorageEndpointForeignKey"
   );
+
+  classad::ExprList* el = dynamic_cast<classad::ExprList*>(
+    ad->Lookup(fk)
+  );
+
   if (el && el->size()) {
     for( // link each endpoint to the share it binds to 
       classad::ExprList::iterator el_it = el->begin() ;
@@ -350,6 +425,9 @@ void process_glue2_endpoint_fk(ShareInfoMap::iterator& share_it, ClassAdPtr ad, 
          endpoint_it->second.shares_lnk.push_back(share_it);
       }
     }
+  }
+  else {
+    Error(fk << " missing or empty while processing " << *ad );
   }
 }    
 
@@ -370,6 +448,7 @@ void process_glue2_share_info(
   boost::tie(share_it, insert) = bdii_info.shares.insert(
     std::make_pair(share_id, ShareInfo())
   );
+
   process_glue2_resource_fk(share_it, ad, bdii_info);
   process_glue2_endpoint_fk(share_it, ad, bdii_info);
   
@@ -388,6 +467,7 @@ void process_glue2_share_info(
     "Share",
     ad->Copy()
   );
+  Debug("Share:" << *ad);
 }
 
 void process_glue2_endpoint_info(
@@ -431,6 +511,66 @@ void process_glue2_endpoint_info(
   endpoint_it->second.service_lnk = service_it;
 }
 
+void process_glue2_execenv_info(
+std::string const resource_id,
+std::string const service_id,
+ClassAdPtr ad,
+  BDIICEInfo& bdii_info
+) {
+  
+  bool insert;
+  ResourceInfoMap::iterator resource_it;
+  Debug(*ad);
+  boost::tie(resource_it, insert) = bdii_info.resources.insert(
+    std::make_pair(resource_id, ExecEnvInfo())
+  );
+    
+  classad::ClassAd* oi = new classad::ClassAd;
+  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "SmpSize", oi);
+  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "Cores", oi);
+  ad->Insert("OtherInfo", oi);
+
+  cleanup_glue2_info(ad, bas::list_of("CreationTime")
+    ("ComputingManagerForeignKey")
+    ("ManagerForeignKey")
+  );
+
+  ClassAdPtr resource_ad(new classad::ClassAd());
+  resource_ad->Insert(
+    "ExecutionEnvironment", ad->Copy()
+  );
+  ExecEnvInfo& eei = boost::any_cast<ExecEnvInfo&>(resource_it->second);
+  eei.ad = resource_ad;
+}
+
+void process_glue2_datastore_info(
+std::string const resource_id,
+std::string const service_id,
+ClassAdPtr ad,
+  BDIICEInfo& bdii_info
+) {
+  
+  bool insert;
+  ResourceInfoMap::iterator resource_it;
+  Debug(*ad);
+  boost::tie(resource_it, insert) = bdii_info.resources.insert(
+    std::make_pair(resource_id, DataStoreInfo())
+  );
+    
+  cleanup_glue2_info(ad, bas::list_of("CreationTime")
+    ("ComputingManagerForeignKey")
+    ("ManagerForeignKey")
+  );
+
+  ClassAdPtr resource_ad(new classad::ClassAd());
+  resource_ad->Insert(
+    "DataStore", ad->Copy()
+  );
+  DataStoreInfo& dsi = boost::any_cast<DataStoreInfo&>(resource_it->second);
+  dsi.ad = resource_ad;
+}
+
+
 void process_glue2_resource_info(
   std::vector<std::string> const& ldap_dn_tokens, 
   ClassAdPtr ad, 
@@ -444,27 +584,12 @@ void process_glue2_resource_info(
    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
   );
 
-  bool insert;
-  ExecEnvInfoMap::iterator execenv_it;
-  boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
-    std::make_pair(resource_id, ExecEnvInfo())
-  );
-  classad::ClassAd* oi = new classad::ClassAd;
-  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "SmpSize", oi);
-  extract_glue2_info_value_in<short>(*ad, "OtherInfo", "Cores", oi);
-  ad->Insert("OtherInfo", oi);
-
-  cleanup_glue2_info(ad,
-    bas::list_of("CreationTime")
-      ("ComputingManagerForeignKey")
-      ("ManagerForeignKey")
-  );
- 
-  execenv_it->second.ad.reset(new classad::ClassAd());
-  execenv_it->second.ad->Insert(
-    "ExecutionEnvironment",
-    ad->Copy()
-  );
+  if (is_glue2_execenv_resource(*ad)) {
+    process_glue2_execenv_info(resource_id, service_id, ad, bdii_info);
+  }
+  else if (is_glue2_datastore_resource(*ad)) {
+    process_glue2_datastore_info(resource_id, service_id, ad, bdii_info);
+  }
 }
 
 void process_glue2_application_env_info(
@@ -484,12 +609,14 @@ void process_glue2_application_env_info(
     cu::evaluate_attribute(*ad,"AppName");
 
   bool insert;
-  ExecEnvInfoMap::iterator execenv_it;
-  boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
+  ResourceInfoMap::iterator resource_it;
+  boost::tie(resource_it, insert) = bdii_info.resources.insert(
     std::make_pair(resource_id, ExecEnvInfo())
   );
 
-  execenv_it->second.applications.insert(application);
+  boost::any_cast<ExecEnvInfo&>(
+    resource_it->second
+  ).applications.insert(application);
 }
 
 void process_glue2_benchmark_info(
@@ -501,6 +628,7 @@ void process_glue2_benchmark_info(
   std::string const bmark_id(
    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
   );
+
   std::string const resource_id(
    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
   );
@@ -527,11 +655,13 @@ void process_glue2_benchmark_info(
   
   bmark_it->second.ad = ad;
 
-  ExecEnvInfoMap::iterator execenv_it;
-  boost::tie(execenv_it, insert) = bdii_info.execenvs.insert(
+  ResourceInfoMap::iterator resource_it;
+  boost::tie(resource_it, insert) = bdii_info.resources.insert(
     std::make_pair(resource_id, ExecEnvInfo())
   );
-  execenv_it->second.bmarks_lnk.push_back(bmark_it);
+  boost::any_cast<ExecEnvInfo&>(
+    resource_it->second
+  ).bmarks_lnk.push_back(bmark_it);
 }
 
 
@@ -732,15 +862,15 @@ typedef boost::tuple<
 
 const glue2_stripping_prefix 
   service_pfx  = bas::list_of("GLUE2Entity")("GLUE2Service"),
-  manager_pfx  = bas::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager"),
-  share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare"),
+  manager_pfx  = bas::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager")("GLUE2StorageManager"),
+  share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare")("GLUE2StorageShare"),
   endpoint_pfx = bas::list_of("GLUE2Entity")("GLUE2Endpoint")("GLUE2ComputingEndpoint"),
   resource_pfx = bas::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment"),
   mpolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy"),
   apolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2AccessPolicy"),
   appenv_pfx   = bas::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment"),
   bmark_pfx    = bas::list_of("GLUE2Entity")("GLUE2Benchmark");
-
+  
 std::list<glue2_info_processor_tuple> 
 glue2_info_processors = bas::tuple_list_of
   (is_glue2_service_dn, service_pfx, process_glue2_service_info)
@@ -789,6 +919,101 @@ fetch_bdii_se_info_g2(
   std::string const& host, size_t port, std::string const& dn, 
   time_t timeout, ism::purchaser::PurchaserInfoContainer& se_info_container) 
 {
+  std::string filter("(|"
+    "(objectclass=GLUE2StorageService)(|"
+    "(objectclass=GLUE2StorageManager)(|"
+    "(objectclass=GLUE2StorageShare)(|"
+    "(objectclass=GLUE2StorgeEndPoint)"
+    ")))"
+  ")");
+ 
+  LDAP* ld = 0;
+  int result = ldap_initialize(
+    &ld, 
+    std::string("ldap://" + host + ":" + boost::lexical_cast<std::string>(port)).c_str()
+  );
+  boost::shared_ptr<void> ld_guard(
+    static_cast<void*>(0), 
+    boost::bind(ldap_unbind_ext, ld, (LDAPControl**)(0), (LDAPControl**)(0))
+  );
+  if (result != LDAP_SUCCESS ) {
+
+    throw LDAPException(
+      std::string("ldap_simple_bind_s error: ").append(
+        ldap_err2string(result)
+      )
+    );
+  }
+
+  struct timeval to;
+  to.tv_sec = timeout;
+  to.tv_usec = 0L;
+
+  ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &to);
+
+  LDAPMessage *ldresult = 0;
+  if ( (result = ldap_search_ext_s(
+    ld,
+    dn.c_str(),
+    LDAP_SCOPE_SUBTREE,
+    filter.c_str(),
+    0,
+    false,
+    0,
+    0,
+    &to,
+    LDAP_NO_LIMIT,
+    &ldresult) != LDAP_SUCCESS)) {
+
+    throw LDAPException(
+      std::string("ldap_search error: ").append(
+        ldap_err2string(result)
+      )
+    );
+  }
+  struct BDIICEInfo bdii_info;
+
+  boost::shared_ptr<void> ldresult_guard(
+    ldresult, ldap_msgfree
+  );
+
+
+  time_t const t0 = std::time(0);
+  size_t n_entries = 0;
+  for (
+    LDAPMessage* lde = ldap_first_entry(ld, ldresult);
+    lde != 0; lde = ldap_next_entry(ld, lde)
+  ) {
+
+    boost::shared_ptr<char> dn_str(
+      ldap_get_dn( ld, lde ),
+      ber_memfree
+    );
+    ++n_entries;
+    std::vector<std::string> ldap_dn_tokens;
+    tokenize_ldap_dn(dn_str.get(), ldap_dn_tokens);
+    for (
+      std::list<glue2_info_processor_tuple>::const_iterator p_it = glue2_info_processors.begin() ;
+      p_it != glue2_info_processors.end() ; ++p_it ) {
+    
+      glue2_dn_test_predicate check = p_it->get<0>();
+      
+      if (check(ldap_dn_tokens)) {
+        
+        ClassAdPtr ad(
+          create_classad_from_ldap_entry(
+            ld, lde, p_it->get<1>()
+        ));
+        glue2_info_processing_fn process = p_it->get<2>();
+        process(ldap_dn_tokens, ad, bdii_info);
+        Debug(*ad);
+        break ; 
+      } 
+    }
+  }
+  Debug("#" << n_entries << " LDAP entries received in " << std::time(0) - t0 << " seconds");
+
+  
 }
 
 void 
@@ -897,7 +1122,7 @@ fetch_bdii_ce_info_g2(
 
   EndpointInfoMap::const_iterator ep_it(bdii_info.endpoints.begin());
   EndpointInfoMap::const_iterator const ep_e(bdii_info.endpoints.end());
-  Debug(bdii_info.endpoints.size());
+  
   time_t const t1 = std::time(0);
   size_t n_shares = 0;
   for( ; ep_it != ep_e; ++ep_it) { 
@@ -930,11 +1155,14 @@ fetch_bdii_ce_info_g2(
         dynamic_cast<classad::ClassAd*>(computingAd->Copy())
       );
       computingAd_copy->Update(*(*sh_it)->second.ad);
+      ExecEnvInfo const& eei(
+        boost::any_cast<ExecEnvInfo>((*sh_it)->second.resources_lnk.front()->second)
+      );
 
       std::vector<classad::ExprTree*> apps_el;
       std::transform(
-        (*sh_it)->second.execenv_lnk->second.applications.begin(),
-        (*sh_it)->second.execenv_lnk->second.applications.end(),
+        eei.applications.begin(),
+        eei.applications.end(),
         std::back_inserter(apps_el),
         make_literal
       ); 
@@ -943,8 +1171,8 @@ fetch_bdii_ce_info_g2(
 
       std::vector<classad::ExprTree*> bmark_ets;
       std::transform(
-        (*sh_it)->second.execenv_lnk->second.bmarks_lnk.begin(),
-        (*sh_it)->second.execenv_lnk->second.bmarks_lnk.end(),
+        eei.bmarks_lnk.begin(),
+        eei.bmarks_lnk.end(),
         std::back_inserter(bmark_ets),
         copy_benchmark_info
        ); 
@@ -953,7 +1181,7 @@ fetch_bdii_ce_info_g2(
 
       g2Ad->Insert("Benchmark", classad::ExprList::MakeExprList(bmark_ets));
       g2Ad->Insert("ApplicationEnvironment", appenvAd);
-      g2Ad->Update(*(*sh_it)->second.execenv_lnk->second.ad);
+      g2Ad->Update(*eei.ad);
       g2Ad->Insert("Computing", computingAd_copy);
       g2Ad->DeepInsert(
         computingAd_copy->Lookup("Share"),
@@ -963,8 +1191,7 @@ fetch_bdii_ce_info_g2(
       std::string interface_name = cu::evaluate_expression(
         *ep_it->second.ad, "EndPoint.InterfaceName"
       );
- 
-      classad::ClassAd* shareAd = dynamic_cast<classad::ClassAd*>(
+     classad::ClassAd* shareAd = dynamic_cast<classad::ClassAd*>(
         computingAd_copy->Lookup("Share")
       );
       
