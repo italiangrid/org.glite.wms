@@ -11,9 +11,9 @@ Summary: Nagios probe for the EMI CREAM and WN services
 Name: emi-cream-nagios
 Version: 1.0.0
 Release: 5%{?dist}
-
-License: ASL 2.0
-Group: Monitoring
+License: Apache Software License
+URL: http://glite.cern.ch/
+Group: Applications/Internet
 Source: %{name}-%{version}.src.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: python >= 2.4
@@ -77,7 +77,7 @@ install --mode 644 %{lpylib}/*.py* %{buildroot}%{pylib}
 %doc CHANGES
 
 %changelog
-* Fri Sep 23 2011 Alessio Gianelle <gianelle@pd.infn.it>
+* Fri Sep 23 2011 Alessio Gianelle <gianelle@pd.infn.it> - 1.0.0.7
 - Porting to EMI
 - Removed unused 'data' probes
 * Tue Jul 5 2011 Emir Imamagic <eimamagi@srce.hr> - 0.2.3-1
@@ -108,7 +108,7 @@ install --mode 644 %{lpylib}/*.py* %{buildroot}%{pylib}
 * Mon May 10 2010 K. Skaburskas <Konstantin.Skaburskas@cern.ch> - 0.1.12-1
 - added CHANGES file to the package documentation
 * Wed Apr 21 2010 K. Skaburskas <Konstantin.Skaburskas@cern.ch> - 0.1.11-1
-- added %{pylib}/jobmonit package
+- added %%{pylib}/jobmonit package
 - dependency: python-GridMon >= 1.1.7
 * Thu Mar 18 2010 K. Skaburskas <Konstantin.Skaburskas@cern.ch> - 0.1.10-1
 - changes to use new VOMS FQAN based Nagios metrics naming
@@ -176,7 +176,7 @@ install --mode 644 %{lpylib}/*.py* %{buildroot}%{pylib}
 - added CREAM CE metrics for testing direct job submission.
 - added probe for WMS service.
 - added metrics and passive checks output sanitizer.
-- making Nagios WN checks config files as %config(noreplace) in RPM.
+- making Nagios WN checks config files as %%config(noreplace) in RPM.
 - added new gLite error expressions to /etc/gridmon/org.sam.errdb.
 - checked/updated LDAP queries in all metrics. Fixing:
   * https://savannah.cern.ch/bugs/?59599
@@ -306,7 +306,7 @@ install --mode 644 %{lpylib}/*.py* %{buildroot}%{pylib}
 - imporvements in command line paramters parsing and handling. All common ones
   to probe were moved to Metric.Gatherer.
 * Thu Jan 08 2009 K. Skaburskas <Konstantin.Skaburskas@cern.ch> - 0.0.3-3
-- changes to .spec in %post and %postun for safe upgrades.
+- changes to .spec in %%post and %%postun for safe upgrades.
 - Probes and metrics optional arguments:
   - removed -o "..." functionality to feed options to metrics. Now they can
     be provided along with others. Hacked Python's 'getopt' module to loosen
@@ -316,7 +316,7 @@ install --mode 644 %{lpylib}/*.py* %{buildroot}%{pylib}
 * Tue Jan 06 2009 K. Skaburskas <Konstantin.Skaburskas@cern.ch> - 0.0.2-1
 - .spec file
   - added dependency on GFAL-client, lcg_util, python-ldap
-  - added %post and %postun to create/remove probes working directory
+  - added %%post and %%postun to create/remove probes working directory
 - gridmonsam/probe.py module
   - added publication of passive checks via NSCA
 - added gridmonsam/{pexpect,pexpectpgrp}.py modules for getting line buffered
