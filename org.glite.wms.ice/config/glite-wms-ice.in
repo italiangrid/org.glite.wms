@@ -54,7 +54,7 @@ start()
     else
         rm -f ${pid_file}
 	touch ${pid_file}
-	chown ${GLITE_USER}:${GLITE_USER} ${pid_file}
+	#chown ${GLITE_USER}:${GLITE_USER} ${pid_file}
 
         # FIXME: This is a temporary fix for setting up the correct
         # LD_LIBRARY_PATH value 
@@ -64,7 +64,10 @@ start()
             LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/log4cpp/lib/
         fi
         export LD_LIBRARY_PATH
-        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
+        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon /tmp/icepid >> ${err_logfile} 2>&1"
+	local pid=`pidof ${binpath} 2>/dev/null`
+	echo $pid > ${pid_file}
+
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
