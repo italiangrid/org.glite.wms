@@ -219,8 +219,8 @@ getProxyTimeLeft(string const& pxfile)
          x = PEM_read_bio_X509(in, NULL, 0, NULL);
          if (!x) {
             BIO_free(in);
-            edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
-                          "doesn't exist or has bad permissions"<<endl;
+            edglog(severe) << "PEM_read_bio_X509: proxy file " << pxfile <<
+               " doesn't exist or has bad permissions" << endl;
             throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                   "VOMSAuthN::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
                   "Proxy file doesn't exist or has bad permissions");
