@@ -108,10 +108,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
           }
 
           if( strstr(buffer, "jw exit status = ") == buffer ) {
-            if( sscanf(buffer, "jw exit status = %d", &retcode) == 1 ) {
-              found = true;
-            }
-            else retcode = -1;
+            found = true;
           }
 
           if (strstr(buffer, "Sequence code: ") == buffer) {
