@@ -55,7 +55,7 @@ limitations under the License.
 #include "boost/filesystem/exception.hpp"
 #include <boost/lexical_cast.hpp>
 // TAR
-#include "libtar.h"
+//#include "libtar.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
@@ -1880,87 +1880,87 @@ std::string JobSubmit::getJobPath(const std::string& node) {
     to_btransferred.push_back(make_pair(source, dest) );
   }
   
-  void JobSubmit::createZipFile (
-				 const std::string filename,
-				 std::vector<JobFileAd> fileads,
-				 std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred
-				 )
-  {
-    return;
-    int r = 0;
-    TAR *t =NULL;
-    tartype_t *type = NULL ;
-    string file = "";
-    string path = "";
-    string jobpath = "";
-    string tar = "";
-    string gz = "";
-    string jobPath = "";
-    string jobid = "";
-    // path of the tar file is being created
-    // zipAd : ZIPPEDFILEAD={std::string filename; FILEAD files;}
-    tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
-    logInfo->print(WMS_DEBUG,"Archiving the ISB files:", tar);
-    // opens the tar file
-    r = tar_open ( &t,  (char*)tar.c_str(), type,
-		   O_CREAT|O_WRONLY,
-		   S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
-    if ( r != 0 ){
-      throw WmsClientException(__FILE__,__LINE__,
-			       "tar_open",  DEFAULT_ERR_CODE,
-			       "File i/o Error",
-			       "Unable to create tar file for InputSandbox: " + tar );
-    }
-    // files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
-    // RootFiles
-    vector <JobFileAd>::iterator it1 = fileads.begin( );
-    vector <JobFileAd>::iterator const end1 = fileads.end( );
-    for ( ; it1 != end1; it1++ ) {
-      jobpath = this->getJobPath(it1->node);
-      vector <FileAd>::iterator it2 = (it1->files).begin( );
-      vector <FileAd>::iterator const end2 = (it1->files).end( );
-      for ( ; it2 != end2; it2++ ) {
-	file = it2->file;
+//   void JobSubmit::createZipFile (
+// 				 const std::string filename,
+// 				 std::vector<JobFileAd> fileads,
+// 				 std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred
+// 				 )
+//   {
+//     return;
+//     int r = 0;
+// //    TAR *t =NULL;
+// //    tartype_t *type = NULL ;
+//     string file = "";
+//     string path = "";
+//     string jobpath = "";
+//     string tar = "";
+//     string gz = "";
+//     string jobPath = "";
+//     string jobid = "";
+//     // path of the tar file is being created
+//     // zipAd : ZIPPEDFILEAD={std::string filename; FILEAD files;}
+//     tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
+//     logInfo->print(WMS_DEBUG,"Archiving the ISB files:", tar);
+//     // opens the tar file
+//     r = tar_open ( &t,  (char*)tar.c_str(), type,
+// 		   O_CREAT|O_WRONLY,
+// 		   S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
+//     if ( r != 0 ){
+//       throw WmsClientException(__FILE__,__LINE__,
+// 			       "tar_open",  DEFAULT_ERR_CODE,
+// 			       "File i/o Error",
+// 			       "Unable to create tar file for InputSandbox: " + tar );
+//     }
+//     // files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
+//     // RootFiles
+//     vector <JobFileAd>::iterator it1 = fileads.begin( );
+//     vector <JobFileAd>::iterator const end1 = fileads.end( );
+//     for ( ; it1 != end1; it1++ ) {
+//       jobpath = this->getJobPath(it1->node);
+//       vector <FileAd>::iterator it2 = (it1->files).begin( );
+//       vector <FileAd>::iterator const end2 = (it1->files).end( );
+//       for ( ; it2 != end2; it2++ ) {
+// 	file = it2->file;
 
-	//	cout << "***** Handling file [" << file << "]" << endl;
+// 	//	cout << "***** Handling file [" << file << "]" << endl;
 
-	path = jobpath + "/" + Utils::getFileName(it2->file);
-	logInfo->print(WMS_DEBUG, "tar - Archiving the local file: " + file,
-		       "with the following path: " + path, false);
+// 	path = jobpath + "/" + Utils::getFileName(it2->file);
+// 	logInfo->print(WMS_DEBUG, "tar - Archiving the local file: " + file,
+// 		       "with the following path: " + path, false);
 
-	//cout << "***** tar - Archiving the local file: "<<file<<" with the following path: "<< path<<endl;
+// 	//cout << "***** tar - Archiving the local file: "<<file<<" with the following path: "<< path<<endl;
 
-	r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
-	if (r!=0){
-	  string m = "Error in adding the file "+ file+ " to " + tar ;
-	  char* em = strerror(errno);
-	  if (em) { m += string("\n(") + string(em) + ")"; }
-	  throw WmsClientException(__FILE__,__LINE__,
-				   "archiveFiles",  DEFAULT_ERR_CODE,
-				   "File i/o Error",
-				   "Unable to create tar file - " + m);
-	}
-      }
-    }
-    if (t) {
-      // close the file
-      tar_append_eof(t);
-      tar_close (t);
-      logInfo->print(WMS_DEBUG,
-		     "This archive file has been successfully created:", tar);
-      logInfo->print(WMS_DEBUG,
-		     "Compressing the file (" +Utils::getZipExtension() +"):", tar);
-      gz = wmcUtils->fileCompression(tar);
-      logInfo->print(WMS_DEBUG,
-		     "ISB ZIPPED file successfully created:", gz);
-    }
-    FileAd source(FILE_PROTOCOL, gz, Utils::getFileSize(gz));
-    string dest = this->getDestinationURI(this->getJobId( )) + "/" + filename;
-    logInfo->print(WMS_DEBUG,
-		   "ISB Zipped File: " + source.file, "DestURI: " + dest, false);
-    to_btransferred.push_back(make_pair(source, dest) );
-    //exit(1);
-  }
+// 	r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
+// 	if (r!=0){
+// 	  string m = "Error in adding the file "+ file+ " to " + tar ;
+// 	  char* em = strerror(errno);
+// 	  if (em) { m += string("\n(") + string(em) + ")"; }
+// 	  throw WmsClientException(__FILE__,__LINE__,
+// 				   "archiveFiles",  DEFAULT_ERR_CODE,
+// 				   "File i/o Error",
+// 				   "Unable to create tar file - " + m);
+// 	}
+//       }
+//     }
+//     if (t) {
+//       // close the file
+//       tar_append_eof(t);
+//       tar_close (t);
+//       logInfo->print(WMS_DEBUG,
+// 		     "This archive file has been successfully created:", tar);
+//       logInfo->print(WMS_DEBUG,
+// 		     "Compressing the file (" +Utils::getZipExtension() +"):", tar);
+//       gz = wmcUtils->fileCompression(tar);
+//       logInfo->print(WMS_DEBUG,
+// 		     "ISB ZIPPED file successfully created:", gz);
+//     }
+//     FileAd source(FILE_PROTOCOL, gz, Utils::getFileSize(gz));
+//     string dest = this->getDestinationURI(this->getJobId( )) + "/" + filename;
+//     logInfo->print(WMS_DEBUG,
+// 		   "ISB Zipped File: " + source.file, "DestURI: " + dest, false);
+//     to_btransferred.push_back(make_pair(source, dest) );
+//     //exit(1);
+//   }
   
   
 /**
