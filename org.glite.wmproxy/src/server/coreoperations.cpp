@@ -325,21 +325,20 @@ setSubjobFileSystem(
    uid_t userid = getuid();
 
    // Logging Server User ID on syslog
-   //char time_string[80];
-   //struct timeval tv;
-   //struct tm* ptm;
-   //gettimeofday(&tv, NULL);
-   //ptm = gmtime(&tv.tv_sec);
-   //strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
-   //string userid_log = "ts="+std::string(time_string);
-   //userid_log += " : ";
-   //userid_log += "event=wms.wmpserver_setSubjobFileSystem()";
-   //userid_log += " : ";
-   //userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
-   //userid_log += " ";
-   //userid_log += "jobid="+jobid;
-
-   //syslog(LOG_NOTICE,"%s",userid_log.c_str());
+   char time_string[80];
+   struct timeval tv;
+   struct tm* ptm;
+   gettimeofday(&tv, NULL);
+   ptm = gmtime(&tv.tv_sec);
+   strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
+   string userid_log = "ts="+std::string(time_string);
+   userid_log += " : ";
+   userid_log += "event=wms.wmpserver_setSubjobFileSystem()";
+   userid_log += " : ";
+   userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
+   userid_log += " ";
+   userid_log += "jobid="+jobid;
+   syslog(LOG_NOTICE,"%s",userid_log.c_str());
 
    string document_root = getenv(DOCUMENT_ROOT);
 
@@ -1406,29 +1405,6 @@ submit(
       // [ Creating 'output' and 'peek' sub job directories
       string jobidstring;
       try {
-         edglog(debug) << "User Id: " << uid << endl;
-         // Getting WMP Server User ID
-         uid_t userid = getuid();
-
-         // Logging Server User ID on syslog
-         char time_string[80];
-         struct timeval tv;
-         struct tm* ptm;
-         gettimeofday(&tv, NULL);
-         ptm = gmtime(&tv.tv_sec);
-         strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
-
-         //string userid_log = "ts="+std::string(time_string);
-         //userid_log += " : ";
-         //userid_log += "event=wms.wmpserver_submit()";
-         //userid_log += " : ";
-         //userid_log += "userid="+boost::lexical_cast<string>(uid);
-         //userid_log += " ";
-         //JobIdStruct jobidstruct;
-         //dag.getJobIdStruct(jobidstruct);
-         //JobId parentjobid = jobidstruct.jobid;
-         //userid_log += "jobid="+parentjobid.toString();
-         //syslog(LOG_NOTICE,"%s",userid_log.c_str());
          string document_root = getenv(DOCUMENT_ROOT);
          edglog(debug)<<"Creating sub job directories for job " <<parentjobid.toString()<<endl;
          vector<string> jobids;
@@ -1441,7 +1417,7 @@ submit(
             string jobidstring = dag.getNodeAttribute(dag_nodes[i], JDL::JOBID);
             jobids.push_back(jobidstring);
          }
-         wmputilities::managedir(document_root, userid, uid, jobids, wmputilities::DIRECTORY_OUTPUT);
+         wmputilities::managedir(document_root, getuid(), uid, jobids, wmputilities::DIRECTORY_OUTPUT);
 
          char * seqcode = wmplogger.getSequence();
          edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
