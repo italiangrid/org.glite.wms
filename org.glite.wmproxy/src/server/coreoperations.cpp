@@ -324,22 +324,6 @@ setSubjobFileSystem(
    // Getting WMP Server User ID
    uid_t userid = getuid();
 
-   // Logging Server User ID on syslog
-   char time_string[80];
-   struct timeval tv;
-   struct tm* ptm;
-   gettimeofday(&tv, NULL);
-   ptm = gmtime(&tv.tv_sec);
-   strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
-   string userid_log = "ts="+std::string(time_string);
-   userid_log += " : ";
-   userid_log += "event=wms.wmpserver_setSubjobFileSystem()";
-   userid_log += " : ";
-   userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
-   userid_log += " ";
-   userid_log += "jobid="+jobid;
-   syslog(LOG_NOTICE,"%s",userid_log.c_str());
-
    string document_root = getenv(DOCUMENT_ROOT);
 
    // Getting delegated proxy inside job directory
@@ -413,18 +397,8 @@ setJobFileSystem(
    uid_t userid = getuid(); // WMP server id
 
    // Logging Server User ID on syslog
-   char time_string[80];
-   struct timeval tv;
-   struct tm* ptm;
-   gettimeofday(&tv, NULL);
-   ptm = gmtime(&tv.tv_sec);
-   strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
-
-   string userid_log = "ts=" + std::string(time_string);
-   userid_log += ": ";
-   userid_log += "userid="+boost::lexical_cast<string>(jobuserid);
-   userid_log += ", ";
-   userid_log += "jobid="+jobid;
+   string userid_log("userid="+boost::lexical_cast<string>(jobuserid) += ", jobid=");
+   userid_log += jobid;
    syslog(LOG_NOTICE, "%s", userid_log.c_str());
 
    string document_root = getenv(DOCUMENT_ROOT);
