@@ -99,8 +99,8 @@ void util::RequestParser::unparse_request( void )
     unparser.Unparse( adl, argumentsAD->Lookup( "adlad" ) );
   } // end classad-mutex protected regions
 
-  cout << "\n\njobad=["<<jdl<<"]\n\nadlad=["<<adl<<"]" << endl<<endl;
-  exit(1);
+//   cout << "\n\njobad=["<<jdl<<"]\n\nadlad=["<<adl<<"]" << endl<<endl;
+//   exit(1);
 	  
   try {
     m_job.set_jdl( jdl, m_command ); // this puts another mutex
