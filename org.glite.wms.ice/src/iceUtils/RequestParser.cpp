@@ -37,7 +37,7 @@ void util::RequestParser::unparse_request( void )
   throw(ClassadSyntax_ex&, JobRequest_ex&)
 {
   //string protocolStr;
-  string jdl;
+  string jdl, adl;
   {// Classad-mutex protected region  
     boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::util::CreamJob::s_classad_mutex );
 	        
@@ -85,28 +85,27 @@ void util::RequestParser::unparse_request( void )
     classad::ClassAd *adAD = 0; // no need to free this
     if( boost::algorithm::iequals( m_command, "submit" ) || boost::algorithm::iequals( m_command, "reschedule" ) ) {
       // Look for "JobAd" attribute inside "arguments"
-      if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-	throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+      if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) && ! argumentsAD->EvaluateAttrClassAd( "adlad", adAD )) {
+	throw JobRequest_ex("Attribute \"JobAd\" nor \"AdlAd\" not found inside 'arguments', or is not a classad" );
       }
     }
 	    
     // initializes the m_jdl attribute
+
+
+
     classad::ClassAdUnParser unparser;
     unparser.Unparse( jdl, argumentsAD->Lookup( "jobad" ) );
-	    
+    unparser.Unparse( adl, argumentsAD->Lookup( "adlad" ) );
   } // end classad-mutex protected regions
+
+  cout << "\n\njobad=["<<jdl<<"]\n\nadlad=["<<adl<<"]" << endl<<endl;
+  exit(1);
 	  
   try {
     m_job.set_jdl( jdl, m_command ); // this puts another mutex
     m_job.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
   } catch( ClassadSyntax_ex& ex ) {
-	    
-//     CREAM_SAFE_LOG(
-// 		   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-// 		   << "RequestParser::unparse_request - Cannot instantiate a job from jdl=[" << jdl
-// 		   << "] due to classad excaption: " << ex.what()
-// 			   
-// 		   );
     throw( ClassadSyntax_ex( ex.what() ) );
   }
 } // unparse_request 
