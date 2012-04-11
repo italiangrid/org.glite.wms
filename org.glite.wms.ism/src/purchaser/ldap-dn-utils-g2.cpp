@@ -151,7 +151,7 @@ bool is_glue2_share_capacity_dn(std::vector<std::string> const& dn)
   return dn.size() > 3 &&
     boost::algorithm::istarts_with(dn[0],"GLUE2StorageShareCapacity") &&
     boost::algorithm::istarts_with(dn[1],"GLUE2ShareID") &&
-    boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID");
+    boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID") &&
     boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
 }
 

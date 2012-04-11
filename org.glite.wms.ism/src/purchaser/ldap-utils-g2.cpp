@@ -779,7 +779,7 @@ void process_glue2_service_capacity_info(
     std::make_pair(service_id, ServiceInfo())
   );
   cleanup_glue2_info(ad,
-    bas::list_of("ServiceCapacity")
+    bas::list_of("StorageServiceForeignKey")
   );
   // process_glue2_service_info might have inserted its ad before
   if (insert) { 
@@ -799,17 +799,17 @@ void process_glue2_share_capacity_info(
   BDIICEInfo& bdii_info
 )
 {
-  std::string const service_id(
+  std::string const share_id(
    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
   );
 
-  ServiceInfoMap::iterator it;
+  ShareInfoMap::iterator it;
   bool insert;
-  boost::tie(it, insert) = bdii_info.services.insert(
-    std::make_pair(service_id, ServiceInfo())
+  boost::tie(it, insert) = bdii_info.shares.insert(
+    std::make_pair(share_id, ShareInfo())
   );
   cleanup_glue2_info(ad,
-    bas::list_of("ShareCapacity")
+    bas::list_of("StorageShareForeignKey")
   );
   // process_glue2_service_info might have inserted its ad before
   if (insert) { 
@@ -957,9 +957,9 @@ typedef boost::tuple<
 > glue2_info_processor_tuple;
 
 const glue2_stripping_prefix 
-  service_pfx  = bas::list_of("GLUE2Entity")("GLUE2Service"),
+  service_pfx  = bas::list_of("GLUE2Entity")("GLUE2Service")("GLUE2StorageServiceCapacity"),
   manager_pfx  = bas::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager")("GLUE2StorageManager"),
-  share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare")("GLUE2StorageShare"),
+  share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare")("GLUE2StorageShareCapacity")("GLUE2StorageShare"),
   endpoint_pfx = bas::list_of("GLUE2Entity")("GLUE2Endpoint")("GLUE2ComputingEndpoint"),
   resource_pfx = bas::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment"),
   mpolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy"),
@@ -1016,12 +1016,15 @@ fetch_bdii_se_info_g2(
   std::string const& host, size_t port, std::string const& dn, 
   time_t timeout, ism::purchaser::PurchaserInfoContainer& se_info_container) 
 {
-  std::string filter("(|"
+  std::string filter(
+  "(|"
     "(objectclass=GLUE2StorageService)(|"
     "(objectclass=GLUE2StorageManager)(|"
     "(objectclass=GLUE2StorageShare)(|"
-    "(objectclass=GLUE2StorageEndPoint)"
-    ")))"
+    "(objectclass=GLUE2StorageEndPoint)(|"
+    "(objectclass=GLUE2StorageServiceCapacity)(|"
+    "(objectclass=GLUE2StorageShareCapacity)"
+    ")))))"
   ")");
  
   LDAP* ld = 0;
