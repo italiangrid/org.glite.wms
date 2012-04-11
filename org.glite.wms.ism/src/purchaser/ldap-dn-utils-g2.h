@@ -48,6 +48,8 @@ bool is_glue2_access_policy_dn(std::vector<std::string> const&);
 bool is_glue2_resource_dn(std::vector<std::string> const&);
 bool is_glue2_benchmark_dn(std::vector<std::string> const&);
 bool is_glue2_application_env_dn(std::vector<std::string> const&);
+bool is_glue2_service_capacity_dn(std::vector<std::string> const&);
+bool is_glue2_share_capacity_dn(std::vector<std::string> const&);
 } // namespace purchaser
 } // namespace ism
 } // namespace wms
