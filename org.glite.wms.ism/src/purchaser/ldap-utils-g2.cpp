@@ -1022,9 +1022,11 @@ fetch_bdii_se_info_g2(
     "(objectclass=GLUE2StorageManager)(|"
     "(objectclass=GLUE2StorageShare)(|"
     "(objectclass=GLUE2StorageEndPoint)(|"
+    "(objectclass=GLUE2MappingPolicy)(|"
+    "(objectclass=GLUE2AccessPolicy)(|"
     "(objectclass=GLUE2StorageServiceCapacity)(|"
     "(objectclass=GLUE2StorageShareCapacity)"
-    ")))))"
+    ")))))))"
   ")");
  
   LDAP* ld = 0;
@@ -1125,13 +1127,11 @@ fetch_bdii_se_info_g2(
     storageAd->Update(*ep_it->second.service_lnk->second.ad); 
     storageAd->Update(*ep_it->second.service_lnk->second.manager_lnk->second.ad);
     
-    /*
     storageAd->DeepInsert(
       storageAd->Lookup("Endpoint"),
       "Policy",
        ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
     ); 
-   */
 
     // If there is no Share bound to the Endpoint then we have to choose
     // Shares directly from the Service
@@ -1157,13 +1157,11 @@ fetch_bdii_se_info_g2(
       classad::ClassAd* g2Ad = new classad::ClassAd;
 
       g2Ad->Insert("Storage", storageAd_copy);
-      /*
       g2Ad->DeepInsert(
         storageAd_copy->Lookup("Share"),
         "Policy", 
         classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
       );
-      */
       ClassAdPtr result( new classad::ClassAd );
       result->Insert("GLUE2", g2Ad);
       std::string const id = cu::evaluate_expression(*result,
