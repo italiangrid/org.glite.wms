@@ -11,7 +11,6 @@ Requires: mod_fcgid
 Requires: httpd
 Requires: mod_ssl
 Requires: gridsite-apache
-Requires: gridsite-shared
 Requires: glite-wms-configuration
 Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
