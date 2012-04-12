@@ -233,7 +233,7 @@ if userTags:
 #=================================
 jobs= []
 if extra:
-	jobs = wmsui_api.getJobIdfromList(extra)
+	jobs = wmsui_api.getJobIdfromList( json, extra)
 	if len (jobs) != len(extra):
 		sys_exit= -1
 elif inFile :
@@ -334,12 +334,12 @@ if message:
 			
 	#print "message=[" + message +"]"
 	
-	wmsui_utils.print_message(outFile, message)
+	wmsui_utils.print_message(json, outFile, message)
 
 	if outFile:
 		message='===================== glite-wms-job-logging-info Success =====================\n'
 		message=message + " Logging Information has been found and stored in the file:\n"
 		message=message + " "+ outFile +"\n"
 		message=message +'==========================================================================\n'
-		wmsui_utils.print_message(wmsui_utils.info.logFile , message)
+		wmsui_utils.print_message(json, wmsui_utils.info.logFile , message)
 exit(sys_exit)
