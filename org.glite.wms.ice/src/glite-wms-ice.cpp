@@ -66,6 +66,7 @@ namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 
 long long check_my_mem( const pid_t pid ) throw();
 
+/*
 void sigusr1_handle(int x) { 
   exit(2);
 }
@@ -73,12 +74,12 @@ void sigusr1_handle(int x) {
 void sigusr2_handle(int x) { 
   exit(3);
 }
-
+*/
 void sigpipe_handle(int x) { 
-  CREAM_SAFE_LOG(util::creamApiLogger::instance()->getLogger()->debugStream() 
+/*  CREAM_SAFE_LOG(util::creamApiLogger::instance()->getLogger()->debugStream() 
 		 << "glite-wms-ice::sigpipe_handle: Captured SIGPIPE. x argument=["
 		 << x 
-		 << "]" );
+		 << "]" );*/
 }
 
 // change the uid and gid to those of user no-op if user corresponds
@@ -253,8 +254,6 @@ int main(int argc, char*argv[])
     cout << "Logfile is [" << logfile << "]" << endl;
 
     signal(SIGPIPE, sigpipe_handle);
-    signal(SIGUSR1, sigusr1_handle);
-    signal(SIGUSR2, sigusr2_handle);
 
     /*****************************************************************************
      * Gets the distinguished name from the host proxy certificate
