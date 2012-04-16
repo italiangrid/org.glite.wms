@@ -61,7 +61,7 @@ OLDCREAM=${CREAM}
 ## use a wrong queue
 CREAM=`echo ${OLDCREAM} |  sed -e "s/$QUEUE/queuenotexist/"`
 
-wait_until_job_finishes ${JOBID}
+wait_until_job_finishes ${JDLFILE}
 
 if [ $? -eq 1 ] ; then
 	success
