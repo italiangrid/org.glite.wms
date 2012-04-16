@@ -83,7 +83,7 @@ my_echo "TEST 1: check if command works"
 wait_until_job_finishes ${MYTMPDIR}/sbd.jdl
 
 run_command "${TESTCOMMAND} $JOBID"
-DIR=`echo $COM_OUTPUT | awk -F[ '{print $NF}'`
+DIR=`echo $COM_OUTPUT | awk '{print $NF}'`
 
 check_output $DIR
 
@@ -108,7 +108,7 @@ my_echo "TEST 2: check if --dir option works"
 wait_until_job_finishes ${MYTMPDIR}/sbd.jdl
 
 run_command "${TESTCOMMAND} --dir ${MYTMPDIR} $JOBID"
-DIR=`echo $COM_OUTPUT | awk -F[ '{print $NF}'`
+DIR=`echo $COM_OUTPUT | awk '{print $NF}'`
 
 # DIR must be a subdirectory of MYTMPDIR
 if [[ ${MYTMPDIR} < ${DIR} ]] ; then
@@ -139,7 +139,7 @@ run_command "${TESTCOMMAND} --dir ${MYTMPDIR} $JOBID"
 debug "Retrieve again input files"
 
 run_command "${TESTCOMMAND} --noint --dir ${MYTMPDIR} $JOBID"
-DIR=`echo $COM_OUTPUT | awk -F[ '{print $NF}'`
+DIR=`echo $COM_OUTPUT | awk '{print $NF}'`
 
 check_output $DIR
 
@@ -183,7 +183,7 @@ run_command "${TESTCOMMAND} --input $MYTMPDIR/jobid --dir ${MYTMPDIR}/multi"
 IFS=$'\n'
 for line in $COM_OUTPUT; do 
 	JOBID=`echo $line | awk -F[ '{print $2}' | awk -F] '{print $1}'`
-	DIR=`echo $line | awk -F[ '{print $NF}'`
+	DIR=`echo $line | awk '{print $NF}'`
 	debug "Check output of jobs ${JOBID} under ${DIR}"
 	check_output $DIR
 	if [ $? -ne 0 ] ; then
@@ -230,7 +230,7 @@ run_command "${TESTCOMMAND} --dir ${MYTMPDIR}/multi ${JID[0]} ${JID[1]} ${JID[2]
 IFS=$'\n'
 for line in $COM_OUTPUT; do
   JOBID=`echo $line | awk -F[ '{print $2}' | awk -F] '{print $1}'`
-  DIR=`echo $line | awk -F[ '{print $NF}'`
+  DIR=`echo $line | awk '{print $NF}'`
   debug "Check output of jobs ${JOBID} under ${DIR}"
   check_output $DIR
   if [ $? -ne 0 ] ; then
