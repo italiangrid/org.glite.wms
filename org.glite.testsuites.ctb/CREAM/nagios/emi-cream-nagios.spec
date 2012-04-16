@@ -17,10 +17,10 @@ Group: Applications/Internet
 Source: %{name}-%{version}.src.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: python >= 2.4
-Requires: python-GridMon >= 1.1.10
+#Requires: python-GridMon >= 1.1.10
 Requires: python-ldap
-Requires: python-suds >= 0.3.5
-Requires: nagios-submit-conf >= 0.2
+#Requires: python-suds >= 0.3.5
+#Requires: nagios-submit-conf >= 0.2
 Requires: openssl >= 0.9.8e-12
 AutoReqProv: no
 BuildArch: noarch
