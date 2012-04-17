@@ -1869,7 +1869,7 @@ std::string JobSubmit::getJobPath(const std::string& node) {
     command += join(filesToTAR, " ");
     system(command.c_str());
     system((string("gzip -9 ")+tarfile).c_str());
-    system((string("\rm -rf ")+join(filesToTAR, " ")).c_str());
+    system((string("\\rm -rf ")+join(filesToTAR, " ")).c_str());
 
     string gz = tarfile + ".gz";
 
