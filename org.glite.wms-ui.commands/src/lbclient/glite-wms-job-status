@@ -311,10 +311,10 @@ if LBapproach:
 		for job in jobs:
 			#print "**** CHECKING JOB [" + job.jobid + "]"
 			if job.jobid in statesArray:
-				wmsui_utils.print_message(outFile, statesArray[job.jobid].printStatus(json, noNodes))
+				wmsui_utils.print_message(False, outFile, statesArray[job.jobid].printStatus(json, noNodes))
 				st+=1
 			else:	
-				wmsui_utils.print_message(wmsui_utils.info.logFile, "Warning: no matching information for job id: " + job.jobid)
+				wmsui_utils.print_message(False, wmsui_utils.info.logFile, "Warning: no matching information for job id: " + job.jobid)
 			
 
 else:
@@ -424,7 +424,7 @@ else:
 		message=message + " Bookkeeping information has been found and stored in the file:\n"
 		message=message+ " "+ outFile
 		message=message+'\n==========================================================================\n'
-		wmsui_utils.print_message(wmsui_utils.info.logFile,message)
+		wmsui_utils.print_message(False, wmsui_utils.info.logFile,message)
 	exit(sys_exit)
 
 
