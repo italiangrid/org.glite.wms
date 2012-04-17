@@ -51,7 +51,7 @@ if [ $? -ne 1 ]; then
   exit_failure "Command unexpected succes: ${COM_OUTPUT}"
 fi
 
-RESULT=`echo ${COM_OUTPUT} | grep "Delegation ID '$PROXY_ID' already exists"`
+RESULT=`echo ${COM_OUTPUT} | grep -e "${PROXY_ID}.*already exists"`
 if [ -z "$RESULT" ]; then
   failure "Error message is not as expected: ${COM_OUTPUT}"
   ((FAILED++)) # continue

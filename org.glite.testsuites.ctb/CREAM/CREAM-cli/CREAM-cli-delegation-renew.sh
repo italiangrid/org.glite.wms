@@ -53,11 +53,6 @@ my_echo "TEST 2: try to renew a missing proxy:"
 run_command "${TESTCOMMAND} --endpoint $ENDPOINT `new_delegation_id`"
 if [ $? -ne 1 ]; then
   exit_failure "Command unexpected success:: ${COM_OUTPUT}"
-fi
-RESULT=`echo ${COM_OUTPUT} | grep "delegation ID was not delegated"`
-if [ -z "$RESULT" ]; then
-  failure "Error message is not as expected: ${COM_OUTPUT}"
-  ((FAILED++)) # continue
 else
   success
 fi

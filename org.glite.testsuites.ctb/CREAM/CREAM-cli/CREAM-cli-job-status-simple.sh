@@ -59,7 +59,7 @@ my_echo "TEST 2: submit a job which surely failed. Check if the final status is 
 OLDCREAM=${CREAM}
 
 ## use a wrong queue
-CREAM=`echo ${OLDCREAM} |  sed -e "s/$QUEUE/queuenotexist/"`
+CREAM=`echo ${OLDCREAM} |  sed -e "s/$QUEUE$/queuenotexist/"`
 
 wait_until_job_finishes ${JDLFILE}
 
