@@ -1130,8 +1130,14 @@ std::string Utils::checkConf(){
 
 void Utils::checkPrefix( ){
 
-        prefix="/";
-	return;
+  char* envPrefix = ::getenv("EMI_UI_CONF");
+  if(!envPrefix)
+    prefix="/";
+  else
+    prefix=string(envPrefix);
+
+  return;
+
 /*
 	// Look for GLITE installation path
 	vector<string> paths ;
