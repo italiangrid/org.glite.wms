@@ -1931,18 +1931,17 @@ jobSubmit(struct ns1__jobSubmitResponse& response,
    edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
    security::VOMSAuthN vomsproxy(delegatedproxy);
    edglog(debug)<< "VOMS provided DN: " << vomsproxy.getDN() << std::endl;
-   string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
-   security::WMPAuthorizer auth("jobSubmit", delegatedproxyfqan);
+   security::WMPAuthorizer auth("jobSubmit", delegatedproxy);
    auth.authorize();
 
    // GACL Authorizing
    edglog(debug)<<"Checking for drain..."<<endl;
    if ( security::checkJobDrain ( ) ) {
       edglog(error)<<"Unavailable service (the server is temporarily drained)"
-                   <<endl;
+	   <<endl;
       throw AuthorizationException(__FILE__, __LINE__,
-                                   "wmpcoreoperations::jobSubmit()", wmputilities::WMS_AUTHORIZATION_ERROR,
-                                   "Unavailable service (the server is temporarily drained)");
+	   "wmpcoreoperations::jobSubmit()", wmputilities::WMS_AUTHORIZATION_ERROR,
+	   "Unavailable service (the server is temporarily drained)");
    } else {
       edglog(debug)<<"No drain"<<endl;
    }
@@ -1952,7 +1951,7 @@ jobSubmit(struct ns1__jobSubmitResponse& response,
    // Registering the job for submission
    jobRegisterResponse jobRegister_response;
    pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
-                                  delegation_id, delegatedproxy, delegatedproxyfqan, ai.uid_);
+	  delegation_id, delegatedproxy, vomsproxy.getDefaultFQAN(), ai.uid_);
 
    // Getting job identifier from register response
    string jobid = reginfo.first;
