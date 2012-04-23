@@ -289,7 +289,7 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
                        m_log_dev->errorStream() 
                        << method_name  << " TID=[" << getThreadID() << "] "
                        << "Error during submission of jdl=" << m_jdl
-                       << " Fatal Exception is:" << ex.what()
+                       << " Transient Exception is:" << ex.what()
                        );
 	
       string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() );
