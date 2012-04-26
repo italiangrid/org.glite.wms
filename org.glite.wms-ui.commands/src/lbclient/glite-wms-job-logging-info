@@ -42,7 +42,13 @@ import os
 #      sys.exit(1)
 
 
-path="/usr"
+try:
+        path=os.environ['EMI_UI_CONF']+"/usr"
+except:
+        path="/usr"
+
+
+#path="/usr"
 
 # append lib/lib64 directories to search path
 for app in ["lib","lib64"]:
