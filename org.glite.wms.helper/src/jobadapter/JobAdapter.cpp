@@ -1072,7 +1072,7 @@ try {
     jdl::set_grid_resource(*result, "nordugrid " + gatekeeper_hostname);
     jdl::set_nordugrid_rsl(
       *result,
-      "(runTimeEnvironment>ENV/GLITE)" + globusrsl
+      "(runTimeEnvironment=ENV/GLITE)" + globusrsl
         + "(jobName=^*" + job_id + "^*)"
     );
   }
