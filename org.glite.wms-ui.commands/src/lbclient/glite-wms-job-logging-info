@@ -243,7 +243,7 @@ if extra:
 	if len (jobs) != len(extra):
 		sys_exit= -1
 elif inFile :
-	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(inFile)
+	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(json, inFile)
 	if sys_exit and jobs and (not wmsui_utils.info.noint):
 		answ=wmsui_utils.questionYN("Do you wish to continue?")
 		if not answ:
