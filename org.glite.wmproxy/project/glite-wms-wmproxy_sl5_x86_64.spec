@@ -97,15 +97,15 @@ fi
 %config(noreplace) /etc/glite-wms/wmproxy.gacl.template
 %config(noreplace) /etc/lcmaps/lcmaps.db.template
 /etc/rc.d/init.d/glite-wms-wmproxy
-%attr(4755, -, -) /usr/sbin/glite_wms_wmproxy_load_monitor
-%attr(0755, -, -) /usr/bin/glite_wms_wmproxy_server
-%attr(0755, -, -) /usr/bin/glite-wms-wmproxy-purge-proxycache
+%attr(4755, root, root) /usr/sbin/glite_wms_wmproxy_load_monitor
+%attr(0755, root, root) /usr/bin/glite_wms_wmproxy_server
+%attr(0755, root, root) /usr/bin/glite-wms-wmproxy-purge-proxycache
 %dir /usr/share/doc/glite-wms-wmproxy-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-%{version}/LICENSE
 %{_libdir}/libglite_wms_wmproxy_*.so.0.0.0
 %{_libdir}/libglite_wms_wmproxy_*.so.0
 %{_libdir}/libglite_wms_wmproxy_*.so
-%attr(4755, -, -) /usr/libexec/glite_wms_wmproxy_dirmanager
+%attr(4755, root, root) /usr/libexec/glite_wms_wmproxy_dirmanager
 
 
 
