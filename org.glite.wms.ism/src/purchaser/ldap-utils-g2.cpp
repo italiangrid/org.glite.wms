@@ -142,7 +142,7 @@ struct ServiceInfo
   ManagerInfoMap::iterator manager_lnk;
   //////////////////////////////////////////////////////
   // The following is requireg since for StorageServices
-  // the relevant Shares are most like bound to the only
+  // the relevant Shares are most likely bound to the only
   // existing EndPoint for a given Service and do not
   // publish the ForeignKey describing such a relation.
   // 
@@ -504,9 +504,9 @@ void process_glue2_share_info(
     );
   }
   else {
-    dynamic_cast<classad::ClassAd*>(
-      share_it->second.ad->Lookup("Share")
-    )->Update(*ad);
+    classad::ClassAd* shareAd = 0;
+    share_it->second.ad->EvaluateAttrClassAd("Share",shareAd);
+    shareAd->Update(*ad); 
   }
 }
 
@@ -588,7 +588,6 @@ void process_glue2_datastore_info(
   ClassAdPtr ad,
   BDIICEInfo& bdii_info
 ) {
-  
   bool insert;
   ResourceInfoMap::iterator resource_it;
   boost::tie(resource_it, insert) = bdii_info.resources.insert(
@@ -618,9 +617,8 @@ void process_glue2_resource_info(
    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
   );
   std::string const service_id(
-   ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+   ldap_dn_tokens[2].substr(ldap_dn_tokens[2].find("=")+1)
   );
-
   if (is_glue2_execenv_resource(*ad)) {
     process_glue2_execenv_info(resource_id, service_id, ad, bdii_info);
   }
@@ -961,7 +959,7 @@ const glue2_stripping_prefix
   manager_pfx  = bas::list_of("GLUE2Entity")("GLUE2Manager")("GLUE2ComputingManager")("GLUE2StorageManager"),
   share_pfx    = bas::list_of("GLUE2Entity")("GLUE2Share")("GLUE2ComputingShare")("GLUE2StorageShareCapacity")("GLUE2StorageShare"),
   endpoint_pfx = bas::list_of("GLUE2Entity")("GLUE2Endpoint")("GLUE2ComputingEndpoint"),
-  resource_pfx = bas::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment"),
+  resource_pfx = bas::list_of("GLUE2Entity")("GLUE2Resource")("GLUE2ExecutionEnvironment")("GLUE2DataStore"),
   mpolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy"),
   apolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2AccessPolicy"),
   appenv_pfx   = bas::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment"),
@@ -1024,9 +1022,10 @@ fetch_bdii_se_info_g2(
     "(objectclass=GLUE2StorageEndPoint)(|"
     "(objectclass=GLUE2MappingPolicy)(|"
     "(objectclass=GLUE2AccessPolicy)(|"
+    "(objectclass=GLUE2DataStore)(|"
     "(objectclass=GLUE2StorageServiceCapacity)(|"
     "(objectclass=GLUE2StorageShareCapacity)"
-    ")))))))"
+    "))))))))"
   ")");
  
   LDAP* ld = 0;
@@ -1152,25 +1151,38 @@ fetch_bdii_se_info_g2(
       classad::ClassAd* storageAd_copy(
         dynamic_cast<classad::ClassAd*>(storageAd->Copy())
       );
-      storageAd_copy->Update(*(*sh_it)->second.ad);
-      Debug(*storageAd_copy); 
+      classad::ExprTree* shareAd_copy(
+        (*sh_it)->second.ad->Lookup("Share")->Copy()
+      );
+      dynamic_cast<classad::ClassAd*>(shareAd_copy)->Insert(
+        "Policy",
+        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
+      );
+      storageAd_copy->Insert("Share", shareAd_copy);
+    
+      if( !(*sh_it)->second.resources_lnk.empty() ) {
+        DataStoreInfo const& dsi(
+          boost::any_cast<DataStoreInfo const&>(
+            (*sh_it)->second.resources_lnk.front()->second
+          )
+        );
+
+        storageAd_copy->Update(*dsi.ad);
+      }
+
       classad::ClassAd* g2Ad = new classad::ClassAd;
 
       g2Ad->Insert("Storage", storageAd_copy);
-      g2Ad->DeepInsert(
-        storageAd_copy->Lookup("Share"),
-        "Policy", 
-        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
-      );
       ClassAdPtr result( new classad::ClassAd );
       result->Insert("GLUE2", g2Ad);
       std::string const id = cu::evaluate_expression(*result,
         "GLUE2.Storage.Share.ID"
       );
       se_info_container.insert(std::make_pair(id, result));
+      n_shares++;
     }
   }
-  Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
+  Debug("#" << n_shares << " GLUE2StorageShare's ClassAd(s) generated in " << std::time(0) - t1 << " seconds");
 }
 
 void 
@@ -1397,7 +1409,6 @@ fetch_bdii_ce_info_g2(
         "! FQANmember(strcat(\"DENY:\",other.VOMS_FQAN),GLUE2.Computing.Endpoint.Policy)"
       ));
       result->Insert("requirements", parse_expression("AuthorizationCheck"));
-      n_shares++;
 
       std::string const id = cu::evaluate_expression(*result,
         "IsUndefined(GLUE2.Computing.Share.OtherInfo.CREAMCEId) ?"
@@ -1416,9 +1427,10 @@ fetch_bdii_ce_info_g2(
       );
       result->InsertAttr("CEid", id); 
       ce_info_container.insert(std::make_pair(glue13Id, result));
+      n_shares++;
     }   
   }
-  Debug("#" << n_shares << " GLUE2 shares ClassAd generated in " << std::time(0) - t1 << " seconds");
+  Debug("#" << n_shares << " GLUE2ComputingShare's ClassAd(s) generated in " << std::time(0) - t1 << " seconds");
 }
 void fetch_bdii_info_g2(
   std::string const& hostname,

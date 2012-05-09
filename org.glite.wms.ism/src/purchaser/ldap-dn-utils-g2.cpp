@@ -114,10 +114,11 @@ bool is_glue2_access_policy_dn(std::vector<std::string> const& dn)
 
 bool is_glue2_resource_dn(std::vector<std::string> const& dn)
 {
-  return dn.size() > 2 &&
+  return dn.size() > 3 &&
     boost::algorithm::istarts_with(dn[0],"GLUE2ResourceID") &&
-    boost::algorithm::istarts_with(dn[1],"GLUE2ServiceID") &&
-    boost::algorithm::istarts_with(dn[2],"GLUE2GroupID");
+    boost::algorithm::istarts_with(dn[1],"GLUE2ManagerID") &&
+    boost::algorithm::istarts_with(dn[2],"GLUE2ServiceID") &&
+    boost::algorithm::istarts_with(dn[3],"GLUE2GroupID");
 }
 
 bool is_glue2_benchmark_dn(std::vector<std::string> const& dn)
