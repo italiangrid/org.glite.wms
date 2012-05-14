@@ -835,7 +835,7 @@ jobregister(
 }
 
 char**
-copyEnvironment(char** sourceEnv)
+copyEnvironment()
 {
    if (targetEnv) {
       for (unsigned int i = 0; targetEnv[i]; ++i) {
@@ -846,15 +846,16 @@ copyEnvironment(char** sourceEnv)
 
    char** oldEnv = environ;
    int env_vars_num = 0;
-   for (; *oldEnv; ++oldEnv, ++ env_vars_num)
-      ;
-
-   targetEnv = (char **)malloc (env_vars_num * sizeof(char **));
-   char **tmpEnv = targetEnv;
-   for (oldEnv = sourceEnv; *oldEnv; ++oldEnv) {
-      *tmpEnv++ = strdup(*oldEnv);
+   for (; *oldEnv; ++oldEnv, ++ env_vars_num) {
    }
-   *tmpEnv = 0;
+
+   targetEnv = (char **)malloc((1 + env_vars_num) * sizeof(char *));
+   unsigned int i=0;
+   for (oldEnv = environ; *oldEnv; ++oldEnv, ++i) {
+      targetEnv[i] = (char *)malloc(strlen(*oldEnv) * sizeof(char) + 1);
+      targetEnv[i] = strcpy(targetEnv[i], *oldEnv);
+   }
+   targetEnv[i] = 0;
    return targetEnv;
 }
 
@@ -1082,7 +1083,7 @@ submit(
 
    if (conf.getAsyncJobStart()) {
       // \/ Copy environment and restore it right after FCGI_Finish
-      char** backupenv = copyEnvironment(environ);
+      char** backupenv = copyEnvironment();
       FCGI_Finish(); // returns control to client
       environ = backupenv;
       // /_ From here on, execution is asynchronous
@@ -1890,6 +1891,7 @@ jobStart(jobStartResponse& jobStart_response, const string& job_id, struct soap 
 
    Ad tempad;
    tempad.fromFile(jdlpath);
+   std::string a(tempad.toString());
    submit(tempad.toString(), jid.get(), ai.uid_, ai.gid_, wmplogger);
 
    GLITE_STACK_CATCH();

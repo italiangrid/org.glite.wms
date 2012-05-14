@@ -93,7 +93,7 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 
    soap_destroy(soap);
    soap_end(soap);
-   soap_free(soap);
+   //soap_free(soap);
 
    return SOAP_OK;
 }
