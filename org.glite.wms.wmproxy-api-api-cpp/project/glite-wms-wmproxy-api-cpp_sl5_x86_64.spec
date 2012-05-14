@@ -16,6 +16,12 @@ Source: %{name}-%{version}-%{release}.tar.gz
 
 %global debug_package %{nil}
 
+%define filter_requires_in(P) %{expand: \
+%global __filter_req_cmd %{?__filter_req_cmd} %{__grep} -v %{-P} '%*' | \
+}
+
+%filter_requires_in /usr/lib64/pkgconfig/.*\.pc$
+
 %description
 C/C++ libraries for the WM Proxy service
 
