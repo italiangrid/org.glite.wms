@@ -321,8 +321,8 @@ callLoadScriptFile(const string& operation)
             break;
             default:
                // Exit Code > 1 => Error executing script
-               edglog(error)<<"Unable to execute load script file:\n";
-               edglog(error)<<"Error code: "<<outcome<<endl;
+               edglog(error)<<"Unable to execute load script file, error code: " << outcome << ". ";
+               edglog(error)<<"Reason: " << wmputilities::readTextFile(errorfile) << '\n';
                break;
             }
          }
