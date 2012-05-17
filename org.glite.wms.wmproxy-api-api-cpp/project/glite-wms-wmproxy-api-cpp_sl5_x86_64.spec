@@ -74,6 +74,7 @@ rm -rf %{buildroot}
 %package devel
 Summary: C/C++ libraries for the WM Proxy service (development files)
 Group: System Environment/Libraries
+Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: gridsite-devel, gsoap-devel, libxml2-devel, openssl-devel
 AutoReqProv: no
 
