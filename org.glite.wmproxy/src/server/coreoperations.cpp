@@ -385,6 +385,8 @@ setSubjobFileSystem(
 
 void
 setJobFileSystem(
+   string const& dn,
+   string const& fqan,
    uid_t const& jobuserid,
    const string& delegatedproxy,
    const string& jobid, vector<string> &jobids, const string& jdl,
@@ -396,8 +398,17 @@ setJobFileSystem(
    edglog(debug) << "User Id: " << jobuserid << endl;
    uid_t userid = getuid(); // WMP server id
 
+   char * fromclient = NULL;
+   if (getenv("REMOTE_HOST")) {
+      fromclient = getenv("REMOTE_HOST");
+   } else if (getenv("REMOTE_ADDR")) {
+      fromclient = getenv("REMOTE_ADDR");
+   }
+
    // Logging Server User ID on syslog
-   string userid_log("userid="+boost::lexical_cast<string>(jobuserid) += ", jobid=");
+   string userid_log(string("submission from ") + fromclient +
+        ", DN=" + dn + ", FQAN=" + fqan + ", userid=" +
+        boost::lexical_cast<string>(jobuserid) + " for jobid=");
    userid_log += jobid;
    syslog(LOG_NOTICE, "%s", userid_log.c_str());
 
@@ -569,7 +580,15 @@ regist(
 
    // Creating private job directory with delegated Proxy
    vector<string> jobids;
-   setJobFileSystem(uid, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
+   setJobFileSystem(
+      wmputilities::getDN_SSL(),
+      delegatedproxyfqan,
+      uid,
+      delegatedproxy,
+      stringjid,
+      jobids,
+      jdl,
+      renewalproxy);
 
    // Writing registered JDL (to start)
    edglog(debug)<<"Writing jdl to start file: "
@@ -708,7 +727,14 @@ regist(
 
    // Creating private job directory with delegated Proxy
    // Sub jobs directory MUST be created now
-   setJobFileSystem(uid, delegatedproxy, stringjid, jobids, jdl, renewalproxypath);
+   setJobFileSystem(wmputilities::getDN_SSL(),
+      delegatedproxyfqan,
+      uid,
+      delegatedproxy,
+      stringjid,
+      jobids,
+      jdl,
+      renewalproxypath);
 
    string dagjdl = dag->toString(ExpDagAd::MULTI_LINES);
    pair<string, string> returnpair(pair<string, string>(stringjid,  dagjdl));
