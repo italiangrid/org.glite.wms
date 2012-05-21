@@ -26,6 +26,8 @@ limitations under the License.
 #include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/classads/classad_utils.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 
 using namespace std;
 namespace utils = glite::wmsutils::classads;
@@ -37,21 +39,6 @@ namespace purchaser {
 
 namespace {
 
-  std::string const requirements_str(
-    "["
-    "  CloseOutputSECheck = IsUndefined(other.OutputSE)"
-    "    ||   member(other.OutputSE,GlueCESEBindGroupSEUniqueID);"
-    "  AuthorizationCheck = "
-    "    ( "
-    "      member(other.CertificateSubject,GlueCEAccessControlBaseRule) || "
-    "      member(strcat(\"VO:\",other.VirtualOrganisation),GlueCEAccessControlBaseRule) || "
-    "      FQANmember(strcat(\"VOMS:\",other.VOMS_FQAN ),GlueCEAccessControlBaseRule) "
-    "    ) && "
-    "    ! FQANmember(strcat(\"DENY:\",other.VOMS_FQAN),GlueCEAccessControlBaseRule);"
-    "  requirements = AuthorizationCheck && CloseOutputSECheck;"
-    "]"
-    );
-
    std::string const gangmatch_storage_ad_str(
     "["
     "  storage =  ["
@@ -61,7 +48,6 @@ namespace {
     "]"
   );
 
-  boost::scoped_ptr<classad::ClassAd> requirements_ad;
   boost::scoped_ptr<classad::ClassAd> gangmatch_storage_ad;
 }
 
@@ -116,14 +102,13 @@ bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info)
 
 bool insert_aux_requirements(gluece_info_type& gluece_info)
 {
-    try {
-    if(!requirements_ad) {
-      requirements_ad.reset(
-        utils::parse_classad(requirements_str)
-      );
-    }
+  static glite::wms::common::configuration::Configuration const& config(
+    *glite::wms::common::configuration::Configuration::instance()
+  );
+
+  try {
     gluece_info->Update(
-      *requirements_ad
+      static_cast<classad::ClassAd&>(*config.wm()->queue_requirements_glue13())
     );
   }
   catch(...) {
