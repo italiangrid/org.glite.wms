@@ -591,7 +591,8 @@ WMPAuthorizer::authorize()
             configuration::Configuration::instance()->wp()->argus_pepd_endpoints();
          if (!endpoints.empty()) {
             boost::tuple<bool, xacml_decision_t, uid_t, gid_t> ans;
-            boost::replace_all(userdn_, "/", ","); // MUST be RFC 2253 compliant
+            //boost::replace_all(userdn_, "/", ","); // MUST be RFC 2253 compliant
+            //userdn_ = userdn_.substr(1, userdn_.size() - 1);
             ans = argus_authZ(
                   endpoints,
                   fqans_,
@@ -610,7 +611,7 @@ WMPAuthorizer::authorize()
                } else {
                   throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                      "authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-                     "Argus denied authorization on " + action_ + " by " + userdn_);
+                     "Argus denied authorization on " + action_ + " issued by DN:" + userdn_);
                }
             } else {
 
