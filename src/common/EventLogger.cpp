@@ -116,7 +116,7 @@ string EventLogger::getLoggingError( const char *preamble )
   return cause;
 }
 
-void EventLogger::testCode( int &code, bool retry )
+void EventLogger::test_lb_exitcode( int &code, bool retry )
 {
   const configuration::CommonConfiguration     *conf = configuration::Configuration::instance()->common();
   int          ret;
@@ -133,44 +133,40 @@ void EventLogger::testCode( int &code, bool retry )
 
       code = 0; // Don't retry...
       break;
+    case 2:
     case EDG_WLL_ERROR_GSS:
-      ts::edglog << logger::setlevel( logger::severe )
-		 << "Severe error in GSS layer while communicating with L&B daemons." << endl
-		 << "Cause = \"" << cause << "\"." << endl;
+      if (EDG_WLL_ERROR_GSS == code) {
+        ts::edglog << logger::setlevel( logger::severe )
+        << "Severe error in GSS layer while communicating with L&B daemons." << endl
+        << "Cause = \"" << cause << "\"." << endl;
+      }
 
       if( this->el_hostProxy ) {
-	ts::edglog << "The log with the host certificate has just been done. Giving up." << endl;
+         ts::edglog << "The log with the host certificate has just been done. Giving up." << endl;
+         code = 0; // Don't retry...
+      } else {
+        ts::edglog << logger::setlevel( logger::info )
+		    << "Retrying using host proxy certificate..." << endl;
+        host_proxy = conf->host_proxy_file();
+       if( host_proxy.length() == 0 ) {
+         ts::edglog << logger::setlevel( logger::warning )
+           << "Host proxy file not set inside configuration file." << endl
+           << "Trying with a default NULL and hoping for the best." << endl;
 
-	code = 0; // Don't retry...
-      }
-      else {
-	ts::edglog << logger::setlevel( logger::info )
-		   << "Retrying using host proxy certificate..." << endl;
-
-	host_proxy = conf->host_proxy_file();
-
-	if( host_proxy.length() == 0 ) {
-	  ts::edglog << logger::setlevel( logger::warning )
-		     << "Host proxy file not set inside configuration file." << endl
-		     << "Trying with a default NULL and hoping for the best." << endl;
-
-	  ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
-	}
-	else {
-	  ts::edglog << logger::setlevel( logger::info )
-		     << "Host proxy file found = \"" << host_proxy << "\"." << endl;
-
-	  ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
-	}
-
-	if( ret ) {
-	  ts::edglog << logger::setlevel( logger::severe )
-		     << "Cannot set the host proxy inside the context. Giving up." << endl;
-
-	  code = 0; // Don't retry.
-	}
-	else this->el_hostProxy = true; // Set and retry (code is still != 0)
-      }
+       ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
+       }	else {
+          ts::edglog << logger::setlevel( logger::info )
+		      << "Host proxy file found = \"" << host_proxy << "\"." << endl;
+          ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
+       }
+       if( ret ) {
+          ts::edglog << logger::setlevel( logger::severe )
+		       << "Cannot set the host proxy inside the context. Giving up." << endl;
+       code = 0; // Don't retry.
+	} else {
+      this->el_hostProxy = true; // Set and retry (code is still != 0)
+   }
+   }
 
       break;
     default:
@@ -392,7 +388,7 @@ void EventLogger::condor_submit_event( const string &condorId, const string &rsl
       } else {
         res = edg_wll_LogAccepted( *this->el_context, EDG_WLL_SOURCE_JOB_SUBMISSION, "localhost", el_s_unavailable, condorId.c_str() );
       }
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else {
@@ -422,7 +418,7 @@ void EventLogger::globus_submit_event( const string &ce, const string &rsl, cons
 				   el_s_unavailable );
       }
       
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -451,7 +447,7 @@ void EventLogger::grid_submit_event( const string &ce, const string &logfile )
 				   logfile.c_str(), "Grid job - no RSL", "Job successfully submitted over the Grid",
 				   el_s_unavailable );
       }
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -477,7 +473,7 @@ void EventLogger::execute_event( const char *host )
         res = edg_wll_LogRunning( *this->el_context, host );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -510,7 +506,7 @@ void EventLogger::terminated_event(int retcode)
         res = edg_wll_LogDoneOK(*this->el_context, reason_to_log.c_str(), retcode);
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -536,7 +532,7 @@ void EventLogger::failed_on_error_event(const string &cause)
         res = edg_wll_LogDoneFAILED( *this->el_context, cause.c_str(), 1 );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -563,7 +559,7 @@ void EventLogger::abort_on_error_event( const string &cause )
         res = edg_wll_LogAbort( *this->el_context, cause.c_str() );
       }
       
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -589,7 +585,7 @@ void EventLogger::aborted_by_system_event( const string &cause )
       } else {
         res = edg_wll_LogDoneFAILED( *this->el_context, cause.c_str(), 1 );
       }
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -616,7 +612,7 @@ void EventLogger::aborted_by_user_event( void )
         res = edg_wll_LogCancelDONE( *this->el_context, "Aborted by user." );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
 
     this->startLogging();
@@ -627,7 +623,7 @@ void EventLogger::aborted_by_user_event( void )
         res = edg_wll_LogDoneCANCELLED( *this->el_context, "Aborted by user", 0 );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -655,7 +651,7 @@ void EventLogger::globus_submit_failed_event( const string &rsl, const char *rea
 				     rsl.c_str(), reason, el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   } else {
     elog::cedglog << logger::setlevel( logger::null )
@@ -683,7 +679,7 @@ void EventLogger::globus_resource_down_event( void )
         res = edg_wll_LogDoneFAILED( *this->el_context, "Globus resource down", 1 );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -712,7 +708,7 @@ void EventLogger::job_held_event( const string &reason )
         res = edg_wll_LogDoneFAILED( *this->el_context, what.c_str(), 1 );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -741,7 +737,7 @@ void EventLogger::job_enqueued_start_event( const string &filename, const classa
         res = edg_wll_LogEnQueuedSTART( *this->el_context, filename.c_str(), job.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else 
@@ -771,7 +767,7 @@ void EventLogger::job_enqueued_ok_event( const string &filename, const classad::
         res = edg_wll_LogEnQueuedOK( *this->el_context, filename.c_str(), job.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -801,7 +797,7 @@ void EventLogger::job_enqueued_failed_event( const string &filename, const strin
         res = edg_wll_LogEnQueuedFAIL( *this->el_context, filename.c_str(), job.c_str(), error.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -828,7 +824,7 @@ void EventLogger::job_dequeued_event( const string &filename )
         res = edg_wll_LogDeQueued( *this->el_context, filename.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -857,7 +853,7 @@ void EventLogger::job_cancel_requested_event( const string &source )
         res = edg_wll_LogCancelREQ( *this->el_context, reason.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -885,7 +881,7 @@ void EventLogger::condor_submit_start_event( const string &logfile )
 				      el_s_unavailable, el_s_unavailable, el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -913,7 +909,7 @@ void EventLogger::condor_submit_ok_event( const string &rsl, const string &condo
 				   rsl.c_str(), el_s_unavailable, condorid.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -941,7 +937,7 @@ void EventLogger::condor_submit_failed_event( const string &rsl, const string &r
 				     rsl.c_str(), reason.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
 
     this->startLogging();
@@ -952,7 +948,7 @@ void EventLogger::condor_submit_failed_event( const string &rsl, const string &r
         res = edg_wll_LogAbort( *this->el_context, "Submission to condor failed." );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else {
@@ -981,7 +977,7 @@ void EventLogger::job_cancel_refused_event( const string &info )
         res = edg_wll_LogCancelREFUSE( *this->el_context, info.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1013,7 +1009,7 @@ void EventLogger::job_abort_classad_invalid_event( const string &logfile, const 
 				     el_s_unavailable, info.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
 
     this->startLogging();
@@ -1024,7 +1020,7 @@ void EventLogger::job_abort_classad_invalid_event( const string &logfile, const 
         res = edg_wll_LogAbort( *this->el_context, info.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1056,7 +1052,7 @@ void EventLogger::job_abort_cannot_write_submit_file_event( const string &logfil
 				     el_s_unavailable, info.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
 
     this->startLogging();
@@ -1067,7 +1063,7 @@ void EventLogger::job_abort_cannot_write_submit_file_event( const string &logfil
         res = edg_wll_LogAbort( *this->el_context, info.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1093,7 +1089,7 @@ void EventLogger::job_resubmitting_event( void )
       res = edg_wll_LogResubmissionWILLRESUB( *this->el_context, el_s_unavailable, el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1123,7 +1119,7 @@ void EventLogger::job_wm_enqueued_start_event( const string &filename, const cla
       res = edg_wll_LogEnQueuedSTART( *this->el_context, filename.c_str(), job.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1153,7 +1149,7 @@ void EventLogger::job_wm_enqueued_ok_event( const string &filename, const classa
         res = edg_wll_LogEnQueuedOK( *this->el_context, filename.c_str(), job.c_str(), el_s_unavailable );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1183,7 +1179,7 @@ void EventLogger::job_wm_enqueued_failed_event( const string &filename, const cl
         res = edg_wll_LogEnQueuedFAIL( *this->el_context, filename.c_str(), job.c_str(), error.c_str() );
       }
 
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else
@@ -1210,7 +1206,7 @@ void EventLogger::job_really_run_event( const string &sc )
       } else {
         res = edg_wll_LogReallyRunning( *this->el_context, sc.c_str() );
       }
-      this->testCode( res );
+      this->test_lb_exitcode( res );
     } while( res != 0 );
   }
   else

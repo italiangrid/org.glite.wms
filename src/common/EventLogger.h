@@ -135,7 +135,7 @@ public:
 private:
   inline void startLogging( void ) { this->el_count = 0; this->el_hostProxy = false; }
 
-  void testCode( int &code, bool retry = false );
+  void test_lb_exitcode( int &code, bool retry = false );
   std::string getLoggingError( const char *preamble );
 
   bool               el_remove, el_hostProxy;
