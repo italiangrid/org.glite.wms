@@ -62,30 +62,10 @@ void EventAborted::process_event( void )
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
   
-  if( position == this->ei_data->md_container->end() )
+  if( position == this->ei_data->md_container->end() ) {
     elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
-  else if( this->ei_data->md_isDagLog && (this->ei_data->md_dagId == position->edg_id()) ) { // Aborting of a DAG job
-    elog::cedglog << logger::setlevel( logger::info ) << ei_s_dagideq << position->edg_id() << endl;
-    
-    this->ei_data->md_sizefile->set_last( true );
-
-    this->ei_data->md_sizefile->decrement_pending();
-
-    if (this->ei_data->md_logger->have_lbproxy()) {
-      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-    } else {
-      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-    }
-    this->ei_data->md_logger->aborted_by_user_event();
-
-    if( this->ei_data->md_aborted->search(this->ei_condor) )
-      this->ei_data->md_aborted->remove( this->ei_condor );
-  }
-  else { // Common jobs and DAG nodes...
+  } else {
     elog::cedglog << logger::setlevel( logger::info ) << ei_s_edgideq << position->edg_id() << endl;
-
-    if( this->ei_data->md_isDagLog )
-      elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
 
     if( this->ea_removeTimer )
       this->ei_data->md_timer->remove_all_timeouts( this->ea_event->cluster ); // Remove any installed timeout for the job
@@ -137,9 +117,6 @@ void EventAborted::process_event( void )
     if( this->ei_data->md_container->remove(position) ) {
       elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_errremcorr << endl
 		    << "For job: " << position->edg_id() << endl;
-
-      if( this->ei_data->md_isDagLog )
-	elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
 
       elog::cedglog << "Running in cluster: " << this->ei_condor << endl;
 

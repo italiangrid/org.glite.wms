@@ -39,7 +39,6 @@ MonitorData::MonitorData( AbortedContainer *aborted, jccommon::IdContainer *cont
 namespace processer {
 
 MonitorData::MonitorData( const string &filename, logmonitor::MonitorData &data ) :
-  md_isDagLog( false ),
   md_logger( data.md_logger ), md_container( data.md_container ), md_aborted( data.md_aborted ), md_resubmitter( data.md_resubmitter ),
   md_logfile_name( utilities::normalize_path(filename) ),
   md_dagId(),

@@ -60,8 +60,6 @@ void EventExecute::process_event( void )
   else {
     elog::cedglog << logger::setlevel( logger::info ) << ei_s_edgideq << position->edg_id() << endl;
 
-    if( this->ei_data->md_isDagLog )
-      elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
       if (this->ei_data->md_logger->have_lbproxy()) {
         this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
       } else {

@@ -50,7 +50,6 @@ struct MonitorData {
   MonitorData( const char *filename, logmonitor::MonitorData &data );
   MonitorData( const std::string &filename, logmonitor::MonitorData &data );
 
-  bool                     md_isDagLog;
   jccommon::EventLogger   *md_logger;
   jccommon::IdContainer   *md_container;
   AbortedContainer        *md_aborted;

@@ -76,30 +76,15 @@ void EventJobHeld::process_event( void )
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
 
-  if( position == this->ei_data->md_container->end() )
+  if( position == this->ei_data->md_container->end() ) {
     elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
-  else if( this->ei_data->md_isDagLog && (this->ei_data->md_dagId == position->edg_id()) ) {
-    /*
-      What to do if holding a DAG job ???
-      I don't know: we will cross our arms and happily tweetie
-    */
-
-    elog::cedglog << logger::setlevel( logger::error ) << ei_s_dagideq << position->edg_id() << endl
-		  << "I really don't know what to do in such a case..." << endl
-		  << "Well, I will do nothing, someone will come and help me..." << endl
-		  << logger::setlevel( logger::debug ) << "Hissing to the sky, hissing to the moon..." << endl;
-  }
-  else {
+  } else {
     elog::cedglog << logger::setlevel( logger::info )
 		  << "Reason = \"" << reason << "\"." << endl
 #if CONDORG_AT_LEAST(6,5,3)
 		  << "Code = " << this->ejh_event->getReasonCode() << ", SubCode = " << this->ejh_event->getReasonSubCode() << endl
 #endif
 		  << ei_s_edgideq << position->edg_id() << endl;
-
-    if (this->ei_data->md_isDagLog) {
-      elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
-    }
 
     //if (reason.substr(0, globus_error10.size()) == globus_error10) {
 

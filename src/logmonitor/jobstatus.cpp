@@ -52,7 +52,6 @@ RenameLogStreamNS( elog );
 
 utilities::LineOption options[] = {
   { 'c', 1, "condor-id",     "\t\tSelects the job based on its condor id." },
-  { 'd', 1, "dag-id",        "\t\tSets the Job-Id of the DAG job if known." },
   { 'e', 1, "job-id",        "\t\tSelects the job based on its job id." },
   { 'C', 1, "configuration", "\t\tUse an alternate configuration file." },
 };

@@ -43,12 +43,7 @@ const string      EventInterface::ei_s_failedinsertion( "Failed insertion of abo
 SubmitReader *EventInterface::createReader( const string &edgid )
 {
   SubmitReader   *reader;
-
-  if( !this->ei_data->md_isDagLog || (edgid == this->ei_data->md_dagId) )
-    reader = new SubmitReader( glite::jobid::JobId(edgid) );
-  else
-    reader = new SubmitReader( glite::jobid::JobId(this->ei_data->md_dagId), glite::jobid::JobId(edgid) );
-
+  reader = new SubmitReader( glite::jobid::JobId(edgid) );
   return reader;
 }
 
