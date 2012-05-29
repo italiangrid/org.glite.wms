@@ -28,7 +28,6 @@ public:
   enum status_type { unknown = -1, good, abort, resubmit };
 
   JobWrapperOutputParser( const std::string &edgid );
-  JobWrapperOutputParser( const std::string &dagid, const std::string &jobid );
   ~JobWrapperOutputParser( void );
 
   status_type parse_file( int &retcode, std::string &errors, std::string &sc, std::string& reason);
@@ -36,7 +35,7 @@ public:
 private:
   bool parseStream( std::istream &is, std::string &errors, int &retcode, status_type &stat, std::string &sc, std::string& reason);
 
-  std::string     jwop_dagid, jwop_edgid;
+  std::string     jwop_edgid;
 };
 
 } // namespace logmonitor

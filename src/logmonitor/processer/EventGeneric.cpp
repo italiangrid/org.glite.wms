@@ -202,12 +202,8 @@ void EventGeneric::finalProcess( int cn )
 
 	  jccommon::ProxyUnregistrar( edgid ).unregister();
 	  
-	  if( this->ei_data->md_isDagLog) // it is a Dag job 
-	    jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), edgid ).do_purge();
-	  else { // normal job
 	    const glite::jobid::JobId tmp;
-	    jccommon::JobFilePurger( tmp, this->ei_data->md_logger->have_lbproxy(), edgid ).do_purge();	
-	  }
+	    jccommon::JobFilePurger( tmp, this->ei_data->md_logger->have_lbproxy()).do_purge();	
 	  
 	  this->ei_data->md_container->remove( position );
 	  this->ei_data->md_aborted->remove( this->ei_condor );

@@ -62,7 +62,7 @@ JobStatusExtractor::JobStatusExtractor( const utilities::LineParser &options ) :
   if( options.is_present('d') ) {
     string    dagid( options['d'].getStringValue() );
 
-    this->jse_parser.reset( new JobWrapperOutputParser(dagid, edgid) );
+    this->jse_parser.reset( new JobWrapperOutputParser(edgid) );
   }
   else this->jse_parser.reset( new JobWrapperOutputParser(edgid) );
 }

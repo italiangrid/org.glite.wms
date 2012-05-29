@@ -73,7 +73,7 @@ SubmitReader::SubmitReader( const glite::jobid::JobId &edgid ) : sr_submit(), sr
 }
 
 SubmitReader::SubmitReader( const glite::jobid::JobId &dagid, const glite::jobid::JobId &edgid ) : sr_submit(), sr_globusRsl(),
-											     sr_files( dagid, edgid )
+											     sr_files( edgid )
 {
   this->internalRead( edgid );
 }

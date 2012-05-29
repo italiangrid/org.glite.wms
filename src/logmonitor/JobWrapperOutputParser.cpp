@@ -48,9 +48,7 @@ struct JWErrors {
 
 } // Anonymous namespace
 
-JobWrapperOutputParser::JobWrapperOutputParser( const string &edgid ) : jwop_dagid(), jwop_edgid( edgid ) {}
-
-JobWrapperOutputParser::JobWrapperOutputParser( const string &dagid, const string &edgid ) : jwop_dagid( dagid ), jwop_edgid( edgid ) {}
+JobWrapperOutputParser::JobWrapperOutputParser( const string &edgid ) : jwop_edgid( edgid ) {}
 
 JobWrapperOutputParser::~JobWrapperOutputParser( void ) {}
 
@@ -164,8 +162,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
   bool                       found = false;
   status_type                stat = good;
   glite::jobid::JobId               id( this->jwop_edgid );
-  auto_ptr<jccommon::Files>  files( (this->jwop_dagid.size() != 0) ? new jccommon::Files(this->jwop_dagid, this->jwop_edgid) :
-				    new jccommon::Files(this->jwop_edgid) );
+  auto_ptr<jccommon::Files>  files( new jccommon::Files(this->jwop_edgid) );
   ifstream                   ifs;
   logger::StatePusher        pusher( elog::cedglog, "JobWrapperOutputParser::parse_file(...)" );
 

@@ -42,62 +42,20 @@ namespace jccommon {
 
 const string  Files::f_s_submitPrefix( "Condor." ), Files::f_s_submitSuffix( ".submit" );
 const string  Files::f_s_wrapperPrefix( "JobWrapper." ), Files::f_s_scriptSuffix( ".sh" );
-const string  Files::f_s_classadPrefix( "ClassAd." ), Files::f_s_dagPrefix( "dag." );
+const string  Files::f_s_classadPrefix( "ClassAd." );
 const string  Files::f_s_stdout( "StandardOutput" ), Files::f_s_stderr( "StandardError" );
 const string  Files::f_s_maradona( "Maradona.output" );
-const string  Files::f_s_logPrefix( "CondorG." ), Files::f_s_dagLogPrefix( "dag." ), Files::f_s_logSuffix( ".log" );
+const string  Files::f_s_logPrefix( "CondorG." ), Files::f_s_logSuffix( ".log" );
 const string  Files::f_s_Output( "output" ), Files::f_s_Input( "input" );
 
-Files::path *Files::createDagLogFileName( const string &jobid )
-{
-  const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
-  string               logdir( utilities::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_dagLogPrefix );
-  std::auto_ptr<path>  logfile;
-
-  logname.append( jobid ); logname.append( f_s_logSuffix );
-  logfile.reset( new path(logdir, fs::native) );
-  *logfile /= logname;
-
-  return logfile.release();
-}
-
 Files::Files( const glite::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(), f_maradona(),
-					 f_sandbox(), f_insbx(), f_outsbx(), f_dagsubdir(),
-					 f_jobid( utilities::to_filename(id) ), f_dagid(),
-					 f_jobReduced( utilities::get_reduced_part(id), fs::native ),
-					 f_dagReduced()
+					 f_sandbox(), f_insbx(), f_outsbx(),
+					 f_jobid( utilities::to_filename(id) ),
+					 f_jobReduced( utilities::get_reduced_part(id), fs::native )
 
 {}
 				
-Files::Files( const glite::jobid::JobId &dagid, const glite::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(),
-								    f_maradona(), f_insbx(), f_outsbx(), f_dagsubdir(),
-								    f_jobid( utilities::to_filename(id) ),
-								    f_dagid( utilities::to_filename(dagid) ),
-								    f_jobReduced( utilities::get_reduced_part(id), fs::native ),
-								    f_dagReduced( utilities::get_reduced_part(dagid), fs::native )
-{}
-
 Files::~Files( void ) {}
-
-const fs::path &Files::dag_submit_directory( void )
-{
-  const configuration::JCConfiguration    *jcconfig = configuration::Configuration::instance()->jc();
-
-  if( this->f_dagsubdir.get() == NULL ) {
-    string   subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
-    string   dagname( f_s_dagPrefix );
-
-    if( this->f_dagid.size() == 0 ) dagname.append( this->f_jobid );
-    else dagname.append( this->f_dagid );
-
-    this->f_dagsubdir.reset( new path(subdir, fs::native) );
-
-	if( this->f_dagid.size() == 0 )  *this->f_dagsubdir /= this->f_jobReduced / dagname;
-    else *this->f_dagsubdir /= this->f_dagReduced / dagname;  
-}
-
-  return *this->f_dagsubdir;
-}
 
 const fs::path &Files::submit_file( void )
 {
@@ -108,13 +66,10 @@ const fs::path &Files::submit_file( void )
 
     filename.append( this->f_jobid ); filename.append( f_s_submitSuffix );
 
-    if( this->f_dagid.size() == 0 ) {
       string    subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_submit.reset( new path(subdir, fs::native) );
 
       *this->f_submit /= this->f_jobReduced;
-    }
-    else this->f_submit.reset( new path(this->dag_submit_directory()) );
 
     *this->f_submit /= filename;
   }
@@ -131,13 +86,10 @@ const fs::path &Files::jobwrapper_file( void )
 
     name.append( this->f_jobid ); name.append( f_s_scriptSuffix );
 
-    if( this->f_dagid.size() == 0 ) {
       string     subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_wrapper.reset( new path(subdir, fs::native) );
 
       *this->f_wrapper /= this->f_jobReduced;
-    }
-    else this->f_wrapper.reset( new path(this->dag_submit_directory()) );
 
     *this->f_wrapper /= name;
   }
@@ -154,13 +106,10 @@ const fs::path &Files::classad_file( void )
 
     cname.append( this->f_jobid );
 
-    if( this->f_dagid.size() == 0 ) {
       string     subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_classad.reset( new path(subdir, fs::native) );
 
       *this->f_classad /= this->f_jobReduced;
-    }
-    else this->f_classad.reset( new path(this->dag_submit_directory()) );
 
     *this->f_classad /= cname;
   }
@@ -177,10 +126,7 @@ const fs::path &Files::output_directory( void )
 
     this->f_outdir.reset( new path(dirname, fs::native) );
 
-    if( this->f_dagid.size() != 0 )
-      *this->f_outdir /= this->f_dagReduced / fs::path(this->f_dagid, fs::native);
-    else
-      *this->f_outdir /= this->f_jobReduced;
+    *this->f_outdir /= this->f_jobReduced;
 
     *this->f_outdir /= fs::path(this->f_jobid, fs::native);
   }
@@ -221,20 +167,11 @@ const fs::path &Files::maradona_file( void )
   return *this->f_maradona;
 }
 
-const fs::path &Files::dag_log_file( void )
-{
-  if( this->f_logfile.get() == NULL )
-    this->f_logfile.reset( this->createDagLogFileName(this->f_jobid) );
-
-  return *this->f_logfile;
-}
-
 const fs::path &Files::log_file( time_t epoch )
 {
   const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
 
   if( (epoch != this->f_epoch) || (this->f_logfile.get() == NULL) ) {
-    if( this->f_dagid.size() == 0 ) {
       string    logdir( utilities::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_logPrefix );
 
       logname.append( boost::lexical_cast<string>(epoch) );
@@ -243,8 +180,6 @@ const fs::path &Files::log_file( time_t epoch )
 
       this->f_logfile.reset( new path(logdir, fs::native) );
       *this->f_logfile /= logname; this->f_epoch = epoch;
-    }
-    else this->f_logfile.reset( this->createDagLogFileName(this->f_dagid) );
   }
 
   return *this->f_logfile;
@@ -253,7 +188,6 @@ const fs::path &Files::log_file( time_t epoch )
 const fs::path &Files::log_file( void )
 {
   if( this->f_logfile.get() == NULL ) {
-    if( this->f_dagid.size() == 0 ) {
       classad::ClassAd        *ad;
       const path              &adfile = this->classad_file();
       ifstream                 ifs( adfile.native_file_string().c_str() );
@@ -271,8 +205,6 @@ const fs::path &Files::log_file( void )
 	  this->f_logfile.reset( new path );
       }
       else this->f_logfile.reset( new path );
-    }
-    else this->dag_log_file();
   }
 
   return *this->f_logfile;

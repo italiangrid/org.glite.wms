@@ -178,8 +178,6 @@ CondorMonitor::CondorMonitor( const string &filename, MonitorData &data ) :
   fs::path                         timer_path( conf->monitor_internal_dir(), fs::native );
   logger::StatePusher                             pusher( elog::cedglog, "CondorMonitor::CondorMonitor()" );
 
-  static boost::regex   dagid_expression( ".*DagId = ([^\\s]+).*" );
-
   if( fs::exists(logfile_path) ) {
     this->cm_shared_data->md_sizefile.reset( new SizeFile(logfile_name.c_str()) );
 
@@ -202,29 +200,6 @@ CondorMonitor::CondorMonitor( const string &filename, MonitorData &data ) :
 
   elog::cedglog << logger::setlevel( logger::info ) << "Condor log file parser initialized." << endl;
 
-  if( boost::regex_match(this->cm_shared_data->md_sizefile->header().header(), match_pieces, dagid_expression) ) {
-    this->cm_shared_data->md_dagId.assign( match_pieces[1].first, match_pieces[2].second );
-    try {
-      glite::jobid::JobId     dId( this->cm_shared_data->md_dagId );
-      this->cm_shared_data->md_isDagLog = true;
-    }
-    catch( const glite::jobid::JobIdError &err ) {
-      elog::cedglog << logger::setlevel( logger::debug ) << "I can not setting the DagId, Error is: "
-                    << err.what() << endl; 
-      this->cm_shared_data->md_dagId.clear();
-      this->cm_shared_data->md_isDagLog = false;
-    }
-  }
-  else {
-
-    this->cm_shared_data->md_dagId.clear();
-    this->cm_shared_data->md_isDagLog = false;
-  }
-
-  if( this->cm_shared_data->md_isDagLog )
-    elog::cedglog << logger::setlevel( logger::info ) << "Log file is attached to DAG id: " << this->cm_shared_data->md_dagId << endl
-		  << "Entering DAG mode..." << endl;
-  
   logfile_nopath.append( ".timer" );
   timer_path /= logfile_nopath;
 

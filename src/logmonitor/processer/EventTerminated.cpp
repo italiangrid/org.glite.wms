@@ -105,7 +105,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 
     jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-    jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
+    jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy()).do_purge();
   }
   else { // Job got an error in the jobwrapper
     elog::cedglog << logger::setlevel( logger::warning ) << "Last job terminated (" << this->ei_condor
@@ -123,7 +123,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 
     this->ei_data->md_logger->failed_on_error_event(errors + '\n' + done_reason);
 
-    jccommon::JobFilePurger   purger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false);
+    jccommon::JobFilePurger   purger( position->edg_id(), this->ei_data->md_logger->have_lbproxy());
     switch( stat ) {
     case JWOP::resubmit:
       purger.do_purge();
@@ -160,50 +160,6 @@ void EventTerminated::process_event( void )
   if( position == this->ei_data->md_container->end() )
     elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
   else {
-    if( this->ei_data->md_isDagLog && (this->ei_data->md_dagId == position->edg_id()) ) {
-      /*
-	We are in a dag log file... And this is the terminated event for
-	the main DAG...
-      */
-      elog::cedglog << logger::setlevel( logger::info ) << ei_s_dagideq << position->edg_id() << endl
-		    << "Return code = " << this->et_event->returnValue << endl;
-
-      if (this->ei_data->md_logger->have_lbproxy()) {
-        this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-      } else {
-        this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-      }
-      
-      if( this->ei_data->md_aborted->search(this->ei_condor) ) { // The POST script bug
-	this->ei_data->md_aborted->remove( this->ei_condor );
-
-	elog::cedglog << logger::setlevel( logger::error )
-		      << "Because of the POST script bug, this DAG has terminated while it should be failing." << endl
-		      << logger::setlevel( logger::warning ) << "Aborting it." << endl;
-
-	this->ei_data->md_logger->abort_on_error_event( ei_s_dagfailed );
-      }
-      else
-	this->ei_data->md_logger->terminated_event( this->et_event->returnValue);
-
-      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
-
-      jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-      jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), true ).do_purge();
-
-      this->ei_data->md_sizefile->decrement_pending();
-    }
-    else if( !this->ei_data->md_isDagLog ) // Common jobs only...
-      this->processNormalJob( position );
-    else { // DAG subjobs...
-      elog::cedglog << logger::setlevel( logger::info )
-		    << ei_s_edgideq << position->edg_id() << endl
-		    << ei_s_subnodeof << this->ei_data->md_dagId << endl
-		    << "Ignoring this event, waiting for a POST_TERMINATED one..." << endl;
-
-      remove = false;
-    }
-
     if( remove && this->ei_data->md_container->remove(position) ) {
       elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_errremcorr << endl
 		    << "For job: " << position->edg_id() << endl

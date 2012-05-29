@@ -104,13 +104,9 @@ void EventAborted::process_event( void )
 
       this->ei_data->md_logger->aborted_by_system_event( ei_s_joberror );
 
-      if( this->ei_data->md_isDagLog )
-	jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), position->edg_id() ).do_purge();
-      else {
-	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
+	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy()).do_purge();
 	// Only resubmit common jobs...
 	this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code(), this->ei_data->md_container );
-      }
     }
     else { // Job had a "normal" life cycle...
       elog::cedglog << logger::setlevel( logger::debug )
@@ -123,7 +119,7 @@ void EventAborted::process_event( void )
           this->ei_data->md_aborted->remove( this->ei_condor );
           this->ei_data->md_logger->aborted_by_system_event( ei_s_joberror );
 
-	        jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
+	        jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy()).do_purge();
           this->ei_data->md_resubmitter->resubmit(
             position->last_status(), position->edg_id(), position->sequence_code(), this->ei_data->md_container
           );
@@ -134,23 +130,8 @@ void EventAborted::process_event( void )
 
       this->ei_data->md_logger->aborted_by_user_event();
 
-      if( this->ei_data->md_isDagLog )
-	jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), position->edg_id() ).do_purge( true ); // Remove also Sandbox
-      else {
 	jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge( true ); // Remove also Sandbox
-      }
-    }
-
-    if( this->ei_data->md_isDagLog && this->ei_data->md_sizefile->completed() ) {
-      elog::cedglog << logger::setlevel( logger::info )
-		    << "Seems we are sending the last event during a removal of this DAG." << endl
-		    << logger::setlevel( logger::debug )
-		    << ei_s_dagideq << this->ei_data->md_dagId << endl
-		    << logger::setlevel( logger::info ) << "Removing DAG proxy and files." << endl;
-
-      jccommon::ProxyUnregistrar( this->ei_data->md_dagId ).unregister();
-      jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), true ).do_purge( true );
+	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy()).do_purge( true ); // Remove also Sandbox
     }
 
     if( this->ei_data->md_container->remove(position) ) {

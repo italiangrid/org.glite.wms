@@ -143,7 +143,7 @@ void EventJobHeld::process_event( void )
 //#endif
     //   return;
     //  } else {
-        elog::cedglog << logger::setlevel( logger::info ) << "Number of Condor retries exceeded, __NOT__ forwarding release request to JC." << endl;
+        //elog::cedglog << logger::setlevel( logger::info ) << "Number of Condor retries exceeded, __NOT__ forwarding release request to JC." << endl;
     // }
     //}
 

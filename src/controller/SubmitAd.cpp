@@ -111,40 +111,31 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
   int                                      maxjobs = lmconfig->jobs_per_condor_log();
   time_t                                   epoch = 0;
   char                                    *dirType;
-  glite::jobid::JobId                      dagId, edgId;
+  glite::jobid::JobId                      edgId;
   string                                   buildPath;
   auto_ptr<jccommon::Files>                files;
   logger::StatePusher                      pusher( elog::cedglog, "SubmitAd::createFromAd(...)" );
 
-  if( this->sa_ad.get() == NULL )
+  if( this->sa_ad.get() == NULL ) {
     this->sa_ad.reset(static_cast<classad::ClassAd*>(pad->Copy()));
+  }
 
   this->sa_jobtype.assign( glite::jdl::get_type(*this->sa_ad, this->sa_good) );
 
   if( this->sa_good ) {
     transform( this->sa_jobtype.begin(), this->sa_jobtype.end(), this->sa_jobtype.begin(), ::tolower );
 
-    this->sa_dagid.assign( glite::jdl::get_edg_dagid(*this->sa_ad, this->sa_hasDagId) );
+  this->sa_jobid.assign( glite::jdl::get_edg_jobid(*this->sa_ad, this->sa_good) );
 
-    if( !this->sa_hasDagId ) this->loadStatus();
-    else try {
-      dagId = glite::jobid::JobId( this->sa_dagid );
-    } catch (const glite::jobid::JobIdError &e) {
-  elog::cedglog << logger::setlevel( logger::warning ) 
-                << "Could not create JobId from string: " << e.what() << endl;
-    }  
-
-    this->sa_jobid.assign( glite::jdl::get_edg_jobid(*this->sa_ad, this->sa_good) );
-
-    if( !this->sa_good ) this->sa_reason.assign( "Cannot extract \"edg_jobid\" from given classad." );
-    else {
-      try {
-        edgId = glite::jobid::JobId( this->sa_jobid );
-      } catch (const glite::jobid::JobIdError &e) {
-    elog::cedglog << logger::setlevel( logger::warning )
+  if( !this->sa_good ) this->sa_reason.assign( "Cannot extract \"edg_jobid\" from given classad." );
+  else {
+     try {
+       edgId = glite::jobid::JobId( this->sa_jobid );
+     } catch (const glite::jobid::JobIdError &e) {
+  elog::cedglog << logger::setlevel( logger::warning )
                   << "Could not create JobId from string: " << e.what() << endl;
       } 
-      files.reset( this->sa_hasDagId ? new jccommon::Files(dagId, edgId) : new jccommon::Files(edgId) );
+      files.reset(new jccommon::Files(edgId));
 
       try {
 	dirType = "job directory";
@@ -183,52 +174,42 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
       this->sa_submitfile.assign( files->submit_file().native_file_string() );
       this->sa_classadfile.assign( files->classad_file().native_file_string() );
 
-      if( this->sa_jobtype == "dag" ) {
-	this->sa_last = false;
-	this->sa_logfile.assign( files->dag_log_file().native_file_string() );
-	this->sa_isDag = true;
-      }
-      else if( this->sa_jobtype == "job" ) {
-	if( !this->sa_hasDagId ) {
-	  // Create CondorG log file name
-	  epoch = this->sa_lastEpoch;
-	  if( this->sa_jobperlog >= maxjobs ) {
-	    this->sa_last = true;
+   if( this->sa_jobtype == "job" ) {
+	    // Create CondorG log file name
+       epoch = this->sa_lastEpoch;
+	    if( this->sa_jobperlog >= maxjobs ) {
+	      this->sa_last = true;
 
-	    this->sa_lastEpoch = time( NULL );
-	    this->sa_jobperlog = 1;
+	      this->sa_lastEpoch = time( NULL );
+	      this->sa_jobperlog = 1;
 
-	    elog::cedglog << logger::setlevel( logger::warning )
+	      elog::cedglog << logger::setlevel( logger::warning )
 			  << "Maximum number of jobs per log file reached." << endl
 			  << logger::setlevel( logger::info )
 			  << "Next job will be submitted to the file: CondorG." << this->sa_lastEpoch << ".log." << endl;
-	  }
-	  else this->sa_jobperlog += 1;
+	    } else {
+         this->sa_jobperlog += 1;
+       }
 
-	  this->saveStatus();
-	}
-	else this->sa_last = false;
+	    this->saveStatus();
 
-	this->sa_logfile.assign( files->log_file(epoch).native_file_string() );
-      }
+     this->sa_logfile.assign( files->log_file(epoch).native_file_string() );
+   }
 
-      try {
+   try {
 	glite::jdl::set_log( *this->sa_ad, this->sa_logfile );
 	glite::jdl::set_condor_submit_file( *this->sa_ad, this->sa_submitfile );
-      }
-      catch( glite::jdl::CannotGetAttribute &par ) {
+      } catch( glite::jdl::CannotGetAttribute &par ) {
 	this->sa_reason.assign( "Cannot extract parameter \"" );
 	this->sa_reason.append( par.parameter() ); this->sa_reason.append( "\" from given classad." );
 
 	this->sa_good = false;
-      }
-      catch( glite::jdl::CannotSetAttribute &par ) {
+      } catch( glite::jdl::CannotSetAttribute &par ) {
 	this->sa_reason.assign( "Cannot set parameter \"" );
 	this->sa_reason.append( par.parameter() ); this->sa_reason.append( "\" into given classad." );
 
 	this->sa_good = false;
-      }
-      catch( glite::jdl::CannotRemoveAttribute &par ) {
+      } catch( glite::jdl::CannotRemoveAttribute &par ) {
 	this->sa_reason.assign( "Cannot remove parameter \"" );
 	this->sa_reason.append( par.parameter() ); this->sa_reason.append( "\" from classad." );
 
@@ -242,10 +223,10 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 }
 
 SubmitAd::SubmitAd( const classad::ClassAd *pad )
-  : sa_good( true ), sa_last( false ), sa_hasDagId( false ), sa_isDag( false ),
+  : sa_good( true ), sa_last( false ),
     sa_jobperlog( 1 ), sa_lastEpoch( 0 ),
     sa_ad( pad ? static_cast<classad::ClassAd*>(pad->Copy()) : NULL ),
-    sa_jobid(), sa_dagid(), sa_jobtype(),
+    sa_jobid(), sa_jobtype(),
     sa_submitfile(), sa_submitad(), sa_reason(), sa_seqcode(),
     sa_classadfile(), sa_logfile()
 {
@@ -276,17 +257,7 @@ SubmitAd &SubmitAd::set_sequence_code( const string &code )
       seqcode.insert( seqcode.begin(), '\'' ); seqcode.append( 1, '\'' );
       glite::jdl::set_arguments( *this->sa_ad, seqcode ); // Must pass the seqcode as first argument of the JobWrapper...
 
-      if( this->sa_hasDagId )
-	glite::jdl::set_submit_event_user_notes( *this->sa_ad, notes );
-      else
 	glite::jdl::set_submit_event_notes( *this->sa_ad, notes );
-    }
-    else if( this->sa_jobtype == "dag" ) {
-      notes.assign( "DAG job: (" ); notes.append( this->sa_jobid ); notes.append( ") (" );
-      notes.append( seqcode ); notes.append( 1, ')' );
-
-      glite::jdl::set_lb_sequence_code( *this->sa_ad, seqcode );
-      glite::jdl::set_submit_event_notes( *this->sa_ad, notes );
     }
   }
 

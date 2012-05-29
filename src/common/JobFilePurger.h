@@ -25,17 +25,11 @@ class JobFilePurger {
 public:
   JobFilePurger(
     glite::jobid::JobId const& jobid,
-    bool have_lbproxy, bool isdag
-  );
-  JobFilePurger(
-    glite::jobid::JobId const& dagid,
-    bool have_lbproxy,
-    const glite::jobid::JobId &jobid
+    bool have_lbproxy
   );
   void do_purge(bool everything = false);
 
 private:
-  bool                   jfp_isDag;
   bool                   jfp_have_lbproxy;
   glite::jobid::JobId    jfp_jobId;
   glite::jobid::JobId    jfp_dagId;

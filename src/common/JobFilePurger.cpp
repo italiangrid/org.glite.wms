@@ -44,18 +44,9 @@ namespace jccommon {
 
 JobFilePurger::JobFilePurger(
   glite::jobid::JobId const& id,
-  bool have_lbproxy,
-  bool isdag
+  bool have_lbproxy
 )
-  : jfp_isDag(isdag), jfp_have_lbproxy(have_lbproxy), jfp_jobId(id), jfp_dagId()
-{ }
-
-JobFilePurger::JobFilePurger(
-  glite::jobid::JobId const& dagid,
-  bool have_lbproxy,
-  glite::jobid::JobId const& jobid
-)
-  : jfp_isDag(false), jfp_have_lbproxy(have_lbproxy), jfp_jobId(jobid), jfp_dagId(dagid)
+  : jfp_have_lbproxy(have_lbproxy), jfp_jobId(id)
 { }
 
 void JobFilePurger::do_purge( bool everything )
@@ -65,8 +56,7 @@ void JobFilePurger::do_purge( bool everything )
 
   if( lmconfig->remove_job_files() ) {
     unsigned long int            removed;
-    auto_ptr<Files>              files(jfp_isDag ? new Files(this->jfp_dagId, this->jfp_jobId) : 
-					new Files(this->jfp_jobId) );
+    auto_ptr<Files>              files(new Files(this->jfp_jobId));
 
     try {
       elog::cedglog << logger::setlevel( logger::info ) << "Removing job directory: " << files->output_directory().native_file_string() << endl;
@@ -98,19 +88,6 @@ void JobFilePurger::do_purge( bool everything )
 		    << "Reason: " << err.what() << endl;
     }
 
-    if( this->jfp_isDag ) {
-      try {
-	elog::cedglog << logger::setlevel( logger::info ) << "Removing DAG submit directory: "
-		     << files->dag_submit_directory().native_file_string() << endl;
-	removed = fs::remove_all( files->dag_submit_directory() );
-	elog::cedglog << logger::setlevel( logger::ugly ) << "Removed " << removed << " files." << endl;
-      }
-      catch( fs::filesystem_error &err ) {
-	elog::cedglog << logger::setlevel( logger::null ) << "Failed to remove DAG submit directory." << endl
-		      << "Reason: " << err.what() << endl;
-      }
-    }
-    else {
       try {
 	elog::cedglog << logger::setlevel( logger::info ) << "Removing wrapper file: " << files->jobwrapper_file().native_file_string() << endl;
 	fs::remove( files->jobwrapper_file() );
@@ -120,7 +97,6 @@ void JobFilePurger::do_purge( bool everything )
 	elog::cedglog << logger::setlevel( logger::null ) << "Failed to remove wrapper file." << endl
 		      << "Reason: " << err.what() << endl;
       }
-    }
   }
   else
     elog::cedglog << logger::setlevel( logger::info )
