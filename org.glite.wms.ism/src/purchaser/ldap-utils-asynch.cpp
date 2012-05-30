@@ -729,7 +729,6 @@ fetch_bdii_ce_info(
      );
      try {  
        ism::purchaser::expand_glueceid_info((*ce_it)->second.ad);
-       ism::purchaser::insert_aux_requirements((*ce_it)->second.ad);
        ism::purchaser::insert_gangmatch_storage_ad((*ce_it)->second.ad);
      }
      catch(cu::InvalidValue) {

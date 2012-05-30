@@ -586,7 +586,6 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
           );
           try {  
             expand_glueceid_info((*ce_it)->second.first);
-            insert_aux_requirements((*ce_it)->second.first);
             insert_gangmatch_storage_ad((*ce_it)->second.first);
           }
           catch(classadutils::InvalidValue) {

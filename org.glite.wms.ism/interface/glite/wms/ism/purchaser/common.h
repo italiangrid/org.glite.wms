@@ -63,7 +63,6 @@ typedef gluese_info_container_type::const_iterator gluese_info_const_iterator;
 typedef gluese_info_container_type::iterator       gluese_info_iterator;
 
 bool expand_information_service_info(gluece_info_type& gluece_info);
-bool insert_aux_requirements(gluece_info_type& gluece_info);
 bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info);
 bool expand_glueceid_info(gluece_info_type& gluece_info);
 bool split_information_service_url(

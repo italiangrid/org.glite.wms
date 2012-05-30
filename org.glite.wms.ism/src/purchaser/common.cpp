@@ -90,26 +90,7 @@ bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info)
         utils::parse_classad(gangmatch_storage_ad_str)
       ); 
     }
-    gluece_info->Update(
-      *gangmatch_storage_ad
-    );
-  }
-  catch(...) {
-    assert(false);
-  }
-  return true;
-}
-
-bool insert_aux_requirements(gluece_info_type& gluece_info)
-{
-  static glite::wms::common::configuration::Configuration const& config(
-    *glite::wms::common::configuration::Configuration::instance()
-  );
-
-  try {
-    gluece_info->Update(
-      static_cast<classad::ClassAd&>(*config.wm()->queue_requirements_glue13())
-    );
+    gluece_info->Update( *gangmatch_storage_ad);
   }
   catch(...) {
     assert(false);

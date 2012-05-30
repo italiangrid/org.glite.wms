@@ -156,7 +156,6 @@ void ism_cemon_asynch_purchaser::operator()()
 
                 if ((m_skip_predicate.empty() || !m_skip_predicate(it->first))) {                 
                 
-                  insert_aux_requirements(it->second);
                   insert_gangmatch_storage_ad(it->second);
 
                   if (expand_glueceid_info(it->second)) {

@@ -251,7 +251,6 @@ void ism_rgma_purchaser::operator()()
    
                bool purchasing_ok = checkMainValue((it->second).get())     && 
                                     expand_glueceid_info(it->second)       &&
-                                    insert_aux_requirements(it->second)    &&
                                     insert_gangmatch_storage_ad(it->second);
    
                if (purchasing_ok) {

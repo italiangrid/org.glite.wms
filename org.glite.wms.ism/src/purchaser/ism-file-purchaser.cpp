@@ -105,7 +105,6 @@ void ism_file_purchaser::operator()()
         else 
         if(info->Lookup("GlueCEUniqueID")) {
         
-          insert_aux_requirements(info);
           expand_glueceid_info(info);
 
           // Check the type of puchaser which has generated the info
