@@ -20,10 +20,8 @@
 
 #include <string>
 
-#include <user_log.c++.h>
-#if CONDORG_AT_LEAST(6,5,3)
+#include <condor/user_log.c++.h>
 #include <globus_gram_protocol_constants.h>
-#endif
 
 #include "glite/jobid/JobId.h"
 
@@ -81,9 +79,7 @@ void EventJobHeld::process_event( void )
   } else {
     elog::cedglog << logger::setlevel( logger::info )
 		  << "Reason = \"" << reason << "\"." << endl
-#if CONDORG_AT_LEAST(6,5,3)
 		  << "Code = " << this->ejh_event->getReasonCode() << ", SubCode = " << this->ejh_event->getReasonSubCode() << endl
-#endif
 		  << ei_s_edgideq << position->edg_id() << endl;
 
     //if (reason.substr(0, globus_error10.size()) == globus_error10) {
@@ -120,12 +116,8 @@ void EventJobHeld::process_event( void )
     //    sleep(5);
     //    controller.release(this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
 
-//#if CONDORG_AT_LEAST(6,5,3)
     //    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
     //    this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
-//#else
-    //    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ejh_event->eventNumber );
-//#endif
     //   return;
     //  } else {
         //elog::cedglog << logger::setlevel( logger::info ) << "Number of Condor retries exceeded, __NOT__ forwarding release request to JC." << endl;
@@ -143,7 +135,6 @@ void EventJobHeld::process_event( void )
       elog::cedglog << logger::setlevel( logger::info ) << "The job got a previous error, ignoring the held event..." << endl;
     }
 
-#if CONDORG_AT_LEAST(6,5,3)
     else if( position->last_status() == GLOBUS_GRAM_PROTOCOL_ERROR_JOB_CANCEL_FAILED ) {
       elog::cedglog << logger::setlevel( logger::warning )
 		    << "Got another held event for an already removing job\n"
@@ -160,9 +151,7 @@ void EventJobHeld::process_event( void )
 
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
 						   this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
-    }
-#endif
-    else {
+    } else {
       if (this->ei_data->md_aborted->insert(this->ei_condor)) {
         elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_failedinsertion << endl;
 	      throw CannotExecute(ei_s_failedinsertion);
@@ -179,13 +168,11 @@ void EventJobHeld::process_event( void )
 
       controller.cancel( this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str() );	
 
-
-#if CONDORG_AT_LEAST(6,5,3)
-      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
-						   this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
-#else
-      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ejh_event->eventNumber );
-#endif
+      this->ei_data->md_container->update_pointer(
+         position,
+         this->ei_data->md_logger->sequence_code(),
+         this->ejh_event->eventNumber,
+         this->ejh_event->getReasonSubCode());
     }
   }
 

@@ -20,7 +20,7 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/jobid/JobId.h"
 #include "glite/wms/common/logger/logstream.h"

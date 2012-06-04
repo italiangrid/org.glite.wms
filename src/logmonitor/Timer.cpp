@@ -25,7 +25,7 @@ limitations under the License. */
 
 #include <boost/lexical_cast.hpp>
 
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -89,21 +89,14 @@ const char   *TimeoutEvent::te_s_Size = "Size", *TimeoutEvent::te_s_NumPids = "N
 const char   *TimeoutEvent::te_s_Message = "Message", *TimeoutEvent::te_s_Info = "Info";
 const char   *TimeoutEvent::te_s_RmContact = "RmContact", *TimeoutEvent::te_s_JmContact = "JmContact";
 const char   *TimeoutEvent::te_s_RestartableJM = "RestartableJM", *TimeoutEvent::te_s_CheckPointed = "CheckPointed";
-#if CONDORG_AT_LEAST(6,5,3)
   const char   *TimeoutEvent::te_s_DaemonName = "DaemonName", *TimeoutEvent::te_s_ErrorStr = "ErrorText"; 
   const char   *TimeoutEvent::te_s_CriticalError = "CriticalError";
   const char   *TimeoutEvent::te_s_ReasonCode = "ReasonCode", *TimeoutEvent::te_s_ReasonSubCode = "ReasonSubCode";
   const char   *TimeoutEvent::te_s_UserNotes = "UserNotes";
-#endif
-#if CONDORG_AT_LEAST(6,7,0)
   const char   *TimeoutEvent::te_s_StartdAddr = "StartdAddr", *TimeoutEvent::te_s_StartdName = "StartdName";
   const char   *TimeoutEvent::te_s_StarterAddr = "StartesAddr", *TimeoutEvent::te_s_DisconnReason = "DisconnReason";
   const char   *TimeoutEvent::te_s_NoReconnReason = "NoReconnReason", *TimeoutEvent::te_s_CanReconn = "CanReconn";
-#endif
-#if CONDORG_AT_LEAST(6,7,14)
   const char   *TimeoutEvent::te_s_ResourceName= "GridResource", *TimeoutEvent::te_s_JobId = "GridJobId";
-#endif
-
 
 namespace {
 
@@ -196,7 +189,7 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
     switch( this->te_event->eventNumber ) {
     case ULOG_SUBMIT: {
       SubmitEvent    *sev = dynamic_cast<SubmitEvent *>( this->te_event.get() );
-      NullString      host( sev->submitHost );
+      NullString      host(sev->getSubmitHost());
 
       this->te_classad->InsertAttr( te_s_SubmitHost, host );
       if( sev->submitEventLogNotes ) {
@@ -204,18 +197,16 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
 
 	this->te_classad->InsertAttr( te_s_LogNotes, lnotes );
       }
-#if CONDORG_AT_LEAST(6,5,3)
       if( sev->submitEventUserNotes ) {
 	NullString    unotes( sev->submitEventUserNotes );
 	
 	this->te_classad->InsertAttr( te_s_UserNotes, unotes );
       }
-#endif
       break;
     }
     case ULOG_EXECUTE: {
       ExecuteEvent   *eev = dynamic_cast<ExecuteEvent *>( this->te_event.get() );
-      NullString      host( eev->executeHost );
+      NullString      host(eev->getExecuteHost());
 
       this->te_classad->InsertAttr( te_s_ExecuteHost, host );
 
@@ -275,8 +266,8 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
     }
     case ULOG_IMAGE_SIZE: {
       JobImageSizeEvent   *jisev = dynamic_cast<JobImageSizeEvent *>( this->te_event.get() );
-
-      this->te_classad->InsertAttr( te_s_Size, jisev->size );
+      int size = jisev->image_size_kb;
+      this->te_classad->InsertAttr(te_s_Size, size);
 
       break;
     }
@@ -319,11 +310,8 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
       NullString      reason( jhev->getReason() );
 
       this->te_classad->InsertAttr( te_s_Reason, reason );
-#if CONDORG_AT_LEAST(6,5,3)
       this->te_classad->InsertAttr( te_s_ReasonCode, jhev->getReasonCode() );
       this->te_classad->InsertAttr( te_s_ReasonSubCode, jhev->getReasonSubCode() );
-#endif
-
 
       break;
     }
@@ -337,7 +325,7 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
     }
     case ULOG_NODE_EXECUTE: {
       NodeExecuteEvent    *neev = dynamic_cast<NodeExecuteEvent *>( this->te_event.get() );
-      NullString           host( neev->executeHost );
+      NullString           host(neev->getExecuteHost());
 
       this->te_classad->InsertAttr( te_s_ExecuteHost, host );
       this->te_classad->InsertAttr( te_s_Node, neev->node );
@@ -407,7 +395,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
 
       break;
     }
-#if CONDORG_AT_LEAST(6,5,3)
     case ULOG_REMOTE_ERROR: {
       RemoteErrorEvent          *reev = dynamic_cast<RemoteErrorEvent *>( this->te_event.get() );
       NullString                 exeHost( reev->getExecuteHost() );
@@ -421,8 +408,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
 
       break;
     }
-#endif
-#if CONDORG_AT_LEAST(6,7,0) 
     case ULOG_JOB_DISCONNECTED: {
       JobDisconnectedEvent     *jdcev = dynamic_cast<JobDisconnectedEvent *>( this->te_event.get() );
       NullString                startdAddr( jdcev->getStartdAddr() );
@@ -460,8 +445,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
 
       break;
     }
-#endif
-#if CONDORG_AT_LEAST(6,7,14)
     case ULOG_GRID_SUBMIT: {
       GridSubmitEvent     *gsev = dynamic_cast<GridSubmitEvent *>( this->te_event.get() );
       NullString           resourceName( gsev->resourceName ), jobId( gsev->jobId );
@@ -487,7 +470,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
 
       break;
     }
-#endif // 6.7.14 and beyond
     } 
   }
   return this->te_classad.get();
@@ -520,15 +502,12 @@ ULogEvent *TimeoutEvent::to_event( void )
       SubmitEvent   *sev = dynamic_cast<SubmitEvent *>( this->te_event.get() );
 
       this->te_classad->EvaluateAttrString( te_s_SubmitHost, sval );
-      strncpy( sev->submitHost, sval.c_str(), 128 );
+      sev->setSubmitHost(myStrdup(sval.substr(0, 128)));
 
       if( this->te_classad->EvaluateAttrString(te_s_LogNotes, sval) )
 	sev->submitEventLogNotes = myStrdup( sval );
-#if CONDORG_AT_LEAST(6,5,3)
       if( this->te_classad->EvaluateAttrString(te_s_UserNotes, sval) )
 	sev->submitEventUserNotes = myStrdup( sval );
-#endif
-
 
       break;
     }
@@ -536,7 +515,7 @@ ULogEvent *TimeoutEvent::to_event( void )
       ExecuteEvent   *eev = dynamic_cast<ExecuteEvent *>( this->te_event.get() );
 
       this->te_classad->EvaluateAttrString( te_s_ExecuteHost, sval );
-      strncpy( eev->executeHost, sval.c_str(), 128 );
+      eev->setExecuteHost(myStrdup(sval.substr(0, 128)));
 
       break;
     }
@@ -612,7 +591,8 @@ ULogEvent *TimeoutEvent::to_event( void )
     case ULOG_IMAGE_SIZE: {
       JobImageSizeEvent   *jisev = dynamic_cast<JobImageSizeEvent *>( this->te_event.get() );
 
-      this->te_classad->EvaluateAttrNumber( te_s_Size, jisev->size );
+      int size = jisev->image_size_kb;
+      this->te_classad->EvaluateAttrNumber(te_s_Size, size);
 
       break;
     }
@@ -656,12 +636,10 @@ ULogEvent *TimeoutEvent::to_event( void )
 
       this->te_classad->EvaluateAttrString( te_s_Reason, sval );
       jhev->setReason( myStrdup(sval) );
-#if CONDORG_AT_LEAST(6,5,3)
       this->te_classad->EvaluateAttrNumber( te_s_ReasonCode, ival );
       jhev->setReasonCode( ival );
       this->te_classad->EvaluateAttrNumber( te_s_ReasonSubCode, ival );
       jhev->setReasonSubCode( ival );
-#endif
 
       break;
     }
@@ -679,7 +657,7 @@ ULogEvent *TimeoutEvent::to_event( void )
       this->te_classad->EvaluateAttrNumber( te_s_Node, neev->node );
 
       this->te_classad->EvaluateAttrString( te_s_ExecuteHost, sval );
-      strncpy( neev->executeHost, sval.c_str(), 128 );
+      neev->setExecuteHost(myStrdup(sval.substr(0, 128)));
 
       break;
     }
@@ -757,7 +735,6 @@ ULogEvent *TimeoutEvent::to_event( void )
 
       break;
     }
-#if CONDORG_AT_LEAST(6,5,3)
     case ULOG_REMOTE_ERROR: {
       bool                     bval;
       RemoteErrorEvent        *reev = dynamic_cast<RemoteErrorEvent *>( this->te_event.get() );
@@ -773,8 +750,6 @@ ULogEvent *TimeoutEvent::to_event( void )
      
       break;
     }
-#endif
-#if CONDORG_AT_LEAST(6,7,0) 
     case ULOG_JOB_DISCONNECTED: {
       JobDisconnectedEvent     *jdcev = dynamic_cast<JobDisconnectedEvent *>( this->te_event.get() );
                                                                                                                        
@@ -811,8 +786,6 @@ ULogEvent *TimeoutEvent::to_event( void )
 
       break;
     }
-#endif
-#if CONDORG_AT_LEAST(6,7,14)
     case ULOG_GRID_SUBMIT: {
       GridSubmitEvent    *gsev = dynamic_cast<GridSubmitEvent *>( this->te_event.get() );
 
@@ -840,7 +813,6 @@ ULogEvent *TimeoutEvent::to_event( void )
 
       break;
     }
-#endif // 6.7.14 and beyond
     }
   }
 

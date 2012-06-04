@@ -16,13 +16,11 @@ limitations under the License. */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-// This event can be defined only for Condor versions >= 6.7.14
-#if CONDORG_AT_LEAST(6,7,14)
 
 #include <cstdio>
 #include <ctime>
 
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -63,5 +61,3 @@ void EventGridResourceDown::process_event( void )
 }} // namespace processer, logmonitor
 
 } JOBCONTROL_NAMESPACE_END
-
-#endif // Condor v6.7.14 and beyond.

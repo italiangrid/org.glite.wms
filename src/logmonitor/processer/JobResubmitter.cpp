@@ -17,9 +17,7 @@
 #include <config.h>
 #endif
 
-#if CONDORG_AT_LEAST(6,5,3) 
 #include <globus_gram_protocol_constants.h>
-#endif
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -33,7 +31,7 @@
 #include "logmonitor/JobWrapperOutputParser.h"
 
 #include <boost/filesystem/path.hpp>
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "JobResubmitter.h"
 
@@ -82,7 +80,6 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
 		<< "Last known status = " << laststatus << endl;
 
   switch( laststatus ) {
-#if CONDORG_AT_LEAST(6,5,3) 
     case GLOBUS_GRAM_PROTOCOL_ERROR_USER_PROXY_EXPIRED:
       elog::cedglog << logger::setlevel( logger::warning ) << "Job has an expiring proxy." << endl
 		    << logger::setlevel( logger::info ) << "Must not resubmit, but abort." << endl
@@ -93,7 +90,6 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
       jccommon::ProxyUnregistrar( edgid ).unregister();
 
       break;
-#endif
   case jccommon::no_resubmission:
     elog::cedglog << logger::setlevel( logger::warning ) << "Job has been cancelled by the user." << endl
 		  << "Don't resubmit it." << endl;

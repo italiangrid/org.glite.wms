@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -93,7 +93,7 @@ void EventSubmit::process_event( void )
   static boost::regex  jobexpr( "^\\s*\\((.*)\\) \\((.*)\\) \\(([01])\\)$" );
 
   elog::cedglog << logger::setlevel( logger::info ) << "Got job submit event." << endl
-		<< "Submitted job " << this->ei_condor << " coming from host: " << this->es_event->submitHost << endl;
+		<< "Submitted job " << this->ei_condor << " coming from host: " << this->es_event->getSubmitHost() << endl;
 
   if( boost::regex_match(notes, match_pieces, jobexpr) ) { // The event notes are in the EDG format.
     edgid.assign( match_pieces[1].first, match_pieces[1].second );

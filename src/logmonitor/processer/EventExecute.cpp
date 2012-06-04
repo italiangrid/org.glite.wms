@@ -20,7 +20,7 @@ limitations under the License. */
 #include <cstdio>
 #include <ctime>
 #include <config.h>
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -51,7 +51,7 @@ void EventExecute::process_event( void )
   logger::StatePusher                    pusher( elog::cedglog, "EventExecute::process_event()" );
 
   elog::cedglog << logger::setlevel( logger::info ) << "Got job executing event." << endl
-		<< "For cluster " << this->ei_condor << " at host " << this->ee_event->executeHost << endl;
+		<< "For cluster " << this->ei_condor << " at host " << this->ee_event->getExecuteHost() << endl;
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
 
@@ -65,7 +65,7 @@ void EventExecute::process_event( void )
       } else {
         this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
       }
-    this->ei_data->md_logger->execute_event( this->ee_event->executeHost );
+    this->ei_data->md_logger->execute_event(this->ee_event->getExecuteHost());
     
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ee_event->eventNumber );
   }
