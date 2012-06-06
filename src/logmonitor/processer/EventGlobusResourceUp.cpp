@@ -20,7 +20,7 @@ limitations under the License. */
 #include <cstdio>
 #include <ctime>
 #include <config.h>
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"

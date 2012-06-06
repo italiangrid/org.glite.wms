@@ -39,7 +39,7 @@
 namespace fs = boost::filesystem;
 
 #include <classad_distribution.h>
-#include <user_log.c++.h>
+#include <condor/user_log.c++.h>
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
