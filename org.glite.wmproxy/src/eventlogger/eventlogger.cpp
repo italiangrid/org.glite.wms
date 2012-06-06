@@ -340,9 +340,10 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
          register_result = edg_wll_RegisterJobProxy(ctx_, jid->c_jobid(),
             EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
          if (register_result) {
-            edglog(severe)
-               <<error_message("Register job failed\nedg_wll_RegisterJobProxy",
-                                  register_result)<<endl;
+            char *et, *ed;
+            edg_wll_Error(ctx_, &et, &ed);
+            edglog(severe) << "edg_wll_RegisterJobProxy returned: " << et <<
+              " (" << ed << ')' << endl;
             randomsleep();
          }
       }
@@ -352,8 +353,10 @@ WMPEventLogger::registerJob(JobAd *jad, glite::jobid::JobId const* const jid, co
          register_result = edg_wll_RegisterJobSync(ctx_, jid->c_jobid(),
             EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
          if (register_result) {
-            edglog(severe)<<error_message("Register job failed\n"
-               "edg_wll_RegisterJobSync", register_result)<<endl;
+            char *et, *ed;
+            edg_wll_Error(ctx_, &et, &ed);
+            edglog(severe) << "edg_wll_RegisterJobProxy returned: " << et <<
+              " (" << ed << ')' << endl;
             randomsleep();
          }
       }
@@ -407,7 +410,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
          if(edg_wll_RegisterSubjobsProxy(ctx_, id_->c_jobid(), (const char **)jdls_char, server.c_str(), jids_id)) {
             char *et, *ed;
             edg_wll_Error(ctx_,&et,&ed);
-            edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobsProxy returned:" << et << '(' << ed << "), for jobid: " << id_->toString() << endl;
+            edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobsProxy returned:" << et << " (" << ed << "), for jobid: " << id_->toString() << endl;
             randomsleep();
          } else {
             register_success = true;
@@ -420,7 +423,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
          if (edg_wll_RegisterSubjobs(ctx_, id_->c_jobid(), jdls_char, server.c_str(), jids_id)) {
             char *et, *ed;
             edg_wll_Error(ctx_, &et,&ed);
-            edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobs returned:" << et << '(' << ed << "), for jobid: " << id_->toString() << endl;
+            edglog(severe)<<"Register DAG subjobs failed, edg_wll_RegisterSubjobs returned:" << et << " (" << ed << "), for jobid: " << id_->toString() << endl;
             randomsleep();
          } else {
             register_success = true;
