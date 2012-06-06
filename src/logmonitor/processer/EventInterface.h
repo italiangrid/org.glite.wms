@@ -43,7 +43,7 @@ protected:
   MonitorData      *ei_data;
   std::string       ei_condor;
 
-  static const std::string  ei_s_edgideq, ei_s_subnodeof, ei_s_notsub, ei_s_dagfailed, ei_s_dagideq;
+  static const std::string  ei_s_edgideq, ei_s_subnodeof, ei_s_notsub;
   static const std::string  ei_s_joberror, ei_s_jobwrapfail;
   static const std::string  ei_s_errremcorr, ei_s_failedinsertion;
 

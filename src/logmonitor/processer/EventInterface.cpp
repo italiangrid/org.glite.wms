@@ -31,10 +31,6 @@ namespace logmonitor { namespace processer {
 
 const string      EventInterface::ei_s_edgideq( "Job id = " ), EventInterface::ei_s_subnodeof( "Sub job of DAG: " );
 const string      EventInterface::ei_s_notsub( "Job seems to be not submitted by the GRID." );
-const string      EventInterface::ei_s_dagfailed( "DAG failed as one of the node failed.\n"
-						  "DAGMan was not able to intercept this status as of the bug in the POST script.\n"
-						  "Ask Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it> for more details." );
-const string      EventInterface::ei_s_dagideq( "DAG id = " );
 const string      EventInterface::ei_s_joberror( "Job got an error while in the CondorG queue." );
 const string      EventInterface::ei_s_jobwrapfail( "Failure while executing job wrapper" );
 const string      EventInterface::ei_s_errremcorr( "Error removing CondorId <-> JobId correspondance." );
