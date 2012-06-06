@@ -64,7 +64,6 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 		<< "Return value = " << this->et_event->returnValue << endl;
   
   this->ei_data->md_timer->remove_all_timeouts( this->et_event->cluster ); // Remove any installed timeout for this job.
-
   this->ei_data->md_sizefile->decrement_pending();
 
   // why aborting a terminated job with a previous error? better getting the job home, errors do not
@@ -157,9 +156,10 @@ void EventTerminated::process_event( void )
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
 
-  if( position == this->ei_data->md_container->end() )
+  if (position == this->ei_data->md_container->end()) {
     elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
-  else {
+  } else {
+    this->processNormalJob(position);
     if( remove && this->ei_data->md_container->remove(position) ) {
       elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_errremcorr << endl
 		    << "For job: " << position->edg_id() << endl
