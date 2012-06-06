@@ -547,7 +547,7 @@ regist(
       }
       ret = wmplogger.registerJob(jad, jid.get(), wmputilities::getJobJDLToStartPath(*jid, true));
       lbaddresses.erase(std::find(lbaddresses.begin(), lbaddresses.end(), lbaddress));
-   } while (!jad->hasAttribute(JDL::LB_ADDRESS) && !ret && lbaddresses.size()>0);
+   } while (!jad->hasAttribute(JDL::LB_ADDRESS) && !ret && lbaddresses.size() > 0);
 
    if (!ret) {
       throw LBException(__FILE__, __LINE__, "regist()",
@@ -1392,10 +1392,7 @@ submit(
          }
          return;
       }
-// ==========   END TYPE is a JOB ==========
-   } else {
-// ==========   TYPE is a DAG   ==========
-
+   } else { // type is a DAG
       WMPExpDagAd dag (jdl);
       dag.setLocalAccess(false);
 
@@ -1592,11 +1589,8 @@ submit(
                                            "submit()", wmputilities::WMS_JDL_PARSING,msg);
             }
             dag.replaceNode(dag_nodes[i], nodead);
-         }
-// END Iterate over DAG children
+         } // iterate over DAG children
 
-         //TBD Change getSubmissionStrings() with a better method when coded??
-         //Done here, Not done during register any more.
          dag.getSubmissionStrings();
          if (maxInputSandboxFiles > 0) {
             for (unsigned int i = 0; i < size; ++i) {
