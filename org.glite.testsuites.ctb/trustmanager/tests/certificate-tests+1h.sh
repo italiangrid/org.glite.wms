@@ -8,7 +8,13 @@
 #tomcat host and port
 export HOST=localhost:8443
 #tomcat service (for service xxxx restart)
-export TOMCAT_SERVICE=tomcat5
+rpm -qa |grep tomcat5
+RES=$?
+if [ $RES = 0 ]; then
+    export TOMCAT_SERVICE=tomcat5
+else
+    export TOMCAT_SERVICE=tomcat6
+fi
 #end of config variables
 
 SUCCESS=1
@@ -52,11 +58,18 @@ function test_cert() {
  CERT=$2
  OUTCOME=$3
 
- if [ x"$4" != x ] ;  then 
-  CA_CMD="-CAfile $4"
+ if [ x"$4" != x ] ;  then
+  CA_CMD="--cacert $4"
+ else
+  CA_CMD=""
  fi
 
- openssl s_client -key $KEY -cert $CERT -CApath /etc/grid-security/certificates $CA_CMD -connect $HOST < input.txt  2>/dev/null |grep "(ok)" 
+
+echo "curl -v -s -S --cert $CERT --key $KEY $CA_CMD --capath /etc/grid-security/certificates/ https://${HOST}/trustmanager-test/services/EchoServ\
+ice?method=getAttributes|&grep -v \"failed to load .* from CURLOPT_CAPATH\""
+curl -v -s -S --cert $CERT --key $KEY $CA_CMD --capath /etc/grid-security/certificates/ https://${HOST}/trustmanager-test/services/EchoServ\
+ice?method=getAttributes | grep -v "failed to load .* from CURLOPT_CAPATH"|grep "Your final certificate subject is"
+# openssl s_client -key $KEY -cert $CERT -CApath /etc/grid-security/certificates $CA_CMD -connect $HOST < input.txt  2>/dev/null |grep "(ok)" 
  RES=$?
 
  if [ $OUTCOME -eq $SUCCESS ] ; then 

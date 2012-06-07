@@ -92,6 +92,16 @@ cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_cl
 
 
 echo "Copying trustmanager WAR to tomcat"
-cp /usr/share/java/trustmanager-test.war /var/lib/tomcat5/webapps/
+rpm -qa |grep tomcat5
+RES=$?
+if [ $RES = 0 ]; then
+    export TOMCAT_SERVICE=tomcat5
+else
+    export TOMCAT_SERVICE=tomcat6
+fi
+
+#tomcat webapp dir
+export TOMCAT_WEBAPP=/var/lib/${TOMCAT_SERVICE}/webapps/
+cp /usr/share/java/trustmanager-test.war ${TOMCAT_WEBAPP}
 
 echo "Copying done, please restart tomcat"

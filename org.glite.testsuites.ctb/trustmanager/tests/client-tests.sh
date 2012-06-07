@@ -9,15 +9,22 @@
 
 #config variables
 #tomcat host and port
-export HOST=$HOSTNAME:8443
+export HOST=`hostname -f`:8443
 #tomcat host certificate
 export TOMCAT_CERT=/etc/grid-security/tomcat-cert.pem
 #tomcat host key
 export TOMCAT_KEY=/etc/grid-security/tomcat-key.pem
 #tomcat service name (for restart)
-export TOMCAT_SERVICE=tomcat5
+rpm -qa |grep tomcat5
+RES=$?
+if [ $RES = 0 ]; then
+    export TOMCAT_SERVICE=tomcat5
+else
+    export TOMCAT_SERVICE=tomcat6
+fi
+
 #tomcat webapp dir
-export TOMCAT_WEBAPP=/var/lib/tomcat5/webapps/
+export TOMCAT_WEBAPP=/var/lib/${TOMCAT_SERVICE}/webapps/
 #end of config variables
 
 SUCCESS=1

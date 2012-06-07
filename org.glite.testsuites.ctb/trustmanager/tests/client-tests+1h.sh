@@ -12,7 +12,17 @@
 export HOST=localhost:8443
 #tomcat host certificate
 #tomcat webapp dir
-export TOMCAT_WEBAPP=/var/lib/tomcat5/webapps/
+rpm -qa |grep tomcat5
+RES=$?
+if [ $RES = 0 ]; then
+    export TOMCAT_SERVICE=tomcat5
+else
+    export TOMCAT_SERVICE=tomcat6
+fi
+
+#tomcat webapp dir
+export TOMCAT_WEBAPP=/var/lib/${TOMCAT_SERVICE}/webapps/
+
 export WEBAPPNAME=trustmanager-test
 #end of config variables
 
