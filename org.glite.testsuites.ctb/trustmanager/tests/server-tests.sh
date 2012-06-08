@@ -9,7 +9,7 @@
 
 #config variables
 #tomcat host and port
-export HOST=$HOSTNAME:8443
+export HOST=`hostname -f`:8443
 export WEBAPPNAME=trustmanager-test
 #end of config variables
 
@@ -87,7 +87,9 @@ rm $getfile
 
 myecho "Checking that the server reports the correct information for a normal certificate"
 
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv  https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
+echo "curl -v -s -S --cert $certdir/trusted-certs/trusted_client.cert --key $certdir/trusted-certs/trusted_client_nopass.priv --capath /etc/grid-security/certificates/ https://$HOST/$WEBAPPNAME/servlet/EchoSecurity >$getfile"
+curl -v -s -S --cert $certdir/trusted-certs/trusted_client.cert --key $certdir/trusted-certs/trusted_client_nopass.priv --capath /etc/grid-security/certificates/ https://$HOST/$WEBAPPNAME/servlet/EchoSecurity >$getfile
+#wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv  https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
 
 if [ $? -ne 0 ] ; then
  myecho "Error getting certificate information from server"
@@ -138,7 +140,9 @@ rm $getfile
 
 myecho "Checking that the server reports the correct information for a proxy certificate"
 
-wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.proxy.cert --private-key $certdir/trusted-certs/trusted_client.proxy_nopass.priv --ca-certificate $certdir/trusted-certs/trusted_client.cert https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
+curl -v -s -S --cert $certdir/trusted-certs/trusted_client.proxy.cert --key $certdir/trusted-certs/trusted_client.proxy_nopass.priv --cacert $certdir/trusted-certs/trusted_client.cert --capath /etc/grid-security/certificates/ https://$HOST/$WEBAPPNAME/servlet/EchoSecurity >$getfile
+
+#wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.proxy.cert --private-key $certdir/trusted-certs/trusted_client.proxy_nopass.priv --ca-certificate $certdir/trusted-certs/trusted_client.cert https://$HOST/$WEBAPPNAME/servlet/EchoSecurity -O  $getfile
 
 if [ $? -ne 0 ] ; then
  myecho "Error getting proxy certificate information from server"

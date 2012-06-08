@@ -14,7 +14,7 @@ export HOST=localhost:8443
 #tomcat webapp dir
 rpm -qa |grep tomcat5
 RES=$?
-if [ $RES = 0 ]; then
+if [ $RES -eq 0 ]; then
     export TOMCAT_SERVICE=tomcat5
 else
     export TOMCAT_SERVICE=tomcat6
@@ -37,6 +37,16 @@ function myexit() {
 
   if [ -f /etc/grid-security/certificates/$ca_hash.0.bak  ]  ; then
    mv /etc/grid-security/certificates/$ca_hash.0.bak /etc/grid-security/certificates/$ca_hash.0
+  fi
+  if [ $OPENSSL1 -eq 0 ]; then
+
+      if [ -f /etc/grid-security/certificates/$ca_hash2.r0.bak  ]  ; then
+	  mv /etc/grid-security/certificates/$ca_hash2.r0.bak /etc/grid-security/certificates/$ca_hash2.r0
+      fi
+      
+      if [ -f /etc/grid-security/certificates/$ca_hash2.0.bak  ]  ; then
+	  mv /etc/grid-security/certificates/$ca_hash2.0.bak /etc/grid-security/certificates/$ca_hash2.0
+      fi
   fi
 
   if [ $1 -ne 0 ]; then
@@ -92,7 +102,10 @@ if [ x"$certdir" == x ]  ; then
 fi
 certdir=$(readlink -f $certdir)
 
-ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -hash`
+ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash`
+ca_hash2=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash_old`
+OPENSSL1=$?
+
 
 #Check that the CRL has expired
 exp=`openssl crl -in /etc/grid-security/certificates/$ca_hash.r0 -noout -nextupdate | cut -f2 -d = `
@@ -152,12 +165,24 @@ if [ $? -ne 0 ] ; then
     myexit 1
 fi
 
+if [ $OPENSSL1 -eq 0 ]; then
+    echo openssl version ">=" 1.0.0
+    mv /etc/grid-security/certificates/$ca_hash2.r0 /etc/grid-security/certificates/$ca_hash2.r0.bak
+    if [ $? -ne 0 ] ; then
+	myecho "deleting of the CRL of CA $ca_hash failed."
+	myexit 1
+    fi
+fi
+
 myecho "Testing client against CA without CRL" 
 CMD="java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/$WEBAPPNAME/services/EchoService"
 $CMD  |grep "CRL checking failed, CRL loading had failed"
 
 if [ $? -ne 0 ] ; then 
  myecho "Succesfully connected to service even if the CRL of CA $ca_hash was missing."  
+ if [ $OPENSSL1 -eq 0 ]; then  
+     myecho "Also CRL for CA $ca_hash2 was missing"
+ fi
  myecho "command was:"
  echo $CMD
  myexit 1
@@ -168,6 +193,10 @@ myecho "Connection correctly failed when testing against a CA without CRL"
 myecho "Removing the CA file"
 
 mv /etc/grid-security/certificates/$ca_hash.0 /etc/grid-security/certificates/$ca_hash.0.bak 
+if [ $OPENSSL1 -eq 0 ];then
+    mv /etc/grid-security/certificates/$ca_hash2.0 /etc/grid-security/certificates/$ca_hash2.0.bak
+fi
+
 
 myecho "Testing client against untrusted CA" 
 java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/$WEBAPPNAME/services/EchoService  |grep "peer not authenticated"

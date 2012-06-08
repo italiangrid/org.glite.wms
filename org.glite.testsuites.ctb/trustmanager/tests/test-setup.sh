@@ -74,9 +74,14 @@ echo "Copying CA certificates"
 cp $certdir/grid-security/certificates/* /etc/grid-security/certificates/
 
 #copy the generated crl
-ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -hash`
-cp $certdir/trusted-ca/trusted.crl /etc/grid-security/certificates/$ca_hash.r0
+ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash`
+ca_hash2=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash_old`
+OPENSSL1=$?
 
+cp $certdir/trusted-ca/trusted.crl /etc/grid-security/certificates/$ca_hash.r0
+if [ $OPENSSL1 -eq 0 ]; then
+    cp $certdir/trusted-ca/trusted.crl /etc/grid-security/certificates/$ca_hash2.r0
+fi
 
 echo "Removing passphrases from certificates"
 while read LINE; do 
@@ -104,4 +109,6 @@ fi
 export TOMCAT_WEBAPP=/var/lib/${TOMCAT_SERVICE}/webapps/
 cp /usr/share/java/trustmanager-test.war ${TOMCAT_WEBAPP}
 
-echo "Copying done, please restart tomcat"
+echo "Copying done"
+
+/sbin/service ${TOMCAT_SERVICE} restart

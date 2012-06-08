@@ -6,7 +6,8 @@
 
 #config variables
 #tomcat host and port
-export HOST=localhost:8443
+export HOST=`hostname -f`:8443
+echo host is $HOST
 #tomcat service (for service xxxx restart)
 rpm -qa |grep tomcat5
 RES=$?
@@ -110,7 +111,9 @@ if [ x"$certdir" == x ] ; then
  exit 1
 fi
 
-ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -hash`
+ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash`
+ca_hash2=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -subject_hash_old`
+OPENSSL1=$?
 
 
 #Check that the CRL has expired
@@ -129,6 +132,9 @@ myecho "Test passed"
 echo ""
 myecho "Moving CRL"
 mv /etc/grid-security/certificates/$ca_hash.r0 /etc/grid-security/certificates/$ca_hash.r0.bak
+if [ $OPENSSL1 -eq 0 ]; then
+    mv /etc/grid-security/certificates/$ca_hash2.r0 /etc/grid-security/certificates/$ca_hash2.r0.bak
+fi
 
 myecho "Restarting tomcat"
 /sbin/service $TOMCAT_SERVICE restart
@@ -140,6 +146,9 @@ test_cert $certdir/trusted-certs/trusted_client_nopass.priv $certdir/trusted-cer
 myecho "Test passed"
 myecho "Moving CRL back"
 mv /etc/grid-security/certificates/$ca_hash.r0.bak /etc/grid-security/certificates/$ca_hash.r0
+if [ $OPENSSL1 -eq 0 ]; then
+    mv /etc/grid-security/certificates/$ca_hash2.r0.bak /etc/grid-security/certificates/$ca_hash2.r0
+fi
 
 myecho "Restarting tomcat"
 /sbin/service $TOMCAT_SERVICE restart
