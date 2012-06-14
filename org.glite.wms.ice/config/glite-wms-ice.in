@@ -16,7 +16,8 @@ this_script_name=$0
 
 program_name=glite-wms-ice-safe
 binpath=${WMS_LOCATION_BIN}/${program_name}
-pid_file=/var/run/${program_name}.pid
+#pid_file=/var/run/${program_name}.pid
+pid_file=${WMS_LOCATION_VAR}/run/${program_name}.pid
 
 running()
 {
@@ -52,6 +53,7 @@ start()
     if running; then
         echo "ok (already running)"
     else
+	mkdir -p ${WMS_LOCATION_VAR}/run/
         rm -f ${pid_file}
 	touch ${pid_file}
 	#chown ${GLITE_USER}:${GLITE_USER} ${pid_file}
@@ -64,7 +66,7 @@ start()
             LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/log4cpp/lib/
         fi
         export LD_LIBRARY_PATH
-        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon /tmp/icepid >> ${err_logfile} 2>&1"
+        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
 	local pid=`pidof ${binpath} 2>/dev/null`
 	echo $pid > ${pid_file}
 
