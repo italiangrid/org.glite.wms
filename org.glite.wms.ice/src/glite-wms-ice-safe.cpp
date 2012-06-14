@@ -127,16 +127,16 @@ int main( int argc, char *argv[]) {
   string consolelog = logpath + "/ice_console.log";
 
   if ( vm.count("daemon") ) {
-    ofstream pid_file(opt_pid_file.c_str());
+    /*ofstream pid_file(opt_pid_file.c_str());
     if (!pid_file) {
       cerr << "the pid file " << opt_pid_file << " is not writable\n";
       return -1;
-    }
+    }*/
     if (daemon(0, 0)) {
-      cerr << "cannot become daemon (errno = "<< errno << ")\n";
+      cerr << "cannot become daemon (errno = "<< errno << "): " << strerror(errno) << "\n";
       return -1;
     }
-    pid_file << ::getpid();
+    //pid_file << ::getpid();
   }
   
 
