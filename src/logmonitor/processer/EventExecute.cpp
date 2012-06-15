@@ -51,7 +51,7 @@ void EventExecute::process_event( void )
   logger::StatePusher                    pusher( elog::cedglog, "EventExecute::process_event()" );
 
   elog::cedglog << logger::setlevel( logger::info ) << "Got job executing event." << endl
-		<< "For cluster " << this->ei_condor << " at host " << this->ee_event->getExecuteHost() << endl;
+		<< "For cluster " << this->ei_condor << endl;
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
 

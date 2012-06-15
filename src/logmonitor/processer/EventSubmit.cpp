@@ -83,7 +83,7 @@ void EventSubmit::finalProcess( const string &edgid, const string &seqcode )
 
 void EventSubmit::process_event( void )
 {
-  char                 *char_notes( this->es_event->submitEventLogNotes );
+  char                  *char_notes( this->es_event->submitEventLogNotes );
   string                edgid, seqcode, rel, buffer, error, islast;
   string                notes( char_notes ? char_notes : "" );
   logger::StatePusher   pusher( elog::cedglog, "EventSubmit::process_event()" );
@@ -91,9 +91,8 @@ void EventSubmit::process_event( void )
   jccommon::IdContainer::iterator   position;
 
   static boost::regex  jobexpr( "^\\s*\\((.*)\\) \\((.*)\\) \\(([01])\\)$" );
-
   elog::cedglog << logger::setlevel( logger::info ) << "Got job submit event." << endl
-		<< "Submitted job " << this->ei_condor << " coming from host: " << this->es_event->getSubmitHost() << endl;
+		<< "Submitted job " << this->ei_condor << endl;
 
   if( boost::regex_match(notes, match_pieces, jobexpr) ) { // The event notes are in the EDG format.
     edgid.assign( match_pieces[1].first, match_pieces[1].second );
@@ -104,8 +103,8 @@ void EventSubmit::process_event( void )
     this->finalProcess( edgid, seqcode );
   }
   else
-    elog::cedglog << logger::setlevel( logger::warning ) << "Cluster " << this->ei_condor << " does not seem a GRID job." << endl
-		  << logger::setlevel( logger::info ) << "Event notes = \"" << notes << "\"." << endl;
+    elog::cedglog << logger::setlevel( logger::warning ) << "Cluster "
+      << this->ei_condor << " does not seem a GRID job." << endl;
 
   return;
 }

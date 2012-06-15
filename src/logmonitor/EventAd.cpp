@@ -124,7 +124,7 @@ Rusage classad_to_rusage( const classad::ClassAd *ad )
 
 const char   *EventAd::ea_s_EventTime = "EventTime", *EventAd::ea_s_EventNumber = "EventNumber";
 const char   *EventAd::ea_s_Cluster = "Cluster", *EventAd::ea_s_Proc = "Proc", *EventAd::ea_s_SubProc = "SubProc";
-const char   *EventAd::ea_s_SubmitHost = "SubmitHost", *EventAd::ea_s_LogNotes = "LogNotes";
+const char   *EventAd::ea_s_LogNotes = "LogNotes";
 const char   *EventAd::ea_s_ExecuteHost = "ExecuteHost";
 const char   *EventAd::ea_s_ExecErrorType = "ExecErrorType", *EventAd::ea_s_Node = "Node";
 const char   *EventAd::ea_s_RunLocalRusage = "RunLocalRusage", *EventAd::ea_s_RunRemoteRusage = "RunRemoteRusage";
@@ -176,9 +176,6 @@ EventAd &EventAd::from_event( const ULogEvent *const_event )
   switch( event->eventNumber ) {
   case ULOG_SUBMIT: {
     SubmitEvent    *sev = dynamic_cast<SubmitEvent *>( event );
-    NullString      host(sev->getSubmitHost());
-
-    this->ea_ad.InsertAttr( ea_s_SubmitHost, host );
 
     if( sev->submitEventLogNotes ) {
       NullString    lnotes( sev->submitEventLogNotes );
@@ -195,11 +192,6 @@ EventAd &EventAd::from_event( const ULogEvent *const_event )
     break;
   }
   case ULOG_EXECUTE: {
-    ExecuteEvent   *eev = dynamic_cast<ExecuteEvent *>( event );
-    NullString      host( eev->getExecuteHost() );
-
-    this->ea_ad.InsertAttr( ea_s_ExecuteHost, host );
-
     break;
   }
   case ULOG_EXECUTABLE_ERROR: {
@@ -347,9 +339,6 @@ ULogEvent *EventAd::create_event( void )
     switch( eventN ) {
     case ULOG_SUBMIT: {
       SubmitEvent   *sev = dynamic_cast<SubmitEvent *>( event.get() );
-
-      this->ea_ad.EvaluateAttrString( ea_s_SubmitHost, string_value );
-      sev->setSubmitHost(string_value.substr(0, 128).c_str());
 
       if( this->ea_ad.EvaluateAttrString(ea_s_LogNotes, string_value) )
 	sev->submitEventLogNotes = local_strdup( string_value );

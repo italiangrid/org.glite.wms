@@ -75,7 +75,7 @@ char *myStrdup( const string &s )
 const char   *TimeoutEvent::te_s_Timeout = "Timeout", *TimeoutEvent::te_s_EventNumber = "EventNumber";
 const char   *TimeoutEvent::te_s_EventTime = "EventTime", *TimeoutEvent::te_s_Cluster = "Cluster";
 const char   *TimeoutEvent::te_s_Proc = "Proc", *TimeoutEvent::te_s_SubProc = "SubProc";
-const char   *TimeoutEvent::te_s_SubmitHost = "SubmitHost", *TimeoutEvent::te_s_LogNotes = "LogNotes";
+const char   *TimeoutEvent::te_s_LogNotes = "LogNotes";
 const char   *TimeoutEvent::te_s_ExecuteHost = "ExecuteHost", *TimeoutEvent::te_s_Node = "Node";
 const char   *TimeoutEvent::te_s_ExecErrorType = "ExecErrorType";
 const char   *TimeoutEvent::te_s_RunLocalRusage = "RunLocalRusage", *TimeoutEvent::te_s_RunRemoteRusage = "RunRemoteRusage";
@@ -189,9 +189,7 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
     switch( this->te_event->eventNumber ) {
     case ULOG_SUBMIT: {
       SubmitEvent    *sev = dynamic_cast<SubmitEvent *>( this->te_event.get() );
-      NullString      host(sev->getSubmitHost());
 
-      this->te_classad->InsertAttr( te_s_SubmitHost, host );
       if( sev->submitEventLogNotes ) {
 	NullString    lnotes( sev->submitEventLogNotes );
 
@@ -205,11 +203,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
       break;
     }
     case ULOG_EXECUTE: {
-      ExecuteEvent   *eev = dynamic_cast<ExecuteEvent *>( this->te_event.get() );
-      NullString      host(eev->getExecuteHost());
-
-      this->te_classad->InsertAttr( te_s_ExecuteHost, host );
-
       break;
     }
     case ULOG_EXECUTABLE_ERROR: {
@@ -325,9 +318,6 @@ classad::ClassAd *TimeoutEvent::to_classad( void )
     }
     case ULOG_NODE_EXECUTE: {
       NodeExecuteEvent    *neev = dynamic_cast<NodeExecuteEvent *>( this->te_event.get() );
-      NullString           host(neev->getExecuteHost());
-
-      this->te_classad->InsertAttr( te_s_ExecuteHost, host );
       this->te_classad->InsertAttr( te_s_Node, neev->node );
 
       break;
@@ -500,9 +490,6 @@ ULogEvent *TimeoutEvent::to_event( void )
     switch( this->te_event->eventNumber ) {
     case ULOG_SUBMIT: {
       SubmitEvent   *sev = dynamic_cast<SubmitEvent *>( this->te_event.get() );
-
-      this->te_classad->EvaluateAttrString( te_s_SubmitHost, sval );
-      sev->setSubmitHost(myStrdup(sval.substr(0, 128)));
 
       if( this->te_classad->EvaluateAttrString(te_s_LogNotes, sval) )
 	sev->submitEventLogNotes = myStrdup( sval );

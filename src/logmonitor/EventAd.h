@@ -46,7 +46,7 @@ private:
   classad::ClassAd      ea_ad;
 
   static const char   *ea_s_EventTime, *ea_s_EventNumber, *ea_s_Cluster;
-  static const char   *ea_s_Proc, *ea_s_SubProc, *ea_s_SubmitHost, *ea_s_LogNotes;
+  static const char   *ea_s_Proc, *ea_s_SubProc, *ea_s_LogNotes;
   static const char   *ea_s_ExecuteHost, *ea_s_ExecErrorType, *ea_s_RunLocalRusage, *ea_s_RunRemoteRusage;
   static const char   *ea_s_TotalLocalRusage, *ea_s_TotalRemoteRusage, *ea_s_CheckPointed, *ea_s_SentBytes, *ea_s_RecvdBytes;
   static const char   *ea_s_Terminate, *ea_s_Normal, *ea_s_ReturnValue, *ea_s_SignalNumber, *ea_s_Reason;

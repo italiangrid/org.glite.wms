@@ -72,7 +72,7 @@ private:
   FileContainer::iterator              te_pointer;
 
   static const char     *te_s_Timeout, *te_s_EventNumber, *te_s_EventTime, *te_s_Cluster, *te_s_Proc, *te_s_SubProc;
-  static const char     *te_s_SubmitHost, *te_s_LogNotes;
+  static const char     *te_s_LogNotes;
   static const char     *te_s_ExecuteHost, *te_s_Node;
   static const char     *te_s_ExecErrorType;
   static const char     *te_s_RunLocalRusage, *te_s_RunRemoteRusage, *te_s_TotalLocalRusage, *te_s_TotalRemoteRusage;
