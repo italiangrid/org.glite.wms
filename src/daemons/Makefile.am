@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5.2.6  2012/06/18 11:58:06  mcecchi
+#       reintroduced id repository in JC. cleanup
+#
 #       Revision 1.17.2.3.4.1.2.5.2.5  2012/02/23 13:38:30  pandreet
 #       Replaced macros with pkg files
 #
@@ -149,7 +152,7 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
-	$(CONDORG_LIBS) \
+	 -L/usr/lib64/condor -lcondorapi -ldl \
 	$(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
@@ -175,7 +178,7 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
-	$(CONDORG_LIBS) \
+	-L/usr/lib64/condor -lcondorapi -ldl \
         $(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)

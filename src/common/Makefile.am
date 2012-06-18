@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3.2.3.2.4  2012/06/18 11:58:06  mcecchi
+#       reintroduced id repository in JC. cleanup
+#
 #       Revision 1.11.2.1.4.3.2.3.2.3  2012/02/15 14:07:48  pandreet
 #       Removed header file
 #
@@ -135,6 +138,7 @@ libglite_wms_jss_common_la_SOURCES = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_WMS_COMMON_UT_UTIL_CFLAGS) \
+	-I/usr/include \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
 

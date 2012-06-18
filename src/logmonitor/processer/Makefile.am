@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6.2.1.4.1.2.2.2.1  2012/06/18 11:58:06  mcecchi
+#       reintroduced id repository in JC. cleanup
+#
 #       Revision 1.6.2.1.4.1.2.2  2010/01/15 12:34:09  mcecchi
 #       bug #48636
 #
@@ -111,6 +114,6 @@ EXTRA_DIST = EventFactory.cpp \
 	SubmitReader.cpp \
 	JobResubmitter.cpp
 
-AM_CPPFLAGS = 
+AM_CPPFLAGS = -I/usr/include
 
 MAINTAINERCLEANFILES = Makefile.in *~

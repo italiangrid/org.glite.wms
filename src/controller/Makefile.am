@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.2.2.3  2012/06/18 11:58:06  mcecchi
+#       reintroduced id repository in JC. cleanup
+#
 #       Revision 1.2.28.2.6.2.2.2  2012/02/10 16:17:07  mcecchi
 #       filelist in isolated JC/LM locations. possible future redesign
 #
@@ -83,11 +86,11 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	JobControllerClientJD.cpp
 
 
-libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)  ../common/libglite_wms_jss_common.la
-
+libglite_wms_jss_controller_la_LIBADD = -L/usr/lib64/condor -lcondorapi -ldl  ../common/libglite_wms_jss_common.la
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
+	-I/usr/include \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \

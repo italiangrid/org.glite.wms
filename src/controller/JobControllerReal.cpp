@@ -55,6 +55,8 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 
+#include "common/id_container.h"
+#include "common/ram_container.h"
 #include "common/JobFilePurger.h"
 #include "common/ProxyUnregistrar.h"
 #include "common/constants.h"
@@ -76,7 +78,7 @@ namespace controller {
 
 namespace {
 
-typedef WriteUserLog UserLog;
+const int jcr_s_threshold = 10;
 
 GenericEvent *createGenericEvent( int evn )
 {
@@ -96,7 +98,7 @@ void logGenericEvent( jccommon::generic_event_t ev, int condorid, const char *lo
 {
   int                      evn = static_cast<int>( ev );
   auto_ptr<GenericEvent>   event( createGenericEvent(evn) );
-  UserLog                  logger( "owner", logfile, boost::lexical_cast<int>(condorid), 0, 0 );
+  WriteUserLog                  logger( "owner", logfile, boost::lexical_cast<int>(condorid), 0, 0 );
 
   logger.writeEvent( event.get() );
 
@@ -160,14 +162,65 @@ bool cancelJob( const string &condorid, string &info )
 
 } // Anonymous namespace
 
-JobControllerReal::JobControllerReal( edg_wll_Context *cont ) : jcr_logger( cont )
+JobControllerReal::JobControllerReal( edg_wll_Context *cont ) : jcr_logger(cont), jcr_threshold(0)
 {
-  logger::StatePusher                     pusher( elog::cedglog, "JobControllerReal::JobControllerReal()" );
+  logger::StatePusher                     pusher(elog::cedglog, "JobControllerReal::JobControllerReal()");
+  const configuration::LMConfiguration   *lmconfig = configuration::Configuration::instance()->lm();
+  const configuration::JCConfiguration   *jcconfig = configuration::Configuration::instance()->jc();
+  string                                  repname( lmconfig->id_repository_name() );
+  fs::path                                repfile(lmconfig->monitor_internal_dir(), fs::native);
+
+  repfile /= repname;
+
+  try {
+    auto_ptr<jccommon::IdContainer> repository(
+      new jccommon::IdContainer(repfile.native_file_string().c_str())
+    );
+    this->jcr_repository.reset( new jccommon::RamContainer(*repository) );
+  } catch(jccommon::FileContainerError const& err) {
+    elog::cedglog << logger::setlevel( logger::null )
+      << "File container error: " << err.string_error() << endl;
+
+    throw CannotCreate( err.string_error() );
+  }
+
+  jcr_threshold = jcconfig->container_refresh_threshold(jcr_s_threshold);
+  if (jcr_threshold < jcr_s_threshold) {
+    jcr_threshold = jcr_s_threshold;
+  }
+
   elog::cedglog << logger::setlevel( logger::ugly ) << "Controller created..." << endl;
 }
 
 JobControllerReal::~JobControllerReal( void )
 {}
+
+void JobControllerReal::readRepository()
+{
+  const configuration::LMConfiguration   *lmconfig = configuration::Configuration::instance()->lm();
+  string                                  repname(lmconfig->id_repository_name());
+  fs::path                                repfile(lmconfig->monitor_internal_dir(), fs::native);
+  logger::StatePusher                     pusher(elog::cedglog, "JobControllerReal::readRepository()");
+
+  repfile /= repname;
+
+  try {
+    elog::cedglog << logger::setlevel(logger::medium)
+      << "Reading repository from LogMonitor file: " << repfile.native_file_string() << endl;
+
+    auto_ptr<jccommon::IdContainer> repository(
+      new jccommon::IdContainer(repfile.native_file_string().c_str())
+    );
+    jcr_repository->copy(*repository);
+  } catch(jccommon::FileContainerError const& err) {
+    elog::cedglog << logger::setlevel(logger::null)
+       << "File container error: " << err.string_error() << endl;
+
+    throw CannotCreate(err.string_error());
+  }
+
+  return;
+}
 
 int JobControllerReal::submit( const classad::ClassAd *pad )
 try {
@@ -263,6 +316,10 @@ try {
 	elog::cedglog << logger::setlevel( logger::verylow )
 		      << "Job submitted to Condor cluster: " << condorid << endl;
 
+   if (jcr_repository->inserted() >= jcr_threshold) {
+     this->readRepository();
+   }
+   jcr_repository->insert(sad->job_id(), condorid);
 
 	this->jcr_logger.condor_submit_ok_event( "(unavailable)", condorid, sad->log_file() );
       }
@@ -298,44 +355,57 @@ try {
 
 bool JobControllerReal::cancel( const glite::jobid::JobId &id, const char *logfile )
 {
+  logger::StatePusher   pusher(elog::cedglog, "JobControllerReal::cancel(...)");
   bool                  good = true;
   int                   icid = 0;
-  string                sid( id.toString() ), condorid, info;
-  logger::StatePusher   pusher( elog::cedglog, "JobControllerReal::cancel(...)" );
 
-  elog::cedglog << logger::setlevel( logger::info )
+  elog::cedglog << logger::setlevel(logger::info)
 		<< "Asked to remove job: " << id.toString() << endl;
 
+  string sid(id.toString());
+  string condorid(this->jcr_repository->condor_id(sid));
+
+  if (condorid.empty()) { // syncronize the "ram" repository with the LM's one
+     readRepository();
+     condorid = jcr_repository->condor_id(sid);
+  } else {
     // Comunicate to LM that this request comes from the user
-
-    if( logfile ) icid = boost::lexical_cast<int>( condorid );
-
-    if( logfile ) logGenericEvent( jccommon::user_cancelled_event, icid, logfile );
-
-    if( (good = cancelJob(condorid, info)) ) { // The condor command worked fine
-      if( logfile ) logGenericEvent( jccommon::cancelled_event, icid, logfile );
-
-      elog::cedglog << logger::setlevel( logger::verylow ) << "Job " << sid << " successfully marked for removal." << endl;
+    if(logfile) {
+      icid = boost::lexical_cast<int>(condorid);
     }
+    if (logfile) {
+      logGenericEvent(jccommon::user_cancelled_event, icid, logfile);
+    }
+
+    string info;
+    if ((good = cancelJob(condorid, info))) { // The condor command worked fine
+     if(logfile) {
+       logGenericEvent(jccommon::cancelled_event, icid, logfile);
+     }
+
+     elog::cedglog << logger::setlevel( logger::verylow ) << "Job " << sid << " successfully marked for removal." << endl;
+    }
+  }
   return good;
 }
 
 bool JobControllerReal::cancel( int condorid, const char *logfile )
 {
-  bool                  good;
-  string                sid( boost::lexical_cast<string>(condorid) ), info;
   logger::StatePusher   pusher( clog, "JobControllerReal::cancel(...)" );
+  string                sid(boost::lexical_cast<string>(condorid));
 
-  clog << logger::setlevel( logger::info )
+  clog << logger::setlevel(logger::info)
        << "Asked to remove job: " << sid << " (by condor ID)." << endl;
 
-  if( (good = cancelJob(sid, info)) ) {
+  bool good = false;
+  string info;
+  if ((good = cancelJob(sid, info))) {
     clog << logger::setlevel( logger::info ) << "Job " << sid << " successfully marked for removal." << endl;
 
     if( logfile ) logGenericEvent( jccommon::cancelled_event, condorid, logfile );
+  } else if( logfile ) {
+    logGenericEvent(jccommon::cannot_cancel_event, condorid, logfile);
   }
-  else if( logfile )
-    logGenericEvent( jccommon::cannot_cancel_event, condorid, logfile );
 
   return good;
 }
