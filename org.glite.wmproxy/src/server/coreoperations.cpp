@@ -321,9 +321,6 @@ setSubjobFileSystem(
 
    edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
 
-   // Getting WMP Server User ID
-   uid_t userid = getuid();
-
    string document_root = getenv(DOCUMENT_ROOT);
 
    // Getting delegated proxy inside job directory
@@ -336,8 +333,8 @@ setSubjobFileSystem(
    // Creating sub jobs directories
    if (jobids.size()) {
       edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-      wmputilities::managedir(document_root, userid, jobdiruserid, jobids,
-                              wmputilities::DIRECTORY_INPUT);
+      wmputilities::managedir(document_root, getuid() /* WMP Server User ID */,
+         jobdiruserid, jobids, wmputilities::DIRECTORY_INPUT);
 
       string link;
       string linkbak;
@@ -457,7 +454,7 @@ setJobFileSystem(
 
    // Creating sub jobs directories
    if (jobids.size()) {
-      setSubjobFileSystem(userid, jobid, jobids);
+      setSubjobFileSystem(jobuserid, jobid, jobids);
    }
 
    // Writing original jdl to disk
@@ -1254,7 +1251,8 @@ submit(
                }
             }
          }
-         // Adding attribute for perusal functionalities
+
+         // Adding attribute for perusal functionality
          string peekdir = wmputilities::getPeekDirectoryPath(*jid);
          if (jad.hasAttribute(JDL::PU_FILE_ENABLE)) {
             if (jad.getBool(JDL::PU_FILE_ENABLE)) {
@@ -1404,7 +1402,7 @@ submit(
       string jobidstring;
       try {
          string document_root = getenv(DOCUMENT_ROOT);
-         edglog(debug)<<"Creating sub job directories for job " <<parentjobid.toString()<<endl;
+         edglog(debug)<<"Creating subjobs directories for job " <<parentjobid.toString()<<endl;
          vector<string> jobids;
          // requirements must be inherited by nodes #bug 39217
          dag.inherit(JDL::REQUIREMENTS);
@@ -1641,8 +1639,6 @@ submit(
          }
          // Looking for Zipped ISB
          if (dag.hasAttribute(JDLPrivate::ZIPPED_ISB)) {
-            //Setting file system for subjobs
-            /***setSubjobFileSystem(auth, parentjobid.toString(), jobids);***/
             string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
                               + FLAG_FILE_UNZIP;
             if (!wmputilities::fileExists(flagfile)) {
