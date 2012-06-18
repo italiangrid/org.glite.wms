@@ -1838,6 +1838,7 @@ jobStart(jobStartResponse& jobStart_response, const string& job_id, struct soap 
    GLITE_STACK_TRY("jobStart()");
    edglog_fn("wmpcoreoperations::jobStart");
 
+   initWMProxyOperation("jobStart"); // before do_authZ_jobid
    WMPEventLogger wmplogger(wmputilities::getEndpoint());
    boost::scoped_ptr<JobId> jid(new JobId(job_id));
    security::auth_info ai(0, 0, std::vector<std::string>());
@@ -1854,8 +1855,6 @@ jobStart(jobStartResponse& jobStart_response, const string& job_id, struct soap 
       throw ex;
    }
 
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
-   initWMProxyOperation("jobStart");
    // Checking job existency (if the job directory doesn't exist:
    // The job has not been registered from this Workload Manager Proxy
    // or it has been purged)
@@ -1927,9 +1926,8 @@ jobSubmit(struct ns1__jobSubmitResponse& response,
    GLITE_STACK_TRY("jobSubmit()");
    edglog_fn("wmpcoreoperations::jobSubmit");
 
-   security::auth_info ai(security::do_authZ("jobSubmit", delegation_id));
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
    initWMProxyOperation("jobSubmit");
+   security::auth_info ai(security::do_authZ("jobSubmit", delegation_id));
 
    // Checking delegation id
    edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -2035,10 +2033,9 @@ jobSubmitJSDL
    GLITE_STACK_TRY("jobSubmit()");
    edglog_fn("wmpcoreoperations::jobSubmit");
 
+   initWMProxyOperation("jobSubmit");
    security::auth_info ai(security::do_authZ("jobSubmitJSDL", delegation_id));
 
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
-   initWMProxyOperation("jobSubmit");
    edglog(debug)<<"JSDL to Submit:\n"<<jdl<<endl;
    edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
@@ -2152,7 +2149,6 @@ jobRegister(
    security::auth_info ai(security::do_authZ("jobRegister", delegation_id));
 
    edglog(debug)<<"JDL to Register:\n" << jdl << endl;
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
    initWMProxyOperation("jobRegister");
 
    edglog(debug)<<"Checking for drain..."<<endl;
@@ -2188,10 +2184,8 @@ jobCancel(jobCancelResponse& jobCancel_response, const string& job_id)
    GLITE_STACK_TRY("jobCancel()");
    edglog_fn("wmpcoreoperations::jobCancel");
 
-   security::do_authZ_jobid("jobCancel", job_id);
-
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
    initWMProxyOperation("jobCancel");
+   security::do_authZ_jobid("jobCancel", job_id);
 
    boost::scoped_ptr<JobId> jid(new JobId(job_id));
    string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
@@ -2416,10 +2410,8 @@ jobListMatch(
                    "const string &jdl, const string &delegation_id)");
    edglog_fn("wmpcoreoperations::jobListMatch");
 
-   security::auth_info ai(security::do_authZ("jobListMatch", delegation_id));
-
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
    initWMProxyOperation("jobListMatch");
+   security::auth_info ai(security::do_authZ("jobListMatch", delegation_id));
 
    // Checking delegation id
    edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -2453,9 +2445,8 @@ jobPurge(jobPurgeResponse& jobPurge_response, const string& jid)
    GLITE_STACK_TRY("jobPurge()");
    edglog_fn("wmpcoreoperations::jobPurge");
 
-   security::do_authZ_jobid("jobPurge", jid);
-   // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
    initWMProxyOperation("jobPurge");
+   security::do_authZ_jobid("jobPurge", jid);
 
    boost::scoped_ptr<JobId> jobid(new JobId(jid));
 

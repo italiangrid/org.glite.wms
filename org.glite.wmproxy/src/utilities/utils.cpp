@@ -1561,7 +1561,7 @@ createSuidDirectory(const string& directory)
       string group = " -g " + boost::lexical_cast<string>(getgid()); // GROUP
 
       string command = gliteDirmanExe + user + group + dirpermissions + directory;
-      edglog(debug)<<"Excecuting command: "<<command<<endl;
+      edglog(debug)<<"Executing command: "<<command<<endl;
       if (system(command.c_str())) {
          edglog(critical)<<"Unable to create directory: "<<directory<<endl;
          throw FileSystemException(__FILE__, __LINE__,

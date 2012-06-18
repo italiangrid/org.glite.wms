@@ -135,8 +135,8 @@ getVersion(getVersionResponse& getVersion_response)
    GLITE_STACK_TRY("getVersion()");
    edglog_fn("wmpoperations::getVersion");
 
-   security::do_authZ("getVersion");
    initWMProxyOperation("getVersion");
+   security::do_authZ("getVersion");
    getVersion_response.version = WMP_VERSION;
    edglog(info) << "Version retrieved: "<< getVersion_response.version << endl;
    GLITE_STACK_CATCH();
@@ -176,8 +176,8 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
    GLITE_STACK_TRY("getMaxInputSandboxSize()");
    edglog_fn("wmpoperations::getMaxInputSandboxSize");
 
-   security::do_authZ("getMaxInputSandboxSize");
    initWMProxyOperation("getMaxInputSandboxSize");
+   security::do_authZ("getMaxInputSandboxSize");
    try {
       getMaxInputSandboxSize_response.size =
          // WARNING: Temporal cast TBD
@@ -267,8 +267,8 @@ getQuota(getQuotaResponse& getQuota_response)
    GLITE_STACK_TRY("getQuota()");
    edglog_fn("wmpoperations::getQuota");
 
-   std::string user_name = security::do_authZ("getQuota"); // throws
    initWMProxyOperation("getQuota");
+   std::string user_name = security::do_authZ("getQuota"); // throws
    pair<long, long> quotas;
    if (!wmputilities::getUserQuota(quotas, user_name)) {
       edglog(severe)<<"Unable to get total quota"<<endl;
@@ -288,8 +288,8 @@ getFreeQuota(getFreeQuotaResponse& getFreeQuota_response)
    GLITE_STACK_TRY("getFreeQuota()");
    edglog_fn("wmpoperations::getFreeQuota");
 
-   std::string user_name = security::do_authZ("getFreeQuota"); //throws
    initWMProxyOperation("getFreeQuota");
+   std::string user_name = security::do_authZ("getFreeQuota"); //throws
    pair<long, long> quotas;
    if (!wmputilities::getUserFreeQuota(quotas, user_name)) {
       edglog(severe)<<"Unable to get free quota"<<endl;
@@ -429,8 +429,8 @@ getJobTemplate(getJobTemplateResponse& getJobTemplate_response,
    GLITE_STACK_TRY("getJobTemplate()");
    edglog_fn("wmpoperations::getJobTemplate");
 
-   security::do_authZ("getJobTemplate");
    initWMProxyOperation("getJobTemplate");
+   security::do_authZ("getJobTemplate");
 
    getJobTemplate_response.jdl =
       (AdConverter::createJobTemplate(convertJobTypeListToInt(jobType),
@@ -449,8 +449,8 @@ getDAGTemplate(getDAGTemplateResponse& getDAGTemplate_response,
    GLITE_STACK_TRY("getDAGTemplate()");
    edglog_fn("wmpoperations::getDAGTemplate");
 
-   security::do_authZ("getDAGTemplate");
    initWMProxyOperation("getDAGTemplate");
+   security::do_authZ("getDAGTemplate");
 
    getDAGTemplate_response.jdl = AdConverter::createDAGTemplate(
                                     convertGraphStructTypeToNodeStruct(dependencies),
@@ -469,8 +469,8 @@ getCollectionTemplate(getCollectionTemplateResponse
    GLITE_STACK_TRY("getCollectionTemplate()");
    edglog_fn("wmpoperations::getCollectionTemplate");
 
-   security::do_authZ("getCollectionTemplate");
    initWMProxyOperation("getCollectionTemplate");
+   security::do_authZ("getCollectionTemplate");
    getCollectionTemplate_response.jdl =
       AdConverter::createCollectionTemplate(jobNumber, requirements,
             rank)->toString();
@@ -489,8 +489,8 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
    GLITE_STACK_TRY("getIntParametricJobTemplate()");
    edglog_fn("wmpoperations::getIntParametricJobTemplate");
 
-   security::do_authZ("getIntParametricJobTemplate");
    initWMProxyOperation("getIntParametricJobTemplate");
+   security::do_authZ("getIntParametricJobTemplate");
 
    getIntParametricJobTemplate_response.jdl =
       AdConverter::createIntParametricTemplate(*(attributes->Item), param,
@@ -509,8 +509,8 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
    GLITE_STACK_TRY("getStringParametricJobTemplate()");
    edglog_fn("wmpoperations::getStringParametricJobTemplate");
 
-   security::do_authZ("getStringParametricJobTemplate");
    initWMProxyOperation("getStringParametricJobTemplate");
+   security::do_authZ("getStringParametricJobTemplate");
    getStringParametricJobTemplate_response.jdl =
       AdConverter::createStringParametricTemplate(*(attributes->Item),
             *(param->Item), requirements, rank)->toString();
@@ -528,8 +528,8 @@ getDelegationVersion(getVersionResponse& getVersion_response)
    GLITE_STACK_TRY("getDelegationVersion()");
    edglog_fn("wmpoperations::getDelegationVersion");
 
-   security::do_authZ("getDelegationVersion");
    initWMProxyOperation("getDelegationVersion");
+   security::do_authZ("getDelegationVersion");
    getVersion_response.version = security::getDelegationVersion();
    edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
@@ -542,8 +542,8 @@ getDelegationIntefaceVersion(getVersionResponse& getVersion_response)
    GLITE_STACK_TRY("getDelegationInterfaceVersion()");
    edglog_fn("wmpoperations::getDelegationInterfaceVersion");
 
-   security::do_authZ("getDelegationVersion");
    initWMProxyOperation("getDelegationInterfaceVersion");
+   security::do_authZ("getDelegationVersion");
    getVersion_response.version = security::getDelegationInterfaceVersion();
    edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
@@ -557,8 +557,8 @@ getProxyReq(getProxyReqResponse& getProxyReq_response,
    GLITE_STACK_TRY("getProxyReq()");
    edglog_fn("wmpoperations::getProxyReq");
 
-   security::do_authZ("getProxyReq"); // the delegated proxy is not there
    initWMProxyOperation("getProxyReq");
+   security::do_authZ("getProxyReq"); // the delegated proxy is not there
 
 #ifndef GRST_VERSION
    if (delegation_id == "") {
@@ -583,8 +583,8 @@ putProxy(putProxyResponse& putProxyReq_response, const string& delegation_id,
    GLITE_STACK_TRY("putProxy()");
    edglog_fn("wmpoperations::putProxy");
 
-   security::do_authZ("putProxy"); // the delegated proxy is not there
    initWMProxyOperation("putProxy");
+   security::do_authZ("putProxy"); // the delegated proxy is not there
 
    security::putProxy(delegation_id, proxy);
    edglog(debug)<<"Proxy put successful"<<endl;
@@ -599,8 +599,8 @@ renewProxyReq(string& renewProxyReq_response,
    GLITE_STACK_TRY("renewProxyReq()");
    edglog_fn("wmpoperations::renewProxyReq");
 
-   security::do_authZ("renewProxyReq", delegation_id);
    initWMProxyOperation("renewProxyReq");
+   security::do_authZ("renewProxyReq", delegation_id);
 
    renewProxyReq_response = security::renewProxyRequest(delegation_id);
    edglog(debug)<<"Proxy renewed successful"<<endl;
@@ -614,8 +614,8 @@ getNewProxyReq(pair<string, string> &retpair)
    GLITE_STACK_TRY("getNewProxyReq()");
    edglog_fn("wmpoperations::getNewProxyReq");
 
-   security::do_authZ("getNewProxyReq");
    initWMProxyOperation("getNewProxyReq");
+   security::do_authZ("getNewProxyReq");
 
    edglog(debug)<<"found delegationID: "<<retpair.first<<endl;
    edglog(debug)<<"found proxyRequest "<<retpair.second<<endl;
@@ -629,8 +629,9 @@ destroyProxy(const string& delegation_id)
 {
    GLITE_STACK_TRY("destroyProxy()");
    edglog_fn("wmpoperations::destroyProxy");
-   security::do_authZ("destroyProxy", delegation_id);
    initWMProxyOperation("destroyProxy");
+
+   security::do_authZ("destroyProxy", delegation_id);
 
    edglog(debug)<<"destroyProxy successful"<<endl;
 
@@ -645,8 +646,8 @@ getProxyTerminationTime(time_t
    GLITE_STACK_TRY("getProxyTerminationTime()");
    edglog_fn("wmpoperations::getProxyTerminationTime");
 
-   security::do_authZ("getProxyTerminationTime", delegation_id);
    initWMProxyOperation("getProxyTerminationTime");
+   security::do_authZ("getProxyTerminationTime", delegation_id);
    getProxyTerminationTime_response = security::getTerminationTime(delegation_id);
    edglog(debug)<<"getProxyTerminationTime successful"<<endl;
 
@@ -1169,8 +1170,8 @@ getJobStatusOp(getJobStatusResponse& getJobStatus_response, const string& job_id
    GLITE_STACK_TRY("getJobStatus()");
    edglog_fn("wmpoperations::getJobStatus");
 
-   security::do_authZ("getJobStatusOp");
    initWMProxyOperation("getJobStatus");
+   security::do_authZ("getJobStatusOp");
 
    // TODO status flag could be parametrized
    bool status_flag=true;
