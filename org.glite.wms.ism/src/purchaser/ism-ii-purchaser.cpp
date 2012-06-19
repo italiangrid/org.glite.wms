@@ -205,7 +205,7 @@ void ism_ii_purchaser::operator()()
          gluese_info_container
        );
      }
-     Debug("BDII fetching completed in " << std::time(0) - t0 << " seconds");
+     Debug("BDII GLUE 1.3 fetching completed in " << std::time(0) - t0 << " seconds");
 
      apply_skip_predicate(
        gluece_info_container,

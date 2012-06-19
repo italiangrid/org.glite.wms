@@ -106,6 +106,7 @@ ism_ii_g2_purchaser::ism_ii_g2_purchaser(
   std::string const& distinguished_name,
   int timeout,
   std::string const& ldap_ce_filter_ext,
+  std::string const& ldap_se_filter_ext,
   bool ldap_search_async,
   exec_mode_t mode,
   size_t interval,
@@ -117,6 +118,7 @@ ism_ii_g2_purchaser::ism_ii_g2_purchaser(
   m_dn(distinguished_name),
   m_timeout(timeout),
   m_ldap_ce_filter_ext(ldap_ce_filter_ext),
+  m_ldap_se_filter_ext(ldap_se_filter_ext),
   m_ldap_search_async(ldap_search_async)
 {
 }
@@ -240,10 +242,11 @@ void ism_ii_g2_purchaser::operator()()
          m_dn,
          m_timeout,
          m_ldap_ce_filter_ext,
+         m_ldap_se_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
-     Debug("BDII fetching completed in " << std::time(0) - t0 << " seconds");
+     Debug("BDII GLUE2.0 fetching completed in " << std::time(0) - t0 << " seconds");
 
      apply_skip_predicate(
        gluece_info_container,
@@ -287,11 +290,13 @@ void ism_ii_g2_purchaser::operator()()
 }
 
 // the class factories
-extern "C" ism_ii_g2_purchaser* create_ii_g2_purchaser(std::string const& hostname,
+extern "C" ism_ii_g2_purchaser* create_ii_g2_purchaser(
+    std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout,
     std::string const& ldap_ce_filter_ext,
+    std::string const& ldap_se_filter_ext,
     bool ldap_search_async,
     exec_mode_t mode,
     size_t interval,
@@ -299,9 +304,17 @@ extern "C" ism_ii_g2_purchaser* create_ii_g2_purchaser(std::string const& hostna
     skip_predicate_type skip_predicate) 
 {
     return new ism_ii_g2_purchaser(
-      hostname, port, distinguished_name, timeout, 
-      ldap_ce_filter_ext, ldap_search_async,
-      mode, interval, exit_predicate, skip_predicate
+      hostname,
+      port,
+      distinguished_name,
+      timeout, 
+      ldap_ce_filter_ext,
+      ldap_se_filter_ext,
+      ldap_search_async,
+      mode,
+      interval,
+      exit_predicate,
+      skip_predicate
     );
 }
 

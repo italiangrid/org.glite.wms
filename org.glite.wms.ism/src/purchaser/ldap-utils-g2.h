@@ -67,6 +67,7 @@ fetch_bdii_se_info_g2(
   size_t port,
   std::string const& basedn,
   time_t timeout,
+  std::string const& ldap_se_filter_ext,
   PurchaserInfoContainer&
 );
 
@@ -77,8 +78,9 @@ fetch_bdii_info_g2(
   std::string const& basedn,
   time_t timeout,
   std::string const& ldap_ce_filter_ext,
-  PurchaserInfoContainer&,
-  PurchaserInfoContainer&
+  std::string const& ldap_se_filter_ext,
+  PurchaserInfoContainer& ce_info,
+  PurchaserInfoContainer& se_info
 );
 
 }}}}
