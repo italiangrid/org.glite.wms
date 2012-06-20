@@ -69,9 +69,9 @@ PKG_CHECK_MODULES(CLASSAD, emi-classad-ns, , AC_MSG_ERROR(["CLASSADS not found"]
 PKG_CHECK_MODULES(CONDORG, emi-condorg, , AC_MSG_ERROR(["CONDORG not found"]))
 
 condor_version=`pkg-config --modversion emi-condorg`
-condor_vernum=`echo $condor_version | awk -F . '{print $'1'*10000+$'2'*100+$'3'}'`
-AC_SUBST([CONDORG_VERSION], ['${condor_vernum}'])
-AC_MSG_RESULT([Found condor version: ${condor_vernum}])
+CONDORG_VERSION=`echo $condor_version | awk -F . '{print $'1'*10000+$'2'*100+$'3'}'`
+AC_SUBST(CONDORG_VERSION)
+AC_MSG_RESULT([Found condor version: ${CONDORG_VERSION}])
 
 PKG_CHECK_MODULES(GLOBUS_GRAM_PROT, globus-gram-protocol, , AC_MSG_ERROR(["GLOBUS_GRAM_PROT not found"]))
 
