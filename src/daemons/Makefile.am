@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.5.2.7  2012/06/20 13:44:33  pandreet
+#       Used pkgconfig macro for condorg
+#
 #       Revision 1.17.2.3.4.1.2.5.2.6  2012/06/18 11:58:06  mcecchi
 #       reintroduced id repository in JC. cleanup
 #
@@ -152,7 +155,7 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
-	 -L/usr/lib64/condor -lcondorapi -ldl \
+	$(CONDORG_LIBS) \
 	$(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
@@ -178,7 +181,7 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) \
-	-L/usr/lib64/condor -lcondorapi -ldl \
+	$(CONDORG_LIBS) \
         $(RENEWAL_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_JOBID_LIBS)
@@ -189,6 +192,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(CONDORG_CFLAGS)
+	$(CONDORG_CFLAGS) -DCONDORG_VERSION=$(CONDORG_VERSION)
 
 MAINTAINERCLEANFILES = Makefile.in *~

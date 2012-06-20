@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.7.2.7  2012/06/20 13:44:34  pandreet
+#       Used pkgconfig macro for condorg
+#
 #       Revision 1.20.2.2.4.1.2.7.2.6  2012/06/18 11:58:06  mcecchi
 #       reintroduced id repository in JC. cleanup
 #
@@ -182,7 +185,8 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(BOOST_FS_LIBS) $(BOOST_THREAD_LIBS) $(BOOST_REGEX_LIBS) \
-	$(CLASSAD_LIBS) -L/usr/lib64/condor -lcondorapi -ldl \
+	$(CLASSAD_LIBS) \
+	$(CONDORG_LIBS) \
 	$(ARES_LIBS) \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(GLITE_LB_CLIENTPP_LIBS) \
@@ -221,7 +225,8 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	./processer/SubmitReader.cpp \
 	./processer/JobResubmitter.cpp
 
-libglite_wms_jss_logmonitor_la_LIBADD = -L/usr/lib64/condor -lcondorapi -ldl ../common/libglite_wms_jss_common.la
+libglite_wms_jss_logmonitor_la_LIBADD = ../common/libglite_wms_jss_common.la \
+					$(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I/usr/include \
@@ -231,6 +236,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_GRAM_PROT_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(CONDORG_CFLAGS)
+	$(CONDORG_CFLAGS) -DCONDORG_VERSION=$(CONDORG_VERSION)
 
 MAINTAINERCLEANFILES = Makefile.in *~

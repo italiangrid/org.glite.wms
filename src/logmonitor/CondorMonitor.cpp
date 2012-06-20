@@ -268,7 +268,7 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
   if( size > this->cm_shared_data->md_sizefile->size_field().position() ) {
 
     #ifdef CONDORG_VERSION 
-      #if CONDORG_VERSION < 724
+      #if CONDORG_VERSION < 70204
         ReadUserLog id_logfile_parser;
         id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
       

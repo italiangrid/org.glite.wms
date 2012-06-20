@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2.6.2.2.4  2012/06/20 13:44:33  pandreet
+#       Used pkgconfig macro for condorg
+#
 #       Revision 1.2.28.2.6.2.2.3  2012/06/18 11:58:06  mcecchi
 #       reintroduced id repository in JC. cleanup
 #
@@ -86,7 +89,8 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	JobControllerClientJD.cpp
 
 
-libglite_wms_jss_controller_la_LIBADD = -L/usr/lib64/condor -lcondorapi -ldl  ../common/libglite_wms_jss_common.la
+libglite_wms_jss_controller_la_LIBADD = ../common/libglite_wms_jss_common.la \
+					$(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
@@ -94,6 +98,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(CONDORG_CFLAGS)
+	$(CONDORG_CFLAGS) -DCONDORG_VERSION=$(CONDORG_VERSION)
 
 MAINTAINERCLEANFILES = Makefile.in *~
