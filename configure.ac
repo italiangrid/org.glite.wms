@@ -12,8 +12,17 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 #       Authors: Paolo Andreetto <paolo.andreetto@pd.infn.it>
+<<<<<<< configure.ac
+<<<<<<< configure.ac
 #       Version info: $Id$
 #       Release: $Name$
+=======
+#       Version info: $Id$
+=======
+#       Version info: $Id$
+>>>>>>> 1.22.2.16.6.6.2.10
+#       Release: $Name$
+>>>>>>> 1.22.2.16.6.6.2.8
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS jobsubmission], [3.3.1])
