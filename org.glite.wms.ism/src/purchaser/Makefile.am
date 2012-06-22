@@ -13,7 +13,6 @@
 
 lib_LTLIBRARIES    = \
   libglite_wms_ism_ii_purchaser.la \
-  libglite_wms_ism_ii_g2_purchaser.la \
   libglite_wms_ism_file_purchaser.la 
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
@@ -22,27 +21,16 @@ libglite_wms_ism_ii_purchaser_la_SOURCES = \
         ldap-utils-asynch.cpp \
         ldap-dn-utils.cpp \
         schema_utils.cpp \
-        ism-ii-purchaser.cpp
+        ism-ii-purchaser.cpp \
+        ldap-utils-g2.cpp \
+        ldap-dn-utils-g2.cpp \
+        schema_utils-g2.cpp
 
 libglite_wms_ism_ii_purchaser_la_LIBADD = $(GLITE_WMSUTILS_CLASSADS_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
                 $(BOOST_LIBS) \
                 $(CLASSAD_LIBS) \
                 $(LDAP_LIBS)
-
-libglite_wms_ism_ii_g2_purchaser_la_SOURCES = \
-        common.cpp \
-        ldap-utils-g2.cpp \
-        ldap-dn-utils-g2.cpp \
-        schema_utils-g2.cpp \
-        ism-ii-g2-purchaser.cpp
-
-libglite_wms_ism_ii_g2_purchaser_la_LIBADD = $(GLITE_WMSUTILS_CLASSADS_LIBS) \
-                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-                $(BOOST_LIBS) \
-                $(CLASSAD_LIBS) \
-                $(LDAP_LIBS)
-
 
 libglite_wms_ism_file_purchaser_la_SOURCES = \
         common.cpp \

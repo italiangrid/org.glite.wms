@@ -44,7 +44,9 @@ public:
     int port,
     std::string const& distinguished_name,
     int timeout = 30,
-    std::string const& ldap_ce_filter_ext = std::string(),
+    std::string const& ldap_ce_filter_g13 = std::string(),
+    std::string const& ldap_ce_filter_g13 = std::string(),
+    std::string const& ldap_se_filter_g20 = std::string(),
     bool ldap_search_async = false,
     exec_mode_t mode = loop,
     size_t interval = 30,
@@ -59,7 +61,9 @@ private:
   int m_port;
   std::string m_dn;
   int m_timeout;
-  std::string m_ldap_ce_filter_ext;
+  std::string m_ldap_ce_filter_g13;
+  std::string m_ldap_ce_filter_g20;
+  std::string m_ldap_se_filter_g20;
   bool m_ldap_search_async;
 };
 
@@ -76,7 +80,9 @@ typedef ism_ii_purchaser* create_t(std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout = 30,
-    std::string const& ldap_ce_filter_ext = std::string(),
+    std::string const& ldap_ce_filter_g13 = std::string(),
+    std::string const& ldap_ce_filter_g13 = std::string(),
+    std::string const& ldap_se_filter_g20 = std::string(),
     bool ldap_search_async = false,
     exec_mode_t mode = loop,
     size_t interval = 30,

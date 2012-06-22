@@ -3,10 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: bdii purchager
-Description: BDII purchaser for WMS information supermarket
+Name: bdii purchasers
+Description: BDII GLUE1.3 and GLUE2.0 purchasers for WMS information cache
 Version: @VERSION@
 Requires: wms-common-conf, wms-common-logger
 Libs: -L${libdir} -lglite_wms_ism_ii_purchaser
 Cflags: -I${includedir}
-

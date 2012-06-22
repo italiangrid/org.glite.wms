@@ -23,7 +23,7 @@
 #include <classad_distribution.h>
 
 #include "ldap-utils.h"
-#include "ldap-utils-asynch.h"
+#include "ldap-utils-g2.h"
 #include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -63,13 +63,14 @@ ism_ii_purchaser_entry_update::operator()(
   return false;
 }
 
-
 ism_ii_purchaser::ism_ii_purchaser(
   std::string const& hostname,
   int port,
   std::string const& distinguished_name,
   int timeout,
-  std::string const& ldap_ce_filter_ext,
+  std::string const& ldap_ce_filter_g13,
+  std::string const& ldap_ce_filter_g20,
+  std::string const& ldap_se_filter_g20,
   bool ldap_search_async,
   exec_mode_t mode,
   size_t interval,
@@ -80,69 +81,11 @@ ism_ii_purchaser::ism_ii_purchaser(
   m_port(port),
   m_dn(distinguished_name),
   m_timeout(timeout),
-  m_ldap_ce_filter_ext(ldap_ce_filter_ext),
+  m_ldap_ce_filter_g13(ldap_ce_filter_g13),
+  m_ldap_ce_filter_g20(ldap_ce_filter_g20),
+  m_ldap_se_filter_g20(ldap_se_filter_g20),
   m_ldap_search_async(ldap_search_async)
 {
-}
-
-namespace {
-
-void apply_skip_predicate(
-  gluece_info_container_type& gluece_info_container,
-  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
-  skip_predicate_type skip
-)
-{
-  gluece_info_iterator it = gluece_info_container.begin();
-  gluece_info_iterator const gluece_info_container_end(
-    gluece_info_container.end()
-  );
-
-  for ( ; it != gluece_info_container_end; ++it) {
-    if (!skip(it->first)) {
-      it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
-      gluece_info_container_updated_entries.push_back(it);
-    }
-    else {
-      Debug("Skipping " << it->first << " due to skip predicate settings");
-    }
-  }
-}
-
-void populate_ism(
-  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
-  size_t the_ism_index)
-{      
-  static glite::wms::common::configuration::Configuration const& config(
-    *glite::wms::common::configuration::Configuration::instance()
-  ); 
-  static const time_t expiry_time( 
-    config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
-  );
-
-  vector<gluece_info_iterator>::const_iterator it(
-    gluece_info_container_updated_entries.begin()
-  );
-  vector<gluece_info_iterator>::const_iterator const e(
-    gluece_info_container_updated_entries.end()
-  );
-
-  // no locking is needed here (before the switch)
-  int dark_side = ism::dark_side();
-  for ( ; it != e; ++it ) {
-    get_ism(the_ism_index, dark_side).insert( 
-      make_ism_entry(
-        (*it)->first,
-        std::time(0),
-        (*it)->second,
-        ism_ii_purchaser_entry_update(),
-        expiry_time
-      )
-    );
-    Debug((*it)->first << " added to ISM ");
-  } 
-}
-
 }
 
 void ism_ii_purchaser::operator()()
@@ -150,11 +93,6 @@ void ism_ii_purchaser::operator()()
   static glite::wms::common::configuration::Configuration const& config(
     *glite::wms::common::configuration::Configuration::instance()
   );
-
-  static bool const glue20_purchsing_is_enabled(
-    config.wm()->enable_ism_ii_glue20_purchasing()
-  );
-
 
   do {
 
@@ -167,67 +105,94 @@ void ism_ii_purchaser::operator()()
        " threads to match before switching the ISM side "
      );
 
-     ::sleep(1); // TODO
+     ::sleep(1); // we don't need to be waken up by thousands spurious signals
     }
 
-    // free this memory _before_ another huge allocation made by the purchaser
+    // free this memory _before_ other huge allocations made by the purchaser (fetch_bdii_info*)
     ism::get_ism(ism::ce, ism::dark_side()).clear();
     ism::get_ism(ism::se, ism::dark_side()).clear();
 
     try {
 
-     gluece_info_container_type gluece_info_container;
-     vector<gluece_info_iterator> gluece_info_container_updated_entries;
+      time_t t0 = std::time(0);
+      static bool const glue13_purchasing_is_enabled(
+        config.wm()->enable_ism_ii_glue13_purchasing()
+      );
+      static bool const glue20_purchasing_is_enabled(
+       config.wm()->enable_ism_ii_glue20_purchasing()
+      );
+      if (glue13_purchasing_is_enabled) {
+        gluece_info_container_type gluece_info_container;
+        vector<gluece_info_iterator> gluece_info_container_updated_entries;
+        gluese_info_container_type gluese_info_container;
+        vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
-     gluese_info_container_type gluese_info_container;
-     vector<gluese_info_iterator> gluese_info_container_updated_entries;
+        fetch_bdii_info(
+          m_hostname,
+          m_port,
+          m_dn,
+          m_timeout,
+          m_ldap_ce_filter_g13,
+          gluece_info_container,
+          gluese_info_container
+        );
+        Debug("BDII GLUE 1.3 fetching completed in " << std::time(0) - t0 << " seconds");
+        t0 = std::time(0);
+        apply_skip_predicate(
+          gluece_info_container,
+          gluece_info_container_updated_entries,
+          m_skip_predicate,
+          "II_G13_purchaser"
+        );
+        apply_skip_predicate(
+          gluese_info_container,
+          gluese_info_container_updated_entries,
+          m_skip_predicate,
+          "II_G13_purchaser"
+        );
+        // incoming requests asking for MM will be assigned the current active
+        // side so we can continue without locking here, now that older threads
+        // against the current dark side have all flushed
+        // NOTA BENE: this is valid as long as other purchasers are not
+        // switching side under our nose
+        populate_ism(gluece_info_container_updated_entries, ism::ce, ism_ii_purchaser_entry_update());
+        populate_ism(gluese_info_container_updated_entries, ism::se, ism_ii_purchaser_entry_update());
+      }
+      if (glue20_purchasing_is_enabled) {
+        gluece_info_container_type gluece_info_container;
+        vector<gluece_info_iterator> gluece_info_container_updated_entries;
+        gluese_info_container_type gluese_info_container;
+        vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
-     time_t const t0 = std::time(0);
-     if (m_ldap_search_async) {
-       async::fetch_bdii_info(
+        fetch_bdii_info_g2(
          m_hostname,
          m_port,
-         m_dn,
+         "o=glue",
          m_timeout,
-         m_ldap_ce_filter_ext,
+         m_ldap_ce_filter_g20,
+         m_ldap_se_filter_g20,
          gluece_info_container,
          gluese_info_container
        );
-     }
-     else {
-       fetch_bdii_info(
-         m_hostname,
-         m_port,
-         m_dn,
-         m_timeout,
-         m_ldap_ce_filter_ext,
-         gluece_info_container,
-         gluese_info_container
-       );
-     }
-     Debug("BDII GLUE 1.3 fetching completed in " << std::time(0) - t0 << " seconds");
+       Debug("BDII GLUE 2.0 fetching completed in " << std::time(0) - t0 << " seconds");
+       apply_skip_predicate(
+          gluece_info_container,
+          gluece_info_container_updated_entries,
+          m_skip_predicate,
+          "II_G2_purchaser"
+        );
+        apply_skip_predicate(
+          gluese_info_container,
+          gluese_info_container_updated_entries,
+          m_skip_predicate,
+          "II_G2_purchaser"
+        );
+        populate_ism(gluece_info_container_updated_entries, ism::ce, ism_ii_purchaser_entry_update());
+        populate_ism(gluese_info_container_updated_entries, ism::se, ism_ii_purchaser_entry_update());
+      }
 
-     apply_skip_predicate(
-       gluece_info_container,
-       gluece_info_container_updated_entries,
-       m_skip_predicate
-     );
+      ism::switch_active_side();
 
-     apply_skip_predicate(
-       gluese_info_container,
-       gluese_info_container_updated_entries,
-       m_skip_predicate
-     );
-
-     // incoming requests asking for MM will be assigned the current active
-     // side so we can operate without locking here, now that older threads
-     // against the current dark side have all flushed
-     populate_ism(gluece_info_container_updated_entries, ism::ce);
-     populate_ism(gluese_info_container_updated_entries, ism::se);
-     
-     // If both glue13 and glue20 purchasing is enabled the switch should 
-     // be preveted here since the purcasing actually continues
-     if(!glue20_purchsing_is_enabled) ism::switch_active_side();
     } catch (LDAPException& e) {
 
       Error(
@@ -255,7 +220,9 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout,
-    std::string const& ldap_ce_filter_ext,
+    std::string const& ldap_ce_filter_g13,
+    std::string const& ldap_ce_filter_g20,
+    std::string const& ldap_se_filter_g20,
     bool ldap_search_async,
     exec_mode_t mode,
     size_t interval,
@@ -263,9 +230,18 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
     skip_predicate_type skip_predicate) 
 {
     return new ism_ii_purchaser(
-      hostname, port, distinguished_name, timeout, 
-      ldap_ce_filter_ext, ldap_search_async,
-      mode, interval, exit_predicate, skip_predicate
+      hostname,
+      port,
+      distinguished_name,
+      timeout,
+      ldap_ce_filter_g13,
+      ldap_ce_filter_g20,
+      ldap_se_filter_g20,
+      ldap_search_async,
+      mode,
+      interval,
+      exit_predicate,
+      skip_predicate
     );
 }
 

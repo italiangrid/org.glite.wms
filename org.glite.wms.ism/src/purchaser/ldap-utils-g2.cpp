@@ -1143,11 +1143,11 @@ fetch_bdii_se_info_g2(
       "Policy",
        ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
     );
-}
+  }
 
     // If there is no Share bound to the Endpoint then we have to choose
     // Shares directly from the Service
-if (ep_it->second.has_shareslnk_iterators) {
+  if (ep_it->second.has_shareslnk_iterators) {
     std::vector<ShareInfoMap::iterator> const& shares(
       ep_it->second.shares_lnk.empty() ? 
         ep_it->second.service_lnk->second.shares_lnk :
@@ -1194,15 +1194,18 @@ if (ep_it->second.has_shareslnk_iterators) {
       se_info_container.insert(std::make_pair(id, result));
       n_shares++;
     }
-}
+  }
   }
   Debug("#" << n_shares << " GLUE2StorageShare's ClassAd(s) generated in " << std::time(0) - t1 << " seconds");
 }
 
 void 
 fetch_bdii_ce_info_g2(
-  std::string const& host, size_t port, std::string const& dn, 
-  time_t timeout, std::string const& ldap_ce_filter_ext,
+  std::string const& host,
+  size_t port,
+  std::string const& dn,
+  time_t timeout,
+  std::string const& ldap_ce_filter_ext,
   ism::purchaser::PurchaserInfoContainer& ce_info_container) 
 {
   LDAP* ld = 0;
@@ -1256,7 +1259,7 @@ fetch_bdii_ce_info_g2(
 
   BDII_info bdii_info;
 
-    time_t const t0 = std::time(0);
+  time_t const t0 = std::time(0);
   size_t n_entries = 0;
   for (
     LDAPMessage* lde = ldap_first_entry(ld, ldresult);

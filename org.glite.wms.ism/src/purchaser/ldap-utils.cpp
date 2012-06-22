@@ -309,10 +309,10 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
               boost::tuples::get<3>(se_it->second)
             ));
         }
-        std::vector<ClassAdPtr>::const_iterator it(
+        std::vector<ad_ptr>::const_iterator it(
           boost::tuples::get<4>(se_it->second).begin()
         );
-        std::vector<ClassAdPtr>::const_iterator const e(
+        std::vector<ad_ptr>::const_iterator const e(
           boost::tuples::get<4>(se_it->second).end()
         );
         std::vector<classad::ExprTree*> exprs;

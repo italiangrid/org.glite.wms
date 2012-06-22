@@ -91,7 +91,6 @@ AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/wms-ism.pc])
 AC_CONFIG_FILES([src/wms-ism-ii-purchaser.pc])
-AC_CONFIG_FILES([src/wms-ism-ii-g2-purchaser.pc])
 AC_CONFIG_FILES([src/purchaser/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 

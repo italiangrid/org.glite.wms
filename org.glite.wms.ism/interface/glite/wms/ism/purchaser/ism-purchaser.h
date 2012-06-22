@@ -38,19 +38,20 @@ namespace purchaser {
 
 inline bool false_(std::string const&) { return false; }
 
-typedef boost::function<bool(void)> exit_predicate_type;
-typedef boost::function<bool(std::string const&)> skip_predicate_type;
-
 class ism_purchaser
 {
 public:
-  ism_purchaser(exec_mode_t mode, 
+  ism_purchaser(
+    exec_mode_t mode, 
     size_t interval, 
     exit_predicate_type exit_predicate = exit_predicate_type(),
-    skip_predicate_type skip_predicate = skip_predicate_type()) :
-	m_mode(mode), m_interval(interval), m_exit_predicate(exit_predicate), m_skip_predicate(skip_predicate) {}
+    skip_predicate_type skip_predicate = skip_predicate_type())
+      :  m_mode(mode),
+         m_interval(interval),
+         m_exit_predicate(exit_predicate),
+         m_skip_predicate(skip_predicate) { }
 
-  virtual ~ism_purchaser() {}
+  virtual ~ism_purchaser() { }
   virtual void operator()() = 0;
 
   exec_mode_t exec_mode() const

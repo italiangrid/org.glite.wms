@@ -23,11 +23,17 @@ limitations under the License.
 
 // $Id$
 
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
+
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
 
 using namespace std;
 namespace utils = glite::wmsutils::classads;
@@ -36,6 +42,136 @@ namespace glite {
 namespace wms {
 namespace ism {
 namespace purchaser {
+
+namespace {
+
+boost::shared_ptr<classad::ClassAd> glue13_mapping_ad(
+   glite::wmsutils::classads::parse_classad(
+    "["
+   "GlueCECapability = GLUE2.Computing.Endpoint.Capability;"
+   "GlueCEImplementationName = GLUE2.Computing.Endpoint.ImplementationName;"
+   "GlueCEImplementationVersion = GLUE2.Computing.Endpoint.ImplementationVersion;"
+   "GlueCEInfoLRMSVersion = GLUE2.Manager.ProductVersion;"
+   "GlueCEPolicyMaxWallClockTime = GLUE2.Computing.Share.MaxWallTime;"
+   "GlueCEPolicyMaxCPUTime = GLUE2.Computing.Share.MaxCPUTime;"
+   "GlueCEPolicyMaxRunningJobs  = GLUE2.Computing.Share.MaxRunningJobs;"
+   "GlueCEStateStatus = GLUE2.Computing.Share.ServingState;"
+   "GlueCEStateWaitingJobs = GLUE2.Computing.Share.WaitingJobs;"
+   "GlueCEStateTotalJobs = GLUE2.Computing.Share.TotalJobs;"
+   "GlueCEStateFreeJobSlots  = GLUE2.Computing.Share.FreeSlots;"
+   "GlueCEStateRunningJobs = GLUE2.Computing.Share.RunningJobs;"
+   "GlueCEStateEstimatedResponseTime = GLUE2.Computing.Share.EstimatedAverageWaitingTime;"
+   "GlueCEStateWorstResponseTime = GLUE2.Computing.Share.EstimatedWorstWaitingTime;"
+   "GlueHostArchitecturePlatformType = GLUE2.ExecutionEnvironment.Platform;"
+   "GlueHostArchitectureSMPSize = GLUE2.ExecutionEnvironment.OtherInfo.SmpSize;"
+   "GlueHostProcessorModel = GLUE2.ExecutionEnvironment.CPUModel;"
+   "GlueHostProcessorVendor = GLUE2.ExecutionEnvironment.CPUVendor;"
+   "GlueHostProcessorClockSpeed = GLUE2.ExecutionEnvironment.CPUClockSpeed;"
+   "GlueHostOperatingSystemName = GLUE2.ExecutionEnvironment.OSName;"
+   "GlueHostMainMemoryRAMSize = GLUE2.ExecutionEnvironment.MainMemorySize;"
+   "GlueHostMainMemoryVirtualSize = GLUE2.ExecutionEnvironment.VirtualMemorySize;"
+   "GlueHostNetworkAdapterInboundIP = GLUE2.ExecutionEnvironment.ConnectivityIn;"
+   "GlueHostNetworkAdapterOutboundIP = GLUE2.ExecutionEnvironment.ConnectivityOut;"
+   "GlueSubClusterLogicalCPUs = GLUE2.ExecutionEnvironment.LogicalCPUs;"
+   "GlueSubClusterPhysicalCPUs = GLUE2.ExecutionEnvironment.PhysicalCPUs;"
+    "]")
+);
+
+} // {anonymous}
+
+
+void populate_ism(
+  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
+  size_t the_ism_index, // typically ce or se
+  update_function_type const& uf
+  )
+{
+  static glite::wms::common::configuration::Configuration const& config(
+    *glite::wms::common::configuration::Configuration::instance()
+  );
+  static const time_t expiry_time(
+    config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
+  );
+
+  vector<gluece_info_iterator>::const_iterator it(
+    gluece_info_container_updated_entries.begin()
+  );
+  vector<gluece_info_iterator>::const_iterator const e(
+    gluece_info_container_updated_entries.end()
+  );
+
+  // no locking is needed here (before the switch)
+  int dark_side = ism::dark_side();
+
+  bool insert = false;
+  ism_type::iterator ism_entry;
+
+  for ( ; it != e; ++it ) {
+    boost::tie(ism_entry, insert) =
+      get_ism(the_ism_index, dark_side).insert(
+        make_ism_entry(
+          (*it)->first,
+          std::time(0),
+          (*it)->second,
+          uf,
+          expiry_time
+        )
+      );
+    if (!insert) { // existing entry (typically glue13), need to merge info
+      ism_entry->second.get<2>()->Update(*(*it)->second);
+      ism_entry->second.get<2>()->Update(*(glue13_mapping_ad));
+
+      Debug((*it)->first << " updated with GLUE2.0");
+    }
+    else {
+       Debug((*it)->first << " added to ISM ");
+    }
+  }
+}
+
+void apply_skip_predicate(
+  gluece_info_container_type& gluece_info_container,
+  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
+  skip_predicate_type skip,
+  std::string const& purchasedby
+)
+{
+  gluece_info_iterator it = gluece_info_container.begin();
+  gluece_info_iterator const gluece_info_container_end(
+    gluece_info_container.end()
+  );
+
+  for ( ; it != gluece_info_container_end; ++it) {
+    if (!skip(it->first)) {
+      it->second->InsertAttr("PurchasedBy", purchasedby);
+      gluece_info_container_updated_entries.push_back(it);
+    } else {
+      Debug("Skipping " << it->first << " due to skip predicate settings");
+    }
+  }
+}
+
+void tokenize_ldap_dn(std::string const& s, std::vector<std::string> &v)
+{
+  boost::escaped_list_separator<char> ldap_dn_sep("",",","");
+  boost::tokenizer<boost::escaped_list_separator<char> >
+    ldap_dn_tok(s,ldap_dn_sep);
+
+  boost::tokenizer< boost::escaped_list_separator<char> >::iterator
+    ldap_dn_tok_it(
+      ldap_dn_tok.begin()
+    );
+  boost::tokenizer< boost::escaped_list_separator<char> >::iterator const
+    ldap_dn_tok_end(
+       ldap_dn_tok.end()
+    );
+
+  for( ; ldap_dn_tok_it != ldap_dn_tok_end; ++ldap_dn_tok_it)
+    v.push_back(
+      boost::algorithm::trim_copy(*ldap_dn_tok_it)
+    );
+
+}
 
 namespace {
 

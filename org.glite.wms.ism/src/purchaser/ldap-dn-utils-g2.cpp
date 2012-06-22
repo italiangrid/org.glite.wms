@@ -34,28 +34,6 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
-void tokenize_ldap_dn(std::string const& s, std::vector<std::string> &v)
-{
-  boost::escaped_list_separator<char> ldap_dn_sep("",",","");
-  boost::tokenizer<boost::escaped_list_separator<char> > 
-    ldap_dn_tok(s,ldap_dn_sep);
-
-  boost::tokenizer< boost::escaped_list_separator<char> >::iterator
-    ldap_dn_tok_it(
-      ldap_dn_tok.begin()
-    );
-  boost::tokenizer< boost::escaped_list_separator<char> >::iterator const 
-    ldap_dn_tok_end(
-       ldap_dn_tok.end()
-    );
-
-  for( ; ldap_dn_tok_it != ldap_dn_tok_end; ++ldap_dn_tok_it) 
-    v.push_back(
-      boost::algorithm::trim_copy(*ldap_dn_tok_it)
-    );
-  
-}
-
 bool is_glue2_service_dn(std::vector<std::string> const& dn)
 {
  return dn.size() > 1 && 
