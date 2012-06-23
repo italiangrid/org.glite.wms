@@ -30,6 +30,8 @@ END LICENSE */
 #include <cstring>
 #include <cerrno>
 #include <signal.h>
+//#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <globus_gsi_credential.h>
 #include <globus_gsi_proxy.h>
@@ -66,7 +68,8 @@ static struct option const long_options[] = {
    { "server",   required_argument, 0, 's' },
    { "proxy",    required_argument, 0, 'p' },
    { "help",     no_argument,       0, 'h' },
-   { "output",   required_argument, 0, 'o'},
+   { "output",   required_argument, 0, 'o' },
+   { "timeout",  required_argument, 0, 't' },
    { NULL, 0, NULL, 0}
 };
 
@@ -82,7 +85,7 @@ main(int argc, char *argv[])
    char arg;
    glite_renewal_core_context ctx = NULL;
    int ret;
-
+   int timeout = 60;
    char *outputfile = NULL;
 
    while ((arg = getopt_long(argc, argv, short_options, long_options, NULL)) != EOF) {
@@ -93,6 +96,8 @@ main(int argc, char *argv[])
 	proxy = optarg; break;
       case 'o':
 	outputfile = optarg;break;
+      case 't':
+        timeout = atoi(optarg); break;
       case 'h':
 	//fprintf(stdout, "Usage: %s --server <myproxy server> --proxy <filename>\n", argv[0]);
 	cerr << "Usage: "
@@ -116,7 +121,7 @@ main(int argc, char *argv[])
 //   }
 
    if(!boost::filesystem::exists( boost::filesystem::path(proxy,boost::filesystem::native) )) {
-     cerr << "Proxy file [" << proxy << " doest not exist" << endl;
+     cerr << "Proxy file [" << proxy << "] doest not exist" << endl;
      return 1;
    }
 
@@ -155,23 +160,52 @@ main(int argc, char *argv[])
    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 
-   ret = glite_renewal_core_renew(ctx, server, 0, proxy, &new_proxy);
-   if (ret) {
-     //      fprintf(stderr, "%s: glite_renewal_core_renew() failed: %s",
-     //              argv[0], ctx->err_message);
-     cout << argv[0] <<": glite_renewal_core_renew() failed: "
-	  << ctx->err_message << endl;
-       
-     //      exit(1);
+   pid_t retchld = fork();
+   if ( retchld == -1 ) {
+     cout << argv[0] << " cannot proceed: fork() error" << endl;
      return 1;
    }
+   
+   if (retchld == 0) {
+     // child process that has to renew the proxy
+     ret = glite_renewal_core_renew(ctx, server, 0, proxy, &new_proxy);
+     if (ret) {
+       //      fprintf(stderr, "%s: glite_renewal_core_renew() failed: %s",
+       //              argv[0], ctx->err_message);
+       cout << argv[0] <<": glite_renewal_core_renew() failed: "
+	    << ctx->err_message << endl;
+       
+       //exit(1);
+       return 1;
+     }
+   
+     ret = glite_renewal_core_destroy_ctx(ctx);
 
-   ret = glite_renewal_core_destroy_ctx(ctx);
+     //   printf("%s\n", new_proxy);
+     cout << new_proxy << endl;
 
-   //   printf("%s\n", new_proxy);
-   cout <<new_proxy<<endl;
-
-   ::rename( new_proxy, outputfile );
-
+     ::rename( new_proxy, outputfile );
+     return 0;
+   } else {
+     // parent process
+     int i = 0;
+     while(i++<timeout) {
+       //cout << "sleep " << i<<endl;
+       sleep(1);
+       int status;
+       int retwaitpid = ::waitpid(retchld, &status, WNOHANG|WUNTRACED);
+       if(retwaitpid == retchld) // the child finished (changed status)
+         {
+	   //cout << "Child finished. Child's return status=" << status << endl;
+	   if(status == 0)
+	     return 0;
+	   else
+	     return 1;
+	 }
+     }
+     kill(retchld, SIGKILL);
+     cout << argv[0] << " killed the renewal child after timeout of " << timeout << " seconds. The proxy " << proxy << " has NOT been renewed! " << endl;
+     return 1;
+   }
    return 0;
 }

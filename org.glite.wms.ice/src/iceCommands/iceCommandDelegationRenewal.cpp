@@ -30,7 +30,7 @@ END LICENSE */
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 //#include "iceDb/UpdateJobByGid.h"
-#include "glite/security/proxyrenewal/renewal.h"
+//#include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 /**
