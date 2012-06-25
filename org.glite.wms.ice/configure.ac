@@ -116,6 +116,7 @@ AC_CONFIG_FILES([src/iceUtils/Makefile])
 AC_CONFIG_FILES([src/ice/Makefile])
 AC_CONFIG_FILES([src/iceCommands/Makefile])
 AC_CONFIG_FILES([src/iceThreads/Makefile])
-
+EXPORT_DYNAMIC_LDFLAGS=-rdynamic
+AC_SUBST([EXPORT_DYNAMIC_LDFLAGS])
 
 AC_OUTPUT
