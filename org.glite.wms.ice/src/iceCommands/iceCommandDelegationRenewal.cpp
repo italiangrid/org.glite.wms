@@ -206,10 +206,10 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 
 	  int pcloseret = pclose( res );
 
-	  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-			  << "Command output is ["
-			  << output << "]"
-			  );
+// 	  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+// 			  << "Command output is ["
+// 			  << output << "]"
+// 			  );
 
 	  if( pcloseret == -1 ) // the call to pclose failed for some reason
 	    {
@@ -218,19 +218,15 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			  << strerror(errno)
 			  << ". Cannot determine if proxy has been correctly renewed..."
 			  );
-	     
 	    }
 	  if( pcloseret != 0 ) {
 	    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 			  << "Proxy renewal failed: [" 		  
 			    << output << "]"
-			  );
+			  );	    
 	  }
 
 	  if( pcloseret == 0 ) {
-	    //	    new_proxy = (char*)output.c_str();
-	    //int pos = output.find('\n');
-	    //new_proxy = (char*)output.substr(0, pos).c_str();
 	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 			    << "Proxy renewal successful for DN=["
 			    << it->m_user_dn
