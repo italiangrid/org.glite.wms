@@ -44,7 +44,7 @@ glite_wms_ice_SOURCES = glite-wms-ice.cpp
 
 glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
 
-queryDb_LDADD = \
+queryDb_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
 		$(GLITE_CREAM_LIBS) \
@@ -78,7 +78,7 @@ queryDb_LDADD = \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-queryStats_LDADD = \
+queryStats_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
@@ -112,7 +112,7 @@ queryStats_LDADD = \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-putFL_LDADD =  \
+putFL_LDADD =  $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
 		$(GLITE_CREAM_LIBS) \
@@ -144,7 +144,7 @@ putFL_LDADD =  \
 		-lboost_serialization \
 		iceDb/sqlite/libsqlite3.a
 
-putFL_reschedule_LDADD = \
+putFL_reschedule_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 			$(GRIDSITE_OPENSSL_LIBS) \
 			$(XML2_LIBS) \
 	                $(GLITE_CREAM_LIBS) \
@@ -178,7 +178,7 @@ putFL_reschedule_LDADD = \
 			$(VOMS_LIBS) \
 			iceDb/sqlite/libsqlite3.a
 
-putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
+putFL_cancel_LDADD = $(LOG4CPP_LIBS) $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
@@ -197,7 +197,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		-lboost_serialization \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
+glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
@@ -231,7 +231,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_rm_LDADD = \
+glite_wms_ice_rm_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
@@ -265,7 +265,7 @@ glite_wms_ice_rm_LDADD = \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 		
-glite_wms_ice_db_rm_LDADD = \
+glite_wms_ice_db_rm_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
@@ -299,7 +299,7 @@ glite_wms_ice_db_rm_LDADD = \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_LDADD = \
+glite_wms_ice_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \
 		$(XML2_LIBS) \
                 $(GLITE_CREAM_LIBS) \
@@ -333,7 +333,7 @@ glite_wms_ice_LDADD = \
 		$(VOMS_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
-glite_wms_ice_proxy_renew_LDADD = \
+glite_wms_ice_proxy_renew_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GLOBUS_GSI_CRED_LIBS) \
 		$(GLOBUS_GSI_PROXY_LIBS) \
 		$(GLOBUS_GSI_UTILS_LIBS) \
