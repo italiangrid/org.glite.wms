@@ -211,7 +211,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			  << output << "]"
 			  );
 
-	  if( pcloseret == -1 ) // the command failed for some reason
+	  if( pcloseret == -1 ) // the call to pclose failed for some reason
 	    {
 	      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 			  << "pclose failed for error: " 		  
@@ -220,7 +220,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			  );
 	     
 	    }
-	  if( pcloseret == 1 ) {
+	  if( pcloseret != 0 ) {
 	    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 			  << "Proxy renewal failed: [" 		  
 			    << output << "]"
