@@ -29,8 +29,6 @@ END LICENSE */
 #include "iceDb/GetJobsByDNMyProxy.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-//#include "iceDb/UpdateJobByGid.h"
-//#include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 /**
@@ -38,7 +36,6 @@ END LICENSE */
  * Cream Client API C++ Headers
  *
  */
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
@@ -50,10 +47,13 @@ END LICENSE */
  *
  */
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctime>
 #include <cerrno>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace cream_api = glite::ce::cream_client_api;
 
@@ -61,7 +61,7 @@ using namespace std;
 using namespace glite::wms::ice::util;
 
 #define DELEGATION_EXPIRATION_THRESHOLD_TIME 3600
-//int iceCommandDelegationRenewal::DELEGATION_EXPIRATION_THRESHOLD_TIME = 3600
+
 //______________________________________________________________________________
 iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
     iceAbsCommand( "iceCommandDelegationRenewal", "" ),
@@ -85,7 +85,6 @@ string iceCommandDelegationRenewal::get_grid_job_id( ) const
   return randid.str();
 }
 
-
 //______________________________________________________________________________
 void iceCommandDelegationRenewal::execute( const std::string& tid ) throw()
 {  
@@ -101,8 +100,6 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 {
     static const char* method_name = "iceCommandDelegationRenewal::renewAllDelegations() - ";
     
-    //char* new_proxy = NULL;
- 
     /**
        Now, let's check all delegations for expiration and renew them
     */
@@ -164,7 +161,8 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  mapDelegTime.erase( thisDelegID );
 	  continue;
 	}
-	
+	int timeout = IceConfManager::instance()->getConfiguration()->ice( )->proxy_renewal_timeout( );
+	string timeoutStr( boost::lexical_cast<string>(timeout) );
 	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 			<< "Contacting MyProxy server [" 
 			<< it->m_myproxyserver << "] for user dn ["
@@ -172,97 +170,203 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			<< certfile << "] to renew it..."
 			);
 
-	/**
-	 *
-	 * CODE to POPEN to glite-wms-ice-proxy-renew
-	 *
-	 */
-	string output;
-	string command = "export X509_USER_CERT=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
-	command += "; export X509_USER_KEY=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
-        int timeout = IceConfManager::instance()->getConfiguration()->ice( )->proxy_renewal_timeout( );
-	command += "; /usr/bin/glite-wms-ice-proxy-renew --timeout " + boost::lexical_cast<string>(timeout);
-	command += " -s " + it->m_myproxyserver;
-	command += " -p " + certfile;
-	command += " -o " + certfile + ".renewed";
+        string newcert = certfile+".renewed";
 
-	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-			<< "Executing command [" 
-			<< command << "]..."
-			);
+	char *renewal_args[] = { "/usr/bin/glite-wms-ice-proxy-renew", 
+	                         "--timeout", 
+				 (char*)timeoutStr.c_str( ), 
+				 "-s", 
+				 (char*)it->m_myproxyserver.c_str(), 
+				 "-p", 
+				 (char*)certfile.c_str(), 
+				 "-o", 
+				 (char*)newcert.c_str(), 
+				 0 };
+				 
+	char *renewal_envs[] = { "X509_USER_CERT", (char*)IceConfManager::instance()->getConfiguration()->common()->host_proxy_file().c_str(), 
+				 "X509_USER_KEY", (char*)IceConfManager::instance()->getConfiguration()->common()->host_proxy_file().c_str(), 0 
+				};
 
-	FILE *res = popen(command.c_str(), "r");
-	if(!res) {
+	pid_t renewal_process_pid = fork();
+	if(renewal_process_pid == -1 ) {
 	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-			  << "Couldn't popen command [" 		  
-			  << command << "]: " << strerror(errno)
-			  << ". Skipping this delegation renew..."
+			  << "fork returned error: [" 		  
+			  << strerror(errno) << "]"
+			  << ". Cannot get a fresh proxy for user ["
+			  << it->m_user_dn << "]."
 			  );
 	} else {
-
-	  while(!feof(res)) {
-	    output += fgetc(res);
-	  }
-
-	  int pcloseret = pclose( res );
-
-// 	  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-// 			  << "Command output is ["
-// 			  << output << "]"
-// 			  );
-
-	  if( pcloseret == -1 ) // the call to pclose failed for some reason
-	    {
-	      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-			  << "pclose failed for error: " 		  
-			  << strerror(errno)
-			  << ". Cannot determine if proxy has been correctly renewed..."
-			  );
-	    }
-	  if( pcloseret != 0 ) {
+	  if(renewal_process_pid == 0 ) {
+	    // child that has to do execve
+	    ::execve( "/usr/bin/glite-wms-ice-proxy-renew", renewal_args, renewal_envs );
 	    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-			  << "Proxy renewal failed: [" 		  
-			    << output << "]"
-			  );	    
-	  }
-
-	  if( pcloseret == 0 ) {
-	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+			  << "execve returned error: [" 		  
+			  << strerror(errno) << "]"
+			  << ". Cannot get a fresh proxy for user ["
+			  << it->m_user_dn << "]."
+			  );
+	  } else {
+	    // parent that has to wait for the child termination
+	    int status;
+    	    int retwaitpid = ::waitpid(renewal_process_pid, &status, WUNTRACED);
+	    if(retwaitpid == renewal_process_pid) {
+	      // the child finised. must retrieve command's output from file in tmp and parse it to
+	      // check if OK or ERROR
+	      ifstream in;
+	      in.open((string("/tmp/glite-wms-ice-proxy-renew.output.") + boost::lexical_cast<string>(retwaitpid)).c_str(), ios::in);
+	      string renewal_command_output;
+	      string line;
+   	      while (getline(in, line)) renewal_command_output += line;
+   	      in.close();
+	      ::unlink( (string("/tmp/glite-wms-ice-proxy-renew.output.") + boost::lexical_cast<string>(retwaitpid)).c_str() );
+	      
+	      /**
+	       *
+	       * ERROR 
+	       *
+	       */
+	      if(boost::starts_with(renewal_command_output, "ERROR")) {
+	        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+			        << "Proxy renewal failed: [" 		  
+			        << renewal_command_output << "]"
+			      );
+	      }
+	      
+	      /**
+	       *
+	       * OK
+	       *
+	       */
+	      if(boost::starts_with(renewal_command_output, "OK")) {
+	        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 			    << "Proxy renewal successful for DN=["
 			    << it->m_user_dn
 			    <<"] MyProxyURL=["
 			    << it->m_myproxyserver
 			    << "]: new proxy is [" 		  
-			    << certfile + ".renewed" << "]. It will overwrite the better one..."
+			    << newcert << "]. It will overwrite the better one..."
 			    );
-	    /**
-	       Must substitute old better proxy with new downloaded one, if it's more long-living 
-	    */
-	    cream_api::soap_proxy::VOMSWrapper V( certfile + ".renewed", !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
-	    if( !V.IsValid( ) ) {
-	      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			     << method_name
+	        /**
+	           Must substitute old better proxy with new downloaded one, if it's more long-living 
+	         */
+	        cream_api::soap_proxy::VOMSWrapper V( certfile + ".renewed", !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
+	        if( !V.IsValid( ) ) {
+	          CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   	     << method_name
 			     << "Cannot parse downloaded new proxy ["
 			     << certfile + ".renewed" << "] from MyProxy Service ["
 			     << it->m_myproxyserver << "]. Error is: "
 			     << V.getErrorMessage()
 			     );
 	      
-	    } else {
+	        } else {
 	      
-	      /** SUBSTITUTE old better proxy with downloaded one. 
-	       */
-	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( certfile + ".renewed", V.getProxyTimeEnd(), (long long int)-1 ); // -1 means to not modify the job counter
-	      DNProxyManager::getInstance()->updateBetterProxy( it->m_user_dn,
+	        /** SUBSTITUTE old better proxy with downloaded one. 
+	         */
+	        boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( certfile + ".renewed", V.getProxyTimeEnd(), (long long int)-1 ); // -1 means to not modify the job counter
+	        DNProxyManager::getInstance()->updateBetterProxy( it->m_user_dn,
 								it->m_myproxyserver,
 								newPrx );
-	      ::unlink( (certfile + ".renewed").c_str() );
+	        ::unlink( (certfile + ".renewed").c_str() );
 	      
+	       }
+	      }
 	    }
-	    
-	    
 	  }
+
 	}
+	
+	/**
+	 *
+	 * CODE to POPEN to glite-wms-ice-proxy-renew
+	 *
+	 */
+// 	string output;
+// 	string command = "export X509_USER_CERT=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
+// 	command += "; export X509_USER_KEY=" + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
+//         timeout = IceConfManager::instance()->getConfiguration()->ice( )->proxy_renewal_timeout( );
+// 	command += "; /usr/bin/glite-wms-ice-proxy-renew --timeout " + boost::lexical_cast<string>(timeout);
+// 	command += " -s " + it->m_myproxyserver;
+// 	command += " -p " + certfile;
+// 	command += " -o " + certfile + ".renewed";
+// 
+// 	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+// 			<< "Executing command [" 
+// 			<< command << "]..."
+// 			);
+// 
+// 	FILE *res = popen(command.c_str(), "r");
+// 	if(!res) {
+// 	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+// 			  << "Couldn't popen command [" 		  
+// 			  << command << "]: " << strerror(errno)
+// 			  << ". Skipping this delegation renew..."
+// 			  );
+// 	} else {
+// 
+// 	  while(!feof(res)) {
+// 	    output += fgetc(res);
+// 	  }
+// 
+// 	  int pcloseret = pclose( res );
+// 
+// // 	  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+// // 			  << "Command output is ["
+// // 			  << output << "]"
+// // 			  );
+// 
+// 	  if( pcloseret == -1 ) // the call to pclose failed for some reason
+// 	    {
+// 	      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+// 			  << "pclose failed for error: " 		  
+// 			  << strerror(errno)
+// 			  << ". Cannot determine if proxy has been correctly renewed..."
+// 			  );
+// 	    }
+// 	  if( pcloseret != 0 ) {
+// 	    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+// 			  << "Proxy renewal failed: [" 		  
+// 			    << output << "]"
+// 			  );	    
+// 	  }
+// 
+// 	  if( pcloseret == 0 ) {
+// 	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+// 			    << "Proxy renewal successful for DN=["
+// 			    << it->m_user_dn
+// 			    <<"] MyProxyURL=["
+// 			    << it->m_myproxyserver
+// 			    << "]: new proxy is [" 		  
+// 			    << certfile + ".renewed" << "]. It will overwrite the better one..."
+// 			    );
+// 	    /**
+// 	       Must substitute old better proxy with new downloaded one, if it's more long-living 
+// 	    */
+// 	    cream_api::soap_proxy::VOMSWrapper V( certfile + ".renewed", !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
+// 	    if( !V.IsValid( ) ) {
+// 	      CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 			     << method_name
+// 			     << "Cannot parse downloaded new proxy ["
+// 			     << certfile + ".renewed" << "] from MyProxy Service ["
+// 			     << it->m_myproxyserver << "]. Error is: "
+// 			     << V.getErrorMessage()
+// 			     );
+// 	      
+// 	    } else {
+// 	      
+// 	      /** SUBSTITUTE old better proxy with downloaded one. 
+// 	       */
+// 	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( certfile + ".renewed", V.getProxyTimeEnd(), (long long int)-1 ); // -1 means to not modify the job counter
+// 	      DNProxyManager::getInstance()->updateBetterProxy( it->m_user_dn,
+// 								it->m_myproxyserver,
+// 								newPrx );
+// 	      ::unlink( (certfile + ".renewed").c_str() );
+// 	      
+// 	    }
+// 	    
+// 	    
+// 	  }
+// 	}
 	
 	mapDelegTime[ thisDelegID ] = make_pair(thisExpTime, thisDuration);
 	

@@ -18,24 +18,26 @@ limitations under the License.
 
 END LICENSE */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <getopt.h>
 #include <glite/security/proxyrenewal/renewal_core.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <iostream>
 #include <cstring>
 #include <cerrno>
 #include <signal.h>
-//#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <globus_gsi_credential.h>
 #include <globus_gsi_proxy.h>
 #include <globus_gsi_cert_utils_constants.h>
+
+#include <boost/lexical_cast.hpp>
 
 #include <boost/filesystem/operations.hpp>
 
@@ -76,7 +78,7 @@ static struct option const long_options[] = {
 static char short_options[] = "s:p:h:o:";
 
 int
-main(int argc, char *argv[])
+main(int argc, char *argv[], char *envp[])
 {
    char *server = NULL;
    char *proxy = NULL;
@@ -113,13 +115,6 @@ main(int argc, char *argv[])
      return 1;
    }
 
-//   struct stat buf;
-//   int rc = stat(proxy, &buf);
-//   if( rc ) {
-//     cerr << strerror( errno ) << endl;
-//     return 1;
-//   }
-
    if(!boost::filesystem::exists( boost::filesystem::path(proxy,boost::filesystem::native) )) {
      cerr << "Proxy file [" << proxy << "] doest not exist" << endl;
      return 1;
@@ -131,7 +126,6 @@ main(int argc, char *argv[])
      fprintf(stderr, "glite_renewal_core_init_ctx() failed\n");
      cout << "glite_renewal_core_init_ctx() failed\n";
      return 1;
-       //       exit(1);
    }
 
    ctx->log_dst = GLITE_RENEWAL_LOG_NONE;
@@ -158,8 +152,20 @@ main(int argc, char *argv[])
    sigaddset(&mask, SIGCHLD);
    sigaddset(&mask, SIGPIPE);
    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+  
+   if(envp[0] && envp[1])
+     ::setenv( envp[0], envp[1], 1);
 
-
+   if(envp[2] && envp[3])
+     ::setenv( envp[2], envp[3], 1);
+ 
+   pid_t pid = ::getpid();
+   string outputstream = string("/tmp/glite-wms-ice-proxy-renew.output.") + boost::lexical_cast<string>( pid );
+   {
+     ofstream out;
+     out.open(outputstream.c_str(), ios::trunc);
+     out << "OK " << endl;
+   }
    pid_t retchld = fork();
    if ( retchld == -1 ) {
      cout << argv[0] << " cannot proceed: fork() error" << endl;
@@ -168,24 +174,24 @@ main(int argc, char *argv[])
    
    if (retchld == 0) {
      // child process that has to renew the proxy
+     
      ret = glite_renewal_core_renew(ctx, server, 0, proxy, &new_proxy);
      if (ret) {
-       //      fprintf(stderr, "%s: glite_renewal_core_renew() failed: %s",
-       //              argv[0], ctx->err_message);
-       cout << argv[0] <<": glite_renewal_core_renew() failed: "
-	    << ctx->err_message << endl;
-       
-       //exit(1);
+       ofstream out;
+       out.open(outputstream.c_str(), ios::trunc);
+       out << "ERROR - " << argv[0] <<": glite_renewal_core_renew() failed: "
+           << ctx->err_message << " - timeout=[" << timeout << "] - myproxyserver=["<<server<<"] - proxy=["<<proxy << "]" 
+	   << " - HOSTCERT="<< (::getenv("X509_USER_CERT") ? ::getenv("X509_USER_CERT") : "" )
+	   << " - HOSTKEY=" << (::getenv("X509_USER_KEY") ? ::getenv("X509_USER_KEY") : "" )
+	   << endl;
        return 1;
      }
    
      ret = glite_renewal_core_destroy_ctx(ctx);
 
-     //   printf("%s\n", new_proxy);
-     cout << new_proxy << endl;
-
      ::rename( new_proxy, outputfile );
      return 0;
+     
    } else {
      // parent process
      int i = 0;
@@ -199,12 +205,17 @@ main(int argc, char *argv[])
 	   //cout << "Child finished. Child's return status=" << status << endl;
 	   if(status == 0)
 	     return 0;
-	   else
+	   else {
 	     return 1;
+	   }
 	 }
      }
      kill(retchld, SIGKILL);
-     cout << argv[0] << " killed the renewal child after timeout of " << timeout << " seconds. The proxy " << proxy << " has NOT been renewed! " << endl;
+     
+     //cout << argv[0] << " killed the renewal child after timeout of " << timeout << " seconds. The proxy " << proxy << " has NOT been renewed! " << endl;
+     ofstream out;
+     out.open(outputstream.c_str(), ios::trunc);
+     out << "ERROR - " << argv[0] << " killed the renewal child after timeout of " << timeout << " seconds. The proxy " << proxy << " has NOT been renewed! " << endl;
      return 1;
    }
    return 0;
