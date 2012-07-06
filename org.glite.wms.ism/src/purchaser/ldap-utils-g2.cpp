@@ -1375,14 +1375,14 @@ fetch_bdii_ce_info_g2(
         g2Ad->Update(*eei.ad);
       }
       g2Ad->Insert("Computing", computingAd_copy);
-if((*sh_it)->second.ad && (*sh_it)->second.ad->Lookup("Rule")) {
-      g2Ad->DeepInsert(
-        computingAd_copy->Lookup("Share"),
-        "Policy", 
-(*sh_it)->second.ad->Lookup("Rule")->Copy()
-//        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
-      );
-}
+      if ((*sh_it)->second.ad &&
+        (*sh_it)->second.ad->Lookup("Rule")) {
+        g2Ad->DeepInsert(
+          computingAd_copy->Lookup("Share"),
+          "Policy", 
+          (*sh_it)->second.ad->Lookup("Rule")->Copy()
+        );
+      }
       std::string interface_name = cu::evaluate_expression(
         *ep_it->second.ad, "EndPoint.InterfaceName"
       );
