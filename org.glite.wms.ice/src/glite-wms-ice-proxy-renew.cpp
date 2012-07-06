@@ -25,7 +25,8 @@ END LICENSE */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <map>
+#include <vector>
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -38,7 +39,8 @@ END LICENSE */
 #include <globus_gsi_cert_utils_constants.h>
 
 #include <boost/lexical_cast.hpp>
-
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 
 /* workaround for gsoap 2.7.13 */
@@ -152,13 +154,33 @@ main(int argc, char *argv[], char *envp[])
    sigaddset(&mask, SIGCHLD);
    sigaddset(&mask, SIGPIPE);
    sigprocmask(SIG_UNBLOCK, &mask, NULL);
-  
+
+   map<string, string> envMap;
+ 
+   for (char **env = envp; *env != 0; ++env) {
+    //std::cout << "**** ENVP **** " << *env << '\n';
+    vector<string> pieces;
+    boost::split(pieces, *env, boost::is_any_of("="));
+    if(pieces.size()==2) {
+      envMap[pieces[0]] = pieces[1];
+    }
+   }  
+/* 
    if(envp[0] && envp[1])
      ::setenv( envp[0], envp[1], 1);
 
    if(envp[2] && envp[3])
      ::setenv( envp[2], envp[3], 1);
- 
+*/ 
+
+   map<string, string>::const_iterator it = envMap.begin();
+   for( ; it != envMap.end(); ++it ) {
+	if(it->first == "X509_USER_CERT")
+	  ::setenv( "X509_USER_CERT", it->second.c_str(), 1 );
+        if(it->first == "X509_USER_KEY")
+          ::setenv( "X509_USER_KEY", it->second.c_str(), 1 );
+   }
+
    pid_t pid = ::getpid();
    string outputstream = string("/tmp/glite-wms-ice-proxy-renew.output.") + boost::lexical_cast<string>( pid );
    {
@@ -168,7 +190,9 @@ main(int argc, char *argv[], char *envp[])
    }
    pid_t retchld = fork();
    if ( retchld == -1 ) {
-     cout << argv[0] << " cannot proceed: fork() error" << endl;
+     ofstream out;
+     out.open(outputstream.c_str(), ios::trunc);
+     out << "ERROR - There's a problem with fork(): " << strerror(errno) << endl;
      return 1;
    }
    

@@ -182,10 +182,16 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 				 "-o", 
 				 (char*)newcert.c_str(), 
 				 0 };
-				 
+	
+	string env_cert = string("X509_USER_CERT=") + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
+	string env_key  = string("X509_USER_KEY=") + IceConfManager::instance()->getConfiguration()->common()->host_proxy_file();
+/* 
 	char *renewal_envs[] = { "X509_USER_CERT", (char*)IceConfManager::instance()->getConfiguration()->common()->host_proxy_file().c_str(), 
 				 "X509_USER_KEY", (char*)IceConfManager::instance()->getConfiguration()->common()->host_proxy_file().c_str(), 0 
 				};
+*/
+
+	char *renewal_envs[] = { (char*)env_cert.c_str(), (char*)env_key.c_str(), 0 };
 
 	pid_t renewal_process_pid = fork();
 	if(renewal_process_pid == -1 ) {
