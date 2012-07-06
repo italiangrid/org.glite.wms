@@ -109,7 +109,6 @@ class EndpointInfo
 {
 public:
   ClassAdPtr ad;
-  std::vector<classad::ExprTree*> policy_rules;
   bool has_servicelnk_iterator;
   bool has_policylnk_iterator;
   bool has_shareslnk_iterators;
@@ -146,10 +145,11 @@ struct ServiceInfo
 {
 public:
   ServiceInfo()
-    : has_managerlnk(false) { }
+    : has_managerlnk(false), has_shareslnk_iterators(false) { }
   ClassAdPtr ad;
   ManagerInfoMap::iterator manager_lnk;
   bool has_managerlnk;
+  bool has_shareslnk_iterators;
   //////////////////////////////////////////////////////
   // The following is requireg since for StorageServices
   // the relevant Shares are most likely bound to the only
@@ -163,7 +163,6 @@ public:
 struct ShareInfo
 {
   ClassAdPtr ad;
-  std::vector<classad::ExprTree*> policy_rules;
   std::vector<ResourceInfoMap::iterator> resources_lnk;
 };
 
@@ -470,6 +469,7 @@ void bind_share_to_service(
     std::make_pair(service_id, ServiceInfo())
   );
   service_it->second.shares_lnk.push_back(share_it);
+  service_it->second.has_shareslnk_iterators = true;
 }
 
 void process_glue2_share_info(
@@ -727,17 +727,10 @@ void process_glue2_mapping_policy_info(
   boost::tie(share_it, insert) = bdii_info.shares.insert(
     std::make_pair(share_id, ShareInfo())
   );
-  classad::ExprList* el = dynamic_cast<classad::ExprList*>(
-    ad->Lookup("Rule")
-  );
-  std::transform(
-    el->begin(), el->end(),
-    std::inserter(
-      share_it->second.policy_rules, 
-      share_it->second.policy_rules.end()
-    ),
-    boost::bind(&classad::ExprTree::Copy, _1)
-  );
+  if (!share_it->second.ad) {
+    share_it->second.ad.reset(new classad::ClassAd);
+  }
+  share_it->second.ad->Insert("Rule", ad->Lookup("Rule")->Copy());
 }
 
 void process_glue2_access_policy_info(
@@ -1137,28 +1130,34 @@ fetch_bdii_se_info_g2(
     }
     if (ep_it->second.has_policylnk_iterator &&
       ep_it->second.policy_lnk->second.ad && 
-        storageAd->Lookup("Endpoint")) {
-    storageAd->DeepInsert(
-      storageAd->Lookup("Endpoint"),
-      "Policy",
-       ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
-    );
-  }
+      storageAd->Lookup("Endpoint")) {
+      storageAd->DeepInsert(
+        storageAd->Lookup("Endpoint"),
+        "Policy",
+        ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
+      );
+    }
 
     // If there is no Share bound to the Endpoint then we have to choose
     // Shares directly from the Service
-  if (ep_it->second.has_shareslnk_iterators) {
-    std::vector<ShareInfoMap::iterator> const& shares(
-      ep_it->second.shares_lnk.empty() ? 
-        ep_it->second.service_lnk->second.shares_lnk :
-        ep_it->second.shares_lnk
-    );
 
-    std::vector<ShareInfoMap::iterator>::const_iterator sh_it(
-      shares.begin()
-    );
-    std::vector<ShareInfoMap::iterator>::const_iterator const sh_e(
-      shares.end());
+    std::vector<ShareInfoMap::iterator> shares;
+    if (ep_it->second.shares_lnk.empty()) {
+      if (ep_it->second.has_servicelnk_iterator && ep_it->second.service_lnk->second.has_shareslnk_iterators) {
+        shares = ep_it->second.service_lnk->second.shares_lnk;
+      } else {
+        continue;
+      }
+    } else {
+      if (ep_it->second.has_shareslnk_iterators) {
+        shares = ep_it->second.shares_lnk;
+      } else {
+        continue;
+      }
+    }
+   
+    std::vector<ShareInfoMap::iterator>::const_iterator sh_it(shares.begin());
+    std::vector<ShareInfoMap::iterator>::const_iterator const sh_e(shares.end());
     for( ; sh_it != sh_e; ++sh_it) {
 
       classad::ClassAd* storageAd_copy(
@@ -1167,10 +1166,15 @@ fetch_bdii_se_info_g2(
       classad::ExprTree* shareAd_copy(
         (*sh_it)->second.ad->Lookup("Share")->Copy()
       );
-      dynamic_cast<classad::ClassAd*>(shareAd_copy)->Insert(
-        "Policy",
-        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
-      );
+      if (
+        (*sh_it)->second.ad &&
+        (*sh_it)->second.ad->Lookup("Rule")
+      ) {
+        dynamic_cast<classad::ClassAd*>(shareAd_copy)->Insert(
+          "Policy",
+          (*sh_it)->second.ad->Lookup("Rule")->Copy()
+        );
+      }
       storageAd_copy->Insert("Share", shareAd_copy);
     
       if( !(*sh_it)->second.resources_lnk.empty() ) {
@@ -1188,14 +1192,24 @@ fetch_bdii_se_info_g2(
       g2Ad->Insert("Storage", storageAd_copy);
       ClassAdPtr result( new classad::ClassAd );
       result->Insert("GLUE2", g2Ad);
-      std::string const id = cu::evaluate_expression(*result,
-        "GLUE2.Storage.Share.ID"
-      );
+
+      std::string id;
+      try {
+        id = std::string(
+          cu::evaluate_expression(
+            *result,
+            "GLUE2.Storage.Share.ID"
+          )
+        );
+      } catch (std::exception) {
+        Info("purchased entry missing GLUE2.Storage.Share.ID");
+        continue;
+      }
       se_info_container.insert(std::make_pair(id, result));
       n_shares++;
     }
   }
-  }
+
   Debug("#" << n_shares << " GLUE2StorageShare's ClassAd(s) generated in " << std::time(0) - t1 << " seconds");
 }
 
@@ -1361,11 +1375,14 @@ fetch_bdii_ce_info_g2(
         g2Ad->Update(*eei.ad);
       }
       g2Ad->Insert("Computing", computingAd_copy);
+if((*sh_it)->second.ad && (*sh_it)->second.ad->Lookup("Rule")) {
       g2Ad->DeepInsert(
         computingAd_copy->Lookup("Share"),
         "Policy", 
-        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
+(*sh_it)->second.ad->Lookup("Rule")->Copy()
+//        classad::ExprList::MakeExprList((*sh_it)->second.policy_rules)
       );
+}
       std::string interface_name = cu::evaluate_expression(
         *ep_it->second.ad, "EndPoint.InterfaceName"
       );
@@ -1414,9 +1431,19 @@ fetch_bdii_ce_info_g2(
         "IsUndefined(GLUE2.Computing.Share.OtherInfo.CREAMCEId) ?"
         "    GLUE2.Computing.Share.ID : GLUE2.Computing.Share.OtherInfo.CREAMCEId"
       );
-      std::string const policy = cu::evaluate_expression(*result,
-        "GLUE2.Computing.Share.Policy[0]"
-      );
+
+      std::string policy;
+      try {
+        policy = std::string(
+          cu::evaluate_expression(
+           *result,
+          "GLUE2.Computing.Share.Policy[0]"
+          )
+        );
+      } catch (std::exception) {
+        Info("cannot evaluate GLUE2.Computing.Share.Policy[0] for " << id);
+        continue;
+      }
 
       std::string const glue13Id(
         id + "/" + ba::erase_regex_copy(policy, boost::regex(".+:"))
