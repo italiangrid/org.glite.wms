@@ -41,6 +41,8 @@ END LICENSE */
 #include <algorithm>
 #include <cstdlib>
 
+#include <csignal>
+
 namespace cream_api     = glite::ce::cream_client_api;
 namespace configuration = glite::wms::common::configuration;
 using namespace glite::wms::ice::util;
@@ -56,7 +58,14 @@ eventStatusPoller::eventStatusPoller( glite::wms::ice::IceCore* manager, int d )
       m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
       m_threadPool( manager->get_ice_commands_pool() )
 {
-
+  sigset_t set;
+  ::sigemptyset(&set);
+  ::sigaddset(&set, SIGCHLD);
+  if(::pthread_sigmask( SIG_BLOCK, &set, 0 ) < 0 ) 
+    CREAM_SAFE_LOG( m_log_dev->fatalStream() << "eventStatusPoller::CTOR"
+  	                                     << "pthread_sigmask failed. This could compromise correct working"
+                	                     << " of ICE's threads..." );
+             
 }
 
 //____________________________________________________________________________

@@ -113,12 +113,12 @@ namespace ice {
         // 
         // ICE threads
         //        
-        IceThreadHelper m_listener_thread;
+//        IceThreadHelper m_listener_thread;
         IceThreadHelper m_poller_thread;
-        IceThreadHelper m_updater_thread;
-        IceThreadHelper m_lease_updater_thread;
+//        IceThreadHelper m_updater_thread;
+//         IceThreadHelper m_lease_updater_thread;
         IceThreadHelper m_proxy_renewer_thread;
-        IceThreadHelper m_job_killer_thread;
+//        IceThreadHelper m_job_killer_thread;
         
         // 
         // ICE request sources
@@ -217,20 +217,20 @@ namespace ice {
         void removeRequest( util::Request* r );
 
         // Starter methods
-        void startListener( void );
+//        void startListener( void );
         void startPoller( void );
-        void startLeaseUpdater( void );
+//        void startLeaseUpdater( void );
         void startProxyRenewer( void );
-        void startJobKiller( void );
+ //       void startJobKiller( void );
         
 	void stopAllThreads( void );
 
         // Query methods
-        bool is_listener_started( void ) const;
+//        bool is_listener_started( void ) const;
         bool is_poller_started( void ) const;
-        bool is_lease_updater_started( void ) const;
+//        bool is_lease_updater_started( void ) const;
         bool is_proxy_renewer_started( void ) const;
-        bool is_job_killer_started( void ) const;
+//        bool is_job_killer_started( void ) const;
 
         // Misc job handling functions
 

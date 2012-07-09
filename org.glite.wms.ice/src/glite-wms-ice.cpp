@@ -298,7 +298,7 @@ int main(int argc, char*argv[])
      * Starts status poller and/or listener if specified in the config file
      */
     iceManager->startPoller( );  
-    iceManager->startJobKiller( );
+    //iceManager->startJobKiller( );
     iceManager->startProxyRenewer( );
 
 

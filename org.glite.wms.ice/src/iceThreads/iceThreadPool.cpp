@@ -34,6 +34,8 @@ END LICENSE */
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
+#include <csignal>
+
 namespace conf_ns=glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
@@ -49,7 +51,14 @@ iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st,
     m_threadNum( id ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-
+  sigset_t set;
+  ::sigemptyset(&set);
+  ::sigaddset(&set, SIGCHLD);
+  if(::pthread_sigmask( SIG_BLOCK, &set, 0 ) < 0 ) 
+    CREAM_SAFE_LOG( m_log_dev->fatalStream() << "iceThreadPoolWorker::CTOR"
+  	                                     << "pthread_sigmask failed. This could compromise correct working"
+                	                     << " of ICE's threads..." );
+                
 }
 
 //______________________________________________________________________________

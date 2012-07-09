@@ -213,12 +213,12 @@ IceCore* IceCore::instance( void )
 
 //____________________________________________________________________________
 IceCore::IceCore( ) throw(iceInit_ex&) : 
-    m_listener_thread( "Event Status Listener" ),
+//    m_listener_thread( "Event Status Listener" ),
     m_poller_thread( "Event Status Poller" ),
-    m_updater_thread( "Subscription Updater" ),
-    m_lease_updater_thread( "Lease Updater" ),
+//    m_updater_thread( "Subscription Updater" ),
+//    m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
-    m_job_killer_thread( "Job Killer" ),
+//    m_job_killer_thread( "Job Killer" ),
     m_wms_input_queue( new Request_source_jobdir( IceConfManager::instance()->getConfiguration()->wm()->input(), true ) /*util::Request_source_factory::make_source_input_wm()*/ ),
     m_ice_input_queue( new Request_source_jobdir( IceConfManager::instance()->getConfiguration()->ice()->input(), true ) /*util::Request_source_factory::make_source_input_ice()*/ ),
     m_reqnum(util::IceConfManager::instance()->getConfiguration()->ice()->max_ice_threads()),
@@ -245,7 +245,7 @@ IceCore::IceCore( ) throw(iceInit_ex&) :
 
    m_requests_pool     = new util::iceThreadPool("ICE Submission Pool", thread_num );
    m_ice_commands_pool = new util::iceThreadPool( "ICE Poller Pool", poll_tnum);
-   m_ice_lblog_pool    = new util::iceThreadPool( "ICE LB Loggin Pool", 2);
+   m_ice_lblog_pool    = new util::iceThreadPool( "ICE LB Logging Pool", 2);
 
     try {
 
@@ -278,17 +278,17 @@ void IceCore::stopAllThreads( void )
   if(m_poller_thread.is_started())
     m_poller_thread.stop();
 
-  if(m_listener_thread.is_started())
-  m_listener_thread.stop();
+//   if(m_listener_thread.is_started())
+//     m_listener_thread.stop( );
 
-  if(m_updater_thread.is_started())
-    m_updater_thread.stop();
+//   if(m_updater_thread.is_started())
+//     m_updater_thread.stop();
 
-  if(m_lease_updater_thread.is_started())
-    m_lease_updater_thread.stop();
+//   if(m_lease_updater_thread.is_started())
+//     m_lease_updater_thread.stop();
 
-  if(m_job_killer_thread.is_started())
-    m_job_killer_thread.stop();
+//   if(m_job_killer_thread.is_started())
+//     m_job_killer_thread.stop();
 
   if(m_proxy_renewer_thread.is_started())
     m_proxy_renewer_thread.stop();
@@ -312,133 +312,133 @@ void IceCore::init( void )
 }
 
 //____________________________________________________________________________
-void IceCore::startListener( void )
-{
-    if ( ! m_configuration->ice()->start_listener() ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->debugStream()
-                       << "IceCore::startListener() - "
-                       << "Listener not enabled, not started."
-                       
-                       );
-        return;
-    }
-
-    if( m_hostdn.empty() ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream() 
-                       << "IceCore::startListener() - Host certificate has an empty subject. "
-                       << "Won't start Listener"
-                       
-                       );
-        return;
-    } else {
-        CREAM_SAFE_LOG(
-                       m_log_dev->debugStream() 
-                       << "IceCore::startListener() - Host DN is [" << m_hostdn << "]"
-                       
-                       );
-    }
-
-
-    /**
-     * The listener and the iceCommandSubmit need to subscribe to
-     * CEMon in order to make ICE able to receive job status
-     * notifications.  So now as preliminary operation it's the case
-     * to check that the subscriptionManager singleton can be created
-     * without problems.
-     *
-     * The subscriptionManager initialization also setups
-     * authentication.
-     */
-    { 
-      //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-      //util::subscriptionManager::getInstance();
-    }
-    
-/*    util::eventStatusListener* listener;
-    if( m_configuration->ice()->listener_enable_authn() ) {
-
-        if( m_configuration->ice()->ice_host_cert().empty() ||
-            m_configuration->ice()->ice_host_key().empty() ) {
-            CREAM_SAFE_LOG(
-                           m_log_dev->fatalStream()
-                           << "Ice::startListener() - "
-                           << "ice_host_cert and/or ice_host_key are not defined. "
-                           << "Cannot start Listener "
-                           << "with authentication as requested. Stop."
-                           
-                           );
-            abort();
-        }
-
-        CREAM_SAFE_LOG(
-               m_log_dev->debugStream()
-               << "Ice::startListener() - "
-               << "Creating a CEMon listener object: port=["
-               << m_configuration->ice()->listener_port() << "]"
-               << " hostkey=["
-               << m_configuration->ice()->ice_host_key() << "]"
-               << " hostcert=["
-               << m_configuration->ice()->ice_host_cert() << "]"
-               
-               );
-        
-        listener = new util::eventStatusListener(m_configuration->ice()->listener_port(),
-                                                 m_configuration->ice()->ice_host_cert(),
-                                                 m_configuration->ice()->ice_host_key() );
-    } else {
-        CREAM_SAFE_LOG(
-                       m_log_dev->debugStream()
-                       << "Ice::startListener() - "
-                       << "Creating a CEMon listener object: port=["
-                       << m_configuration->ice()->listener_port() <<"]"
-                       
-                       );
-        
-        listener = new util::eventStatusListener( m_configuration->ice()->listener_port() );
-    }
-    
-    if( !listener->isOK() ) {
-        
-        CREAM_SAFE_LOG(        
-                       m_log_dev->errorStream()
-                       << "Ice::startListener() - CEMon listener creation went wrong. Won't start it."
-                       
-                       );
-        
-        // this must be set because other pieces of code
-        // have a behaviour that depends on the listener is running or not
-        // confMgr->setStartListener( false ); FIXME
-        return;
-    }
-    int bind_retry = 0;
-    while( !listener->bind() ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "Ice::startListener() - Bind error: "
-                       << listener->getErrorMessage()
-                       << " - error code="
-                       << listener->getErrorCode()
-                       << "Retrying in 5 seconds..."
-                       
-                       );
-	bind_retry++;
-	if( bind_retry > 1000 ) {
-            CREAM_SAFE_LOG(
-                           m_log_dev->fatalStream()
-                           << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
-                           
-                           );
-            abort();
-	}  
-        sleep(5);
-    }
-    
-    m_listener_thread.start( listener );
-    
-*/
-}
+// void IceCore::startListener( void )
+// {
+//     if ( ! m_configuration->ice()->start_listener() ) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->debugStream()
+//                        << "IceCore::startListener() - "
+//                        << "Listener not enabled, not started."
+//                        
+//                        );
+//         return;
+//     }
+// 
+//     if( m_hostdn.empty() ) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->errorStream() 
+//                        << "IceCore::startListener() - Host certificate has an empty subject. "
+//                        << "Won't start Listener"
+//                        
+//                        );
+//         return;
+//     } else {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->debugStream() 
+//                        << "IceCore::startListener() - Host DN is [" << m_hostdn << "]"
+//                        
+//                        );
+//     }
+// 
+// 
+//     /**
+//      * The listener and the iceCommandSubmit need to subscribe to
+//      * CEMon in order to make ICE able to receive job status
+//      * notifications.  So now as preliminary operation it's the case
+//      * to check that the subscriptionManager singleton can be created
+//      * without problems.
+//      *
+//      * The subscriptionManager initialization also setups
+//      * authentication.
+//      */
+//     { 
+//       //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+//       //util::subscriptionManager::getInstance();
+//     }
+//     
+// /*    util::eventStatusListener* listener;
+//     if( m_configuration->ice()->listener_enable_authn() ) {
+// 
+//         if( m_configuration->ice()->ice_host_cert().empty() ||
+//             m_configuration->ice()->ice_host_key().empty() ) {
+//             CREAM_SAFE_LOG(
+//                            m_log_dev->fatalStream()
+//                            << "Ice::startListener() - "
+//                            << "ice_host_cert and/or ice_host_key are not defined. "
+//                            << "Cannot start Listener "
+//                            << "with authentication as requested. Stop."
+//                            
+//                            );
+//             abort();
+//         }
+// 
+//         CREAM_SAFE_LOG(
+//                m_log_dev->debugStream()
+//                << "Ice::startListener() - "
+//                << "Creating a CEMon listener object: port=["
+//                << m_configuration->ice()->listener_port() << "]"
+//                << " hostkey=["
+//                << m_configuration->ice()->ice_host_key() << "]"
+//                << " hostcert=["
+//                << m_configuration->ice()->ice_host_cert() << "]"
+//                
+//                );
+//         
+//         listener = new util::eventStatusListener(m_configuration->ice()->listener_port(),
+//                                                  m_configuration->ice()->ice_host_cert(),
+//                                                  m_configuration->ice()->ice_host_key() );
+//     } else {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->debugStream()
+//                        << "Ice::startListener() - "
+//                        << "Creating a CEMon listener object: port=["
+//                        << m_configuration->ice()->listener_port() <<"]"
+//                        
+//                        );
+//         
+//         listener = new util::eventStatusListener( m_configuration->ice()->listener_port() );
+//     }
+//     
+//     if( !listener->isOK() ) {
+//         
+//         CREAM_SAFE_LOG(        
+//                        m_log_dev->errorStream()
+//                        << "Ice::startListener() - CEMon listener creation went wrong. Won't start it."
+//                        
+//                        );
+//         
+//         // this must be set because other pieces of code
+//         // have a behaviour that depends on the listener is running or not
+//         // confMgr->setStartListener( false ); FIXME
+//         return;
+//     }
+//     int bind_retry = 0;
+//     while( !listener->bind() ) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->errorStream()
+//                        << "Ice::startListener() - Bind error: "
+//                        << listener->getErrorMessage()
+//                        << " - error code="
+//                        << listener->getErrorCode()
+//                        << "Retrying in 5 seconds..."
+//                        
+//                        );
+// 	bind_retry++;
+// 	if( bind_retry > 1000 ) {
+//             CREAM_SAFE_LOG(
+//                            m_log_dev->fatalStream()
+//                            << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
+//                            
+//                            );
+//             abort();
+// 	}  
+//         sleep(5);
+//     }
+//     
+//     m_listener_thread.start( listener );
+//     
+// */
+// }
 
 //____________________________________________________________________________
 void IceCore::startPoller( void )
@@ -496,21 +496,21 @@ void IceCore::startProxyRenewer( void )
 }
 
 //-----------------------------------------------------------------------------
-void IceCore::startJobKiller( void )
-{
-    // FIXME: uncomment this method to activate the jobKiller    
-/*    if ( !m_configuration->ice()->start_job_killer() ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "Ice::startJobKiller() - "
-                        << "Job Killer disabled in configuration file. "
-                        << "Not started"
-                        
-                        );
-        return;
-    }
-    util::jobKiller* jobkiller = new util::jobKiller( );
-    m_job_killer_thread.start( jobkiller ); */
-}
+// void IceCore::startJobKiller( void )
+// {
+//     // FIXME: uncomment this method to activate the jobKiller    
+// /*    if ( !m_configuration->ice()->start_job_killer() ) {
+//         CREAM_SAFE_LOG( m_log_dev->warnStream()
+//                         << "Ice::startJobKiller() - "
+//                         << "Job Killer disabled in configuration file. "
+//                         << "Not started"
+//                         
+//                         );
+//         return;
+//     }
+//     util::jobKiller* jobkiller = new util::jobKiller( );
+//     m_job_killer_thread.start( jobkiller ); */
+// }
 
 //____________________________________________________________________________
 void IceCore::getNextRequests( std::list< util::Request* >& ops) 
@@ -533,10 +533,10 @@ size_t IceCore::get_input_queue_size( void )
 }
 
 //____________________________________________________________________________
-bool IceCore::is_listener_started( void ) const
-{
-    return m_listener_thread.is_started( );
-}
+// bool IceCore::is_listener_started( void ) const
+// {
+//     return m_listener_thread.is_started( );
+// }
 
 //____________________________________________________________________________
 bool IceCore::is_poller_started( void ) const
@@ -545,10 +545,10 @@ bool IceCore::is_poller_started( void ) const
 }
 
 //____________________________________________________________________________
-bool IceCore::is_lease_updater_started( void ) const
-{
-    return m_updater_thread.is_started( );
-}
+// bool IceCore::is_lease_updater_started( void ) const
+// {
+//     return m_updater_thread.is_started( );
+// }
 
 //____________________________________________________________________________
 bool IceCore::is_proxy_renewer_started( void ) const
@@ -557,10 +557,10 @@ bool IceCore::is_proxy_renewer_started( void ) const
 }
 
 //____________________________________________________________________________
-bool IceCore::is_job_killer_started( void ) const
-{
-    return m_job_killer_thread.is_started( );
-}
+// bool IceCore::is_job_killer_started( void ) const
+// {
+//     return m_job_killer_thread.is_started( );
+// }
 
 //____________________________________________________________________________
 void IceCore::resubmit_job( util::CreamJob* the_job, const string& reason ) throw()
