@@ -86,6 +86,11 @@ namespace broker {
 
 namespace {
 
+std::string const GlueCEInfoHostName = "GlueCEInfoHostName";
+std::string const GlueCEInfoApplicationDir = "GlueCEInfoApplicationDir";
+std::string const DataAccessProtocol = "DataAccessProtocol";
+std::string const GlueCEUniqueID = "GlueCEUniqueID";
+
 std::string const helper_id("BrokerHelper");
 
 //FIXME: should be moved back to ckassad_plugin if/when only this DL is used
@@ -198,7 +203,7 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
     requestad::set_queue_name(*result, name);
     try {
       std::string junk = requestad::get_lrms_type(*result);
-    } catch ( glite::jdl::CannotGetAttribute const& e) {
+    } catch (glite::jdl::CannotGetAttribute const& e) {
       requestad::set_lrms_type(*result, type);
     }
    
@@ -217,11 +222,11 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
       classad::ClassAd* ce_ad(boost::tuples::get<2>(ce_it->second).get());
 
       std::string ceinfohostname(host);
-      ce_ad->EvaluateAttrString("GlueCEInfoHostName", ceinfohostname);
+      ce_ad->EvaluateAttrString(GlueCEInfoHostName, ceinfohostname);
       requestad::set_ceinfo_host_name(*result, ceinfohostname);
 
-    } 
-    else {
+    } else {
+
       requestad::set_ceinfo_host_name(*result, host);
     }
 
@@ -353,7 +358,7 @@ try {
   matchmaking::matchtable::const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
   std::string const ce_id(
-    utils::evaluate_attribute(*matchmaking::getAd(ce_it->second),"GlueCEUniqueID")
+    utils::evaluate_attribute(*matchmaking::getAd(ce_it->second), GlueCEUniqueID)
   );
 
   // Add the .Brokerinfo files to the InputSandbox
@@ -396,9 +401,9 @@ try {
       brokerinfo::DataInfo(fm,sm)
     )
   );
-  classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
+  classad::ExprTree const* DACexpr = input_ad.Lookup(DataAccessProtocol);
   if (DACexpr) {
-    biAd->Insert("DataAccessProtocol", DACexpr->Copy());
+    biAd->Insert(DataAccessProtocol, DACexpr->Copy());
   }
   BIfilestream << *biAd << std::endl;
 
@@ -518,7 +523,7 @@ try {
     );
     requestad::set_ceinfo_host_name(
       *result,
-      utils::evaluate_attribute(*ce_ad, "GlueCEInfoHostName")
+      utils::evaluate_attribute(*ce_ad, GlueCEInfoHostName)
     );
 
   } catch (utils::InvalidValue const& e) {
@@ -531,7 +536,7 @@ try {
 
   std::string attr;
   bool checkAttr =
-    ce_ad->EvaluateAttrString("GlueCEInfoApplicationDir", attr);
+    ce_ad->EvaluateAttrString(GlueCEInfoApplicationDir, attr);
 
   if( checkAttr ){
     bool check;
