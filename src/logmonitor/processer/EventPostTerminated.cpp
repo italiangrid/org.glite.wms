@@ -13,8 +13,8 @@
 
 #include <cstdio>
 #include <ctime>
-
 #include <string>
+#include <stdint.h>
 
 #include <condor/user_log.c++.h>
 
