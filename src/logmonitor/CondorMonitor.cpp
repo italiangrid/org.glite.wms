@@ -18,6 +18,7 @@
 #include <ctime>
 #include <string>
 #include <memory>
+#include <stdint.h>
 
 #include <condor/user_log.c++.h> // condor API for reading log file
 
