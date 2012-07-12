@@ -13,7 +13,7 @@
 
 #include <cstdio>
 #include <ctime>
-
+#include <stdint.h>
 #include <memory>
 #include <string>
 
