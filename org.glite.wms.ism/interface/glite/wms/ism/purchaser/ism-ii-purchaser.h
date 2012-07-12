@@ -38,14 +38,13 @@ namespace purchaser {
 class ism_ii_purchaser : public ism_purchaser
 {
 public:
-                
   ism_ii_purchaser(
     std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout = 30,
     std::string const& ldap_ce_filter_g13 = std::string(),
-    std::string const& ldap_ce_filter_g13 = std::string(),
+    std::string const& ldap_se_filter_g13 = std::string(),
     std::string const& ldap_se_filter_g20 = std::string(),
     bool ldap_search_async = false,
     exec_mode_t mode = loop,
