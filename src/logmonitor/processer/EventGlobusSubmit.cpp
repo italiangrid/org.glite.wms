@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <stdint.h>
 
 #include <condor/user_log.c++.h>
 
