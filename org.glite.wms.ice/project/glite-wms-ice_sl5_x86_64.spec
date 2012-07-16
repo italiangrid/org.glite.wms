@@ -8,6 +8,7 @@ URL: http://glite.cern.ch/
 Group: Applications/Internet
 BuildArch: %{_arch}
 Requires: glite-wms-configuration
+Requires: glite-px-proxyrenewal
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
