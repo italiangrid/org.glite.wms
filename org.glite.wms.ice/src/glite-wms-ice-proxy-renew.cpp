@@ -33,6 +33,8 @@ END LICENSE */
 #include <cerrno>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <globus_gsi_credential.h>
 #include <globus_gsi_proxy.h>
@@ -214,6 +216,9 @@ main(int argc, char *argv[], char *envp[])
      ret = glite_renewal_core_destroy_ctx(ctx);
 
      ::rename( new_proxy, outputfile );
+
+     ::chmod( outputfile, S_IRUSR | S_IWUSR );
+	
      return 0;
      
    } else {

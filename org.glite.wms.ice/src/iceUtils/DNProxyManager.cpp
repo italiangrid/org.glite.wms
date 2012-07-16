@@ -356,6 +356,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
      ::unlink( tmpTarget.c_str( ) ); // actually this is redundant (see at the beginning of the func)
      throw CopyProxyException(string("Couldn't rename new proxy [")+tmpTarget +"] to ["+target + "]: " + strerror(errno));
    }
+   ::chmod( target.c_str( ), S_IRUSR | S_IWUSR );
 }
 
 /**********************************************
