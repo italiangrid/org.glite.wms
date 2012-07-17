@@ -158,6 +158,8 @@ public:
   // 
   std::vector<ShareInfoMap::iterator> shares_lnk;
   /////////////////////////////////////////////////////
+  // The following applies only to StorageServices
+  std::vector<ClassAdPtr> access_protocols;
 };
 
 struct ShareInfo
@@ -212,6 +214,7 @@ struct BDII_info
   AccessPolicyInfoMap policies;
   ResourceInfoMap resources;
   BenchMarkInfoMap benchmarks;
+  
 };
 
 struct is_a_literal_node_starting_with
@@ -279,6 +282,32 @@ inline bool is_glue2_execenv_resource(const classad::ClassAd& ad)
 inline bool is_glue2_datastore_resource(const classad::ClassAd& ad)
 {
   return is_objectclass("GLUE2DataStore", ad);
+}
+
+void process_glue2_storage_access_protocol_info(
+ std::vector<std::string> const& ldap_dn_tokens,
+  ClassAdPtr ad,
+  BDII_info& bdii_info
+)
+{  
+  std::string const protocol_id(
+   ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
+  );
+  std::string const service_id(
+   ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+  );
+  
+  ServiceInfoMap::iterator it;
+  bool insert;
+  boost::tie(it, insert) = bdii_info.services.insert(
+    std::make_pair(service_id, ServiceInfo())
+  );
+  cleanup_glue2_info(ad,
+    bas::list_of("StorageServiceForeignKey")
+  );
+  it->second.access_protocols.push_back(
+    ad
+  );
 }
 
 void process_glue2_service_info(
@@ -982,7 +1011,8 @@ const glue2_stripping_prefix
   mpolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2MappingPolicy"),
   apolicy_pfx  = bas::list_of("GLUE2Entity")("GLUE2Policy")("GLUE2AccessPolicy"),
   appenv_pfx   = bas::list_of("GLUE2Entity")("GLUE2ApplicationEnvironment"),
-  bmark_pfx    = bas::list_of("GLUE2Entity")("GLUE2Benchmark");
+  bmark_pfx    = bas::list_of("GLUE2Entity")("GLUE2Benchmark"),
+  proto_pfx    = bas::list_of("GLUE2Entity")("GLUE2StorageAccessProtocol");
   
 std::list<glue2_info_processor_tuple> 
 glue2_info_processors = bas::tuple_list_of
@@ -997,6 +1027,7 @@ glue2_info_processors = bas::tuple_list_of
   (is_glue2_benchmark_dn, bmark_pfx, process_glue2_benchmark_info)
   (is_glue2_service_capacity_dn, service_pfx, process_glue2_service_capacity_info)
   (is_glue2_share_capacity_dn, share_pfx, process_glue2_share_capacity_info)
+  (is_glue2_storage_access_protocol_dn, proto_pfx, process_glue2_storage_access_protocol_info)
 ;
   // The Helper expects to find some attribute 
   // required to support LCGCE and GLUE13
@@ -1145,6 +1176,25 @@ fetch_bdii_se_info_g2(
         ep_it->second.policy_lnk->second.ad->Lookup("Rule")->Copy()
       );
     }
+    if (ep_it->second.has_servicelnk_iterator) {
+
+      if (ep_it->second.service_lnk->second.ad)
+        storageAd->Update(
+          *ep_it->second.service_lnk->second.ad
+        );
+      
+      std::vector<classad::ExprTree*> protocols;
+      std::transform(
+        ep_it->second.service_lnk->second.access_protocols.begin(), 
+        ep_it->second.service_lnk->second.access_protocols.end(),
+        std::inserter(protocols, protocols.end()),
+        boost::bind(&classad::ExprTree::Copy, _1)
+      );
+      storageAd->Insert(
+        "Protocols", 
+        classad::ExprList::MakeExprList(protocols)
+      );
+    }
 
     // If there is no Share bound to the Endpoint then we have to choose
     // Shares directly from the Service
@@ -1163,7 +1213,7 @@ fetch_bdii_se_info_g2(
         continue;
       }
     }
-   
+     
     std::vector<ShareInfoMap::iterator>::const_iterator sh_it(shares.begin());
     std::vector<ShareInfoMap::iterator>::const_iterator const sh_e(shares.end());
     for( ; sh_it != sh_e; ++sh_it) {
@@ -1174,19 +1224,9 @@ fetch_bdii_se_info_g2(
       classad::ExprTree* shareAd_copy(
         (*sh_it)->second.ad->Lookup("Share")->Copy()
       );
-      /*
-      if (
-        (*sh_it)->second.ad &&
-        (*sh_it)->second.ad->Lookup("Rule")
-      ) {
-        dynamic_cast<classad::ClassAd*>(shareAd_copy)->Insert(
-          "Policy",
-          (*sh_it)->second.ad->Lookup("Rule")->Copy()
-        );
-      }
-      */
+      
       storageAd_copy->Insert("Share", shareAd_copy);
-    
+      
       if( !(*sh_it)->second.resources_lnk.empty() ) {
         DataStoreInfo const& dsi(
           boost::any_cast<DataStoreInfo const&>(
@@ -1197,6 +1237,7 @@ fetch_bdii_se_info_g2(
         storageAd_copy->Update(*dsi.ad);
       }
 
+     
       classad::ClassAd* g2Ad = new classad::ClassAd;
 
       g2Ad->Insert("Storage", storageAd_copy);
