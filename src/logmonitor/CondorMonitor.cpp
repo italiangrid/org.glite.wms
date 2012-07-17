@@ -268,33 +268,15 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
 
   if( size > this->cm_shared_data->md_sizefile->size_field().position() ) {
 
-    #ifdef CONDORG_VERSION 
-      #if CONDORG_VERSION < 70204
-        ReadUserLog id_logfile_parser;
-        id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
-      
-        if( id_logfile_parser.getfd() == -1 ) {
-        elog::cedglog << logger::setlevel( logger::severe )
-                    << "Cannot open Condor log file \"" << logfile_name << "\"." << endl;
+    FILE *fp = fopen(cm_shared_data->md_logfile_name.c_str(), "r");
+    if ( fp == NULL ) {
+      elog::cedglog << logger::setlevel( logger::severe )
+        << "Cannot open Condor log file \"" << logfile_name << "\"." << endl;
 
-        throw CannotOpenFile( this->cm_shared_data->md_logfile_name );
-        }
-        FILE *fp = id_logfile_parser.getfp();
-    
-      #else
-      
-        FILE * fp = NULL;
-        fp = fopen( cm_shared_data->md_logfile_name.c_str(), "r");
-        if ( fp == NULL ) {
-          elog::cedglog << logger::setlevel( logger::severe )
-                    << "Cannot open Condor log file \"" << logfile_name << "\"." << endl;
-
-          throw CannotOpenFile( this->cm_shared_data->md_logfile_name );
-        }
-        ReadUserLog id_logfile_parser(fp, false);
-        id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
-      #endif
-    #endif
+      throw CannotOpenFile( this->cm_shared_data->md_logfile_name );
+    }
+    ReadUserLog id_logfile_parser(fp, false);
+    id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
 
     // Seek to last 'position'
     std::string error;
