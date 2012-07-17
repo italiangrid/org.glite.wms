@@ -38,6 +38,7 @@ ret_code=0
 
 start()
 {
+    chmod 600 ${WMS_LOCATION_VAR}/ice/persist_dir/*.betterproxy >& /dev/null
     conf_file=glite_wms.conf
     GET_CONF=${WMS_LOCATION_BIN}/glite-wms-get-configuration
     if [ -f ${GET_CONF} ]; then
