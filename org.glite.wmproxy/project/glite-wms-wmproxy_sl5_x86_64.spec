@@ -11,7 +11,7 @@ Requires: mod_fcgid
 Requires: httpd
 Requires: mod_ssl
 Requires: gridsite-apache
-Requires: glite-px-proxyrenewal
+Requires: glite-px-proxyrenewal glite-px-proxyrenewal-progs
 Requires: glite-wms-configuration
 Requires: lcmaps-plugins-basic
 Requires(post): chkconfig
