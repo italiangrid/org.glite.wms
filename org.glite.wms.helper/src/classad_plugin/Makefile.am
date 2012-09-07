@@ -55,7 +55,4 @@ AM_CPPFLAGS = \
 	$(GLITE_LB_CLIENT_CFLAGS) \
 	$(BOOST_CFLAGS)
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = wms-classad-plugin.pc
-
 MAINTAINERCLEANFILES = Makefile.in
