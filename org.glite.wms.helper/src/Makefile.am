@@ -6,7 +6,7 @@
 ## *
 ## *********************************************************************
 
-SUBDIRS = jobadapter broker
+SUBDIRS = classad_plugin jobadapter broker
 
 lib_LTLIBRARIES = libglite_wms_helper.la
 
