@@ -6,6 +6,8 @@
 ## *
 ## *********************************************************************
 
+SUBDIRS = selectors
+
 lib_LTLIBRARIES = \
 	libglite_wms_helper_broker_ism.la
 
@@ -17,8 +19,6 @@ libglite_wms_helper_broker_ism_la_SOURCES = \
 
 libglite_wms_helper_broker_ism_la_LIBADD = \
 	$(GLITE_JDL_LIBS) \
-	$(GLITE_WMS_BROKER_LIBS) \
-	$(GLITE_WMS_BROKERINFO_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_MATCHMAKING_LIBS) \
@@ -33,8 +33,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_JDL_CFLAGS) \
-	$(GLITE_WMS_BROKER_CFLAGS) \
-	$(GLITE_WMS_BROKERINFO_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \
 	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
 	$(GLITE_WMS_ISM_CFLAGS) \
