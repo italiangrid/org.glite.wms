@@ -16,6 +16,7 @@ AC_INIT([GLite WMS Helper], [3.3.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
+AC_CONFIG_SRCDIR([src/classad_plugin/classad_plugin_loader.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -79,14 +80,15 @@ PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR([
 PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
-
-
 PKG_CHECK_MODULES(GLITE_WMS_BROKERINFO, wms-brokerinfo, , AC_MSG_ERROR(["BROKERINFO not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_BROKER, wms-broker, , AC_MSG_ERROR(["BROKER not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_ISM, wms-ism, , AC_MSG_ERROR(["ISM not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_ISM_II_PURCHASER, wms-ism-ii-purchaser, , AC_MSG_ERROR(["ISM_II_PURCHASER not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_MATCHMAKING, wms-matchmaking, , AC_MSG_ERROR(["MATCHMAKING not found"]))
 PKG_CHECK_MODULES(GLITE_WMS_CLASSAD_PLUGIN, wms-classad-plugin, , AC_MSG_ERROR(["MATCHMAKING not found"]))
+PKG_CHECK_MODULES(GLITE_LB_COMMON, emi-lb-common, , AC_MSG_ERROR(["GLITE_LB_COMMON not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENT, emi-lb-client, , AC_MSG_ERROR(["GLITE_LB_CLIENT not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENTPP, emi-lb-clientpp, , AC_MSG_ERROR(["GLITE_LB_CLIENTPP not found"]))
 
 # Configuration items
 AC_PREFIX_DEFAULT([/usr])
@@ -100,8 +102,11 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/wms-helper.pc])
 AC_CONFIG_FILES([src/wms-helper-jobadapter.pc])
 AC_CONFIG_FILES([src/wms-helper-broker-ism.pc])
+AC_CONFIG_FILES([src/wms-classad-plugin.pc])
 AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
+AC_CONFIG_FILES([src/classad_plugin/Makefile])
+
 
 AC_OUTPUT
 
