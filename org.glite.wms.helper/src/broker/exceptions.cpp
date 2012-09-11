@@ -1,3 +1,5 @@
+
+
 /*
 Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners for details on the
@@ -23,7 +25,7 @@ limitations under the License.
 
 // $Id$
 
-#include "glite/wms/helper/broker/exceptions.h"
+#include "exceptions.h"
 #include <string>
 
 namespace fs = boost::filesystem;

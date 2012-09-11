@@ -6,7 +6,7 @@ includedir=@includedir@
 Name: wms helper broker ism
 Description: WMS helper (broker ism) C/C++ APIs
 Version: @VERSION@
-Requires: jdl-api-cpp, wms-broker, wms-ism, wms-matchmaking, wms-common
+Requires: jdl-api-cpp, wms-common
 Libs: -L${libdir} -lglite_wms_helper_broker_ism
 Cflags: -I${includedir}
 

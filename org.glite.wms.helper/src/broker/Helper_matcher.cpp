@@ -33,17 +33,17 @@
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "brokerinfo.h"
 
 #ifdef MATCHER_HELPER_USE_ISM
-#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
+#include "brokerinfoISMImpl.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
 #else
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
-#include "glite/wms/broker/RBSimpleImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesImpl.h"
-#include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
+#include "brokerinfoGlueImpl.h"
+#include "RBSimpleImpl.h"
+#include "RBMaximizeFilesImpl.h"
+#include "RBMinimizeAccessCostImpl.h"
 #endif
 
 #include "glite/wms/matchmaking/exceptions.h"

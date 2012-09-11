@@ -30,7 +30,7 @@
 
 #include "Helper_matcher_ism.h"
 
-#include "glite/wms/helper/broker/exceptions.h"
+#include "exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 

@@ -35,10 +35,10 @@
 
 #include "Helper.h"
 
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "brokerinfo.h"
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
@@ -55,8 +55,8 @@
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wms/helper/HelperFactory.h"
-#include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
+#include "exceptions.h"
 
 #include <glite/wms/ism/ism.h>
 

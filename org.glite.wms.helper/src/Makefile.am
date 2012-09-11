@@ -6,7 +6,7 @@
 ## *
 ## *********************************************************************
 
-SUBDIRS = classad_plugin jobadapter broker
+SUBDIRS = jobadapter broker
 
 lib_LTLIBRARIES = libglite_wms_helper.la
 
@@ -44,7 +44,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = wms-helper.pc \
 		wms-helper-jobadapter.pc \
-		wms-classad-plugin.pc \
 		wms-helper-broker-ism.pc
 
 MAINTAINERCLEANFILES = Makefile.in
