@@ -50,8 +50,8 @@ limitations under the License.
 #include "glite/jdl/PrivateAdManipulation.h"
 
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
 
+#include "brokerinfo.h"
 #include "glue_attributes.h"
 
 Namespace namespaces[] = {}; 

@@ -46,8 +46,8 @@
 #include "RBMinimizeAccessCostImpl.h"
 #endif
 
-#include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wms/matchmaking/utility.h"
+#include "mm_exceptions.h"
+#include "mm_utility.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"

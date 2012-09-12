@@ -28,7 +28,9 @@ limitations under the License.
 
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/path.hpp>
+
 #include "glite/wms/helper/exceptions.h"
+#include "exceptions.h"
 
 namespace glite {
 namespace wms {

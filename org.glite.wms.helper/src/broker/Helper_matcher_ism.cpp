@@ -28,24 +28,21 @@
 
 #include <classad_distribution.h>
 
-#include "Helper_matcher_ism.h"
-
-#include "exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
-
-#include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/matchmaking/utility.h"
-#include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "exceptions.h"
+#include "brokerinfo.h"
+#include "mm_utility.h"
+#include "mm_exceptions.h"
+#include "matchmaker.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
+#include "Helper_matcher_ism.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logger_utils.h"

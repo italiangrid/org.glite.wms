@@ -16,8 +16,6 @@
 
 // $Id$
 
-#include "glite/wms/brokerinfo/storage_utils.h"
-
 #include <numeric>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -26,9 +24,10 @@
 #include <classad_distribution.h>
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/ism/ism.h"
 #include "glite/wmsutils/classads/classad_utils.h"
+#include "brokerinfo.h"
+#include "storage_utils.h"
 
 namespace classad_utils = glite::wmsutils::classads;
 

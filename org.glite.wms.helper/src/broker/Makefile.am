@@ -61,6 +61,7 @@ datalocationinterface.h : $(top_srcdir)/src/broker/DataLocationInterface.wsdl
 	-o datalocationinterface.h $(top_srcdir)/src/broker/DataLocationInterface.wsdl
 
 AM_CPPFLAGS = \
+	-I$(top_srcdir)/interface \
 	$(GLITE_JDL_CFLAGS) \
         $(GLITE_WMS_ISM_CFLAGS) \
 	$(GLITE_WMS_COMMON_CONF_CFLAGS) \

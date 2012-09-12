@@ -26,7 +26,6 @@ limitations under the License.
 #ifndef GLITE_WMS_BROKERINFO_STORAGE_UTILS_H
 #define GLITE_WMS_BROKERINFO_STORAGE_UTILS_H
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>

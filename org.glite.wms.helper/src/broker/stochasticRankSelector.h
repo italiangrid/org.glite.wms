@@ -21,10 +21,10 @@
 #ifndef GLITE_WMS_BROKER_SELECTORS_STOCHASTICRANKSELECTOR_H_
 #define GLITE_WMS_BROKER_SELECTORS_STOCHASTICRANKSELECTOR_H_
 
-#include "glite/wms/broker/selectors/RBSelectionSchema.h"
-
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_01.hpp>
+
+#include "RBSelectionSchema.h"
 
 namespace mm = glite::wms::matchmaking;
 

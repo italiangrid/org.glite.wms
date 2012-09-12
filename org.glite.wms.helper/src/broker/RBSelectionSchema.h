@@ -32,7 +32,7 @@ limitations under the License.
 # include <boost/shared_ptr.hpp>
 # include <map>
 # include <vector>
-# include <glite/wms/matchmaking/matchmaker.h>
+# include <matchmaker.h>
 
 namespace mm = glite::wms::matchmaking;
 

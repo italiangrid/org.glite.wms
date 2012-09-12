@@ -25,14 +25,14 @@ limitations under the License.
 #ifndef _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 #define _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/broker/selectors/RBSelectionSchema.h"	
-
 #include <boost/utility.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
+
+#include "matchmaker.h"
+#include "brokerinfo.h"
+#include "RBSelectionSchema.h"	
 
 namespace mm = glite::wms::matchmaking;
 namespace bi = glite::wms::brokerinfo;

@@ -33,15 +33,6 @@
 
 #include <classad_distribution.h>
 
-#include "Helper.h"
-
-#include "RBSimpleISMImpl.h"
-#include "RBMaximizeFilesISMImpl.h"
-
-#include "brokerinfo.h"
-
-#include "glite/wms/classad_plugin/classad_plugin_loader.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -56,7 +47,6 @@
 
 #include "glite/wms/helper/HelperFactory.h"
 #include "glite/wms/helper/exceptions.h"
-#include "exceptions.h"
 
 #include <glite/wms/ism/ism.h>
 
@@ -65,8 +55,14 @@
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/ManipulationExceptions.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wms/matchmaking/exceptions.h"
+#include "matchmaker.h"
+#include "exceptions.h"
+#include "mm_exceptions.h"
+#include "Helper.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
+#include "brokerinfo.h"
+#include "classad_plugin_loader.h"
 
 namespace ba            = boost::algorithm;
 namespace fs            = boost::filesystem;

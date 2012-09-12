@@ -22,9 +22,11 @@ limitations under the License.
 #include <classad_distribution.h>
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
+
 #include "glite/wms/ism/ism.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wmsutils/classads/classad_utils.h"
+
+#include "brokerinfo.h"
 
 namespace classad_utils = glite::wmsutils::classads;
 

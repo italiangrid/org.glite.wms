@@ -26,7 +26,7 @@ limitations under the License.
 #ifndef GLITE_WMS_MATCHMAKING_MATCHMAKERISMIMPL_H
 #define GLITE_WMS_MATCHMAKING_MATCHMAKERISMIMPL_H
 
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "matchmaker.h"
 
 namespace classad {
 class ClassAd;

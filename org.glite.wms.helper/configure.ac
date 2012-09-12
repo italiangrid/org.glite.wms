@@ -64,10 +64,9 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 GLITE_CHECK_LIBDIR
 AC_OPTIMIZE
 
-AC_GSOAP_EXTRAS
 AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
-
 PKG_CHECK_MODULES(GSOAP, gsoapssl++, , AC_MSG_ERROR(["GSOAP not found"]))
+AC_GSOAP_EXTRAS
 PKG_CHECK_MODULES(GSOAP_PLUGIN, emi-gsoap-plugin, , AC_MSG_ERROR(["GSOAP_PLUGIN not found"]))
 PKG_CHECK_MODULES(CLASSAD, emi-classad-ns, , AC_MSG_ERROR(["CLASSADS not found"]))
 PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))

@@ -33,14 +33,14 @@ limitations under the License.
 #include "glite/jdl/ManipulationExceptions.h"
 #include "glite/jdl/JobAdManipulation.h"
 
-#include "glite/wms/matchmaking/matchmakerISMImpl.h"
-#include "glite/wms/matchmaking/glue_attributes.h"
-#include "glite/wms/matchmaking/jdl_attributes.h"
+#include "glite/wms/common/logger/logger_utils.h"
+
+#include "matchmakerISMImpl.h"
+#include "glue_attributes.h"
+#include "jdl_attributes.h"
 #include "RBMaximizeFilesISMImpl.h"
 
-#include "glite/wms/brokerinfo/storage_utils.h"
-
-#include "glite/wms/common/logger/logger_utils.h"
+#include "storage_utils.h"
 
 using namespace std;
 

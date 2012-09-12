@@ -27,8 +27,8 @@ limitations under the License.
 #include <vector> 
 
 #include <classad_distribution.h>
-#include "glite/wms/matchmaking/matchmakerISMImpl.h"
 
+#include "matchmakerISMImpl.h"
 #include "RBSimpleISMImpl.h"
 
 namespace glite {

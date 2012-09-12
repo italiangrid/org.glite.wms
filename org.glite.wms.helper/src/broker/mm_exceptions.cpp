@@ -17,7 +17,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// File: exceptions.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
 // Author: Salvatore Monforte  <Salvatore.Monforte@ct.infn.it>
 // Copyright (c) 2003 EU DataGrid.
