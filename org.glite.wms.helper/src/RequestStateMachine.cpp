@@ -1,7 +1,25 @@
+/*
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners for details on the
+copyright holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 // File: RequestStateMachine.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
 // Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
 
 // $Id$
 
@@ -176,7 +194,10 @@ RequestStateMachine::start(classad::ClassAd const* ad)
 }
 
 classad::ClassAd*
-RequestStateMachine::next_step(classad::ClassAd const* ad)
+RequestStateMachine::next_step(
+  classad::ClassAd const* ad,
+  boost::shared_ptr<std::string> jw_template
+)
 {
   assert(ad != 0);
 
@@ -191,7 +212,7 @@ RequestStateMachine::next_step(classad::ClassAd const* ad)
   state_type next_state;
   boost::tie(helper, next_state) = it->second;
 
-  result = Helper(helper).resolve(ad);
+  result = Helper(helper).resolve(ad, jw_template);
   m_current_state = next_state;
 
   assert(result != 0);

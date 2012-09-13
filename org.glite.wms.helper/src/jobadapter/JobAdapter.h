@@ -1,3 +1,22 @@
+/*
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners for details on the
+copyright holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 /***************************************************************************
  *  filename  : JobAdapter.h
  *  authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
@@ -15,6 +34,7 @@
 #define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
 #endif
+#include <boost/shared_ptr.hpp>
 
 namespace classad {
 class ClassAd;
@@ -31,23 +51,15 @@ replace(std::string& where, const std::string& what, const std::string& with);
 class JobAdapter: boost::noncopyable
 {
 public:
-  /**
-   * Constructor.
-   */
-  JobAdapter(const classad::ClassAd* ad);
-  /**
-   * Destructor.
-   */
+  JobAdapter(
+    const classad::ClassAd* ad,
+    boost::shared_ptr<std::string> jw_template
+  );
   ~JobAdapter();
-
-public:
-  /**
-   * Create a new ClassAd using a selection of input ClassAd's ones.
-   */
   classad::ClassAd* resolve(void);
-  
 private: 
   const classad::ClassAd* m_ad;
+  boost::shared_ptr<std::string> m_jw_template;
 };
 
 } // namespace jobadapter

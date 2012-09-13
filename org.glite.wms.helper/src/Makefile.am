@@ -28,10 +28,22 @@ libglite_wms_helper_la_SOURCES = \
         RequestStateMachine.h \
         RequestStateMachine.cpp
 
+libglite_wms_helper_la_LIBADD = \
+	$(BOOST_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(GLITE_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) 
+
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
+	$(GLITE_JDL_CFLAGS) \
+	$(GLITE_WMSUTILS_CLASSADS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
- 
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wms-helper.pc \
+		wms-helper-jobadapter.pc \
+		wms-helper-broker-ism.pc
+
 MAINTAINERCLEANFILES = Makefile.in

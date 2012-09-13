@@ -5,8 +5,11 @@
 ## *********************************************************************
 
 
-helperconfigdir = $(sysconfdir)/templates
+helperconfigdir = $(datadir)/glite-wms
 helperconfig_DATA = \
-	template.sh 
+	template.sh
+
+install-data-hook:
+	/bin/mv $(DESTDIR)$(helperconfigdir)/template.sh $(DESTDIR)$(helperconfigdir)/jobwrapper.template.sh
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~

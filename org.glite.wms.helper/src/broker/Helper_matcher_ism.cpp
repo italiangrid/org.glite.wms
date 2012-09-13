@@ -1,9 +1,20 @@
-// File: Helper_matcher_ism.cpp
-// Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
-// Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
+// Author: Francesco Giacomini
+// Author: Salvatore Monforte 
 
-// $Id$
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
+// $Id: Helper_matcher_ism.cpp,v 1.2.2.7.2.2.6.2 2012/09/12 10:02:12 mcecchi Exp $
 
 #include <fstream>
 #include <stdexcept>
@@ -16,27 +27,21 @@
 
 #include <classad_distribution.h>
 
-#include "Helper_matcher_ism.h"
-
-#include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
-
-#include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/matchmaking/utility.h"
-#include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "exceptions.h"
+#include "brokerinfo.h"
+#include "mm_utility.h"
+#include "mm_exceptions.h"
+#include "matchmaker.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
+#include "Helper_matcher_ism.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -44,25 +49,17 @@
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/jdl/JDLAttributes.h"
-#include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/ManipulationExceptions.h"
-
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include "gpbox_utils.h"
-#endif
+#include "glite/jdl/JobAdManipulation.h"
 
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-namespace requestad     = glite::jdl;
-namespace utils		= glite::wmsutils::classads;
-namespace matchmaking   = glite::wms::matchmaking;
-
-#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
-#define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
+namespace requestad = glite::jdl;
+namespace utils = glite::wmsutils::classads;
+namespace matchmaking = glite::wms::matchmaking;
 
 namespace glite {
 namespace wms {
@@ -127,32 +124,28 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   glite::wms::broker::ResourceBroker rb;
 
   bool input_data_exists = false;
-  std::vector<std::string> input_data;
-  requestad::get_input_data(input_ad, input_data, input_data_exists);
+  bool data_requirements_exist = false;
 
-  if (input_data_exists) {
-    // Here we have to check if the rank expression in the request
-    // is rank = other.dataAccessCost and change the implementation
-    // of the broker (RBMinimizeAccessCost)
-    classad::ExprTree* rank_expr = input_ad.Lookup("rank");
-    if (rank_expr) {
-      std::vector<std::string> rankAttributes;
-      utils::insertAttributeInVector(&rankAttributes, rank_expr, utils::is_reference_to("other"));
-      rb.changeImplementation(
-        boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
-          new glite::wms::broker::RBMaximizeFilesISMImpl()
-        )
-      );
-    }
+  std::vector<std::string> input_data;
+
+  requestad::get_input_data(input_ad, input_data, input_data_exists);
+  requestad::get_data_requirements(input_ad, data_requirements_exist);
+
+  if (input_data_exists  || data_requirements_exist) {
+    rb.changeImplementation(
+      boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
+        new glite::wms::broker::RBMaximizeFilesISMImpl()
+      )
+    );
   }
 
   boost::tuple<
     boost::shared_ptr<matchmaking::matchtable>,
-    boost::shared_ptr<brokerinfo::filemapping>,
-    boost::shared_ptr<brokerinfo::storagemapping>
+    boost::shared_ptr<brokerinfo::FileMapping>,
+    boost::shared_ptr<brokerinfo::StorageMapping>
   > brokering_result;
   std::string mm_error;
-  
+
   try {
     brokering_result = rb.findSuitableCEs(&input_ad);
     boost::shared_ptr<matchmaking::matchtable>& suitableCEs(
@@ -164,28 +157,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     input_ad.EvaluateAttrBool("include_brokerinfo", include_brokerinfo);
     int number_of_results = -1;
     input_ad.EvaluateAttrInt("number_of_results", number_of_results);
-
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-    std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-    if (!suitableCEs->empty()) { 
-      configuration::Configuration const* const config(
-        configuration::Configuration::instance()
-      );
-      assert(config);
- 
-      std::string PBOX_host_name(config->wm()->pbox_host_name());
-      if (!PBOX_host_name.empty())
-      {
-        if (!glite::wms::helper::broker::gpbox::interact(
-          *config,
-          x509_user_proxy_file_name,
-          PBOX_host_name,
-          *suitableCEs
-        ))
-          Debug("Error during gpbox interaction");
-      }
-    }
-#endif
 
     if (!suitableCEs->empty() ) {
       matchmaking::matchvector suitableCEs_vector(
@@ -210,9 +181,12 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
            ++it, ++i) {
 
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
-        ceinfo->InsertAttr("ce_id", it->first);
+        string const ce_id(
+          utils::evaluate_attribute(*matchmaking::getAd(it->second), "GlueCEUniqueID")
+        );
+        ceinfo->InsertAttr("ce_id", ce_id);
         ceinfo->InsertAttr("rank", matchmaking::getRank(it->second));
-        
+
         if (include_brokerinfo) {
            std::string const ce_id(
              utils::evaluate_attribute(
@@ -221,26 +195,29 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
              )
            );
            ceinfo->Insert(
-             "brokerinfo",  
-             brokerinfo::make_brokerinfo_ad(
-               boost::tuples::get<1>(brokering_result),
-               boost::tuples::get<2>(brokering_result),
-               *matchmaking::getAd(it->second)
+             "brokerinfo",
+             brokerinfo::create_brokerinfo(
+               input_ad,
+               *matchmaking::getAd(it->second),
+               brokerinfo::DataInfo(
+                 boost::tuples::get<1>(brokering_result),
+                 boost::tuples::get<2>(brokering_result)
+               )  
              )
           );
         }
         hosts.push_back(ceinfo.get());
         ceinfo.release();
       }
-      
-      result->InsertAttr("reason", std::string("ok"));    
-      result->Insert("match_result", classad::ExprList::MakeExprList(hosts));           
+
+      result->InsertAttr("reason", std::string("ok"));
+      result->Insert("match_result", classad::ExprList::MakeExprList(hosts));
     }
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-    else {
-      Info("Empty CE list after G-Pbox screening");
-    }
-#endif
+
+
+
+
+
   } catch (matchmaking::ISNoResultError const& e) {
     result->InsertAttr(
       "reason",
@@ -249,30 +226,27 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     );
 
   } catch (matchmaking::InformationServiceError const& e) {
-    result->InsertAttr("reason", std::string(e.what()));  
+    result->InsertAttr("reason", std::string(e.what()));
 
   } catch (matchmaking::RankingError const& e) {
-    result->InsertAttr("reason", std::string(e.what()));  
- 
+    result->InsertAttr("reason", std::string(e.what()));
+
   } catch (requestad::CannotGetAttribute const& e) {
     result->InsertAttr(
-      "reason", 
+      "reason",
       "Attribute " + e.parameter() + " does not exist or has the wrong type"
-    ); 
+    );
 
   } catch (requestad::CannotSetAttribute const& e) {
     result->InsertAttr("reason", "Cannot set attribute " + e.parameter());
 
-  } catch (jobid::JobIdException const& e) {
-    result->InsertAttr("reason", std::string(e.what()));  
-
   } catch (boost::filesystem::filesystem_error const& e) {
-    result->InsertAttr("reason", std::string(e.what()));  
+    result->InsertAttr("reason", std::string(e.what()));
   }
   return result;
 }
 
-} // {anonymous}
+}
 
 std::string
 Helper::id() const
@@ -287,11 +261,14 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd const* input_ad) const
+Helper::resolve(
+  classad::ClassAd const* input_ad,
+  boost::shared_ptr<std::string> jwt
+) const
 {
   std::auto_ptr<classad::ClassAd> result = f_resolve_do_match(*input_ad);
 
   return result.release();
 }
 
-}}}} // glite::wms::helper::matcher
+}}}}

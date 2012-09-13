@@ -12,8 +12,7 @@ HELPER_JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_helper_jobadapte
 check_PROGRAMS = \
 	jobwrapperTest \
 	urlTest \
-	jobadapterTest \
-  gpbox_test
+	jobadapterTest
 
 jobadapterTest_SOURCES = jobadapterTest.cpp
 
@@ -24,12 +23,7 @@ jobadapterTest_LDADD   = \
   $(GLITE_WMS_COMMON_LOGGER_LIBS) \
   $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
   $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-  $(GLITE_WMSUTILS_JOBID_LIBS) \
-  $(GLITE_WMSUTILS_CJOBID_LIBS) \
   $(GLITE_WMSUTILS_CLASSADS_LIBS) \
-  $(GLITE_LB_THR_CLIENT_LIBS) \
-  $(GLITE_LB_THR_CLIENTPP_LIBS) \
-  $(GLITE_LB_THR_COMMON_LIBS) \
   $(GLITE_JDL_LIBS) \
   $(GLOBUS_SSL_THR_LIBS) \
   $(CLASSAD_LIBS) \
@@ -43,14 +37,9 @@ jobwrapperTest_LDADD   = \
   $(GLITE_WMS_COMMON_CONF_LIBS) \
   $(GLITE_WMS_COMMON_LOGGER_LIBS) \
   $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-  $(GLITE_WMSUTILS_JOBID_LIBS) \
-  $(GLITE_WMSUTILS_CJOBID_LIBS) \
   $(GLITE_WMSUTILS_CLASSADS_LIBS) \
   $(GLITE_JDL_LIBS) \
   $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-  $(GLITE_LB_THR_CLIENT_LIBS) \
-  $(GLITE_LB_THR_CLIENTPP_LIBS) \
-  $(GLITE_LB_THR_COMMON_LIBS) \
   $(GLOBUS_SSL_THR_LIBS) \
   $(CLASSAD_LIBS) \
   $(BOOST_LIBS)
@@ -61,28 +50,8 @@ urlTest_LDADD   =  \
   ../../src/jobadapter/url.o \
   $(BOOST_LIBS)
 
-gpbox_test_SOURCES = gpbox_test.cpp
-
-gpbox_test_LDADD   = \
-  $(GLITE_WMS_COMMON_CONF_LIBS) \
-  -lpep \
-  -lpci \
-  $(VOMS_LIBS) \
-  $(GLITE_WMS_MATCHMAKING_LIBS) \
-  $(GLITE_WMS_ISM_LIBS) \
-  $(GLITE_JDL_LIBS) \
-  $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-  $(GLITE_WMSUTILS_CLASSADS_LIBS) \
-  $(GLOBUS_SSL_THR_LIBS) \
-  $(CLASSAD_LIBS) \
-  $(BOOST_LIBS)
-
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
-  $(GLOBUS_THR_CFLAGS) \
-	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) 
 
@@ -100,3 +69,4 @@ CLEANFILES = outputclassad \
   localjobadapter.conf 
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
+

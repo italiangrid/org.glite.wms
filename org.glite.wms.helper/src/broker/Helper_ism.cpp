@@ -1,9 +1,19 @@
-// File: Helper.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
-// Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
 
-// $Id$
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
+// $Id: Helper_ism.cpp,v 1.22.2.19.2.2.2.6.2.6.4.1.2.1.2.2 2012/09/12 10:02:12 mcecchi Exp $
 
 #include <fstream>
 #include <stdexcept>
@@ -13,18 +23,14 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/function_output_iterator.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+
 #include <boost/timer.hpp>
 
 #include <classad_distribution.h>
-
-#include "Helper.h"
-
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
-
-#include "glite/wms/brokerinfo/brokerinfo.h"
-
-#include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
@@ -39,27 +45,26 @@
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wms/helper/HelperFactory.h"
-#include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
+
+#include <glite/wms/ism/ism.h>
 
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/ManipulationExceptions.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wms/matchmaking/exceptions.h"
+#include "matchmaker.h"
+#include "exceptions.h"
+#include "mm_exceptions.h"
+#include "Helper.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
+#include "brokerinfo.h"
+#include "classad_plugin_loader.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
-
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include "gpbox_utils.h"
-#endif
-
+namespace ba            = boost::algorithm;
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
@@ -75,6 +80,11 @@ namespace helper {
 namespace broker {
 
 namespace {
+
+std::string const GlueCEInfoHostName = "GlueCEInfoHostName";
+std::string const GlueCEInfoApplicationDir = "GlueCEInfoApplicationDir";
+std::string const DataAccessProtocol = "DataAccessProtocol";
+std::string const GlueCEUniqueID = "GlueCEUniqueID";
 
 std::string const helper_id("BrokerHelper");
 
@@ -103,29 +113,118 @@ Register const r;
 
 std::string const f_output_file_suffix(".rbh");
 
+std::string
+unparse_expression_value(
+classad::ClassAd const& ad, std::string const& expression
+)
+{
+  std::string result;
+  classad::Value v;
+  ad.EvaluateExpr(expression, v);
+  classad::ClassAdUnParser unparser;
+  unparser.Unparse(result, v);
+  return result;
+}
+
+struct string_appender
+{
+    string_appender(std::string& s, const std::string& sep) : m_str(&s), m_sep(sep) {}
+    void operator()(const std::string& x) const {
+        if(!x.empty()) *m_str += x + m_sep;
+    }
+    std::string* m_str;
+    const std::string& m_sep;
+};
+
+std::string translate_to_RSL(classad::ClassAd &ctx, classad::ExprTree* e)
+{
+  ctx.Insert("ad", e);
+  boost::shared_ptr<void> ctx_guard_ad (
+    static_cast<void*>(0), 
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ad")
+  );
+
+  classad::Value v;
+  bool predicate = false;
+  if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+    (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+    v.IsBooleanValue(predicate) && !predicate) ) {
+    return std::string();
+  }
+  return 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
+    ) + "=" + 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.value"),ba::is_any_of("\"")
+    );
+}
+
+std::string translate_to_CREAM(classad::ClassAd &ctx, classad::ExprTree* e)
+{
+  ctx.Insert("ad", e);
+  boost::shared_ptr<void> ctx_guard_ad (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ad")
+  );
+
+  classad::Value v;
+  bool predicate = false;
+  if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+    (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+    v.IsBooleanValue(predicate) && !predicate) ) {
+    return std::string();
+  }
+  return 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
+    ) + "==" + unparse_expression_value(ctx, "ad.value");
+}
 std::auto_ptr<classad::ClassAd>
 f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
 {
   std::auto_ptr<classad::ClassAd> result;
-
-  static boost::regex  expression( "(.+/[^\\-]+-([^\\-]+))-(.+)" );
+  static boost::regex  expression( "(([^\\:]+):[0-9]+/[^\\-]+-([^\\-]+))-(.+)" );
   boost::smatch        pieces;
-  std::string gcrs, type, name;
+  std::string gcrs, host, type, name;
   if (boost::regex_match(ce_id, pieces, expression)) {
     gcrs.assign(pieces[1].first, pieces[1].second);
-    type.assign(pieces[2].first, pieces[2].second);
-    name.assign(pieces[3].first, pieces[3].second);
+    host.assign(pieces[2].first, pieces[2].second);
+    type.assign(pieces[3].first, pieces[3].second);
+    name.assign(pieces[4].first, pieces[4].second);
 
     result.reset(new classad::ClassAd(input_ad));
     requestad::set_globus_resource_contact_string(*result, gcrs);
     requestad::set_queue_name(*result, name);
     try {
       std::string junk = requestad::get_lrms_type(*result);
-    } catch ( glite::jdl::CannotGetAttribute const& e) {
+    } catch (glite::jdl::CannotGetAttribute const& e) {
       requestad::set_lrms_type(*result, type);
     }
    
     requestad::set_ce_id(*result, ce_id);
+    
+    ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
+    ism::ism_type::const_iterator const ism_end(
+      ism::get_ism(ism::ce).end()
+    );
+    ism::ism_type::const_iterator ce_it(
+      ism::get_ism(ism::ce).find(ce_id)
+    );
+    
+    if (ce_it != ism_end) {
+
+      classad::ClassAd* ce_ad(boost::tuples::get<2>(ce_it->second).get());
+
+      std::string ceinfohostname(host);
+      ce_ad->EvaluateAttrString(GlueCEInfoHostName, ceinfohostname);
+      requestad::set_ceinfo_host_name(*result, ceinfohostname);
+
+    } else {
+
+      requestad::set_ceinfo_host_name(*result, host);
+    }
+
 
     // TODO catch requestad::CannotSetAttribute
   } else {
@@ -207,9 +306,14 @@ try {
   glite::wms::broker::ResourceBroker rb;
   
   bool input_data_exists = false;
+  bool data_requirements_exist = false;
+
   std::vector<std::string> input_data;
+
   requestad::get_input_data(input_ad, input_data, input_data_exists);
-  if (input_data_exists) {
+  requestad::get_data_requirements(input_ad, data_requirements_exist);
+
+  if (input_data_exists  || data_requirements_exist) {
     rb.changeImplementation(
       boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
         new glite::wms::broker::RBMaximizeFilesISMImpl()
@@ -222,11 +326,16 @@ try {
   bool use_fuzzy_rank = false;
   if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) {
     rb.changeSelector("stochasticRankSelector");
+    bool change_fuzzy_factor;
+    double fuzzy_factor = requestad::get_fuzzy_factor(input_ad, change_fuzzy_factor);
+    if (change_fuzzy_factor) {
+      glite::wms::broker::RBSelectionSchema::FuzzyFactor = fuzzy_factor;
+    }
   }
   boost::tuple<
     boost::shared_ptr<matchmaking::matchtable>,
-    boost::shared_ptr<brokerinfo::filemapping>,
-    boost::shared_ptr<brokerinfo::storagemapping>
+    boost::shared_ptr<brokerinfo::FileMapping>,
+    boost::shared_ptr<brokerinfo::StorageMapping>
   > brokering_result(
     rb.findSuitableCEs(&input_ad)
   );
@@ -241,32 +350,10 @@ try {
     = configuration::Configuration::instance();
   assert(config);
 
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
-  jobid::JobId dg_jobid(dg_jobid_str);
-
-  std::string PBOX_host_name(config->wm()->pbox_host_name());
-
-  if (!PBOX_host_name.empty()) {
-    if (!gpbox::interact(
-      *config,
-      dg_jobid,
-      PBOX_host_name,
-      *suitable_CEs
-    ))
-      Info("Error during gpbox interaction");
-  }
-
-  if (suitable_CEs->empty()) {
-    Info("Empty CE list after gpbox screening");
-    throw NoCompatibleCEs();
-  }
-#endif
-
   matchmaking::matchtable::const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
   std::string const ce_id(
-    utils::evaluate_attribute(*matchmaking::getAd(ce_it->second),"GlueCEUniqueID")
+    utils::evaluate_attribute(*matchmaking::getAd(ce_it->second), GlueCEUniqueID)
   );
 
   // Add the .Brokerinfo files to the InputSandbox
@@ -298,17 +385,20 @@ try {
   if (!BIfilestream) {
     throw CannotCreateBrokerinfo(brokerinfo_path);
   }
-
+  
+  boost::shared_ptr<brokerinfo::FileMapping> fm = boost::tuples::get<1>(brokering_result);
+  boost::shared_ptr<brokerinfo::StorageMapping> sm = boost::tuples::get<2>(brokering_result);
+  
   boost::scoped_ptr<classad::ClassAd> biAd(
-    brokerinfo::make_brokerinfo_ad(
-      boost::tuples::get<1>(brokering_result),
-      boost::tuples::get<2>(brokering_result),
-      *matchmaking::getAd(ce_it->second)
+    brokerinfo::create_brokerinfo(
+      input_ad,
+      *matchmaking::getAd(ce_it->second),
+      brokerinfo::DataInfo(fm,sm)
     )
   );
-  classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
+  classad::ExprTree const* DACexpr = input_ad.Lookup(DataAccessProtocol);
   if (DACexpr) {
-    biAd->Insert("DataAccessProtocol", DACexpr->Copy());
+    biAd->Insert(DataAccessProtocol, DACexpr->Copy());
   }
   BIfilestream << *biAd << std::endl;
 
@@ -333,16 +423,81 @@ try {
     // Set attribute only if it's not empty, so as not to upset 
     // condor_submit.
     if (!flatten_result.empty()) {
-      requestad::set_remote_remote_ce_requirements(
-        *result,
-         flatten_result
-      );
+
+      boost::regex const cream_ce_id(".+/cream-.+");
+      bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
+
+      if (is_cream_ce) {
+
+        requestad::set_ce_requirements(
+          *result,
+          flatten_result
+        );
+      } else {
+        requestad::set_remote_remote_ce_requirements(
+          *result,
+          flatten_result
+        );
+      }
     }
   } catch (...) {
     // Let's leave remote_remote_requirements undefined if
     // anything went wrong.
   }
 
+  classad::ClassAd ctx;
+
+  ctx.Insert("ce", matchmaking::getAd(ce_info).get());
+  ctx.Insert("jdl", const_cast<classad::ClassAd*>(&input_ad));
+
+  boost::shared_ptr<void> ctx_guard_ce (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ce")
+  );
+  boost::shared_ptr<void> ctx_guard_jdl (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "jdl")
+  );
+
+  const configuration::WMConfiguration* WM_conf = config->wm();
+
+  classad::ExprList* e = dynamic_cast<classad::ExprList*>(
+    WM_conf->propagate_to_lrms()
+  );
+  std::vector<classad::ExprTree*> ads;
+  if (e) {
+
+    e->GetComponents(ads);
+ 
+    boost::regex const cream_ce_id(".+/cream-.+");
+    bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
+
+    if (is_cream_ce) {
+
+      std::string s;
+      std::transform(
+        ads.begin(), ads.end(),
+        boost::make_function_output_iterator(string_appender(s,"&&")),
+        boost::bind(translate_to_CREAM, ctx, _1)
+      );
+      std::string r;
+      try {
+        r = requestad::get_ce_requirements(*result);
+      } catch (...) {}
+      if (!r.empty()) r.append("&&");
+      r.append(ba::trim_right_copy_if(s,ba::is_any_of("&")));
+      requestad::set_ce_requirements(*result,r);
+    }
+    else {
+      std::string s;
+      std::transform(
+        ads.begin(), ads.end(),
+        boost::make_function_output_iterator(string_appender(s,",")),
+        boost::bind(translate_to_RSL, ctx, _1)
+      );
+      result->InsertAttr("RSLArguments", ba::trim_right_copy_if(s,ba::is_any_of(",")));
+    }
+  }
   try {
 
     requestad::set_globus_resource_contact_string(
@@ -361,6 +516,10 @@ try {
       *result,
       utils::evaluate_attribute(*ce_ad, "CEid")
     );
+    requestad::set_ceinfo_host_name(
+      *result,
+      utils::evaluate_attribute(*ce_ad, GlueCEInfoHostName)
+    );
 
   } catch (utils::InvalidValue const& e) {
 
@@ -369,6 +528,20 @@ try {
     throw helper::HelperError("BrokerHelper");
 
   }
+
+  std::string attr;
+  bool checkAttr =
+    ce_ad->EvaluateAttrString(GlueCEInfoApplicationDir, attr);
+
+  if( checkAttr ){
+    bool check;
+    requestad::set_ce_application_dir(
+      *result,
+      attr,
+      check
+    );
+  }
+
 
   return result;
 
@@ -395,18 +568,10 @@ try {
 
   throw helper::CannotSetAttribute(e, helper_id);
 
-} catch( jobid::JobIdException& jide ) {
-
-  edglog( error ) << jide.what() << std::endl;
-  throw helper::InvalidAttributeValue(requestad::JDL::JOBID,
-                                      "unknown",
-                                      "valid jobid",
-                                      helper_id);
-
 } catch( fs::filesystem_error& fse ) {
 
     edglog( error ) << fse.what() << std::endl;
-    throw helper::FileSystemError(helper_id, fse);
+    throw helper::FileSystemError(helper_id, fse.what());
 
 }
 
@@ -425,7 +590,10 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd const* input_ad) const
+Helper::resolve(
+  classad::ClassAd const* input_ad,
+  boost::shared_ptr<std::string> m_jw_template
+) const
 {
   bool submit_to_exists = false;
   std::string ce_id = requestad::get_submit_to(*input_ad, submit_to_exists);
@@ -438,4 +606,3 @@ Helper::resolve(classad::ClassAd const* input_ad) const
 }
 
 }}}} // glite::wms::helper::broker
-

@@ -1,9 +1,24 @@
+opyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners for details on the
+copyright holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 /***************************************************************************
  *  filename  : jobwrapperTest.cpp
- *  authors   : Alessio Gianelle <alessio.gianelle@pd.infn.it>
- *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
- *              Rosario Peluso <rosario.peluso@pd.infn.it>
- *              Marco Cecchi <marco.cecchi@cnaf.infn.it>
+ *  authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
  *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
  *  For license conditions see LICENSE file or
  *  http://www.edg.org/license.html
@@ -11,140 +26,167 @@
 
 #include <iostream>
 #include <fstream>
-#include <netdb.h>
+#include <sstream>
+#include <string>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/exception.hpp>
+#include "classad_distribution.h"
+
+#include "glite/wms/helper/exceptions.h"
+
+#include "jobadapter/JobAdapter.h"
+#include "jobadapter/exceptions.h"
+
+#include "jobadapter/url.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
+
+#include "glite/jdl/convert.h"
+
 #include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/exceptions.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/JCConfiguration.h"
+#include "glite/wms/common/logger/edglog.h"
 
-#include "jobadapter/JobWrapper.h"
+using namespace std;
+using namespace classad;
 
-namespace fs = boost::filesystem;
-namespace jobid = glite::wmsutils::jobid;
-
-using std::ofstream;
-using std::cout;
-using std::cerr;
-using std::vector;
-using std::string;
-using namespace glite::wms::common::configuration;
 using namespace glite::wms::helper::jobadapter;
+
+using namespace glite::wms::common::configuration;
+using namespace glite::wms::common::logger;
+using namespace glite::wms::common::logger::threadsafe;
+
+namespace jdl = glite::jdl;
+namespace helper = glite::wms::helper;
 
 int
 main(int argc, char* argv[])
 {
-  Configuration config("glite_wms.conf", "WorkloadManager");
+  ifstream inf;	
+  string   jaconf;
+  string   outputfile;
+  string   parsedofile;
+  
+  // we read the ClassAds file.
+  if (argc == 5) {
+    inf.open(argv[1]);
+    outputfile = argv[2];
+    parsedofile = argv[3];
+    jaconf = argv[4];
+  } else {
+    cout << "Usage: " 
+	 << argv[0] 
+	 << " CLASSAD_INPUTFILE" 
+	 << " CLASSAD_OUTPUTFILE"  
+	 << " PARSED_OUTPUTFILE" 
+	 << " JOBADAPTER_CONFFILE" 
+	 << endl; 
+    return 1;
+  }
 
-  // Figure out the local host name (this should really come from
-  // some common entity).
-  char   hostname[1024];
-  std::string local_hostname;
+  string input_ad;
+  while (!inf.eof()) {
+    string line;
+    inf >> line;
+    input_ad += line;
+  }
 
-  if (gethostname(hostname, sizeof(hostname)) >= 0) {
-    hostent resolved_host;
-    hostent *resolver_result=NULL;
-    int resolver_work_buffer_size = 2048;
-    char* resolver_work_buffer = new char[resolver_work_buffer_size];
-    int resolve_errno = ERANGE;
-    while ((gethostbyname_r(hostname, &resolved_host,
-                            resolver_work_buffer,
-                            resolver_work_buffer_size,
-                            &resolver_result,
-                            &resolve_errno) ) == ERANGE ) {
-      delete[] resolver_work_buffer;
-      resolver_work_buffer_size *= 2;
-      resolver_work_buffer = new char[resolver_work_buffer_size];
+  inf.close();
+  
+  // we define a ClassAds.
+  ClassAdParser parser;
+  ClassAd*      ad = parser.ParseClassAd(input_ad.c_str());
+  
+  if (ad == 0) 
+  {
+    cout << "Bad input classad file" << endl;
+    return 1;
+  }
+  
+  try {
+    // print on the standard output the log file	  
+    edglog.open(cout);
+
+    // we define the submit path	  
+    Configuration confi(jaconf, "WorkloadManager");
+
+    const JCConfiguration *jwconfig = Configuration::instance()->jc();
+    const WMConfiguration *wmconfig = Configuration::instance()->wm();
+
+    std::string template_file(
+      wmconfig->job_wrapper_template_dir()
+     +
+      "/template.sh"
+    );
+    std::ifstream ifs(template_file.c_str());
+    if (!ifs) {
+      std::cout << "echo \"Cannot open input file " << template_file << "\"\n";
+      return -1;
     }
-    if (resolver_result != NULL) {
-      local_hostname.assign(resolved_host.h_name);
+    std::ostringstream oss;
+    oss << ifs.rdbuf();
+    boost::shared_ptr<std::string> jw_template_ptr(
+      new std::string(oss.str())
+    );
+
+    // we define a JobAdapter
+    JobAdapter ja(ad, jw_template_ptr);
+
+    const ClassAd*      ad_modified = ja.resolve();
+
+    if (ad_modified == 0) 
+    {
+      cout << "Bad input classad file!" << endl;	    
+      return 1;
     }
-    delete[] resolver_work_buffer;
-  }
-
-  // define input sandbox
-  vector<string> in_files;
-  in_files.push_back("job.sh");
-  in_files.push_back("inputfile1");
-  in_files.push_back("inputfile2");
-
-  // define output sandbox
-  vector<string> output_files;
-  output_files.push_back("outputfile1");
-
-  boost::scoped_ptr<JobWrapper> jw;
+	    
+    ofstream outf(outputfile.c_str());
+    
+    // we print out the ClassAds Modified
+    PrettyPrint printer;
+    string      printed_outputclassad;
+    
+    printer.Unparse(printed_outputclassad, ad_modified);
   
-  try {
+    outf << printed_outputclassad;
+    
+    ofstream convertedoutf(parsedofile.c_str());
 
-    jw.reset(new JobWrapper("job.sh"));
-
-    // set the input sandbox
-    jw->input_sandbox(URL("gsiftp://joda.cnaf.infn.it:9000/home/joda/wp1/JobWrapper"), in_files);
-
-    // set the output sandbox
-    jw->output_sandbox(URL("gsiftp://joda.cnaf.infn.it:8000/tmp/gridtest"), output_files);
-  } catch (InvalidURL& ex) {
-    cerr << ex.what();
-    return -1;
-  } catch (...) {
-    cerr << "Caught uknown exception\n";
-    return -2;
+    jdl::to_submit_stream(convertedoutf, *ad_modified); 
   }
-
-  // set the stdin, stdout and stderr for job.sh
-  jw->standard_input("job.in");
-  jw->standard_output("job.out");
-  jw->standard_error("job.err");
+  catch (CannotConfigure &ex) {
+    cerr << ex << endl;
+    return 1;
+  }
+  catch (helper::CannotSetAttribute& ex) {
+    cerr << "Cannot Set Attribute " << ex.what() << endl;
+    return 2;
+  }
+  catch (helper::CannotGetAttribute& ex) {
+    cerr << "Cannot Get Attribute " <<  ex.what() << endl;
+    return 3;
+  }
+  catch (CannotCreateJobWrapper& ex) {
+    cerr << "Cannot Create Job Wrapper " <<  ex.what() << endl;
+    return 4;
+  }
+  catch (helper::InvalidAttributeValue& ex) {
+    cerr << "Invalid Attribute Value " <<  ex.what() << endl;
+    return 5;
+  }
+  catch (InvalidURL& ex) {
+    cerr << ex.what() << endl;
+    return 6;
+  }
+  catch (std::exception& ex) {
+    cerr << "Other " << ex.what() << endl;
+    return 7;
+  }
+  catch (...) {
+    cerr << "Other errors" << endl;
+    return 8;
+  }
   
-  // set arguments
-  jw->arguments("-i \"\\\"Fabrizio Pacini\" *.txt");
-
-  // set EDG_WL_RB_BROKERINFO to the default value
-  jw->brokerinfo(".BrokerInfo");
-
-  // set EDG_WL_JOBID to the default value
-  jobid::JobId j("https://edt003.cnaf.infn.it:9000/131.154.99.82/092250216745692?edt003.cnaf.infn.it:7771");
-  jw->job_id(j.toString());
-
-  // set EDG_WL_SEQUENCE_CODE to the default value
-  //jw->sequence_code("UI=1:NS=1:WM=3:BH=3:JSS=2:LM=1:LRMS=1:APP=0");
- 
-  // run job.sh in a subdirectory
-  jw->create_subdir();
-  
-  std::string maradonapr("gsiftp");
-  std::string jobid_to_file(jobid::to_filename(j));
-  try {
-    fs::path maradona_path("SandBox", fs::native);
-    maradona_path /= fs::path(jobid::get_reduced_part(j), fs::native);
-    maradona_path /= fs::path(jobid_to_file, fs::native);
-    maradona_path /= fs::path("Maradona.output", fs::native);
-
-    jw->maradona(maradonapr + "://" + local_hostname, maradona_path.native_file_string());
-  } catch(fs::filesystem_error const& ex) {
-    cerr << ex.what();
-    return -1;
-  }
-
-  try {
-    URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
-    jw->set_output_sandbox_base_dest_uri(url_);
-    jw->set_osb_wildcards_support(true);
-  } catch (InvalidURL& ex) {
-    cerr << ex.what();
-    return -1;
-  }
-
-  // output the job wrapper script to standard output
-  cout << *jw;
-
-  // output the job wrapper script to file
-  ofstream of("./job_wrapper.sh");
-  of << *jw;
-
   return 0;
 }
