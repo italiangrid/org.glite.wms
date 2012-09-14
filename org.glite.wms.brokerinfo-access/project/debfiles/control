@@ -1,0 +1,32 @@
+Source:  glite-wms-brokerinfo-access
+Section:  net
+Priority:  optional
+Maintainer:  WMS group <wms-support@lists.infn.it>
+Build-Depends: debhelper (>= 8.0.0~)
+Standards-Version:  3.9.1
+Homepage: http://glite.cern.ch/
+
+Package: glite-wms-brokerinfo-access
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Brokerinfo component for the WMS user interface
+ Brokerinfo component for the WMS user interface
+ 
+Package: glite-wms-brokerinfo-access-lib
+Section:  libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Brokerinfo component for the WMS user interface (libraries)
+ Brokerinfo component for the WMS user interface (libraries)
+
+Package: glite-wms-brokerinfo-access-dev
+Section: libdevel
+Depends: glite-wms-brokerinfo-access-lib (= ${binary:Version})
+Description: Brokerinfo component for the WMS user interface (development files)
+ Brokerinfo component for the WMS user interface (development files)
+
+Package: Documentation files for the brokerinfo access component
+Section: doc
+Description: Documentation files for the brokerinfo access component
+ Documentation files for the brokerinfo access component
+
+
