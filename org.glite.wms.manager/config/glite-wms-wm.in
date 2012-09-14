@@ -7,38 +7,28 @@
 #
 # Description: start, stop, status of the GLITE workload manager daemon
 #
-# $Id$
+# $Id: glite-wms-wm.in,v 1.6.2.1.4.8.2.1.4.1.2.10 2012/07/12 07:50:45 mcecchi Exp $
 
 # chkconfig: 345 94 06 
+# description: WMS processing engine
 
-GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
-
-#########################################################
-#
-#				Integration changes
-#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
-#. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
-#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
-#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
-
-. /etc/glite/profile.d/glite_setenv.sh 
-########################################
-
- 
-GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
-export GLITE_WMS_CONFIG_DIR
-
-this_script_name=$0
-
-program_name=glite-wms-workload_manager
-binpath=${GLITE_LOCATION}/bin/${program_name}
-pid_file=${GLITE_WMS_TMP}/${program_name}.pid
-
-#set -x
-
+# return values:
 # 0 - daemon is running,
 # 1 = daemon is stopped and lock file is present,
-# 2 = daemon is stopped.
+# 2 = daemon is stopped,
+# 3 = anything else.
+
+. /opt/glite/yaim/etc/grid-env-funcs.sh
+. /etc/profile.d/grid-env.sh 
+
+CONFIGURATION_FILE="glite_wms.conf"
+
+this_script_name=$0
+program_name=glite-wms-workload_manager
+binpath=${WMS_LOCATION_BIN}/${program_name}
+pid_file="${WMS_LOCATION_VAR}/run/${program_name}.pid"
+ret_code=0
+
 running()
 {
     # no pidfile
@@ -46,11 +36,13 @@ running()
         return 2
     fi
 
-    pid=`cat ${pid_file} 2> /dev/null`
+    pid=`cat ${pid_file} 2> /dev/null | awk '{print $1}'`
 
-    # no pid
+    # an empty pid file is indicative of some weird error and
+    # doesn't relate to the expected status according to #16480;
+    # an error situation is in any case reported
     if [ -z "${pid}" ]; then
-        return 2
+        return 3
     fi
     
     local cmdline=`ps hwwwp ${pid} o command` # BSD style
@@ -69,58 +61,124 @@ running()
     return 0
 }
 
-ret_code=0
+set_input() # first parameter is the input, second is the input type
+{
+  mkdir -p $1/{tmp,new,old} 2>/dev/null
+  mkdir_ret=$?
+  chown -R ${GLITE_WMS_USER}:${GLITE_WMS_USER} "$1"
+  if [ $? -ne 0 -o $mkdir_ret -ne 0 ]; then
+    false
+  else
+    true
+  fi
+}
+
+check_input() # first parameter is the input, second is the input type
+{
+  if [ -d "$1" ]; then
+    set_input_ret=0
+    if [ ! -d $1/old -o ! -d $1/new -o ! -d $1/tmp ]; then
+      echo "input structure has changed, trying to (re)create it"
+      set_input "$1"
+      if [ $? != 0 ]; then
+        set_input_ret=1
+      fi
+    fi
+
+    if [ $set_input_ret -eq 0 ]; then
+      # mv of the whole dir would fail when too much populated
+      find "$1/old/" -type f | xargs -I '{}' mv '{}' "$1/new/" &>/dev/null
+      if [ $? != 0 ]; then
+        echo "error moving files from old to new dir, continuing"
+      fi
+      true
+    else
+      false
+    fi
+  else
+    set_input "$1"
+  fi
+}
 
 start()
 {
     conf_file=glite_wms.conf
     parse_attribute=WorkloadManager
-    . ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
+    . ${WMS_LOCATION_LIBEXEC}/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
 
     echo -n "starting workload manager... "
     if running; then
-        echo "ok (already running)"
+      echo "ok (already running)"
     else
-        rm -f ${pid_file}
-        ${binpath} --conf ${conf_file} --daemon ${pid_file} > /dev/null 2>&1
-        # there is a race condition due to some delay between becoming
-        # a daemon (hence returning control to this script) and
-        # writing the pid file; the following sleep should be enough
-        # to get around it
-        sleep 1
-        if running; then
-            echo "ok"
-        else
-            echo "failure"
-            ret_code=1
+      ulimit -n 32768 # max fds
+      wm_input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.input`
+      if [ -z ${wm_input} ]; then
+        echo "Please set Input parameter in ${CONFIGURATION_FILE} - WM section" 2>&1
+        ret_code=1 
+      fi 
+      jc_input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration JobController.Input`
+      if [ -z ${jc_input} ]; then
+        echo "Please set Input parameter in ${CONFIGURATION_FILE} - JC section" 2>&1
+        ret_code=1
+      fi 
+      ice_input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration ICE.Input`
+      if [ -z ${ice_input} ]; then
+        echo "Please set Input parameter in ${CONFIGURATION_FILE} - ICE section" 2>&1
+        ret_code=1
+      fi 
+      if [ ${ret_code} -eq 1 ]; then
+        echo "failure"
+        exit 1
+      fi
+
+      set_input ${jc_input}
+      set_input ${ice_input}
+      check_input ${wm_input}
+      if [ $? != 0 ]; then
+        echo "error setting up input structure... failure"
+        ret_code=1
+      else
+        runtime_malloc=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.RuntimeMalloc`
+        if [ -n ${runtime_malloc} ]; then
+          preload="LD_PRELOAD='${runtime_malloc}'"
         fi
+        mkdir -p "${WMS_LOCATION_VAR}/run/"
+        eval ${preload} ${binpath} --conf ${conf_file} --daemon > /dev/null 2>&1
+        local pid=`/sbin/pidof ${program_name} 2>/dev/null`
+        if [ "x$pid" == "x" ]; then
+          echo "failure"
+          ret_code=1
+        else
+          echo "ok"
+        fi
+        echo $pid > ${pid_file}
+      fi
     fi
 }
 
 stop()
 {
     echo -n "stopping workload manager... "
+    killall ${program_name} 2>/dev/null # never say never, 'running' only checks the PID file
     if running; then
         pid=`cat ${pid_file} 2> /dev/null`
-        kill ${pid}
-        sleep 2
-        if running; then
-            kill -9 ${pid}
-            sleep 2
-            if running; then
-                echo "failure (stop it manually)"
-                ret_code=1
-            else
-                echo "ok"
-                rm -f ${pid_file}
-            fi
-        else
+        kill ${pid} 2> /dev/null
+        timeout=30
+        while [ $timeout -gt 0 ]; do
+          sleep 1
+          if ! running; then
             echo "ok"
             rm -f ${pid_file}
-        fi
-    else
-        echo "ok (was not running)"
+            return
+          fi
+          let "--timeout"
+        done
+        kill -9 ${pid} 2>/dev/null
     fi
+    rm -f ${pid_file} 2>/dev/null # moved outside the previous if. in fact,
+                              # if stop were issued after the process exited
+                              # abruptly, the pid file would be still present
+    echo "ok"
 }
 
 status()

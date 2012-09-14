@@ -1,31 +1,27 @@
-#
-#       Copyright (c) 2004 on behalf of the EU EGEE Project:
-#       The European Organization for Nuclear Research (CERN),
-#       Istituto Nazionale di Fisica Nucleare (INFN), Italy
-#       Datamat Spa, Italy
-#       Centre National de la Recherche Scientifique (CNRS), France
-#       CS Systeme d'Information (CSSI), France
-#       Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
-#       Universiteit van Amsterdam (UvA), Netherlands
-#       University of Helsinki (UH.HIP), Finland
-#       University of Bergen (UiB), Norway
-#       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
-#
-# $Id$
+## Copyright (c) Members of the EGEE Collaboration. 2009. 
+## See http://www.eu-egee.org/partners/ for details on the copyright holders.  
 
-# Process this file with autoconf to produce a configure script.
+## Licensed under the Apache License, Version 2.0 (the "License"); 
+## you may not use this file except in compliance with the License. 
+## You may obtain a copy of the License at 
+##     http://www.apache.org/licenses/LICENSE-2.0 
+## Unless required by applicable law or agreed to in writing, software 
+## distributed under the License is distributed on an "AS IS" BASIS, 
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+## See the License for the specific language governing permissions and 
+## limitations under the License.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Manager], [3.1.0])
+AC_INIT([GLite WMS Manager], [3.3.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/daemons/workload_manager.cpp])
+AC_CONFIG_SRCDIR([src/plan.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
 See LICENCE file for details
 ])
-AC_REVISION([$Revision$])
+AC_REVISION([$Revision: 1.22.2.3.2.2.2.1.2.1.4.5.2.8.2.1 $])
 
 #Environment.
 WORKDIR=`pwd`
@@ -37,6 +33,8 @@ AC_PROG_CPP
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O
+AC_PROG_YACC
+AM_PROG_LEX
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
@@ -65,57 +63,49 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 AC_OPTIMIZE
+GLITE_CHECK_LIBDIR
+GLITE_CHECK_INITDIR
+AC_GLITE_DOCBOOK
 
-have_boost=no
-have_classads=no
-have_globus=no
-have_cppunit=no
+GLITE_CHECK_LDAP
 
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
-                                                                               
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+PKG_CHECK_MODULES(ARES, libcares, , AC_MSG_ERROR(["ARES not found"]))
 
-have_glite_wms_common=no
-have_glite_wmsutils=no
-have_glite_jdl=no
-have_glite_wms_jss=no
-have_glite_lb=no
-have_glite_security=no
-have_glite_wms_ism=no
-have_glite_wms_purger=no
+AC_BOOST([], AC_MSG_RESULT(["BOOST ok"]), AC_MSG_ERROR(["BOOST not found"]))
 
-AC_GLITE
-AC_GLITE_SERVICE_DISCOVERY
+PKG_CHECK_MODULES(CLASSAD, emi-classad-ns, , AC_MSG_ERROR(["CLASSADS not found"]))
 
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+#PKG_CHECK_MODULES(CPPUNIT, cppunit, , AC_MSG_ERROR(["CPPUNIT not found"]))
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+PKG_CHECK_MODULES(GLITE_WMSUTILS_EXCEPTION, jobman-exception, , AC_MSG_ERROR(["WMSUTILS_EXCEPTION not found"]))
+PKG_CHECK_MODULES(GLITE_WMSUTILS_CLASSADS, classad-utils, , AC_MSG_ERROR(["WMSUTILS_CLASSADS not found"]))
 
-AC_GLITE_WMS_JSS([], have_glite_wms_jss=yes, have_glite_wms_jss=no)
-AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
+PKG_CHECK_MODULES(GLITE_JDL, jdl-api-cpp, , AC_MSG_ERROR(["JDL not found"]))
 
-AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_CONF, wms-common-conf, , AC_MSG_ERROR(["WMS_COMMON_CONF not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LDIF2CLASSADS, wms-common-ldif2classads, , AC_MSG_ERROR(["WMS_COMMON_LDIF2CLASSADS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_LOGGER, wms-common-logger, , AC_MSG_ERROR(["WMS_COMMON_LOGGER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_PROCESS, wms-common-process, , AC_MSG_ERROR(["WMS_COMMON_PROCESS not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_UTIL, wms-common-util, , AC_MSG_ERROR(["WMS_COMMON_UT_UTIL not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_UT_II, wms-common-ii, , AC_MSG_ERROR(["WMS_COMMON_UT_II not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_COMMON_QUOTA, wms-common-quota, , AC_MSG_ERROR(["WMS_COMMON_QUOTA not found"]))
 
-AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
-AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
+PKG_CHECK_MODULES(GLITE_WMS_HELPER, wms-helper, , AC_MSG_ERROR(["HELPER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_HELPER_JOBADAPTER, wms-helper-jobadapter, , AC_MSG_ERROR(["HELPER_JOBADAPTER not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_HELPER_BROKER_ISM, wms-helper-broker-ism, , AC_MSG_ERROR(["HELPER_BROKER_ISM not found"]))
 
-AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
-AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
+##AC_GLITE_LB_NF([], AC_MSG_RESULT(["GLITE_LB ok"]), AC_MSG_ERROR(["GLITE_LB not found"]))
+PKG_CHECK_MODULES(GLITE_LB_COMMON, emi-lb-common, , AC_MSG_ERROR(["GLITE_LB_COMMON not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENT, emi-lb-client, , AC_MSG_ERROR(["GLITE_LB_CLIENT not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENTPP, emi-lb-clientpp, , AC_MSG_ERROR(["GLITE_LB_CLIENTPP not found"]))
 
-AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
-AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+##AC_PROXYRENEWAL([], AC_MSG_RESULT(["PROXY RENEWAL ok"]), AC_MSG_ERROR(["PROXY RENEWAL not found"]))
+PKG_CHECK_MODULES(RENEWAL, emi-proxyrenew, , AC_MSG_ERROR(["PROXY RENEWAL not found"]))
 
-AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+PKG_CHECK_MODULES(GLITE_WMS_ISM, wms-ism, , AC_MSG_ERROR(["ISM not found"]))
+PKG_CHECK_MODULES(GLITE_WMS_ISM_II_PURCHASER, wms-ism-ii-purchaser, , AC_MSG_ERROR(["ISM_II_PURCHASER not found"]))
+
+PKG_CHECK_MODULES(GLITE_WMS_PURGER, wms-purger, , AC_MSG_ERROR(["PURGER not found"]))
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
@@ -123,12 +113,9 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite-wms-wm])
+AC_CONFIG_FILES([config/glite-wms-stats-setup.sh])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/daemons/Makefile])
-AC_CONFIG_FILES([src/sensors/Makefile])
-AC_CONFIG_FILES([src/server/Makefile])
-AC_CONFIG_FILES([src/server/glite-wms-dag-post.sh])
 AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([doc/Makefile])
 
 AC_OUTPUT
-
