@@ -1,0 +1,5 @@
+GLITE_REPOSITORY=../..
+
+export LD_LIBRARY_PATH=$GLITE_REPOSITORY/stage/lib:$GLITE_REPOSITORY/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32/lib:$GLITE_REPOSITORY/repository/boost/1.32.0/rhel30_gcc32/lib/
+export PATH=$PATH:$GLITE_REPOSITORY/repository/globus/2.4.3-VDT-1.2.0/rhel30_gcc32/bin/
+export GLITE_WMS_LOG_DESTINATION=gundam.cnaf.infn.it:9002
