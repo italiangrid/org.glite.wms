@@ -24,7 +24,7 @@ AC_CONFIG_SRCDIR([src/server/wmproxy.cpp])
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
 See LICENCE file for details
 ])
-AC_REVISION([$Revision$])
+AC_REVISION([$Revision: 1.27.6.13.2.12.2.1 $])
 
 #Environment.
 WORKDIR=`pwd`
@@ -66,7 +66,6 @@ GLITE_CHECK_LIBDIR
 GLITE_CHECK_INITDIR
 
 AC_OPTIMIZE
-AC_GLITE_WMS_WSDL
 GLITE_CHECK_XSLT
 
 PKG_CHECK_MODULES(GLITE_JOBID, emi-jobid, ,AC_MSG_ERROR(["GLITE_JOBID not found"]))
