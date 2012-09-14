@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<project name="wmproxy-api-java" >
+
+  <property file=".configuration.properties"/>
+  <available file=".configuration.properties" property="isConfigured"/>
+
+  <property name="pkg-name" value="glite-wms-wmproxy-api-java"/>
+  <property name="docs-installdir" value="${dist.location}/usr/share/doc/${pkg-name}"/>
+  <property name="pkg-jarname" value="${pkg-name}.jar"/>
+
+  <property name="util-java.location" value="${stage.location}"/>
+  <property name="org.glite.wms.wsdl.location" value="${stage.location}"/>
+
+  <path id="axis2.classpath">
+    <fileset dir="/usr/share/java/axis2" includes="**/*.jar"/>
+  </path>
+  
+  <path id="compile.classpath">
+    <path refid="axis2.classpath"/>
+    <fileset file="/usr/share/java/bcprov.jar"/>
+    <fileset dir="${util-java.location}/usr/share/java">
+        <include name="trustmanager.jar"/>
+        <include name="trustmanager-axis.jar"/>
+        <include name="delegation-java.jar"/>
+    </fileset>
+  </path>
+
+  <target name="init">
+    <mkdir dir="lib" />
+    <mkdir dir="bin/classes" />
+    <mkdir dir="src/autogen" />
+  </target>
+
+  <target name="check" depends="init">
+    <fail message="The module is not configured" unless="isConfigured"/>
+    <uptodate property="alreadyCompiled" targetfile="lib/${pkg-jarname}">
+      <srcfiles dir= "${org.glite.wms.wsdl.location}/usr/share/wsdl"
+                includes="**/WMProxy.wsdl"/>
+      <srcfiles dir= "src"
+                includes="**/*.java"/>
+    </uptodate>
+  </target>
+  
+  <target name="compile" depends="check" unless="alreadyCompiled">
+	
+	<mkdir dir="autogen/src" />
+	
+	<macrodef name="buildWSDL">
+      <attribute name="serviceWSDL"/>
+      <attribute name="resourceDir"/>
+      <attribute name="packageName"/>
+      <attribute name="mapping"/>
+      <attribute name="portName"/>
+      <attribute name="binding"/>
+      <attribute name="options" default="-s -sp -uw"/>
+      <sequential>
+        <echo>Building port @{portName} ....</echo>
+        <java classname="org.apache.axis2.wsdl.WSDL2Java" fork="true">
+          <arg line="-uri @{serviceWSDL} -o autogen -R @{resourceDir} -S src -p @{packageName} -ns2p @{mapping} -pn @{portName} -d @{binding} @{options}"/>
+          <classpath refid="axis2.classpath"/>
+        </java>
+      </sequential>
+    </macrodef>
+    
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+               resourceDir="resources/wmproxy"
+               packageName="org.glite.wms.wmproxy.ws"
+               mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
+               portName="WMProxy_PortType"
+               binding="adb"/>
+
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+               resourceDir="resources/delegation"
+               packageName="org.gridsite.www.namespaces.delegation_2"
+               mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
+               portName="WMProxyDelegation2_PortType"
+               binding="adb"/>    
+
+    <javac srcdir="src:autogen/src" destdir="bin/classes" source="1.5" 
+           target="1.5" debug="true" debuglevel="lines,vars,source">
+      <classpath refid="compile.classpath" />
+    </javac>
+
+    <jar destfile="lib/${pkg-jarname}"
+         index="true"
+         basedir="bin/classes">
+    	<manifest>
+        	<attribute name="Package-Title" value="${pkg-name}"/>
+        	<attribute name="Package-Version" value="${module.version}"/>
+        	<attribute name="Package-Vendor" value="glite.org"/>
+    	</manifest>
+    </jar>
+
+  </target>
+  
+  
+  <target name="doc.check" depends="init">
+    <uptodate  property="doc.skip"
+               targetfile="${docs-installdir}/html/index.html">
+        <srcfiles dir="src" includes="**/*.java, **/*.html"/>
+    </uptodate>
+  </target>
+  
+  <target name="doc" depends="doc.check" unless="doc.skip">
+    <mkdir dir="${docs-installdir}/html" />		    
+    <javadoc
+            packagenames="org.glite.wms.wmproxy*"
+            destdir="${docs-installdir}/html"
+            windowtitle="${pkg-name}"
+            author="true"
+            failonerror="false"
+            use="true"
+            breakiterator="yes">
+            <bottom><![CDATA[<i>Copyright &#169; 2004-2008. <A href="http://public.eu-egee.org/">EU-EGEE</A></i>]]></bottom>
+            <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
+            <classpath refid="compile.classpath"/>
+        <sourcepath>
+            <pathelement path="src"/>
+            <pathelement path="autogen/src"/>
+        </sourcepath>
+    </javadoc>
+  </target>
+
+
+
+
+  <target name="install" depends="compile, doc">
+    <mkdir dir="${dist.location}/usr/share/java"/>
+    <copy toDir="${dist.location}/usr/share/java">
+      <fileset dir="lib">
+        <include name="*.jar" /> 
+      </fileset>
+    </copy>
+
+    <mkdir dir="${dist.location}/usr/share/doc/${pkg-name}-${module.version}"/>
+    <copy file="LICENSE" todir="${dist.location}/usr/share/doc/${pkg-name}-${module.version}"/>
+
+  </target>
+
+  <target name="clean">
+    <delete dir="lib" />
+    <delete dir="bin" />
+    <delete dir="src/autogen" />
+    <delete dir="autogen"/>
+    <delete dir="doc/autogen" />		
+  </target>
+  
+</project>

@@ -1,0 +1,21 @@
+Source:  glite-wms-wmproxy-api-java
+Section:  java
+Priority:  optional
+Maintainer:  WMS group <wms-support@lists.infn.it>
+Build-Depends: debhelper (>= 8.0.0~)
+Standards-Version:  3.9.1
+Homepage: http://glite.cern.ch/
+
+Package: glite-wms-wmproxy-api-java
+Architecture: all
+Depends: ${misc:Depends}
+Description: Java libraries for the WM Proxy service
+ Java libraries for the WM Proxy service
+
+Package: glite-wms-wmproxy-api-java-doc
+Section: doc
+Architecture: all
+Description: Documentation files for Job Description Language library
+ Documentation files for Job Description Language library
+
+
