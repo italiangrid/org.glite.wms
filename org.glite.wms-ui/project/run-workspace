@@ -1,0 +1,8 @@
+#! /bin/sh
+
+cd ../..
+cvs co org.glite
+cvs co org.glite.wms-ui
+
+cd org.glite.wms-ui/project
+ant -f glite.wms-ui.csf.xml
