@@ -1,0 +1,305 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY dhtitle "User Manuals">
+    <!ENTITY dhcommand "glite-wms-job-perusal">
+    <!ENTITY dhsection "1">
+    
+    <!ENTITY dhfirstname "Alvise">
+    <!ENTITY dhsurname "Dorigo">
+    <!ENTITY dhemail "alvise.dorigo@pd.infn.it">
+    <!ENTITY dhcontrib "Developer of the WMS User Interface">
+    
+]>
+
+
+
+<refentry>
+
+    <refentryinfo>
+        <title>&dhtitle;</title>
+        <productname>&dhcommand;</productname>
+        <authorgroup>
+            <author>
+                <firstname>&dhfirstname;</firstname>
+                <surname>&dhsurname;</surname>
+                <contrib>&dhcontrib;</contrib>
+                <address>
+                    <email>&dhemail;</email>
+                </address>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>&dhcommand;</refentrytitle>
+        <manvolnum>&dhsection;</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>&dhcommand;</refname>
+        <refpurpose>Allows handling files perusal functionalities for a submitted job.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>&dhcommand;</command>
+            <arg choice="opt"><option>options</option></arg>
+            <arg choice="plain" rep="repeat"><replaceable><![CDATA[<job ID>]]></replaceable></arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para><command>&dhcommand;</command> allows handling files perusal functionalities for a submitted job identified by the jobId.
+        This can be done only when files perusal support has been enabled while submitting/registering the job.
+        This is accomplished via the "PerusalFileEnable" JDL attribute.Three different operations can be performed for a given job:
+        <itemizedlist>
+            <listitem><para>Job's file perusal set (<option>--set</option> option): it allows enabling the perusal functionality for one or more specified files.
+            This option requires the user to specify the file(s) to be perused: this can be done by using either the <option>--filename</option>
+            (multiple files can be specified by repeating the option several times) or the <option>--input</option> option
+            (the user will be prompted to select one or more files).</para></listitem>
+
+            <listitem><para>Job's file perusal get (<option>--get</option> option): it allows retrieving chunks of onespecified job's file previously 
+            set for perusal by means of the <option>--set</option> option.
+            This  option requires the user to specify the file to be retrieved: this can be done by using either the <option>--filename</option> 
+            (no multiple files support available) or the <option>--input</option> option (the user will be prompted to select one file).
+            The specified file is therefore downloaded on the local machine and it can be viewed on the  user  shell.
+            User  can specify  a  custom directory where to download the files by using the <option>--dir</option> option.
+            The retrieval of files to be perused is available as soon as the job has started running: 
+            the command will retrieve the content of the generated file up to the time of the call. 
+            By default, any further call on the same file, retrieves back only the last chunks of the file, that means only the information stored after the last call. 
+            To retrieve all chunks of a given file (even those that might have been previously retrieved), the --all option must be specified.</para></listitem>
+
+            <listitem><para>Job's file perusal unset (<option>--unset</option> option): it disables perusal for all job's files (no further option required).
+            All Perusal functionalities are available for  simple jobs and for nodes of compound jobs (like DAGs, collections and parametric jobs) 
+            but not for compound jobs as a whole. Moreover the WMProxy service version must be greater than or equal to 2.0.0 
+            (the service version can be retrieved by using the <option>--version</option> option of the client commands).</para></listitem>
+        </itemizedlist>
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+        <variablelist>
+
+            <varlistentry>
+                <term><option>--all</option></term>
+                <listitem>
+                    <para>This option can only be specified together with <option>--get</option>: 
+                    all chunks of the specified file will be downloaded  (even  those  that  might  have  been  previously retrieved)</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--config <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <term><option>-c <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <listitem>
+                    <para>if the command is launched with this option, the configuration file pointed by configfile is used.
+                    This option is meaningless when used together with <option>--vo</option> option</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--debug</option></term>
+                <listitem>
+                    <para>when this option is specified, debugging information is displayed on the standard output and written also either into 
+                    the default log file: <filename>&dhcommand;<![CDATA[_<uid>_<pid>_<time>.log]]></filename> 
+                    located under the <filename>/var/tmp</filename> directory or in the log file specified with <option>--logfile</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--dir <replaceable class="parameter"><![CDATA[<directory_path>]]></replaceable></option></term>
+                <listitem>
+                    <para>if  this  option  is  specified,  the retrieved files are stored in the location pointed by directory_path 
+                    instead of the default location <filename><![CDATA[/tmp/<jobId unique string>]]></filename>. 
+                    This option is ignored if used with either the <option>--set</option> or the <option>--get</option> options.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--filename <replaceable class="parameter"><![CDATA[<filename>]]></replaceable></option></term>
+                <term><option>-f <replaceable class="parameter"><![CDATA[<filename>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option can be used only when <option>--set</option> or <option>--get</option> option are specified too. 
+                    It allows the user to specify the job's file(s) to be perused or  retrieved.
+                    With the <option>--set</option> option multiple files can be specified by repeating the option several times. 
+                    Instead, multiple files cannot be specified with <option>--get</option>.
+                    e.g.: --filename <![CDATA[<file1>]]> --filename <![CDATA[<file2>]]> --filename <![CDATA[<file3>]]> ...
+                    This option is ignored if used with the <option>--unset</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--get</option></term>
+                <listitem>
+                    <para>if this option is specified, the file specified with the <option>--filename</option> option is downloaded on the local machine. 
+                    Multiple files can not be specified. This option cannot be specified together with <option>--set</option> and <option>--unset</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--help</option></term>
+                <listitem>
+                    <para>Displays command usage.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--input-file <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-i <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option can be used only when <option>--set</option> or <option>--get</option> options are specified too. 
+                    It allows the user to specify respectively the job's file(s) to be perused or retrieved.
+                    The list of files contained in <![CDATA[<filepath>]]> is displayed and the user is prompted for a choice. 
+                    With the <option>--set</option> option multiple files can  be  specified by selecting more items from the list.
+                    Instead, multiple files cannot be specified with <option>--get</option>.
+                    This option is ignored if used with the <option>--unset</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--logfile <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>When this option is specified, a command log file (whose pathname is filepath) is created.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nodisplay</option></term>
+                <listitem>
+                    <para>this option can only be specified together with the <option>--get</option> one;
+                    it ends the execution of the command without displaying the content of the downloaded files.
+                    This option is ignored if used with <option>--set</option> or <option>--unset</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--output <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-o <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>this  option  can only be used together with either the <option>--set</option> or with the <option>--get</option> option.
+                    Information about these two operations are saved in the file specified by filepath at the end of the execution: 
+                    for <option>--set</option> the filename(s) for which perusal has been enabled; 
+                    for <option>--get</option> the local pathnames to the retrieved  files.
+                    filepath can be either a simple name or an absolute path (on the local machine). 
+                    In the former case the file is created in the current working directory.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--proto <replaceable class="parameter"><![CDATA[<protocol>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option specifies the protocol to be used for file tranferring. 
+                    It will be ignored when the specified protocol is not found among WMProxy service  available protocols: 
+                    in this case the default one (generally gsiftp ) will be used instead.
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--set</option></term>
+                <listitem>
+                    <para>if this option is specified, files perusal is enabled for the job (indicated by JobId) for the file(s) specified through 
+                    the <option>--filename</option> option. Multiple files can be specified by repeating the option several times
+                    ( e.g.: --filename <![CDATA[<file2>]]>  --filename <![CDATA[<file3>]]>  ..etc).
+                    This option cannot be specified together with <option>--get</option> and <option>--unset</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--unset</option></term>
+                <listitem>
+                    <para>if this option is specified, files perusal is disabled for the given job.
+                    This option cannot be specified together with <option>--get</option> and <option>--unset</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+                <listitem>
+                    <para>displays WMProxy client and servers version numbers.
+                    If the <option>--endpoint</option> option is specified only this service is contacted to retrieve its version.
+                    If it is not  used, the endpoint contacted is that one specified with <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted.
+                    For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).</para>
+                </listitem>
+            </varlistentry>
+            
+            <varlistentry>
+                <term><option>--vo <replaceable class="parameter"><![CDATA[<voname>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option allows the user to specify the Virtual Organisation she/he is currently working for.
+                    If the user proxy contains VOMS  extensions then  the VO specified through this option is overridden by thedefault VO contained in the proxy
+                    (i.e. this option is only useful when working with non-VOMS proxies).</para>
+                </listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>EXAMPLES</title>
+        
+        <para>enable perusal for several job's files:</para>
+        <para><command>glite-wms-job-perusal --set --filename file1.pr --filename file2.txt  https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        <para>A message with the result of the operation is displayed on the standard output</para>
+        
+        <para>download  the  last chunk of a file in the default directory 
+        (<filename><![CDATA[/tmp/<jobId_UniqueStr>]]></filename> unless otherwise specified in the command config file):</para>
+        <para><command>glite-wms-job-perusal --get --filename file1.pr https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        
+        <para>download   the   last   chunk   of   a   file   in   a   custom   directory:</para>
+        <para><command>glite-wms-job-perusal --get --filename file2.txt --dir /tmp/my_dir https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        
+        <para>download the whole file (generated so far) in the defaultdirectory: already retrieved chunks (if any) are downloaded again:</para>
+        <para><command>glite-wms-job-perusal --get --filename file2.txt --all https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        
+        <para>disable files perusal for the given job:</para>
+        <para><command>glite-wms-job-perusal --unset https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg</command></para>
+        <para>A message with the result of the operation is always displayed on the standard output.</para>
+        
+    </refsect1>
+
+    <refsect1>
+        <title>FILES</title>
+        <para><filename>voName/glite_wms.conf</filename>: The user configuration file. 
+        The standard path location is <filename>$GLITE_WMS_LOCATION/etc</filename> (or <filename>$GLITE_LOCATION/etc</filename>);</para>
+        
+        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy;
+        use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+        
+    </refsect1>
+    
+    <refsect1>
+        <title>ENVIRONMENT</title>
+        <para><envar>GLITE_WMS_CLIENT_CONFIG</envar>: This variable may be set to specify the path location of the configuration file.</para>
+        <para><envar>GLITE_WMS_LOCATION</envar>: This variable must be set when the Glite WMS installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_LOCATION</envar>: This variable must be set when the Glite installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_WMS_WMPROXY_ENDPOINT</envar>: This variable may be set to specify the endpoint URL</para>
+        <para><envar>GLOBUS_LOCATION</envar>: This variable must be set when the Globus installation is not located in the default path (<filename>/usr</filename>).</para>
+        <para><envar>GLOBUS_TCP_PORT_RANGE</envar>="<![CDATA[<val min>]]> <![CDATA[<val max>]]>": This variable must be set to define a range of ports to be used
+        for inbound connections in the interactivity context</para>
+        <para><envar>X509_CERT_DIR</envar>: This variable may be set to override the default location of the trusted certificates directory,
+        which is normally <filename>/etc/grid-security/certificates</filename>.</para>
+        <para><envar>X509_USER_PROXY</envar>: This variable may be set to override the default location of the user proxy credentials,
+        which is normally <filename><![CDATA[/tmp/x509up_u<uid>]]></filename>.</para>
+        <para><envar>GLITE_SD_PLUGIN</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, 
+        normally bdii.</para>
+        <para><envar>LCG_GFAL_INFOSYS</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific Server
+        where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"</para>
+    </refsect1>
+
+    <refsect1>
+        <title>SEE ALSO</title>
+        <para>
+            <citerefentry>
+                <refentrytitle>glite-wms-job-submit</refentrytitle>
+                <manvolnum>1</manvolnum>
+            </citerefentry>
+        </para>
+    </refsect1>
+
+</refentry>
+

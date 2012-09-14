@@ -1,0 +1,224 @@
+##########################################################################
+#  Error Messages List File                                              #
+#  Use the errMsg Function: errMsg(ErrorType,ErrorCode,Argument(s))      #
+#  where :                                                               #
+#          - ErrorType   = ['Error']/['Warning']                         #
+#          - ErrorCode   = unique error code                             #
+#          - Argument(s) = possible arguments that will replace %        #
+##########################################################################
+
+# User Interface Version
+UI_VERSION = @VERSION@
+
+#Files and Dir
+UI_OPEN_ERR = Unable to open file "%"
+UI_CAN_NOT_EXECUTE = Unable to execute "%":\
+%.
+UI_FILE_NOT_FOUND = Unable to find the file "%"
+UI_READ_FILE = Unable to read file "%"
+UI_ENVIRONM_MISSING = Environment variable "%" not found
+UI_ENVIRONM_ERROR = Wrong Environment variable  found for "%". \
+%.
+UI_CREATE_DIR = Unable to create the directory "%"
+UI_GSI_TOOLS = No GSI Directory found
+UI_FILE_COPY = Unable to copy the file "%"
+UI_DIR_NOT_ALLOWED = "%" is a Directory. Cannot be copied
+UI_DIR_NOT_FOUND = Unable to find the directory "%"
+UI_EMPTY_FILE = Unable to find any information in the file "%"
+UI_WRITE_FILE = Unable to write on the file "%"
+UI_FILE_EXISTS = "%" file already exists.
+UI_BAD_INPUT_FILE = "Input file contains corrupted information"
+UI_RM_FILE = Unable to remove the path "%"
+
+#Proxy
+UI_PROXY_DURATION = Proxy certificate will expire within less then % hours.
+#Creating a new %-hours-duration certificate
+UI_PROXY_EXPIRED = Proxy certificate validity expired.
+#Creating a new 24-hours-duration certificate
+UI_PROXY_NOT_FOUND = Proxy certificate not found.
+#Creating a new certificate
+UI_PROXY_INIT_ERROR = An error occurred while creating a new Proxy certificate
+UI_SESSION_ABORTED = Session has not been started successfully
+UI_CERTIFICATE_NOT_AVAILABLE = User certificate not found or corrupted
+UI_PROXY_CREATED = Proxy certificate has been successfully created
+UI_PROXY_CREATING = Creating a %-hours-duration proxy for VO (from %): "%"
+UI_PROXY_CREATION_NOINT = Unable to prompt the user for pass-phrase ('--noint' option required).\
+Please either create a valid proxy before or disable the '--noint' option
+
+#VOMS
+UI_VOMS_NOT_FOUND = Unable to find VOMS extension for "%" inside proxy credentials.
+#Error message caught by c++ wrappers
+UI_NO_VOMS = %
+UI_NO_VO_CONF_INFO = Unable to find configuration information for VO "%"
+UI_VOMS_OVERRIDE = The Virtual Organisation name "%" you have specified  with the % will be overriden by the \
+default VO in your proxy credentials: "%"
+UI_JDL_VO_MATCH= Virtual Organisation name "%"  does not match with attribute value found "%". \
+Please check the file: \
+%
+
+#JobID
+UI_FIRST_JOBID = Last command argument must be a Job ID
+UI_JOBID_MISS =  Last command argument must be a Job ID (or %)
+UI_JOBID_REPEAT = The jobID "%" has been already specified in the input list.\
+The jobID will be taken into account only once.
+UI_WRONG_JOBID_FORMAT = The "%" jobID is not in a valid format
+UI_WRONG_JOBID_ALL = All jobID are in wrong format
+UI_NO_JOBID = Unable to find any jobID
+UI_NO_JOB_FOUND = Unable to find any job matching the query
+UI_NO_JOBID_CANCEL = Unable to cancel any job from the following NS:\
+%
+UI_CANCEL_FAIL= Unable to cancel any job
+UI_GENERIC_ERROR_ON_JOB_ID=Error retrieving information on JobID "%". \
+Error description: %
+
+#Commands Arguments
+UI_OPT_NOT_ALLOWED = Option "%" not allowed (%)
+UI_WRONG_OPT = Option "%" not allowed
+UI_OPT_POS = Option "%" cannot not be specified after the command argument(s)
+UI_TOO_MANY_ARGS= Too many arguments specified
+UI_ARG_MISS = Argument is missing for the "%" option
+UI_ARG_MISMATCH= Not a valid value for the "%" option
+UI_ARG_OUT_OF_LIMIT = Argument "%" is out of limit
+UI_ARG_IGNORED = Argument "%" is meaningless in this context, it will be ignored
+UI_ARG_EXCLUSIVE = Argument "%" cannot be specified with argument "%"
+UI_VAR_NOT_FOUND = Unable to find the variable "%"
+UI_REPEATED_OPT = Option "%" has been specified more than once in the command line
+UI_WRONG_ARGS_NR = Wrong Number of arguments specified in the command line
+UI_JDL_FILE_MISSING = Last Argument of the "%" command must be a JDL file
+UI_NO_RESOURCE_ID = No Resource Id listed in file %
+UI_SKIP_QUESTION = No interaction required: question skipped (%)
+UI_WRONG_RESOURCE_ID = CEId format is: <full hostname>:<port number>/jobmanager-<service>-<queue name> \
+The provided CEId: "%" has a wrong format \
+(%)
+UI_UNKNOWN_LRMS = Cannot get a known LRMS  from the provided CEId: \
+"%"\
+(Please whether specify 'lrms_type' attribute in JDL or use the '--lrms' option \
+when using custom service name with mpi jobs)
+UI_ARG_DEPRECATED = The argument "%" is deprecated (%)
+UI_OUT_OF_LIMIT = The argument "%" is out of possible values
+UI_JDL_UNKNOWN = The following unknown attribute(s) have been found in the JDL file:\
+%They will be passed through but ignored by the NS
+UI_JDL_NOT_ALLOWED = Unable to parse JDL:  attribute '%' cannot be specified. \
+(%) 
+
+#JDL and CONFIG_ENV parsing errors
+UI_JDL_ADD_ERROR = %
+
+
+UI_CONFIG_ATTRIBUTE= Mandatory Attribute default error in configuration file: "%"
+UI_JDL_ERROR = %
+
+UI_JDL_WRONG_SYNTAX = Error in JDL  file: Attribute syntax error (%)
+UI_JDL_ATTR_MISSING = Mandatory Attribute missing in JDL file (%)
+UI_JDL_BAD_RELATION = Bad Relations between attributes in JDL file.\
+Constraint violated by attribute "%"
+UI_JDL_NO_AVAIL_FILE = Unable to find the file(s) "%" from InputSandbox
+UI_JDL_MULTIPLE_ATTR = Multiple "%" attribute found in JDL file
+UI_JDL_LIST_ATTR = "%" attribute type is "list"
+UI_JDL_MEMBER_SYNTAX = Wrong function call for list attribute "%".\
+Function usage is: "Member/IsMember(Value,List)"
+UI_JDL_ENVIRONM_MISSING = Environment variable not found for "%" in InputSandbox path
+UI_JDL_WRONG_FIELD = JDL field "%" is in a wrong format
+UI_WRONG_VALUE = Not a valid value for the % (%)
+
+#API Management:
+
+API_NATIVE_ERROR = Error while calling the "%" native api \
+%
+
+UI_SUBJOB_ERROR = An Error occurred for a SubJob of the Dag:\
+"%"
+
+#NS Error management
+NS_SUBMIT_FAIL = "%" received when submitting a job to NS
+UI_GEN_SYNTAX_ERR = "%" error in "%" attribute specification
+UI_NO_NS_CONTACT = Unable to contact any Network Server
+NS_JOB_CANCEL = Cancel failed on each NSs
+NS_PARSE = Unable to parse information returned from NS server: \
+% \
+Expected format is: %
+NS_LIST_JOB_MATCH_FAIL = "%" Received when submitting a matching request to NS
+NS_NOT_AVAILABLE = Network Server "%" not available or unable to contact \
+%
+NS_API_ERR = "%" returned from "%" api
+NS_TIMEOUT = % NS: "%"
+NS_GET_LB_CONTACT_FAIL = Unable to get LB address from NS "%"
+UI_JDL_NOT_LISTENER = Attachment not allowed for job\
+"%"\
+The JobType is not interactive
+JOB_ATTACH_PORT_RANGE = Unable to attach the listener for the job\
+%\
+The port % does not match with the firewall ports range: %
+JOB_ATTACH_NOT_ALLOWED = Unable to attach the listener to the job\
+"%"\
+The current status is: "%".
+NS_JOB_OUTPUT_NOT_READY = The OutputSandbox files for job\
+"%"\
+are not yet ready for retrieval. Please wait that the job enters the "Done" status.
+NS_JOB_OUTPUT_NOT_ALLOWED = The OutputSandbox files for job\
+"%"\
+are not available. The Job has been cancelled by the user or terminated with failure
+NS_JOB_OUTPUT_RETRIEVED = The OutputSandbox files for job\
+"%"\
+have been already successfully retrieved
+NS_JOB_CANCEL_NOT_ALLOWED = Not allowed to cancel the job:\
+"%"\
+The current status is: "%"
+NS_SUBJOB_CANCEL_NOT_ALLOWED = Not allowed to cancel the sub-job:\
+"%"\
+Try to perform cancellation on the parent job:\
+"%"
+NS_NO_SUCH_JOB = The job "%" has not been found by NS
+NS_GET_OUTPUT_FAIL = Unable to retrieve output sandbox files for any job
+NS_NOT_OWNER = The job "%" is owned by another user
+NS_FILE_RETRIEVAL = Unable to retrieve the following output files:\
+%for the job:\
+"%"
+NS_FILE_RETRIEVAL_FAIL = Unable to retrieve any OutputSandbox files for job:\
+"%"
+NS_FILE_TRANSFER = Unable to transfer any InputSandbox files
+NS_CONNECTION_FAILURE = Unable to connect to NS "%"
+NS_JDL_SYNTAX = Resource Broker found a syntax error while parsing JDL file
+NS_SERVER_BUSY = Resource Broker "%" is busy (thread pool size exceeded). Re-try to connect later.
+NS_WRONG_COMMAND = Resource Broker "%" received a bad command.
+SD_ERROR = Service Discovery Error: %
+
+
+#LB api Errors
+LB_error = Not yet implemented for api "%"
+LB_PARSE_ERROR_BROKEN_ULM = Broken ULM (%)
+LB_PARSE_ERROR_EVENT_UNDEF = Undefined event (%)
+LB_PARSE_ERROR_MESSAGE_INCOMPLETE = Message incomplete (%)
+LB_PARSE_ERROR_KEY_DUPLICITY = Duplicate ULM key (%)
+LB_PARSE_ERROR_KEY_MISUSE = Misuse of ULM key (%)
+LB_PARSE_OK_WITH_EXTRA_FIELDS = extra ULM field (%)
+LB_XML_PARSE_ERROR = XML parse error (%)
+LB_SERVER_RESPONSE_ERROR = Server response error for "%"
+LB_JOBID_FORMAT_ERROR = Bad jobid format (%)
+LB_DB_CALL_ERROR = Database call failed (%)
+LB_DB_DUP_KEY = Duplicate key on index (%)
+LB_URL_FORMAT_ERROR = URL has a wrong format (%)
+LB_MD5_CLASH = MD5 Key clash (%)
+LB_SSL = SSL Connection Error for "%"
+LB_FATAL_ERROR = Fatal connection error for "%" \
+No information can be retrieved from this LB (%)
+
+LB_API_CONTEXT = Error initializing structure dgLBContext (%)
+LB_API_OPEN = Unable to open connection with LB "%" (%)
+LB_API_CLOSE = Unable to close connection with LB "%" (%)
+LB_API_USER_JOB = Unable to retrieve list of jobId from LB "%" (%)
+LB_API_JOB_STATUS = Unable to retrieve job status for "%" (%)
+LB_API_JOB_PARSE = Unable to parse jobId "%" (%)
+LB_API_OPEN_ALL = Unable to open connection with any LB supplied
+LB_API_NO_STATUS = No status informations available for any job
+LB_API_LOG_EVENT = Unable to log Job event (%)
+LB_API_JOB_INFORM = Unable to retrieve information for "%" (%)
+LB_API_USER_INFORM = Unable to retrieve user's jobs information from LB "%" (%)
+LB_API_QUERY_ALL = Unable to retrieve information for any job
+LB_API_PARSE_ALL = Unable to parse any job
+
+# Submitting machine system configuration
+UI_BAD_SYS_CONF = Could not get submitting machine IP address \
+Please check local machine system configuration
+UI_BAD_IP_ADDR = Could only get localhost IP address "%" \
+Please check local machine system configuration

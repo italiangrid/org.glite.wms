@@ -1,0 +1,444 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY dhtitle "User Manuals">
+    <!ENTITY dhcommand "glite-wms-job-submit">
+    <!ENTITY dhsection "1">
+    
+    <!ENTITY dhfirstname "Alvise">
+    <!ENTITY dhsurname "Dorigo">
+    <!ENTITY dhemail "alvise.dorigo@pd.infn.it">
+    <!ENTITY dhcontrib "Developer of the WMS User Interface">
+    
+]>
+
+
+
+<refentry>
+
+    <refentryinfo>
+        <title>&dhtitle;</title>
+        <productname>&dhcommand;</productname>
+        <authorgroup>
+            <author>
+                <firstname>&dhfirstname;</firstname>
+                <surname>&dhsurname;</surname>
+                <contrib>&dhcontrib;</contrib>
+                <address>
+                    <email>&dhemail;</email>
+                </address>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>&dhcommand;</refentrytitle>
+        <manvolnum>&dhsection;</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>&dhcommand;</refname>
+        <refpurpose>Is the command for submitting jobs to the WMProxy service.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>&dhcommand;</command>
+            <arg choice="req"><replaceable><![CDATA[<delegation-opts>]]></replaceable></arg>
+            <arg choice="opt"><option>options</option></arg>
+            <arg choice="opt"><replaceable><![CDATA[<jdl_file>]]></replaceable></arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para><command>&dhcommand;</command> is the command for submitting simple jobs, DAGs, collections and parametric jobs to the WMProxy service: 
+        hence allows the user to run these jobs at one or several remote resources. 
+        It requires as input a job description file in which job characteristics and requirements are expressed by means of Condor classad-like expressions.
+        While it does not matter the order of the other arguments, the job description file has to be the last argument of this command.
+        Submission can be performed either by using a proxy previously delegated to the WMProxy (for example with the <command>glite-wms-job-delegate-proxy</command> command)
+        or delegating a new  proxy at each new submission (<quote>automatic  delegation</quote>).
+        In the former case the the <option>--delegationid</option> option must be used, specifying the id string associated with the delegated proxy.
+        E.g.:
+        <itemizedlist>
+            <listitem><para><command>glite-wms-job-delegate-proxy --delegationid <![CDATA[<mydelegID>]]></command></para></listitem>
+            <listitem><para><command>glite-wms-job-submit --delegationid mydelegID <![CDATA[<myjob ID>]]></command></para></listitem>
+        </itemizedlist></para>
+        
+        <para>For automatic delegation the <option>--autm-delegation</option> option must be used. Only one of these two options must be specified.
+        For job collections there is a further way to perform submission. 
+        The <option>--collection</option> option allows indeed to specify the path to a directory containing all the single JDL files of the jobs you want 
+        the collection is made of.The glite-wms-job-submit will generate the corresponding collection JDL and submit it.
+        E.g.:
+        <itemizedlist>
+            <listitem><para><command>glite-wms-job-submit -d mydelegID --collection /home/glite/KOLL/</command></para></listitem>
+        </itemizedlist>
+        where <filename>/home/glite/KOLL/</filename> is the directory containing all the JDL files.</para>
+
+        <para>In all cases, upon success, the command returns an ID to the user that can be used as the handle to followup the progress of the request itself.</para>
+                
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+        <variablelist>
+
+            <varlistentry>
+                <term><option>--autm-delegation</option></term>
+                <term><option>--a</option></term>
+                <listitem>
+                    <para>this option is specified to make automatic generation of the identifier string (delegationid) that will be associated to the delegated proxy.
+                    It must be used in place of the <option>--delegationid</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--collection <replaceable class="parameter"><![CDATA[<dirpath>]]></replaceable></option></term>
+                <term><option>-c <replaceable class="parameter"><![CDATA[<dirpath>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option allows specifying the directory pointed by <![CDATA[<dirpath>]]> containing all the single JDL files of the jobs that 
+                    the collection will be made of. The corresponding collection JDL will be generated and submitted. 
+                    Using this option the jdl_file (the last argument) must not be specified. Please note that the directory specified through 
+                    the <option>--collection</option> option <emphasis>MUST</emphasis> only contain JDL files describing simple jobs (i.e. no DAGs, no collections).
+                    All job types are admitted but <quote>partitionable</quote> and <quote>parametric</quote>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--config <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <term><option>-c <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <listitem>
+                    <para>if the command is launched with this option, the configuration file pointed by configfile is used.
+                    This option is meaningless when used together with <option>--vo</option> option</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--dag <replaceable class="parameter"><![CDATA[<dirpath>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option allows specifying the directory pointed by <![CDATA[<dirpath>]]> containing all the single JDL files of the jobs that 
+                    the DAG will be made of. The corresponding DAG JDL will be generated and submitted. 
+                    Using this option the jdl_file (the last argument) must not be specified.
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--debug</option></term>
+                <listitem>
+                    <para>when this option is specified, debugging information is displayed on the standard output and written also either into 
+                    the default log file: <filename>&dhcommand;<![CDATA[_<uid>_<pid>_<time>.log]]></filename> 
+                    located under the <filename>/var/tmp</filename> directory or in the log file specified with <option>--logfile</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--default-jdl <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option allows specifying a further jdl file whose attributes will be merged into the submitting (if not yet present).
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--delegationid <replaceable class="parameter"><![CDATA[<idstring>]]></replaceable></option></term>
+                <term><option>-d <replaceable class="parameter"><![CDATA[<idstring>]]></replaceable></option></term>
+                <listitem>
+                    <para>if this option is specified, the proxy that will be delegated is identified by <![CDATA[<idstring>]]>.
+                    This proxy can be therefore used for operations like job registration, job submission and job list matching until
+                    its expiration specifying the <![CDATA[<idstring>]]>. It must be used in place of <option>--autm-delegation</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--endpoint <replaceable class="parameter"><![CDATA[<serviceURL>]]></replaceable></option></term>
+                <term><option>-e <replaceable class="parameter"><![CDATA[<serviceURL>]]></replaceable></option></term>
+                <listitem>
+                    <para>when  this  option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL.
+                    If it is not used, the endpoint contacted is that one specified by the <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If none of these options is specified and the  environment  variable  is  not set, the service request will be sent to one of the endpoints
+                    listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list).
+                    If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one 
+                    of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be 
+                    obviously performed and the execution of the command is stopped with an error message.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--help</option></term>
+                <listitem>
+                    <para>Displays command usage.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--input <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-i <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>If this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the <![CDATA[<filepath>]]>.
+                    Once a CEId has been selected the command behaves as explained for the resource option.
+                    If this option is used together with the <option>--noint</option> one and the input file contains more than  one  CEId,
+                    then the first CEId in the list is taken into account for submitting the job.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--jason</option></term>
+                <listitem>
+                    <para>This option makes the command produce its output in JSON-compliant format, 
+                    that can be parsed by proper json libraries for python/perl and other script.
+                    Please note that <option>--json</option> and <option>--output</option> options are mutually exclusive.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--jsdl <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option must not be used with the last arugment <![CDATA[<jdl_file>]]> (they're mutually exclusive).
+                    It is needed when the job description language used by the user is JSDL instead of standard JDL.
+                    Please refer to this document</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--logfile <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>When this option is specified, a command log file (whose pathname is filepath) is created.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--lrms <replaceable class="parameter"><![CDATA[<lrmstype>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option is only for MPICH jobs and must be used together with either <option>--resource</option> or <option>--input</option> option;
+                    it specifies the type of the lrms of the resource the user is submitting to. 
+                    When the batch system type of the specified CE resource given is not known, the lrms must be provided while  submitting.
+                    For non-MPICH jobs this option will be ignored.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nodes-resource <replaceable class="parameter"><![CDATA[<ceid>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option is available only for DAGs.
+                    If it option is specified, the job-ad sent to the WMProxy service contains a line of the type <quote>SubmitTo = <![CDATA[<ceid>]]></quote>
+                    and the DAG is submitted by the WMS to the resource identified by <![CDATA[<ceid>]]> without going through the match-making process 
+                    for each of its nodes.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--noint</option></term>
+                <listitem>
+                    <para>if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nolisten</option></term>
+                <listitem>
+                    <para>This option can be used only for interactive jobs.
+                    It makes the command forward the job standard streams coming from the WN to named pipes on the client machine whose names are returned to the user 
+                    together with the OS id of the listener process. This allows the user to interact with the job through her/his own tools.
+                    It is important to note that when this option is specified, the command has no more control over the launched listener process that has hence to be
+                    killed by the user (through the returned process id) once the job is finished.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nomsg</option></term>
+                <listitem>
+                    <para>This option makes the command print on the standard output only the jobId generated for the job if submission was successful; 
+                    the location of the log file containing massages and diagnostics is printed otherwise.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--output <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-o <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>Writes the generated jobId assigned to the submitted job in the file specified by <![CDATA[<filepath>]]>, 
+                    which can be either a simple name or an absolute path (on the submitting machine).
+                    In the former case the file filepath is created in the current working directory.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--pretty-print</option></term>
+                <listitem>
+                    <para>This option should be used with <option>--json</option>. Without it the JSON format is machine-oriented (no carriage returns, no indentations).  
+                    This option makes the JSON output easily readable by a human. 
+                    Using this option without <option>--json</option> has no effect.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--proto <replaceable class="parameter"><![CDATA[<protocol>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option specifies the protocol to be used for file transferring. 
+                    It will be ignored when the specified protocol is not found among WMProxy service available protocols: 
+                    in this case the default one (generally gsiftp) will be used instead.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--register-only</option></term>
+                <listitem>
+                    <para>If this option is specified, the job is only registered to the WMProxy service. 
+                    Local files that could be in the JDL InputSandbox attribute are not transferred unless the <option>--transfer-files</option> is also specified;
+                    and the job is not started. If the <option>--transfer-files</option> option is not specified, the command displays the list of the local files  
+                    to be transferred before starting the job. In this list each local file is matched to the corresponding Destination URI where it has to be transferred.
+                    The URIs are referred to either the default protocol (gsiftp) or another protocol specified by <option>--proto</option>.  
+                    Not using the <option>--transfer-files</option> option, users can transfer these files by low level commands like either 
+                    <command>globus-url-copy</command> or <command>curl</command>.
+                    After having transferred all files, the job can be started launching again this command with the <option>--start</option> option:
+                    <command>glite-wms-job-submit --start <![CDATA[<jobid>]]></command>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--resource <replaceable class="parameter"><![CDATA[<ceid>]]></replaceable></option></term>
+                <term><option>-r <replaceable class="parameter"><![CDATA[<ceid>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option is available only for jobs. 
+                    If it is specified, the job-ad sent to the WMProxy service contains a line of the type <quote>SubmitTo = <![CDATA[<ceid>]]></quote>
+                    and the job is submitted by the WMS to the resource identified by <![CDATA[<ceid>]]> without going through the match-making process.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--start <replaceable class="parameter"><![CDATA[<jobid>]]></replaceable></option></term>
+                <listitem>
+                    <para>This option allows starting a job (specified by JobId) previously registered and whose InputSandbox files on the submitting machine 
+                    have been already transferred to the WMProxy machine.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--to <replaceable class="parameter"><![CDATA[<[MM:DD:]hh:mm[:[CC]YY]>]]></replaceable></option></term>
+                <listitem>
+                    <para>A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time 
+                    so that it can be subjected again to matchmaking from time to time until a compatible CE is found. 
+                    The JDL ExpiryTime attribute is an integer representing the date and time (in  seconds since epoch) until the job request has to be considered valid 
+                    by the WMS. This option sets the value for the ExpiryTime attribute to the submitted JDL converting appropriately the absolute timestamp provided as input.
+                    It overrides, if present, the current value. 
+                    If the specified value exceeds one day from job submission then it is not taken into account by the WMS.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--transfer-files</option></term>
+                <listitem>
+                    <para>This option must be only used with the <option>--register-only</option> option.
+                    It enables transferring operation for files in the JDL InputSandbox attribute located on the submitting machine.
+                    These files are transferred to the WMProxy machine.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--valid <replaceable class="parameter"><![CDATA[<hh:mm>]]></replaceable></option></term>
+                <term><option>-v <replaceable class="parameter"><![CDATA[<hh:mm>]]></replaceable></option></term>
+                <listitem>
+                    <para>A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time
+                    so that it can be subjected again to matchmaking from time to time until a compatible CE is found. 
+                    The JDL ExpiryTime attribute is an integer representing the date and  time  (in  seconds since  epoch) until the job request has to be considered valid 
+                    by the WMS. This option allows to specify the validity in hours and minutes from submission time of the submitted JDL.
+                    When this option is used the command sets the value for the ExpiryTime attribute converting appropriately the relative timestamp provided as input.
+                    It overrides, if present,the current value. If the specified value exceeds one day from job submission then it is not taken into account by the WMS.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+                <listitem>
+                    <para>displays WMProxy client and servers version numbers.
+                    If the <option>--endpoint</option> option is specified only this service is contacted to retrieve its version.
+                    If it is not  used, the endpoint contacted is that one specified with <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted.
+                    For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).</para>
+                </listitem>
+            </varlistentry>
+            
+            <varlistentry>
+                <term><option>--vo <replaceable class="parameter"><![CDATA[<voname>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option allows the user to specify the Virtual Organisation she/he is currently working for.
+                    If the user proxy contains VOMS  extensions then  the VO specified through this option is overridden by thedefault VO contained in the proxy
+                    (i.e. this option is only useful when working with non-VOMS proxies).</para>
+                </listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>EXAMPLES</title>
+        
+        <para>Upon successful submission, this command returns the identifier (JobId) assigned to the job</para>
+        
+        <para>submission with automatic credential delegation:</para>
+        <para><command>glite-wms-job-submit -a ./job.jdl</command></para>
+        
+        <para>submission with a proxy previously delegated with <quote>exID</quote> id-string; request for displays CE rank numbers:</para>
+        <para><command>glite-wms-job-submit -d exID ./job.jdl</command></para>
+        
+        <para>sends the request to the WMProxy service whose URL is specified with the <option>-e</option> option
+        (where a proxy has been previously delegated with <quote>exID</quote> id-string)</para>
+        <para><command>glite-wms-job-submit -d exID -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server ./job.jdl</command></para>
+        
+        <para>saves the returned JobId in a file:</para>
+        <para><command>glite-wms-job-submit -a --output jobid.out ./job.jdl</command></para>
+        
+        <para>submits a collection whose JDL files are located in <filename>$HOME/collection_ex</filename>:</para>
+        <para><command>glite-wms-job-submit -d exID --collection $HOME/collection_ex</command></para>
+        
+        <para>forces the submission to the resource specified with the <option>-r</option> option:</para>
+        <para><command>glite-wms-job-submit -d exID -r lxb1111.glite.it:2119/blah-lsf-jra1_low ./job.jdl</command></para>
+        
+        <para>forces the submission of the DAG (the parent and all child nodes) to the resource specified with the <option>--nodes-resources</option> option:</para>
+        <para><command>glite-wms-job-submit -d exID --nodes-resources lxb1111.glite.it:2119/blah-lsf-jra1_low ./dag.jdl</command></para>
+        
+        <para>When <option>--endpoint</option> is not specified, the search of an available WMProxy service is performed according to the modality 
+        reported in the description of the <option>--endpoint</option> option.</para>
+        
+    </refsect1>
+
+    <refsect1>
+        <title>FILES</title>
+        <para><filename>voName/glite_wms.conf</filename>: The user configuration file. 
+        The standard path location is <filename>$GLITE_WMS_LOCATION/etc</filename> (or <filename>$GLITE_LOCATION/etc</filename>);</para>
+        
+        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy; use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+
+        <para>JDL: The file containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); 
+        multiple jdl files can be used with the <option>--collection</option> option.</para>
+        
+    </refsect1>
+    
+    <refsect1>
+        <title>ENVIRONMENT</title>
+        <para><envar>GLITE_WMS_CLIENT_CONFIG</envar>: This variable may be set to specify the path location of the configuration file.</para>
+        <para><envar>GLITE_WMS_LOCATION</envar>: This variable must be set when the Glite WMS installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_LOCATION</envar>: This variable must be set when the Glite installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_WMS_WMPROXY_ENDPOINT</envar>: This variable may be set to specify the endpoint URL</para>
+        <para><envar>GLOBUS_LOCATION</envar>: This variable must be set when the Globus installation is not located in the default path (<filename>/usr</filename>).</para>
+        <para><envar>GLOBUS_TCP_PORT_RANGE</envar>="<![CDATA[<val min>]]> <![CDATA[<val max>]]>": This variable must be set to define a range of ports to be used
+        for inbound connections in the interactivity context</para>
+        <para><envar>X509_CERT_DIR</envar>: This variable may be set to override the default location of the trusted certificates directory,
+        which is normally <filename>/etc/grid-security/certificates</filename>.</para>
+        <para><envar>X509_USER_PROXY</envar>: This variable may be set to override the default location of the user proxy credentials,
+        which is normally <filename><![CDATA[/tmp/x509up_u<uid>]]></filename>.</para>
+    </refsect1>
+
+    <refsect1>
+        <title>SEE ALSO</title>
+        <para>
+            <citerefentry>
+                <refentrytitle>glite-wms-job-submit</refentrytitle>
+                <manvolnum>1</manvolnum>
+            </citerefentry>
+        </para>
+    </refsect1>
+
+</refentry>
+

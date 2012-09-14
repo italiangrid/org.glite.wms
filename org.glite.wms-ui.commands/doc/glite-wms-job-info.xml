@@ -1,0 +1,263 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY dhtitle "User Manuals">
+    <!ENTITY dhcommand "glite-wms-job-info">
+    <!ENTITY dhsection "1">
+    
+    <!ENTITY dhfirstname "Alvise">
+    <!ENTITY dhsurname "Dorigo">
+    <!ENTITY dhemail "alvise.dorigo@pd.infn.it">
+    <!ENTITY dhcontrib "Developer of the WMS User Interface">
+    
+]>
+
+
+
+<refentry>
+
+    <refentryinfo>
+        <title>&dhtitle;</title>
+        <productname>&dhcommand;</productname>
+        <authorgroup>
+            <author>
+                <firstname>&dhfirstname;</firstname>
+                <surname>&dhsurname;</surname>
+                <contrib>&dhcontrib;</contrib>
+                <address>
+                    <email>&dhemail;</email>
+                </address>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>&dhcommand;</refentrytitle>
+        <manvolnum>&dhsection;</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>&dhcommand;</refname>
+        <refpurpose>Allows retrieving information about submitted jobs.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>&dhcommand;</command>
+            <arg choice="opt"><option>options</option></arg>
+            <arg choice="req"><replaceable><![CDATA[<operation options>]]></replaceable></arg>
+            <arg choice="req"><replaceable><![CDATA[<job ID>]]></replaceable></arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para><command>&dhcommand;</command> allows retrieving useful information about the user delegated proxy, the delegated identification details of
+        the user, the jdl of a previously submitted job, etc. Each piece of information has to be queried through the proper option. E.g.:
+        <itemizedlist>
+            <listitem><para><command>glite-wms-job-info --delegationid myDelegationID</command></para></listitem>
+            <listitem><para><command>glite-wms-job-info --jdl mySubmittedJobID</command></para></listitem>
+            <listitem><para><command>glite-wms-job-info --proxy mySubmittedJobID</command></para></listitem>
+        </itemizedlist>
+        </para>
+
+        <para>This  command is only available for glite version >= 3.1.</para>
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+        <variablelist>
+
+            <varlistentry>
+                <term><option>--config <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <term><option>-c <replaceable class="parameter"><![CDATA[<configfile>]]></replaceable></option></term>
+                <listitem>
+                    <para>if the command is launched with this option, the configuration file pointed by configfile is used.
+                    This option is meaningless when used together with <option>--vo</option> option</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--debug</option></term>
+                <listitem>
+                    <para>when this option is specified, debugging information is displayed on the standard output and written also either into 
+                    the default log file: <filename>&dhcommand;<![CDATA[_<uid>_<pid>_<time>.log]]></filename> 
+                    located under the <filename>/var/tmp</filename> directory or in the log file specified with <option>--logfile</option> option.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--delegationid <replaceable class="parameter"><![CDATA[<idstring>]]></replaceable></option></term>
+                <term><option>-d <replaceable class="parameter"><![CDATA[<idstring>]]></replaceable></option></term>
+                <listitem>
+                    <para>if this option is specified, the user proxy associated to the id delegated previously will be displayed.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--endpoint <replaceable class="parameter"><![CDATA[<serviceURL>]]></replaceable></option></term>
+                <term><option>-e <replaceable class="parameter"><![CDATA[<serviceURL>]]></replaceable></option></term>
+                <listitem>
+                    <para>when  this  option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL.
+                    If it is not used, the endpoint contacted is that one specified by the <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If none of these options is specified and the  environment  variable  is  not set, the service request will be sent to one of the endpoints
+                    listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list).
+                    If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one 
+                    of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be 
+                    obviously performed and the execution of the command is stopped with an error message.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--help</option></term>
+                <listitem>
+                    <para>Displays command usage.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--input <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-i <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>Allow the user to select the desired job among the ones contained in the file located in filepath.
+                    This option cannot be used if the jobId has been specified. 
+                    A job has to be selected specifying the numbers associated to the job identifier</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--jdl <replaceable class="parameter"><![CDATA[<jobid>]]></replaceable></option></term>
+                <listitem>
+                    <para>Retrieves and displays the jdl registered to the LB service for the specified JobId: 
+                    the WMProxy service where the job was submitted is contacted and asked for needed information.
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--jdl-original <replaceable class="parameter"><![CDATA[<jobid>]]></replaceable></option></term>
+                <term><option>-j <replaceable class="parameter"><![CDATA[<jobid>]]></replaceable></option></term>
+                <listitem>
+                    <para>Retrieves and displays the original jdl submitted by the user to the WMProxy service.
+                    This information might be quite different from the registered jdl, mostly for parametric and collection of jobs.
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--logfile <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>When this option is specified, a command log file (whose pathname is filepath) is created.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--noint</option></term>
+                <listitem>
+                    <para>if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--output <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <term><option>-o <replaceable class="parameter"><![CDATA[<filepath>]]></replaceable></option></term>
+                <listitem>
+                    <para>Stores the retrieved information into the specified file instead of the standard output.
+                    The specified file path can be either a simple name or an absolute path (on  the submitting machine).
+                    In the former case the file filepath is created in the current working directory.
+                    This option is only available from glite version >= 3.1.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--proxy <replaceable class="parameter"><![CDATA[<JobID>]]></replaceable></option></term>
+                <term><option>-p <replaceable class="parameter"><![CDATA[<JobID>]]></replaceable></option></term>
+                <listitem>
+                    <para>Retrieves and displays information for the proxy delegated with the specified JobId: 
+                    the WMProxy service where the job was submitted is contacted and asked for needed information.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+                <listitem>
+                    <para>displays WMProxy client and servers version numbers.
+                    If the <option>--endpoint</option> option is specified only this service is contacted to retrieve its version.
+                    If it is not  used, the endpoint contacted is that one specified with <envar>GLITE_WMS_WMPROXY_ENDPOINT</envar> environment variable.
+                    If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted.
+                    For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).</para>
+                </listitem>
+            </varlistentry>
+            
+            <varlistentry>
+                <term><option>--vo <replaceable class="parameter"><![CDATA[<voname>]]></replaceable></option></term>
+                <listitem>
+                    <para>this option allows the user to specify the Virtual Organisation she/he is currently working for.
+                    If the user proxy contains VOMS  extensions then  the VO specified through this option is overridden by thedefault VO contained in the proxy
+                    (i.e. this option is only useful when working with non-VOMS proxies).</para>
+                </listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>EXAMPLES</title>
+        
+        <para>Display information for the proxy delegated to the WMProxy service with the specified identifier:</para>
+        <para><command>glite-wms-job-info -d delegationid</command></para>
+        
+        <para>Display information for the proxy delegated with a previously submitted Job:</para>
+        <para><command>glite-wms-job-info -p JobId</command></para>
+        
+        <para>Display the submission string registered to LB server for a previosly submitted Job:</para>
+        <para><command>glite-wms-job-info --jdl JobId -o OutputFile</command></para>
+
+        <para>Display the original submission string sent to the WMProxy service for a previosly submitted Job:</para>
+        <para><command>glite-wms-job-info -j JobId</command></para>
+        
+        <para>Send the request to the WMProxy service whose URL is specified with the <option>-e</option> option:</para>
+        <para><command>glite-wms-job-info -d delegationid -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server</command></para>
+
+        <para>Store  into  a  file the submission string registered to LB server for a previosly submitted Job:</para>
+        <para><command>glite-wms-job-info --jdl JobId -o OutputFile</command></para>
+
+        <para>When <option>--endpoint</option> is not specified, the search of an available WMProxy service is performed according to 
+        the modality reported in the description of the -<option>--endpoint</option> option.</para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>FILES</title>
+        <para><filename>voName/glite_wms.conf</filename>: The user configuration file. 
+        The standard path location is <filename>$GLITE_WMS_LOCATION/etc</filename> (or <filename>$GLITE_LOCATION/etc</filename>);</para>
+        
+        <para><filename><![CDATA[/tmp/x509up_u<uid>]]></filename>: A valid X509 user proxy;
+        use the <envar>X509_USER_PROXY</envar> environment variable to override the default location</para>
+        
+        <para>JDL: The file containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); 
+        multiple jdl files can be used with the <option>--collection</option> option.</para>
+
+    </refsect1>
+    
+    <refsect1>
+        <title>ENVIRONMENT</title>
+        <para><envar>GLITE_WMS_CLIENT_CONFIG</envar>: This variable may be set to specify the path location of the configuration file.</para>
+        <para><envar>GLITE_WMS_LOCATION</envar>: This variable must be set when the Glite WMS installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_LOCATION</envar>: This variable must be set when the Glite installation is not located in the default paths (<filename>/usr</filename>).</para>
+        <para><envar>GLITE_WMS_WMPROXY_ENDPOINT</envar>: This variable may be set to specify the endpoint URL</para>
+        <para><envar>GLOBUS_LOCATION</envar>: This variable must be set when the Globus installation is not located in the default path (<filename>/usr</filename>).</para>
+        <para><envar>GLOBUS_TCP_PORT_RANGE</envar>="<![CDATA[<val min>]]> <![CDATA[<val max>]]>": This variable must be set to define a range of ports to be used
+        for inbound connections in the interactivity context</para>
+        <para><envar>X509_CERT_DIR</envar>: This variable may be set to override the default location of the trusted certificates directory,
+        which is normally <filename>/etc/grid-security/certificates</filename>.</para>
+        <para><envar>X509_USER_PROXY</envar>: This variable may be set to override the default location of the user proxy credentials,
+        which is normally <filename><![CDATA[/tmp/x509up_u<uid>]]></filename>.</para>
+        <para><envar>GLITE_SD_PLUGIN</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, 
+        normally bdii.</para>
+        <para><envar>LCG_GFAL_INFOSYS</envar>: If Service Discovery querying is needed, this variable can be used in order to set a specific Server
+        where to perform the queries: for instance LCG_GFAL_INFOSYS="gridit-bdii-01.cnaf.infn.it:2170"</para>
+    </refsect1>
+
+</refentry>
+

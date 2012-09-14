@@ -1,0 +1,351 @@
+#! /usr/bin/env python2
+
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.  
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0 
+# 
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+
+"""
+***************************************************************************
+    filename  : glite-wms-job-logging-info
+    author    : Alessandro Maraschini
+    email     : alvise.dorigo@pd.infn.it
+    copyright : (C) 2004 by DATAMAT
+***************************************************************************
+//
+// $Id$
+//
+"""
+# Initial Check: try to find UI configuration file path
+import sys
+import os.path
+import os
+
+#try:
+#     path=os.environ['GLITE_WMS_LOCATION']
+#except:
+#   try:
+#      path=os.environ['GLITE_LOCATION']
+#   except:
+#      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+#      sys.exit(1)
+
+
+try:
+        path=os.environ['EMI_UI_CONF']+"/usr"
+except:
+        path="/usr"
+
+
+#path="/usr"
+
+# append lib/lib64 directories to search path
+for app in ["lib","lib64"]:
+        for bpp in ["",os.sep+"python"]:
+                libPath=path+os.sep+app+bpp
+                sys.path.append(libPath)
+
+import wmsui_utils
+import wmsui_checks
+import time
+#common methods
+from glite_wmsui_LbWrapper import Eve
+from glite_wmsui_AdWrapper import AdWrapper
+import wmsui_api
+from wmsui_utils import errMsg
+from wmsui_utils import dbgMsg
+from wmsui_utils import exit
+from signal import *
+ 
+# Catch user interrupt ^C
+signal(SIGINT, wmsui_utils.ctc)
+
+
+def checkExclude(includes, excludes):
+	if includes and excludes:
+		errMsg('Error','UI_ARG_EXCLUSIVE', "--event" , "--exclude")
+		return [1,0,0]
+	OPT= "--event"
+	#index of lud in the actual list
+	for ludes in [includes , excludes]:
+		i = 0
+		for lud in ludes:
+			try:
+				ludes[i]= int(lud)
+				if ludes[i] >= wmsui_api.EVENT_CODE_MAX:
+					errMsg ( "Error" , "UI_ARG_OUT_OF_LIMIT" , OPT )
+					return [1,0,0]
+			except ValueError:
+				try:
+					#Is not an integer, could be a string repr
+					ludes[i] =wmsui_api.events_codes.index(lud.capitalize())
+				except ValueError:
+					errMsg('Error', "UI_ARG_MISMATCH" , OPT)
+					return [1,0,0]
+			i+=1
+		OPT= "--exclude"
+	return 0 , includes ,excludes
+
+sepStart ="===================== glite-wms-job-logging-info Success =====================\n"
+sepEnd = "==========================================================================\n"
+
+######################
+#####MAIN FUNCTION####
+########## I PART: Inizialing variables and Starting checks########################
+
+sys_exit = 0
+prgname="glite-wms-job-logging-info"
+wmsui_utils.err_log_clean(prgname)
+wmsui_checks.check_prefix()
+MSG_EVENT   = "event="
+MSG_EXCLUDE = "=exclude="
+simple_usage = wmsui_utils.createErrMsg(prgname,"job Id(s)",["help","version","@","=input$",\
+"=verbosity=","from=","to=","user-tag=","=config$", MSG_EVENT, MSG_EXCLUDE,"=output$","noint", "debug", "logfile$"])
+argv=sys.argv
+wmsui_checks.check_noint(sys.argv)
+
+#=================================
+#   Option check
+#=================================
+
+json = False
+pprint = False
+
+err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:j:" ,["help","version", \
+"input=","verbosity=","config=", "user-tag=","from=","to=","event=", "exclude=", "output=","noint","debug", "logfile="] )
+
+if    ("--json" in options):
+	json = True
+
+if    ("--pretty-print" in options):
+	pprint = True;
+
+if    ("--help" in options):
+   print "\n" + prgname +" full help"
+   wmsui_utils.printFullHelp(simple_usage, wmsui_checks.info.noint)
+   exit(0)
+elif    ("--version" in options):
+   print "Job Submission User Interface version " + wmsui_utils.info.version
+   exit(0)
+elif err:
+   wmsui_utils.print_help(simple_usage)
+   exit(1)
+"""
+-input/jobId sintax:
+"""
+ext= (len(extra) >0)
+res= ext + (("-i" in options) or ("--input" in options))
+if res == 0:
+   #no input/jobid specified
+   wmsui_utils.print_help(simple_usage)
+   exit(1)
+elif res>1:
+   #   input/job/all speficied more then once
+   errMsg('Error','UI_TOO_MANY_ARGS')
+   wmsui_utils.print_help(simple_usage)
+   exit(1)
+
+
+
+issuer =""
+ad     =0
+
+"""
+   Option check:
+"""
+try:
+	inFile  = wmsui_utils.findVal(["--input"  , "-i" ], options, values)
+	outFile = wmsui_utils.findVal(["--output" , "-o" ], options, values)
+	gname = wmsui_utils.findVal(["--config" , "-c" ], options, values)
+	level    = wmsui_utils.findVal(["--verbosity"  , "-v" ], options, values)
+	logpath = wmsui_utils.findVal(["--logfile"], options, values)
+	includes = wmsui_utils.findVal(["--event"  ,"-n"], options, values, 1)
+	excludes = wmsui_utils.findVal(["--exclude","-e"], options, values, 1)
+	fromT=  wmsui_utils.findVal(  ["--from"], options, values)
+	toT=  wmsui_utils.findVal(  ["--to"], options, values)
+	userTags = wmsui_utils.findVal(["--user-tag"], options, values, 1)
+except SyntaxError,rep:
+	errMsg('Error','UI_REPEATED_OPT',rep[0])
+	wmsui_utils.print_help(simple_usage)
+	exit(1)
+
+wmsui_checks.checkConf (gname, "", logpath)
+
+err, includes, excludes = checkExclude (includes , excludes)
+if err:
+     wmsui_utils.print_help(simple_usage)
+     exit(1)
+
+if level:
+   try:
+     level = int(level)
+   except:
+     errMsg('Error','UI_ARG_MISMATCH', level)
+     wmsui_utils.print_help(simple_usage)
+     exit(1)
+   if (level >3) or (level <0):
+     errMsg('Error','UI_ARG_OUT_OF_LIMIT', level)
+     wmsui_utils.print_help(simple_usage)
+     exit(1)
+else:
+   try:
+     level = wmsui_utils.info.confAd.getIntValue ("DefaultLogInfoLevel")
+     if level:
+       level = int( level[0] )
+     else:
+       level = 1
+   except:
+       level=1
+
+#=================================
+#  TIME
+#=================================
+try:
+	fromT , toT = wmsui_checks.checkFromTo (fromT , toT)
+except:
+	wmsui_utils.print_help(simple_usage)
+	wmsui_utils.exit(1)
+#=================================
+#  USER TAGS
+#=================================
+uTags ={}
+if userTags:
+	try:
+		for tag in userTags:
+			attr , value = tag.split("=")
+			if uTags.has_key(attr):
+				errMsg('Error','UI_REPEATED_OPT',"--user-tag ("+attr +")" )
+				wmsui_utils.print_help(simple_usage)
+				exit(1)
+			uTags[attr]=value
+	except ValueError:
+		errMsg('Error','UI_ARG_MISMATCH', "--user-tag")
+		wmsui_utils.print_help(simple_usage)
+		exit(1)
+
+#=================================
+#   jobID check
+#=================================
+jobs= []
+if extra:
+	jobs = wmsui_api.getJobIdfromList( json, extra)
+	if len (jobs) != len(extra):
+		sys_exit= -1
+elif inFile :
+	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(json, inFile)
+	if sys_exit and jobs and (not wmsui_utils.info.noint):
+		answ=wmsui_utils.questionYN("Do you wish to continue?")
+		if not answ:
+			print "bye"
+			exit(1)
+	if jobs and (not wmsui_utils.info.noint):
+		jobs = wmsui_api.selectJobId( jobs, strjobs )
+else:
+	wmsui_utils.print_help(simple_usage)
+	exit(1)
+
+if sys_exit and (not jobs):
+   errMsg('Error','UI_WRONG_JOBID_ALL')
+   exit(1)
+if sys_exit:
+  if not wmsui_utils.info.noint:
+       answ=wmsui_utils.questionYN("Do you wish to continue?")
+       if not answ:
+         print "bye"
+         exit(1)
+# check -output option
+if (outFile):
+   err,outFile,TBremoved=wmsui_checks.check_outFile(outFile)
+   if not outFile:
+      exit(err)
+
+# Check if an output file has been specified and if it already exists
+if outFile and TBremoved:
+	# The file has to be removed
+	os.remove(outFile)
+
+#Check proxy
+if wmsui_checks.check_proxy():
+   exit(1)
+
+#Define the error/warning message:
+em="Error"
+if len (jobs)>1:
+   em="Warning"
+
+####################RETRIEVE INFORMATION from LB
+
+# Initialise the output message
+message = ""
+
+# Check if LB Query has been requested
+LBapproach = includes or excludes or userTags or issuer or fromT or toT
+
+# Check for LB Query or normal management
+if LBapproach:
+	#print "LBapproach\n"
+	# Initialise the dictionary
+	queriedEvents = {}
+
+	# Perform the LB Query
+	queriedEvents = wmsui_api.queryEvents(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
+
+	message += wmsui_api.printQueriedEvents(jobs, queriedEvents, json, pprint)
+
+	if not queriedEvents: #Not able to open any of the LB's
+	   if em=="Warning":
+	       errMsg('Error','LB_API_OPEN_ALL')
+	   exit(1)
+
+else:
+	#print "NO LBapproach\n"
+	# Retrieve 
+	for jobid in jobs:
+	
+		try:
+			eventArray = wmsui_api.getEvents(jobid, level)
+			
+			if json is True:
+				if pprint is True:
+					message += "   {\n" + wmsui_api.printEvents(jobid, eventArray, json, pprint) + "   }\n"
+				else:
+					message += "{ " + wmsui_api.printEvents(jobid, eventArray, json, pprint) + " }"
+			else:
+				message += wmsui_api.printEvents(jobid, eventArray, json, pprint)
+		except Exception, error:
+			errMsg('Error', 'UI_GENERIC_ERROR_ON_JOB_ID', jobid.jobid, error.args[0])
+
+
+
+if message:
+	
+	if json is False:
+		message = sepStart + message + sepEnd
+	else:
+		if pprint is True:
+			message = "{\n" + message + "}\n"
+		else:
+			message = "{ " + message + " }"
+			
+	#print "message=[" + message +"]"
+	
+	wmsui_utils.print_message(json, outFile, message)
+
+	if outFile:
+		message='===================== glite-wms-job-logging-info Success =====================\n'
+		message=message + " Logging Information has been found and stored in the file:\n"
+		message=message + " "+ outFile +"\n"
+		message=message +'==========================================================================\n'
+		wmsui_utils.print_message(json, wmsui_utils.info.logFile , message)
+exit(sys_exit)
