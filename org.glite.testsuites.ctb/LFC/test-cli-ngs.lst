@@ -1,0 +1,7 @@
+LFC-CLI-ngs-mkdir
+LFC-CLI-ngs-rmdir
+LFC-CLI-ngs-rmfile
+LFC-CLI-ngs-dchmod
+LFC-CLI-ngs-fchmod
+LFC-CLI-ngs-dren
+LFC-CLI-ngs-fren

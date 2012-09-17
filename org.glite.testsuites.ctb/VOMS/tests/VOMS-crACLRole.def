@@ -1,0 +1,4 @@
+testName: VOMS-crACLRole
+testAbbr: crACLro
+testTitle: voms-admin: Test "add-acl-entry CONTAINER ALLOW OPERATION USER" option with CONTAINER being a role
+EOT

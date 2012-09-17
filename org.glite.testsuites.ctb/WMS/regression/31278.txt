@@ -1,0 +1,12 @@
+Bug: #31278
+Link: https://savannah.cern.ch/bugs/?31278
+Summary: WMS should prevent non-SDJ jobs from being scheduled on SDJ CEs
+
+- Using the command 
+  glite-wms-job-info --jdl <jobid> | grep -i requirements
+  check if the expression RegExp(".*sdj$",other.GlueCEUniqueID); is present
+  (the exact expression should be found in the configuration file on the
+  WMS, section: WorkloadManagerProxy, parameter: SDJRequirements) 
+
+- Setting ShortDeadlineJob=false; in the jdl, the previous command should
+  contain the expression !RegExp(".*sdj$",other.GlueCEUniqueID)

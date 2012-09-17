@@ -1,0 +1,3 @@
+testName: LFC-cli-rmdir
+testAbbr: lfcrmdir
+testTitle: Check we can do a lfc-rmdir on /grid/<SAME_VO>

@@ -1,0 +1,212 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+# 18.11.2009
+# AUTHORS: Victor Galaktionov, JINR/CERN 
+# Script based on Gianni Pucciani script FTS-submission
+#
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS file transfer submission
+
+showUsage()
+{
+ echo "Usage: FTS-channel-list --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+}
+
+function special-check-channel-list()
+{
+    echo  "special_check_channel-list($1)"
+    CHANNEL=$1
+
+    echo "1. Check with noncorrect service"
+    echo "glite-transfer-channel-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement"
+    glite-transfer-channel-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 2> message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-list  command - failed"
+    cat message
+    return 1
+    fi
+    echo "OK"
+
+    echo "2. Check -h  parameter" 
+    echo "glite-transfer-channel-list -h"
+    glite-transfer-channel-list -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-lost command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-channel-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list command - failed"
+    return 1
+    fi
+    echo "OK"    
+   echo "4. Check -V  parameter" 
+    echo "glite-transfer-channel-list -V"
+    glite-transfer-channel-list -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "5. Check -q  parameter" 
+    echo "glite-transfer-channel-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "5.1. Check without -s  parameter" 
+    echo "glite-transfer-channel-list -q"
+    glite-transfer-channel-list -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-list command - failed"
+    return 1
+    fi
+    echo "OK"
+
+    echo "6. Check --verbose  parameter" 
+    echo "glite-transfer-channel-list --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHAWNNEL"
+    glite-transfer-channel-list --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list command - failed"
+    return 1
+    fi
+    grep "$CHANNEL" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list --verbose command - failed"
+    return 1
+    fi
+    echo "7. Check -x  parameter" 
+    echo "glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list -x command - failed"
+    return 1
+    fi
+    grep "Srm copy" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-list -x command - failed"
+    return 1
+    fi
+
+    echo "9.  Check nonexisting channel  parameter" 
+    echo "glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement CHANNEL"
+    glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement CHANNEL 2>&1 > message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-list -x command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    return 0
+}
+
+
+
+if [ $# -ne 2 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+          *)
+           shift 1
+    ;;
+  esac
+done
+
+
+#1) Test if channel exists
+
+#Get Channels list
+echo
+echo "Retrieving channels list..."
+get_channels
+echo "List=$Channel_List"
+if [ "x$Channel_List" == "x" ]; then
+  echo "No channels retrieved"
+  exit 0
+fi
+
+found=0
+for Channel in $Channel_List
+do
+  if [ "$Channel" == "$CHANNEL" ];then 
+    echo "Channel exists"
+    found=1
+    break
+  fi
+done
+
+if [ $found -eq 0 ];then
+  echo "Channel $CHANNEL does not exist"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#2) Check that the channel is active
+echo
+echo "Checking that $CHANNEL is active..."
+is_channel_active $CHANNEL
+if [ $? -eq 0 ];then
+  echo "Channel $CHANNEL is Active"
+else
+  echo "Channel $CHANNEL is not Active"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+echo "Check special parameters "
+special-check-channel-list $CHANNEL
+if [ $? != 0 ]; then
+   echo "-TEST FAILED-"
+   exit 1
+fi
+
+echo "-TEST PASSED-"
+exit 0

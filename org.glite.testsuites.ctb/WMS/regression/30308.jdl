@@ -1,0 +1,13 @@
+[
+requirements = ( other.GlueCEStateStatus == "Production" ) && Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ( other.GlueCEInfoTotalCPUs >= 4 ) && ( other.GlueCEInfoLRMSType == "torque" ||   RegExp("pbs",other.GlueCEInfoLRMSType) );
+Type = "Job";
+//NodeNumber = 4;
+cpunumber = 4;
+Executable = "30308_exe.sh";
+Arguments = "cpi 4";
+StdOutput = "test.out";
+StdError = "test.err";
+InputSandbox = {"30308_exe.sh", "exe/cpi"};
+OutputSandbox = {"test.err","test.out","executable.out"};
+usertags = [ bug = "30308" ];
+]

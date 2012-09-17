@@ -1,0 +1,85 @@
+           The short description of tests
+The script start_tests.py starts tests:
+/start_tests.py [options]  < WmsProxy_id >
+options:
+        -r    <ce_id>
+        -o    <file_path>
+
+The file WMProxy_API.conf contains the list of tests:
+if the name of test  is True, test is started,
+else the name of test  is False, test is  not fulfilled.
+
+The test getversion contains the next wmproxy methods:
+getVersion()
+getTransferProtocols()
+
+The test delegation contains the next wmproxy methods:
+getVersion()
+getGrstNs()
+getDefaultNs()
+getProxyReq(delegationId )
+putProxy(delegationId, proxy)
+
+The test  job_collection  contains the next wmproxy methods:
+getDelegatedProxyInfo
+jobRegiste
+getJobProxyInfo
+getCollectionTemplate 
+jobSubmit
+getSandboxBulkDestURI
+getChildren
+getNodeName
+jobCancel
+
+The test job_dag contains the next wmproxy methods:
+getDelegatedProxyInfo
+jobRegister
+getJobProxyInfo
+jobSubmit
+getSandboxBulkDestURI
+getChildren
+getNodeName
+jobCancel
+
+The test test_job contains the next wmproxy methods:
+getVersion
+getGrstNs
+getDefaultNs
+getproxyRequest
+putProxy
+getDelegatedProxyInfo
+jobListMatch
+jobRegister
+getJobProxyInfo
+getACLItems
+getSandboxDestURI
+getSandboxBulkDestURI
+getFreeQuota
+getMaxInputSandboxSize
+jobStart
+jobSubmit
+getOutputFileList                  
+jobPurge
+jobCancel
+
+The test job_parametric contains the next wmproxy methods:
+getDelegatedProxyInfo
+jobRegiste
+getJobProxyInfo
+getIntParametricJobTemplate
+getStringParametricJobTemplate
+jobSubmit
+getSandboxBulkDestURI
+getChildren
+getNodeName
+jobCancel
+
+The test job_perusal contains the next wmproxy methods:
+enableFilePerusal
+getPerusalFiles
+Method enableFilePerusal(self, jobId, fileList) does not create a file files2peek in directory /var/glite/SanboxDir/.../peek on WMS node for files specified with fileList. 
+Method getPerusalFiles(self, jobId, file, allChunks)  produces the message:
+No files to be retrieved for the job.
+
+
+

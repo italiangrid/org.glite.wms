@@ -1,0 +1,268 @@
+#!/bin/bash
+# Date: 01/12/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Functional test for group ACL                                    #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - groupname                                                                         #
+#                                                                                           #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+export voms_host=$1
+echo "<pre>"
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+date
+echo "<br>"
+echo "Test VOMS-funcACLGroup:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "group=$GROUP"
+echo "<br>"
+echo "fake user=$USER"
+echo "<br>"
+
+ACE_RIGHTS=( CONTAINER_READ MEMBERSHIP_READ ACL_READ ATTRIBUTES_READ CONTAINER_WRITE MEMBERSHIP_WRITE ACL_WRITE ATTRIBUTES_WRITE ACL_DEFAULT )
+
+function doCleanUp {
+
+   cp $EXEC_USER_PROXY $PROXY_FILENAME
+   unset X509_USER_PROXY
+   voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name "$TEST_USER_SUBJECT" "$TEST_USER_ISSUER" TRUE
+   restoreTopGroup
+
+   voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name/test_group
+   voms-admin --vo=$vo_name --host=$voms_host delete-role test_role
+   voms-admin --vo=$vo_name --host=$voms_host delete-user $USER4
+   voms-admin --vo=$vo_name --host=$voms_host delete-attribute-class test_class
+}
+
+function prepareTopGroup {
+
+   # Persist top group ACL
+   voms-admin --vo=$vo_name --host=$voms_host get-ACL "/"$vo_name > /tmp/top_group_acl
+   if [ $? -ne 0 ]; then
+      reportFailure "Unable to save top group's ACL. Exiting." 0
+   else
+      IFS=$'\n'
+      CONTEXT="/"$vo_name
+      for ACE in $(cat /tmp/top_group_acl); do
+         if echo $ACE | grep -q "Internal VOMS Process"; then
+            continue
+         fi
+         if echo $ACE | grep -q "$HOSTNAME"; then
+            continue
+         fi
+         if echo $ACE | grep -q "$EXEC_USER_SUBJECT"; then
+            continue
+         fi
+         if echo $ACE | grep -q "Role=VO-Admin"; then
+            continue
+         fi
+         CURRENT_SUBJECT=$(echo $ACE | cut -f 1 -d ',' | cut -f 2 -d '(')
+         CURRENT_ISSUER=$(echo $ACE | cut -f 2 -d ',' | cut -f 1 -d ')')
+         voms-admin --vo=$vo_name --host=$voms_host --nousercert remove-ACL-entry $CONTEXT "$CURRENT_SUBJECT" "$CURRENT_ISSUER" FALSE
+      done
+      unset IFS
+   fi
+}
+
+function restoreTopGroup {
+
+   IFS=$'\n'
+   CONTEXT="/"$vo_name
+   for ACE in $(cat /tmp/top_group_acl); do
+      if echo $ACE | grep -q "Internal VOMS Process"; then
+         continue
+      fi
+      if echo $ACE | grep -q "$HOSTNAME"; then
+         continue
+      fi
+      if echo $ACE | grep -q "$EXEC_USER_SUBJECT"; then
+         continue
+      fi
+      if echo $ACE | grep -q "Role=VO-Admin"; then
+         continue
+      fi
+      CURRENT_SUBJECT=$(echo $ACE | cut -f 1 -d ',' | cut -f 2 -d '(')
+      CURRENT_ISSUER=$(echo $ACE | cut -f 2 -d ',' | cut -f 1 -d ')')
+      CURRENT_RIGHTS=$(echo $ACE | cut -f 2 -d ':') 
+      voms-admin --vo=$vo_name --host=$voms_host --nousercert add-ACL-entry $CONTEXT "$CURRENT_SUBJECT" "$CURRENT_ISSUER" "$CURRENT_RIGHTS" TRUE
+   done
+   unset IFS
+   rm -f /tmp/top_group_acl
+}
+
+function clearGroupACL {
+#Parameters: CONTEXT
+
+   voms-admin --vo=$vo_name --host=$voms_host list-groups > $voms_tmp
+   if [ $? -ne 0 ]; then
+      reportFailure "clearGroupACL encountered a problem. Unable to list groups", 0
+   fi
+   if [ grep -q "^[[:space:]\*]$1$" $voms_tmp ]; then
+      IFS=$'\n'
+      CONTEXT=$1
+      for ACE in $(voms-admin --vo=$vo_name --host=$voms_host get-ACL "$CONTEXT"); do
+        S_SUBJECT=$(echo $ACE | cut -f 1 -d ',' | cut -f 2 -d '(')
+        S_ISSUER=$(echo $ACE | cut -f 2 -d ',' | cut -f 1 -d ')')
+        voms-admin --vo=$vo_name --host=$voms_host --nousercert remove-ACL-entry "$CONTEXT" "$S_SUBJECT" "$S_ISSUER"
+        if [ $? -ne 0 ]; then
+           reportFailure "clearGroupACL encountered a problem. Unable to remove ACE for $S_SUBJECT,$S_ISSUER"
+        fi
+      done
+      unset IFS
+   else
+      reportFailure "clearGroupACL encountered a problem. The given context does not exist", 0
+   fi
+}
+
+function reportFailure {
+# Parameters: message, flagPrintSTDERR
+
+    doCleanUp
+    echo $1
+    echo "<br>"
+    if [ $2 -eq 1 ]; then
+       if [ -f $voms_stderr ]; then
+          cat $voms_stderr
+       fi
+    fi
+    echo "<br>"
+    echo "Test failed"
+    echo "<br>"
+    exit $SAME_ERROR
+}
+
+# Discover the subject of the user running the tests using the proxy
+EXEC_USER_SUBJECT=$(voms-proxy-info -identity -dont-verify-ac)
+if [ $? == 1 ]; then
+    reportFailure "Cannot discover the subject of the user running the test. voms-proxy-info returned an error.Skipping the test.", 0
+fi
+
+# Discover the issuer for this user (this user should be granted ALL rights for the top group)
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name > $voms_tmp
+if [ $? == 1 ]; then
+    reportFailure "Cannot fetch ACL for top group. Skipping test.", 0
+fi
+
+EXEC_USER_ISSUER=$(grep "$EXEC_USER_SUBJECT" $voms_tmp | head -1 | cut -f 2 -d ',' | cut -f 1 -d ')')
+if [ -z "$EXEC_USER_ISSUER" ]; then
+    reportFailure "Cannot find the CA subject. Skipping the test.", 0
+fi
+
+EXEC_USER_PROXY=$(voms-proxy-info -path -dont-verify-ac)
+if [ $? == 1 ]; then
+    reportFailure "Cannot discover the proxy file of the user running the test. voms-proxy-info returned an error.Skipping the test.", 0
+fi
+PROXY_FILENAME=$EXEC_USER_PROXY
+
+echo "Starting the test..."
+echo "Executed by: ($EXEC_USER_SUBJECT, $EXEC_USER_ISSUER); Proxy stored in $EXEC_USER_PROXYFILE."
+
+ACE_RIGHTS=( CONTAINER_READ MEMBERSHIP_READ ACL_READ ATTRIBUTES_READ CONTAINER_WRITE MEMBERSHIP_WRITE ACL_WRITE ATTRIBUTES_WRITE ACL_DEFAULT )
+
+USER1_SUBJECT=$(openssl x509 -in $USER1 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER1_ISSUER=$(openssl x509 -in $USER1 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "<br>SCENARIO: Create working group,role,users "
+voms-admin --vo=$vo_name --host $voms_host create-user $USER4
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"test_group
+voms-admin --vo=$vo_name --host $voms_host create-role test_role
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class test_class test_class_desc FALSE
+
+echo "<br>Choose the user for the effective ACL test. Should be different from the user running the test."
+TEST_USER_SUBJECT=$USER1_SUBJECT
+TEST_USER_ISSUER=$USER1_ISSUER
+TEST_USER_CERT=$USER1
+TEST_USER_KEY=$USER1_KEY
+if [ "$EXEC_USER_SUBJECT" == "$USER1_SUBJECT" ]; then
+   TEST_USER_SUBJECT=$USER2_SUBJECT
+   TEST_USER_ISSUER=$USER2_ISSUER
+   TEST_USER_CERT=$USER2
+   TEST_USER_KEY=$USER2_KEY
+fi
+
+echo "<BR>Create a proxy for the test user"
+chmod 400 $TEST_USER_KEY
+
+voms-proxy-init -cert $TEST_USER_CERT -key $TEST_USER_KEY -out /tmp/acl_test_proxy -pwstdin < $PWS
+if [ $? -ne 0 ]; then
+  reportFailure "Unable to create a proxy for the test user"
+fi
+TEST_USER_PROXY=/tmp/acl_test_proxy
+
+echo "<BR>Save the proxy of the exec user"
+cp $EXEC_USER_PROXY /tmp/acl_exec_proxy
+EXEC_USER_PROXY=/tmp/acl_exec_proxy
+
+prepareTopGroup
+
+rm -f $PROXY_FILENAME
+echo $PROXY_FILENAME
+echo "<br>SCENARIO: Creation/Deletion of users"
+
+export X509_USER_PROXY=$TEST_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert create-user "/C=CH/O=CERN/OU=GD/CN=Fake user 1" "$TEST_USER_ISSUER" "Fake user 1" "fake_user_1@email9782043.com" > $voms_tmp
+if ! grep "org.glite.security.voms.admin.common.VOMSAuthorizationException: Insufficient privileges to perform \"CreateUserOperation\"" $voms_tmp; then
+   reportFailure "CreateUserOperation not enforced", 0
+fi
+
+export X509_USER_PROXY=$EXEC_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name "$TEST_USER_SUBJECT" "$TEST_USER_ISSUER" "CONTAINER_READ,CONTAINER_WRITE,MEMBERSHIP_READ,MEMBERSHIP_WRITE" FALSE
+
+export X509_USER_PROXY=$TEST_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert create-user "/C=CH/O=CERN/OU=GD/CN=Fake user 1" "$TEST_USER_ISSUER" "Fake user 1" "fake_user_1@email9782043.com" > $voms_tmp
+if [ $? -ne 0 ]; then
+   reportFailure "Unable to perform CreateUserOperation although rights are granted", 1
+fi
+
+export X509_USER_PROXY=$EXEC_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name "$TEST_USER_SUBJECT" "$TEST_USER_ISSUER" "CONTAINER_READ,MEMBERSHIP_READ" FALSE
+
+export X509_USER_PROXY=$TEST_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "/C=CH/O=CERN/OU=GD/CN=Fake user 1" "$TEST_USER_ISSUER" > $voms_tmp
+if ! grep "org.glite.security.voms.admin.common.VOMSAuthorizationException: Insufficient privileges to perform \"DeleteUserOperation\"" $voms_tmp; then
+   reportFailure "DeleteUserOperation not enforced", 0
+fi
+
+export X509_USER_PROXY=$EXEC_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name "$TEST_USER_SUBJECT" "$TEST_USER_ISSUER" "CONTAINER_READ,CONTAINER_WRITE,MEMBERSHIP_READ,MEMBERSHIP_WRITE" FALSE
+
+export X509_USER_PROXY=$TEST_USER_PROXY
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "/C=CH/O=CERN/OU=GD/CN=Fake user 1" "$TEST_USER_ISSUER"
+if [ $? -ne 0 ]; then
+   export X509_USER_PROXY=$EXEC_USER_PROXY
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "/C=CH/O=CERN/OU=GD/CN=Fake user 1" "$TEST_USER_ISSUER"
+   reportFailure "Unable to perform DeleteUserOperation although rights are granted", 1
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+
+doCleanUp
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

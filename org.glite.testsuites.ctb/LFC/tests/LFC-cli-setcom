@@ -1,0 +1,21 @@
+#!/bin/bash
+
+nodeName=$1
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+echo "<pre>"
+export LFC_HOST=$nodeName
+mydir="lfcmkdir$$"
+echo "Setting a comment on file /grid/$SAME_VO/$mydir"
+cmd1=`lfc-mkdir /grid/$SAME_VO/$mydir`
+clear=`lfc-setcomment /grid/$SAME_VO/$mydir "Sam test comment!"`
+RETVAL=$?
+cmd1=`lfc-rm -r /grid/$SAME_VO/$mydir`
+echo "$clear"
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; echo "<font color="green"> - OK </font>";
+    exit $SAME_OK
+else
+    echo "Test failed!"; echo "<font color="red"> - FAILED </font>";
+    exit $SAME_ERROR
+fi

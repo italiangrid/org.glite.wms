@@ -1,0 +1,137 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Revised: March 2008                                                                       #
+# Description of the test: Assign Role to user                                              #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - User certificate file path                                                        #
+#       - VO host name                                                                      #
+#       - Role                                                                              #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "test VOMS-assignRole:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Role=$ROLE"
+echo "<br>"
+echo "Group=$GROUP"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
+
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "SCENARIO: VO empty"
+echo "<br>"
+echo "Assign non existing role of non existing user in non existing group"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create new role"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host create-role $ROLE
+echo "Assign role $ROLE in group $GROUP (group doesn't exist)"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create new group"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
+echo "Assign role $ROLE in group $GROUP (user doesn't exist)"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create user"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
+
+echo "Assign role $ROLE in group $GROUP (user doesn't have the role)"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+
+voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER"
+
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-roles "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
+
+expect="/"$vo_name"/"$GROUP"/Role="$ROLE
+grep "$expect" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Error when assigning role to user:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK
+

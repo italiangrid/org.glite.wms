@@ -1,0 +1,14 @@
+Generic AMGA BROWSER:
+
+To run the Browser:
+1. add <your path>/org.glite.amga.api-python/src to env variable PYTHONPATH
+2. Use an appropriate set of python and PyQt, for example
+   python 2.3.4 and PyQt 3.13.
+   On AFS: - Python: /afs/cern.ch/sw/lcg/external/Python/2.3.4/slc3_ia32_gcc323/bin/python/python
+             add to LD_LIBRARY_PATH  /afs/cern.ch/sw/lcg/external/Python/2.3.4/slc3_ia32_gcc323/lib
+	   - PyQt env script: /afs/cern.ch/user/c/ctan/public/pyqt/setup.sh
+   
+   For further information on Python and Pyqt at CERN: http://spi.cern.ch/extsoft
+
+3. Start the browser:
+   > browser.py

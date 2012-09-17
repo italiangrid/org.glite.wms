@@ -1,0 +1,146 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Revised: March 2008                                                                       #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Test user list command                                           #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - trusted  certificate authority                                                       #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "Test VOMS-listUsers:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "CA=$CA"
+echo "<br>"
+
+echo "User1: $user1"
+echo "User2: $user2"
+echo "User3: $user3"
+echo "User4: $user4"
+
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user1=$USER_SUBJECT
+
+USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user2=$USER2_SUBJECT
+
+USER3_SUBJECT=$(openssl x509 -in $USER3 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER3_ISSUER=$(openssl x509 -in $USER3 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user3=$USER3_SUBJECT
+
+USER4_SUBJECT=$(openssl x509 -in $USER4 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER4_ISSUER=$(openssl x509 -in $USER4 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user4=$USER4_SUBJECT
+
+echo "User1: $user1"
+echo "User2: $user2"
+echo "User3: $user3"
+echo "User4: $user4"
+
+echo "SCENARIO: Create 4 users"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER2
+voms-admin --vo=$vo_name --host $voms_host create-user $USER3
+voms-admin --vo=$vo_name --host $voms_host create-user $USER4
+
+echo "SCENARIO: List users"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
+echo "Check DN"
+echo "<br>"
+grep "$user1" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   echo "Error creating user $user1"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$user2" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   echo "Error creating user $user2"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$user3" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   echo "Error creating user $user3"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$user4" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   echo "Error creating user $user4"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

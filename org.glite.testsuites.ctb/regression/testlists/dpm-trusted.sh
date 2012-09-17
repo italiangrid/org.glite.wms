@@ -1,0 +1,9 @@
+DPM_HOST=ctb-generic-67.cern.ch
+DPNS_HOST=ctb-generic-67.cern.ch
+LFC_HOST=ctb-generic-69.cern.ch
+LFC_HOME=/grid/atlas
+LOCAL_FILE=/bin/ls
+VO=atlas
+LFN=lfntest
+SECOND_VO=test
+PRIVATEKEY_PASS=""

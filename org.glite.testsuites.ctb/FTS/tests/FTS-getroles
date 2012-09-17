@@ -1,0 +1,211 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+# 18.11.2009
+# AUTHOR: Victor Galaktionov, JINR/CERN 
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS getroles operation
+
+showUsage()
+{
+ echo "Usage: FTS-getroles --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+# Added by Victor Galaktionov 08/12/2009
+function getroles()
+{
+    echo "getroles($1)"
+    echo "1. Get roles without user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer >message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    grep "Your current clientDN" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    echo "2. Get roles for real user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "$1" > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - Failed"
+    return 1
+    fi
+    egrep "((The)|(This)) user is authorised " message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    cat message
+    return 1
+    fi
+   echo "3. Get roles for nonexisting user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer bla-bla"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "bla-bla" > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+    egrep "((The)|(This)) user is not authorised" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    echo "OK, next - special parameters check"
+
+    echo "glite-transfer-getroles -h"
+    glite-transfer-getroles -h > /dev/null
+       if [ $? != 0 ]; then
+    echo "FTS-getroles -h  -- failed"
+    return 1
+    fi
+
+    echo "glite-transfer-getroles -V"
+    glite-transfer-getroles -V
+    if [ $? != 0 ]; then
+    echo "FTS-getroles -V  -- failed"
+    return 1
+    fi
+
+    echo "glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles -q  -- failed"
+    return 1
+    fi
+    echo "glite-transfer-getroles -q"
+    glite-transfer-getroles -q
+    if [ $? != 0 ]; then
+    echo "FTS-getroles -q  -- failed"
+    return 1
+    fi
+
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1 
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+#0.1) Check for valid proxy
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi
+         echo "-TEST FAILED-"
+         exit 1
+fi
+
+echo "Set user DN"
+echo ""
+USERDN=`glite-voms-proxy-info -identity`
+echo "User DN: $USERDN"
+
+
+echo "Check getroles"
+getroles "$USERDN"
+if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    exit 1
+fi
+
+exit 0

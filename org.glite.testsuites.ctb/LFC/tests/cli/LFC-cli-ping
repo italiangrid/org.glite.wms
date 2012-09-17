@@ -1,0 +1,19 @@
+#!/bin/bash
+
+nodeName=$1
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+echo "<pre>"
+export LFC_HOST=$nodeName
+mydir="lfcmkdir$$"
+echo "Doing an lfc-ping on  LFC node $nodeName:"
+clear=`lfc-ping -h $nodeName`
+RETVAL=$?
+echo "$clear"
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; echo "<font color="green"> - OK </font>";
+    exit $SAME_OK
+else
+    echo "-TEST FAILED-"; echo "<font color="red"> - FAILED </font>";
+    exit $SAME_ERROR
+fi

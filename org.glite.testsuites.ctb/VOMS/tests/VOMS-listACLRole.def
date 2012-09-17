@@ -1,0 +1,4 @@
+testName: VOMS-listACLRole
+testAbbr: lstACLro
+testTitle: voms-admin: Test "get-acl CONTAINER" with CONTAINER being a role
+EOT

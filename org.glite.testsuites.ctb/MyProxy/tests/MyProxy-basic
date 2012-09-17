@@ -1,0 +1,78 @@
+#!/bin/bash 
+
+showUsage ()
+{
+ echo "Missing parameter:                                                                 "
+ echo "Usage:  MyProxy-basic <MyProxy hostname>                                                  "
+ echo ""
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+MYPROXY_HOST=$1
+
+### Sourcing the configuration
+
+#. $SAME_SENSOR_HOME/../functions.sh
+SAME_OK=0
+SAME_ERROR=1
+SAME_WARING=2
+
+function test_ping
+{
+  echo ""
+  echo -n "<li> Testing ping to $MYPROXY_HOST" 
+  result=`ping -c 5 $MYPROXY_HOST 2>/dev/null | grep Unreachable | wc -l`
+
+  if [ $result -gt 0 ]; then
+    echo "The $MYPROXY_HOST is not accessible! Exiting !"
+    echo "-TEST FAILED-"
+    exit $SAME_ERROR
+  fi
+}
+
+function test_ldap
+{
+  echo ""
+  echo -n "<li> Testing connection to LDAP server on $MYPROXY_HOST"
+  result=`ldapsearch -x -H ldap://$MYPROXY_HOST:2170 -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+
+  if [ $result -eq 0 ]; then
+     result=`ldapsearch -x -H ldap://$MYPROXY_HOST:2135 -b Mds-vo-name=local,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+     if [ $result -eq 0 ]; then
+       echo " LDAP is not contactable. Exiting !"
+       echo "-TEST FAILED-"
+       exit $SAME_ERROR
+    fi
+  fi
+}
+
+function test_bdii
+{
+  echo ""
+  echo -n "<li> Testing if there is information for $MYPROXY_HOST on $BDII_HOST"
+
+  result=`ldapsearch -x -h $BDII_HOST -p $BDII_PORT -b "Mds-vo-name=local,o=Grid" 2>/dev/null | grep $MYPROXY_HOST | wc -l`
+  
+  if [ $result -eq 0 ]; then
+    echo "No entries found for MyProxy Server: $MYPROXY_HOST on the top level BDII: $BDII_HOST! Exiting !"
+    echo "-TEST FAILED-"
+    exit $SAME_ERROR
+  fi
+}
+
+### Start testing
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+echo "Starting MyProxy-basic tests: "
+
+test_ping
+test_ldap
+test_bdii
+
+echo "MyProxy-basic test successfuly" ;
+exit $SAME_OK

@@ -1,0 +1,5 @@
+# These tests check for bugs concerning lcg_utils when tested against a classic SE. They can be executed on nodes having lcg_utils installed (UI, WN).
+32808
+32999
+33070
+33072

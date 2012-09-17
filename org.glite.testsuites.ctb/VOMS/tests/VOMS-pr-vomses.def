@@ -1,0 +1,4 @@
+testName: VOMS-pr-vomses
+testAbbr: pr-vms
+testTitle: voms-proxy-init: Test "vomses FILE" option
+EOT

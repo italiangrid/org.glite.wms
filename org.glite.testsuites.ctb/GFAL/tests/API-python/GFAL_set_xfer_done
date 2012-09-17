@@ -1,0 +1,208 @@
+#!/usr/bin/env python
+#Marks a list of SURLs as transfert completed (gfal_set_xfer_done)
+
+import os,sys,errno,time,lfc
+sys.path.append("/opt/lcg/lib/python2.3/site-packages/")
+sys.path.append("/opt/lcg/lib64/python2.4/site-packages/")
+import gfal
+from testClass import _test, _ntest
+global prot
+global vo_name
+global path
+global flag
+flag = 0
+
+
+#=== FUNCTION ================================================================
+# Prints the usage
+#=============================================================================
+
+def usage():
+    print "Usage:  " + sys.argv[0] + " <SE>"
+
+#=== FUNCTION ================================================================
+# Checks for a valid proxy.
+#=============================================================================
+
+def check_proxy():
+    vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+    if not vo_name:
+        print "Error: Couldn't find a valid proxy."
+        sys.exit(1)
+
+check_proxy()
+vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+
+
+#=== FUNCTION ================================================================
+# Parse input arguments 
+#=============================================================================
+def check_arguments(): 
+	if (len(sys.argv) != 2):
+        	usage()
+        	sys.exit(1)
+
+check_arguments()    
+
+se = sys.argv[1]
+
+infosys = result = os.popen("echo $LCG_GFAL_INFOSYS").read()[:-1]
+
+setype = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(objectClass=GlueSEControlProtocol)(GlueChunkKey=GlueSEUniqueid=" + se + "))' | grep 'GlueSEControlProtocolType' | awk 'BEGIN { FS = \" \" } ; {print $2 }' |uniq").read()[:-1]
+
+if (setype == "SRM"):
+	prot = "srm://"
+
+if (setype == "classic"):
+	prot = "sfn://"
+
+if (setype == ""):
+        print sys.argv[1] + " - unknown SE"
+        sys.exit(1)
+
+path = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }'").read()[2:-2]
+
+path1 =  result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }' |awk 'BEGIN { FS = \"/\" } ; {print $2 }'").read()[2:-2]
+
+lfc_host = result = os.popen("lcg-infosites --vo "+ vo_name +"  -f lfc").read()[:-1]
+
+os.environ['LFC_HOST'] = lfc_host
+
+VO = result = os.popen("echo dteam | tr 'a-z' 'A-Z'").read()[:-1]
+
+os.environ["VO_"+ VO +"_DEFAULT_SE"] = se
+
+defa = result = os.popen("echo $VO_"+ VO +"_DEFAULT_SE").read()[:-1]
+
+def print_results(listOfResults, indent):
+        for result in listOfResults:
+                if result['status']:
+                        print indent+"[ERROR]",result['surl'],result['status'],result['explanation']
+                else:
+                        print indent + result['surl']
+
+                if result.has_key('subpaths'):
+                        print_results(result['subpaths'], indent+"  ")
+
+name = prot + se + path + "/gfal_pin_test"
+ret =  gfal.gfal_creat(name, 0755)
+#print ("creat", gfal.gfal_get_errno())
+gfal.gfal_close(ret)
+#print ("close", gfal.gfal_get_errno())
+
+#=== FUNCTION ================================================================
+# test preperation
+#=============================================================================
+class test_set_xfer_done_ok(_test):
+    def info(self):
+        return "gfal_set_xfer_done: Marks a list of SURLs as transfert completed"
+    def test(self):
+	gfalDict = {}
+	gfalDict['defaultsetype'] = 'srmv2'
+	gfalDict['surls'] = [name]
+	gfalDict['srmv2_desiredpintime'] = 60
+
+	errCode,gfalObject,errMessage = gfal.gfal_init(gfalDict)
+	if errCode:
+                print ("init", errMessage)
+                print ("errCode", errCode)
+                print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+                print ("gfalObject", gfalObject)
+
+	errCode,gfalObject,errMessage = gfal.gfal_set_xfer_done(gfalObject)
+	
+	if errCode:
+        	print errMessage
+	error1 = gfal.gfal_get_errno()
+	code = 0
+	print ("return",errCode)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+	print ""
+
+	#numberOfResults,gfalObject,listOfResults = gfal.gfal_get_results(gfalObject)
+	#print_results(listOfResults,"")
+	
+
+	gfal.gfal_internal_free(gfalObject)
+	if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    def clean(self):
+	gfal.gfal_unlink(name)
+    
+class test_EINVAL(_ntest):
+    def info(self):
+        return "gfal_ls errors: gfal_internal object is incorrect (EINVAL)"
+    def test(self):
+	gfalObject = "_d01e6308_gfal_internal"
+	ret = gfal.gfal_ls(gfalObject)
+        error1 = gfal.gfal_get_errno()
+        print ("return",ret)
+        print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EINVAL", errno.EINVAL)
+        code = errno.EINVAL
+	gfal.gfal_internal_free(gfalObject)
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    
+class gfal_set_xfer_done_test:
+    def __init__(self):
+        self.tests=[test_set_xfer_done_ok]#, test_EINVAL]
+
+    def run(self):
+	flag = 0
+        for testclass in self.tests:
+            testInstance = testclass()
+            testInstance.prepare()
+	    ret1 = testInstance.test()	
+            testInstance.clean()
+            if ret1:
+                print "%-60s[OK]" % testInstance.info()
+		print ""
+            else:
+                print "%-60s[FAILED]" % testInstance.info()
+		print ""
+		flag = 1
+	return flag
+
+#************* Interface for Python tests ***************
+
+if (setype == "SRM"):
+	print "=========================================================================="
+	print "Start test: Marks a list of SURLs as transfert completed (gfal_set_xfer_done)"
+	print "=========================================================================="
+	prot = "srm://"
+	ret = gfal_set_xfer_done_test().run()
+	if ( ret == 1 ):
+		print "Test failed"
+		print ""
+                sys.exit(2)
+        else:
+                print "Test is OK"
+                sys.exit(0)
+
+if (setype == "classic"):
+	print "=============================================================================="
+	print sys.argv[1] +" - classic SE"
+	print "Classic SEs aren't officially supported GFAL"
+	print "Start test: Marks a list of SURLs as transfert completed (gfal_set_xfer_done)"
+	print "=============================================================================="
+        prot = "sfn://"
+        ret = gfal_set_xfer_done_test().run()
+        if ( ret == 1 ):
+		print "Test failed"
+		print ""
+                sys.exit(2)
+        else:
+                print "Test is OK"
+                sys.exit(0)
+
+if (setype == ""):
+        print sys.argv[1] + " - unknown SE"
+        sys.exit(1)
+

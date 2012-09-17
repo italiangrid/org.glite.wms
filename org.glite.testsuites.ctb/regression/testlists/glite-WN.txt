@@ -1,0 +1,4 @@
+# regression tests for worker nodes
+# $Id$
+37701
+50879

@@ -1,0 +1,15 @@
+Bug: #28637
+Link: https://savannah.cern.ch/bugs/?28637
+Summary: Delegation IDs not found when CREAM persistence storage is cleared 
+
+- create a delegated proxy with 'glite-wms-job-delegate-proxy -d pippo' on the wmproxy
+  server of the wms machine
+
+- submit a job to a cream CE via the wms using the previously created
+  delegated proxy: glite-wms-job-submit myjob.jdl -d pippo 
+
+- delete records for the user DN you are submitting with from the delegationdb on the CREAM CE, like the following:
+   delete from t_credential where dn like '%Elisabetta%';
+   delete from t_credential_cache where dn like '%Elisabetta%'; 
+
+- submit a new normal job using the same delegated proxy as above;

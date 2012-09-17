@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov 
+# create a new LFC directory in the name server (lfc_mkdir)
+#Do not use explicity values: dteam, etc...
+
+import os,sys,lfc
+from testClass import _test 
+global lfc_vo
+
+#************* Interface for SAM and Python tests ***************
+print "<pre>"
+print "Start test: simple test program for running in Nagios"
+print "1. Prepare environment"
+
+vo_name=os.environ['VO']
+lfc_host = sys.argv[1]
+lfc_home = lfc_host + ":/grid/" + vo_name
+
+os.environ['LFC_HOME'] = lfc_home
+os.environ['LFC_HOST'] = lfc_host
+
+state_ok   = int(os.environ['STATE_OK'])
+state_err  = int(os.environ['STATE_CRITICAL'])
+lfc_vo    = "/grid/" + vo_name
+
+print "2. Start test run()"
+#ret = lfc_mkdir_test().run()
+ret=True
+
+print "3. Ret test code: %s" % ret
+print "Exit"
+print "</pre>"
+
+if ( ret == True ):
+      print "Test is OK"
+      sys.exit(state_ok)
+else:
+      print "Test is failure"
+      sys.exit(state_err)

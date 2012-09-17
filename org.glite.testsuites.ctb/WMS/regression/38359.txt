@@ -1,0 +1,20 @@
+Bug: #38359
+Link: https://savannah.cern.ch/bugs/?38359
+Summary: some issues in the limit for the output sandbox in the WMS jobwrapper
+
+- Set the parameter MaxOutputSandboxSize in the WorkloadManager
+  section of the configuration file /opt/glite/etc/glite_wms.conf
+  on the WMS to 100 and restart the workload manager.
+
+- Submit the jdl: 38359.jdl
+
+- When Done retrieve the output files, this should be the result
+  of an ls -l of the output dir:
+
+-rw-rw-r--  1 ale ale 50 Jul  8 12:06 out1
+-rw-rw-r--  1 ale ale  0 Jul  8 12:06 out2.tail
+-rw-rw-r--  1 ale ale 50 Jul  8 12:06 out3
+-rw-rw-r--  1 ale ale  0 Jul  8 12:06 out4.tail
+-rw-rw-r--  1 ale ale  0 Jul  8 12:06 test.err
+-rw-rw-r--  1 ale ale  0 Jul  8 12:06 test.out
+

@@ -1,0 +1,4 @@
+testName: LFC-getacl
+testAbbr: LFCgacl
+testTitle: Get LFC directory/file access control lists (lfc_getacl) 
+EOT

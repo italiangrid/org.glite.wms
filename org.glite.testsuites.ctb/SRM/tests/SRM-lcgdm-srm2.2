@@ -1,0 +1,189 @@
+#!/bin/sh
+#
+# SAM wrapper for the SRM v2.2 test from LCG-DM
+#
+# This script determines the port number on which the SRM 2.2 service is running
+# by querying the SRM host with ldapsearch, and then launches the SRM2.2 test suite
+# (srmv2Suite) associated with the LCG Data Management package (LCG-DM).
+# The test suite is to be compiled separately and its location to be provided to
+# this script in environment variable LCGDM_SRM22_TEST_LOCATION
+# An informal instruction how to compile the test suite can be found on this link:
+# http://cern.ch/zaborov/gLite/HowToCompileLcgdmTests.txt
+
+# Usage examples:
+#
+# > /afs/cern.ch/project/gd/yaim-server/same/client-ctb/bin/same-exec SRM
+# - run all SRM tests from /afs/cern.ch/project/gd/yaim-server/same/client-ctb/sensors/SRM for all SRM nodes
+#
+# > source ../config.sh
+# > ./SRM-srmv2.2 lxb2036.cern.ch
+# - run this test for lxb2036.cern.ch only (from bash)
+
+# Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
+# Version: $Id$
+
+function exit_failure() {
+
+  if [ -n "$SAME_ERROR" ]; then  # ... if in SAM
+    echo "</pre>"
+    echo " =============== [ <font color=\"#FF0000\"> FAILED </font> ] =============== <br>"
+    exit $SAME_ERROR
+  else  # ... if not
+    echo " =============== [ FAILED ] =============== "
+    exit 1
+  fi
+}
+
+function exit_untested() {
+
+  if [ -n "$SAME_INFO" ]; then  # ... if in SAM
+    echo "</pre>"
+    echo " =============== [ <font color=\"#0000FF\"> UNTESTED </font> ] =============== <br>"
+    exit $SAME_INFO
+  else  # ... if not
+    echo " =============== [ UNTESTED ] =============== "
+    exit 1
+  fi
+}
+
+# ... do html formatting when in SAM
+
+if [ -n "$SAME_OK" ]; then
+  echo "<pre>"
+  OK="[ <font color=\"#00FF00\"> OK </font> ]"
+  FAILED="[ <font color=\"#FF0000\"> FAILED </font> ]"
+else
+  OK="[ OK ]"
+  FAILED="[ FAILED ]"
+fi
+
+# ... make sure a host name is given
+
+SRM_HOST=$1
+
+if [ -z "$SRM_HOST" ]; then
+  echo "Usage : $0 <srmhost>"
+  exit_failure
+fi
+
+echo ""
+echo " =============== SRM 2.2 test for $SRM_HOST =============== "
+echo ""
+echo "Running on" `hostname -f` "at" `date '+%Y-%b-%d %H:%M:%S'`
+echo ""
+
+# ... source the config file
+
+if [ -n "$SAME_SENSOR_HOME" ] && [ -f $SAME_SENSOR_HOME/config.sh ]; then
+  echo "sourcing $SAME_SENSOR_HOME/config.sh"
+  . $SAME_SENSOR_HOME/config.sh
+fi
+
+# ... if a restriction list is defined but SRM host is not in the list then skip it
+
+if [ -n "$RESTRICT_TESTS_TO" ]; then
+  echo "restriction list defined by RESTRICT_TESTS_TO: $RESTRICT_TESTS_TO"
+  grep "\<$SRM_HOST\>" <<<$RESTRICT_TESTS_TO &>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Host $SRM_HOST does not appear in restriction list ($RESTRICT_TESTS_TO) and will be skipped"
+    exit_untested
+  else
+    echo "$SRM_HOST is in the list"
+  fi
+fi
+
+# ... find the test suite
+
+SRM22_TEST_NAME=srmv2Suite
+
+if [ -n "$LCGDM_SRM22_TEST_LOCATION" ] && [ -x $LCGDM_SRM22_TEST_LOCATION/$SRM22_TEST_NAME ] ; then
+
+  export PATH=$LCGDM_SRM22_TEST_LOCATION:$PATH
+
+elif [ -n "$LCG_LOCATION" ] && [ -x $LCG_LOCATION/test/sbin/$SRM22_TEST_NAME ]; then
+
+  export PATH=$LCG_LOCATION/test/sbin:$PATH
+
+else
+
+  echo "Warning! $SRM22_TEST_NAME not found neither in LCGDM_SRM22_TEST_LOCATION nor in LCG_LOCATION/test/sbin"
+
+fi
+
+echo -n "Will launch $SRM22_TEST_NAME from "
+
+if ! type -p $SRM22_TEST_NAME; then
+
+  echo ""
+  echo "ERROR: could not find the test script $SRM22_TEST_NAME"
+  echo "Please define the location of the test suite in LCGDM_SRM22_TEST_LOCATION"
+  echo "e.g. \"export LCGDM_SRM22_TEST_LOCATION=/afs/cern.ch/user/z/zaborov/public/srm2.2-tests\""
+  echo "or install it in LCG_LOCATION/test/sbin"
+
+  exit_failure
+
+fi
+
+# ... find the endpoint
+
+echo "Interrogating the GRIS on $SRM_HOST ..."
+
+LDAP_RESULT=`ldapsearch -x -H ldap://${SRM_HOST}:2135 -b "mds-vo-name=local, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
+
+if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
+
+  echo "ldapsearch result:"
+  echo "$LDAP_RESULT"
+  echo "Error: could not find SRM2.2 endpoint for $SRM_HOST."
+  echo "Possibly $SRM_HOST is not running, protected by firewall or not configured to publish the endpoint."
+  
+  exit_failure
+fi
+
+ENDPOINT=`echo "$LDAP_RESULT" | grep 'GlueServiceEndpoint:' | awk -F ' ' '{print $2}'`
+
+# ... in case we got few endpoints take the first one
+
+ENDPOINT=`echo $ENDPOINT | awk -F ' ' '{print $1}'`
+
+echo "SRM 2.2 endpoint published by $SRM_HOST: $ENDPOINT"
+
+PORT=`echo $ENDPOINT | awk -F ':' '{print $3}' | awk -F '/' '{print $1}'`
+
+echo "SRM 2.2 port: $PORT"
+
+# ... launch the test
+
+THE_COMMAND="$SRM22_TEST_NAME $SRM_HOST $PORT srm2.2test tmpfile_`id -u`_$$ dteam srm22test_`date +%y%m%d`"
+
+echo "Executing:" $THE_COMMAND
+echo ""
+
+$THE_COMMAND
+
+STATUS=$?
+
+# ... check exit status
+
+if [ $STATUS -ne 0 ]; then
+
+  echo ""
+  echo "$SRM22_TEST_NAME for $SRM_HOST failed with code $STATUS"
+  echo ""
+
+  exit_failure
+
+fi
+
+echo ""
+echo "$SRM22_TEST_NAME for $SRM_HOST succeeded"
+echo ""
+
+if [ -n "$SAME_OK" ]; then
+  echo "</pre>"
+  echo "  =============== [ <font color=\"#00FF00\"> OK </font> ] ===============  <br>"
+  exit $SAME_OK
+else
+  echo "  =============== [ OK ] ===============  "
+  exit 0
+fi

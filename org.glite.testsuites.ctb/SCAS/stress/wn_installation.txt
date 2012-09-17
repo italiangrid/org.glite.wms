@@ -1,0 +1,59 @@
+yum install ntp
+
+/etc/rc.d/init.d/ntpd start
+
+#CHANGE X
+cp -r /afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/certs/lxb7605vX.cern.ch/ /opt/certs/
+
+cd yaimgen
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/yaimgen.cfg.wn ./
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.conf /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.sh /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/commonFunctions.sh ./
+
+klog pucciani
+#EDIT yaimgen.cfg.wn to fix the hostname
+
+#install prod WN and and patch2829 (glexec)
+./yaimgen.sh install yaimgen.cfg.wn
+
+#get yaim configuration file
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/site-info.wn.def /etc/yaim/site-info.def
+
+#get users and groups file (must be the same as in the SCAS server host)
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/users.conf /etc/yaim/users.conf
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/groups.conf /etc/yaim/groups.conf
+
+#install vomses files (for proxy renewal)
+tar -xvzf /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/vomses.tar.gz -C /
+
+#configure the node
+/opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN -n GLEXEC_wn
+
+#change log rotation for lcaslcmaps and glexec
+#change daily to 500M
+mv /etc/cron.daily/logrotate /etc/cron.hourly/
+cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_lcaslcmaps_log /etc/logrotate.d/
+
+#if necessary
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec.conf /opt/glite/etc/
+
+----------------------------------SCAS---------------------------------
+#change SCAS log rotation
+#edit /etc/logrotate.d/scas and change daily with size 500M (for example)
+mv /etc/cron.daily/logrotate /etc/cron.hourly/
+
+-----------------------------------------------------------------------
+
+
+#To wipe users
+cd /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/
+./userwipe.pl 70...
+
+#To create users and groups.conf
+./mkugconf.pl -v dteam,org.glite.voms-test -g dteam -r production,pilot,lcgadmin -n 200
+
+#To clean glexec log files when needed
+rm -f /var/log/glexec/*.gz
+rm -f /var/log/glexec/lcas_lcmaps.log
+touch /var/log/glexec/lcas_lcmaps.log
+chmod 640 /var/log/glexec/lcas_lcmaps.log
+

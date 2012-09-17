@@ -1,0 +1,16 @@
+Bug: #36145
+Link: https://savannah.cern.ch/bugs/?36145
+Summary: Jobdir support to be enabled in the glite-wms-planner  
+
+
+2) Test a dag job as described in '35250.txt' only for the jobdir input method => by setting the following two 
+   parameters in the glite_wms.conf WMS configuration file, workload manager
+   section:
+              DispatcherType  =  "jobdir";
+              Input = "${GLITE_LOCATION_VAR}/workload_manager/jobdir";
+
+   - re-start the WM and submit the jdl: 35250.jdl
+                                                                                                                     
+   - check if it is successful
+
+

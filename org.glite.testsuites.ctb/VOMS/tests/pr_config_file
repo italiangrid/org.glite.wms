@@ -1,0 +1,46 @@
+#!/bin/bash
+#  Config file for testing "voms-proxy-init" command
+# Revised: March 2008                                                                       #
+
+export vo_name="test"                                        # Virtuale organization
+
+PROJECT="/afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates"
+#PROJECT="$SAME_SENSOR_HOME/tests"
+
+export USER="$PROJECT/test_user_2_cert.pem"
+export CA="/C=CH/O=CERN/OU=GD/CN=The Certification CA"
+export CA_CERN="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
+
+export CA_0="/etc/grid-security/certificates/1cda0759.0"                   # for option -certdir
+export CA_policy="/etc/grid-security/certificates/1cda0759.signing_policy" # for option -certdir
+
+export GLOBUS=2                                                  # used Globus version (for -proxyver)
+
+#export VOMSES="$SAME_SENSOR_HOME/vomses-1928"                   # vomses file for lxb1928.cern.ch
+export VOMSES="$SAME_SENSOR_HOME/vomses-2026"                    # vomses file for lxb2026.cern.ch
+
+USERCERT="$PROJECT/test_user_2_cert.pem"			  # test_user_2_cert.pem
+USERKEY="$PROJECT/test_user_2_key.pem"	        		 # test_user_2_key.pem
+
+export PWS="$SAME_SENSOR_HOME/tests/pws"                         # password file for $USER
+export VOMS_CNF="$SAME_SENSOR_HOME/tests/voms.profile"           # config file for option -conf
+
+#--------- temporary files ---------------
+WORK=$SAME_SENSOR_WORK/nodes/$nodeName
+rm -rf $WORK/test_user_2_cert.pem
+rm -rf $WORK/test_user_2_key.pem
+
+cp $USERCERT $WORK/test_user_2_cert.pem
+cp $USERKEY $WORK/test_user_2_key.pem
+export USERCERT="$WORK/test_user_2_cert.pem"
+export USERKEY="$WORK/test_user_2_key.pem"
+
+chmod 644 $USERCERT
+chmod 400 $USERKEY
+
+export voms_tmp=$WORK/voms_tmp
+export voms_stderr=$WORK/voms_stderr
+export tempo=$WORK/voms_tempo
+export cert_dir=$SAME_SENSOR_WORK/nodes/$nodeName/voms_certdir # directory for test -certdir
+#echo "Admin cert: $USERCERT"
+#echo "Admin key:  $USERKEY"

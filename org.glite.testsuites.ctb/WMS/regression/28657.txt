@@ -1,0 +1,20 @@
+Bug: #28657
+Link: https://savannah.cern.ch/bugs/?28657
+Summary: Unexpected exception thrown by ICE
+
+
+- Stop ICE: /opt/glite/etc/glite-wms-ice stop
+
+- Corrupt ICE database, e.g. by doing the following:
+
+  o For each file (all but *proxy*) in /var/glite/ice/persist_dir do:
+
+    cat "pippo" > "file"
+
+- Start ICE: /opt/glite/etc/glite-wms-ice start
+
+- In the ICE log file you should see something like:
+
+2008-07-29 12:44:00,537 FATAL - jobCache::jobCache() - Failed to 
+initialize the jobDbManager object. Reason is: Db::open: Invalid argument
+

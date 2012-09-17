@@ -1,0 +1,4 @@
+testName: VOMS-pr-vers
+testAbbr: pr-vrs
+testTitle: voms-proxy-init: Test "version" option
+EOT

@@ -1,0 +1,35 @@
+#!/bin/bash
+#Author Liudmila Stepanova < sli@inr.ru >
+which myproxy-store 2>/dev/null
+if [ $? -ne 0 ]
+then
+   echo "myproxy-store not in PATH, stopped"
+exit 1
+fi
+which myproxy-init 2>/dev/null
+if [ $? -ne 0 ]
+then 
+   echo "myproxy-init not in PATH, stopped"
+   exit 1
+fi
+which myproxy-retrieve 2>/dev/null
+if [ $? -ne 0 ]
+then 
+   echo "myproxy-retrieve not in PATH, stopped"
+fi
+which myproxy-destroy 2>/dev/null
+if [ $? -ne 0 ]
+then
+  echo "myproxy-destroy not in PATH, stopped"
+fi
+which myproxy-logon 2>/dev/null
+if [ $? -ne 0 ]
+then
+   echo "myproxy-logon not in PATH, stopped"
+fi
+which myproxy-change-pass-phrase 2>/dev/null
+if [ $? -ne 0 ]
+then
+   echo  "myproxy-change-pass-phrase not in PATH, stopped"
+fi
+exit 0 

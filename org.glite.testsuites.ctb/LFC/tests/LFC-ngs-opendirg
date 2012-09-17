@@ -1,0 +1,223 @@
+#!/usr/bin/env python
+# test has been developed by Robert Harakaly and changed for SAM (and Nagios) by Victor Galaktionov
+# open a LFC directory, having the specified GUID, in the name server (lfc_opendirg) 
+
+import os, lfc, sys, commands, errno
+from testClass import _test, _ntest
+
+global testHome, lfc_vo 
+
+class test_OK_name(_test):
+    def info(self):
+	return "Test open directory: "
+    def prepare(self):
+        self.name= lfc_vo + "/lfc_opendirg_test"
+        lfc.lfc_mkdir(self.name, 0775)
+    def clean(self):
+        lfc.lfc_rmdir(self.name)
+    def test(self):
+        dir = lfc.lfc_opendirg(self.name,"")
+        return (dir,0)
+    def ret(self):
+        retval=lfc.lfc_DIR()
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        if (test != None):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+class test_OK_guid(_test):
+    def info(self):
+        return "Test open directory: "
+    def prepare(self):
+        self.name= lfc_vo + "/lfc_opendirg_test"
+        self.guid=commands.getoutput('uuidgen').split('/n')[0]
+        lfc.lfc_mkdirg(self.name, self.guid, 0775)
+    def clean(self):
+        lfc.lfc_rmdir(self.name)
+    def test(self):
+        dir = lfc.lfc_opendirg("",self.guid)
+        return (dir,0)
+    def ret(self):
+        retval=lfc.lfc_DIR()
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        if (test != None):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+class test_OK_both(_test):
+    def info(self):
+        return "Test open directory: "
+    def prepare(self):
+        self.name= lfc_vo + "/lfc_opendirg_test"
+        self.guid=commands.getoutput('uuidgen').split('/n')[0]
+        lfc.lfc_mkdirg(self.name, self.guid, 0775)
+    def clean(self):
+        lfc.lfc_rmdir(self.name)
+    def test(self):
+        dir = lfc.lfc_opendirg(self.name,self.guid)
+        return (dir,0)
+    def ret(self):
+        retval=lfc.lfc_DIR()
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        if (test != None):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+#	add test if name and guid do not match
+
+class test_ENAMETOOLONG(_ntest):
+    def info(self):
+        return "Test with path too long (ENAMETOOLONG): "
+    def prepare(self):
+        self.path = "a"
+        for a in range(0,lfc.CA_MAXPATHLEN):
+            self.path = self.path + "a"
+    def test(self):
+        dir = lfc.lfc_opendirg(self.path,"")
+        return (dir,lfc.cvar.serrno,-1)
+    def ret(self):
+        return (None, errno.ENAMETOOLONG)
+    def compare(self, testVal, retVal):
+        ((ret, reterr), retRetVal) = retVal
+        (test, testerr, testRetVal) = testVal
+        if ((ret == test) & (reterr == testerr)):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+class test_EACCES1(_ntest):
+    def info(self):
+        return "Test permission denied on path no read (EACCES): "
+    def prepare(self):
+        self.path= lfc_vo + "/python_opendir_test/testfile"
+        guid = commands.getoutput('uuidgen').split('/n')[0]
+        lfc.lfc_mkdir(os.path.dirname(self.path),0755)
+        lfc.lfc_creatg(self.path,guid,0644)
+        lfc.lfc_chmod(os.path.dirname(self.path),0111)
+    def clean(self):
+        lfc.lfc_chmod(os.path.dirname(self.path),0755)
+        lfc.lfc_unlink(self.path)
+        lfc.lfc_rmdir(os.path.dirname(self.path))
+    def test(self):
+        dir = lfc.lfc_opendirg(os.path.dirname(self.path),"")
+        return (dir,lfc.cvar.serrno,-1)
+    def ret(self):
+        return (None, errno.EACCES)
+    def compare(self, testVal, retVal):
+        ((ret, reterr), retRetVal) = retVal
+        (test, testerr, testRetVal) = testVal
+        if ((retRetVal == testRetVal) & (reterr == testerr)):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+class test_EACCES2(_ntest):
+    def info(self):
+        return "Test permission denied on path nosearch (EACCES): "
+    def prepare(self):
+        self.path= lfc_vo + "/python_opendir_test/testfile"
+        lfc.lfc_mkdir(os.path.dirname(self.path),0755)
+        lfc.lfc_mkdir(self.path, 0644)
+    def clean(self):
+        lfc.lfc_rmdir(self.path)
+        lfc.lfc_rmdir(os.path.dirname(self.path))
+    def test(self):
+        dir = lfc.lfc_opendirg(self.path,"")
+        return (dir,lfc.cvar.serrno,-1)
+    def ret(self):
+        return (None, errno.EACCES)
+    def compare(self, testVal, retVal):
+        ((ret, reterr), retRetVal) = retVal
+        (test, testerr, testRetVal) = testVal
+        if ((retRetVal == testRetVal) & (reterr == testerr)):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+
+class test_ENOENT(_ntest):
+    def info(self):
+        return "Opendir on nonexisting file (ENOENT): "
+    def test(self):
+        dir = lfc.lfc_opendirg("/nonexistingdirectory","")
+        return (dir,lfc.cvar.serrno,-1)
+    def ret(self):
+        return (None, errno.ENOENT)
+    def compare(self, testVal, retVal):
+        ((ret, reterr), retRetVal) = retVal
+        (test, testerr, testRetVal) = testVal
+        if ((ret == test) & (reterr == testerr)):
+            retval = True
+        else:
+            retval = False
+        return retval
+
+
+class lfc_addreplica_test:
+    def __init__(self):
+	self.name = "lfc_addreplica_test"
+        self.tests=[test_OK_name, test_OK_guid, test_OK_both, test_ENAMETOOLONG, test_EACCES1, test_EACCES2, test_ENOENT]
+
+    def run(self):
+        retVal = True
+        for testclass in self.tests:
+            testInstance = testclass()
+            testInstance.prepare()
+            ret1 = testInstance.compare(testInstance.test(), (testInstance.ret(), testInstance.getRetVal()))
+            testInstance.clean()
+            retVal = retVal & ret1
+            if ret1:
+                print "%-60s[OK]" % testInstance.info()
+            else:
+                print "%-60s[FAILED]" % testInstance.info()
+        return retVal
+
+#************* Interface for SAM and Python tests ***************
+print "<pre>"
+print "Start test: open a LFC directory, having the specified GUID, in the name server (lfc_opendirg)"
+print "1. Prepare environment"
+
+vo_name=os.environ['VO']
+lfc_host = sys.argv[1]
+lfc_home = lfc_host + ":/grid/" + vo_name
+
+os.environ['LFC_HOME'] = lfc_home
+os.environ['LFC_HOST'] = lfc_host
+
+same_ok   = int(os.environ['STATE_OK'])
+same_err  = int(os.environ['STATE_CRITICAL'])
+lfc_vo    = "/grid/" + vo_name
+
+print "2. Start test run()"
+testHome = "python_lfc_test"
+ret = lfc_addreplica_test().run()
+
+print "3. Ret test code: %s" % ret
+print "Exit"
+print "</pre>"
+
+if ( ret == True ):
+    print "Test is OK"
+    sys.exit(same_ok)
+else:
+    print "Test is failure"
+    sys.exit(same_err)
+                        

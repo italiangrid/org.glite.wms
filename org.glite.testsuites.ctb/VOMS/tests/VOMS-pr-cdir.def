@@ -1,0 +1,4 @@
+testName: VOMS-pr-cdir
+testAbbr: pr-cdir
+testTitle: voms-proxy-init: Test "certdir CERTDIRECTORY" option
+EOT

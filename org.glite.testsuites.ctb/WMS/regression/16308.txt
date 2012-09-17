@@ -1,0 +1,20 @@
+Bug: #16308
+Link: https://savannah.cern.ch/bugs/?16308
+Summary: a subscription update is not working (doesn't set the new correct
+expiration time) 
+
+ - set the two parameters, subscription_update_threshold_time and
+   subscription_duration in the ICE section of the glite_wms.conf file 
+   to low values, such as the following:
+                                   subscription_duration  =  300;
+                                   subscription_update_threshold_time =  150;
+
+   so that a subscription expires after 5 minutes
+
+-  re-start ICE by the script '/opt/glite/etc/init.d/glite-wms-ice'
+
+- submit a job and check the status of the subscription by the following
+  command of the cream client:
+    
+           CEMonitorSubscriberMgr <cert_proxy> <cert_path> <service_URL_address>
+            

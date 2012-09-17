@@ -1,0 +1,4 @@
+testName: VOMS-listSubGroups
+testAbbr: lstSubgr
+testTitle: voms-admin: Test "list-sub-groups GROUPNAME" option
+EOT

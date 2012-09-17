@@ -1,0 +1,116 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Create one user using its certificate elements                   #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+DN="/Fake User DN"
+CN="/Fake User CN"
+EMAIL="fakeuser@cern.ch"
+
+date
+echo "<br>"
+echo "Test VOMS-crUserNocert:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "User=$DN"
+echo "<br>"
+
+echo "SCENARIO: User doesn't exist"
+echo "<br>"
+echo "Create new user"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host --nousercert create-user "$DN" "$CA" "$CN" "$EMAIL"
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
+echo "Check DN"
+echo "<br>"
+grep "$user_subject" $voms_tmp > $tempo
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$DN" "$CA"
+   echo "Error creating the user: wrong DN"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Check CN"
+echo "<br>"
+grep "$user_CN" $tempo  > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$DN" "$CA"
+   echo "Error creating the user: wrong CN"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Check CA"
+echo "<br>"
+grep "$user_CA" $tempo  > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$DN" "$CA"
+   echo "Error creating the user: wrong CA"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+
+echo "SCENARIO: User already exists in the VO"
+echo "<br>"
+rm -rf $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert create-user "$DN" "$CA" "$CN" "$EMAIL" > $voms_stderr
+grep "org.glite.security.voms.admin.database.UserAlreadyExistsException" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$DN" "$CA"
+   echo "Incorrect error message:"
+   echo "<br>"
+   cat $voms_stderr
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$DN" "$CA"
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

@@ -1,0 +1,14 @@
+Bug: #33103
+Link: https://savannah.cern.ch/bugs/?33103
+Summary: Request for adding an feature to select only specific VO resources
+via an additional LDAP filter
+
+1) Add this parameter to section WorkloadManager of the glite_wms.conf
+   configuration file (using for example vo "cms" as filter):
+
+IsmIILDAPCEFilterExt = "(|(GlueCEAccessControlBaseRule=VO:cms)(GlueCEAccessControlBaseRule=VOMS:/cms/*))"
+
+2) Restart the WM
+
+3) Doing a list-match using a voms proxy of a different VO (e.g. dteam) 
+   you should obtain "no resource available".

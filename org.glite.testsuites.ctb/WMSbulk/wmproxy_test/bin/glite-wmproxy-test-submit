@@ -1,0 +1,151 @@
+#!/usr/bin/perl
+
+#glite-wmproxy-test-submit [--help] [--log <user-defined logfile>] [--dag <parallel DAG node number>] [-c <wms configuration file>] [-o <user-defined id file>] [-q <job assignment number for each queue>] [-t <total job number>] [-x <queue-job assignment list>] [-l <queue-job assignment list file>] <jdl>
+
+#glite-wmproxy-test-daemon [-f <user-defined logfile>] [-g <parallel DAG node number>] [-o <user-defined id file>] [-c <wms configuration file>] [-t <total job assignment number>] [-q <job assignment number for each queue>] [-s <jdl>] [-e <time interval>] [-n <interval number>] [-b <temporary database>] [-p <program repository>] [-x <queue-job assignment list>] [-l <queue-job assignment list file>]
+
+##############################################################################################################
+
+use Getopt::Long;
+exit 1 unless( GetOptions("log:s"=>\$logfile, "help!"=>\$help, "dag:i"=>\$dag, "c=s"=>\$args{c}, "o=s"=>\$args{o}, "q=i"=>\$args{q}, "t=i"=>\$args{t} ,"x=s"=>\$args{x}, "l=s"=>\$args{l}) );
+
+
+$wmproxyHome = "myPath";
+
+$gliteBin = defined($ENV{'GLITE_LOCATION'}) ? "$ENV{'GLITE_LOCATION'}/bin" : "/opt/glite/bin";
+$wmproxyBase = defined($ENV{'WMPROXY_TEST_HOME'}) ? $ENV{'WMPROXY_TEST_HOME'} : $wmproxyHome; 
+$wmproxyBin = "$wmproxyBase/bin";
+$jobRptCol = "$wmproxyBase/.wmproxy_test/rpt";
+@currDirs = ("$wmproxyBase/.wmproxy_test", 'col', 'rpt');
+$retryNum = 200;
+$retryTime = 10;
+
+die("Please set the environment variable \$WMPROXY_TEST_HOME\n") unless (-e "$wmproxyBase");
+
+sub helpMsg {
+  $msg = shift;
+  $helpMsg = $msg ? &getContent($msg) : 
+"Usage: glite-wmproxy-test-submit -c [wms configuration file] -o [user-defined id file] -q [job assignment number for each queue] -t [total job number] -x [queue-job assignment list] -l [queue-job assignment list file] jdl";
+  print "$helpMsg\n";
+  exit 0;
+}
+
+sub getContent {
+  my $s = '', $f = shift;
+  open TMP, "<$f" or die("Can't open $f:$!\n");
+  $s = join '', <TMP>;
+  close TMP;
+  return $s;
+}
+
+
+sub makeDirs {
+ my $initDir;
+ chomp($initDir = shift);
+ foreach (@_) {
+  `/bin/mkdir -p $initDir/$_`
+ }
+}
+
+sub killDaemon {
+
+   chomp (@jid = `/bin/ps auxwwww|/bin/grep 'glite-wmproxy-test-daemon'|/bin/grep $timeStamp|/bin/awk '{print \$2}'`);
+   `/bin/kill -9 @jid &>/dev/null` if ($#jid > 0);
+   exit 1;
+}
+
+&makeDirs(@currDirs);
+
+chomp ($timeStamp = `/bin/date +%s`);
+$SIG{'INT'} = 'killDaemon';
+$argList = '';
+
+if($help) {
+  &helpMsg("$wmproxyBase/readme/glite-wmproxy-test-submit.readme");
+}
+
+if ($ARGV[0]) {
+  die("Error: jdl $ARGV[0] doesn\'t exist!\n") unless (-e $ARGV[0]);
+  $argList .= "-s $ARGV[0]";
+} 
+else {
+  &helpMsg;
+}
+
+if ($args{c}) {
+  $argList .= " -c $args{c}";
+}
+
+if ($args{o}) {
+  die("Error: $args{o} has already existed!\n") if (-e $args{o});
+  $argList .= " -o $args{o}"; 
+}
+
+if ($args{q}) {
+  $argList .= " -q $args{q}";
+}
+
+if ($args{t}) {
+  $argList .= " -t $args{t}";
+}
+
+if ($args{x}) {
+  $argList .= " -x $args{x}";
+}
+
+if ($args{l}) {
+  die("Error: $args{l} doesn\'t exist\n") unless (-e $args{l});
+  $argList .= " -l $args{l}";
+}
+
+if ($args{e}) {
+  $argList .= " -e $args{e}";
+}
+
+if ($args{n}) {
+  $argList .= " -n $args{n}";
+}
+
+if (defined($dag) && $dag>=0) {
+  $argList .= " -g $dag";
+}
+
+if (defined($logfile)) {
+  die("Please check if you fill in the argument correctly\n") unless $logfile;
+  $argList .= " -f $logfile";
+}
+
+$argList .= " -p $wmproxyBin -b $wmproxyBase/.wmproxy_test -r $timeStamp";
+
+
+`$gliteBin/glite-voms-proxy-info -exists`;
+die("Please check if the user proxy is valid\n") if ($?);
+
+
+system "/usr/bin/nohup $wmproxyBin/glite-wmproxy-test-daemon $argList > /dev/null &";
+if ($? !=0) {
+  die("Failed to initiate the daemon:$!\n");
+}
+
+$idFlag = "$jobRptCol/$timeStamp.tmp";
+
+while ( ($retry++) < $retryNum) {
+  if (-e $idFlag) {
+    $errMsg = $s unless ( ($s = &getContent($idFlag)) =~ m/http.*/g ); 
+    chomp($jobId = $s);
+    last; 
+  }
+  print "Please wait until the bulk job submission has been completed\n";
+  sleep $retryTime;
+}
+
+if ($jobId =~ m/http.*/) {
+  print "Succeeded in submitting the job\n";
+  print "$jobId\n";
+}
+else {
+  print "Failed to submit the job: $s\n";
+  &killDaemon if ($jobId);
+}
+
+`rm -f $jobRptCol/*.tmp`;

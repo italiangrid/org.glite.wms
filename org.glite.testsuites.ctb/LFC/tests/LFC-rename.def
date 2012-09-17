@@ -1,0 +1,4 @@
+testName: LFC-rename
+testAbbr: LFCren
+testTitle: rename a LFC file or directory in the name server (lfc_rename)
+EOT

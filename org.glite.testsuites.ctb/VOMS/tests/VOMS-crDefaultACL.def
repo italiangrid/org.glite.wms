@@ -1,0 +1,4 @@
+testName: VOMS-crDefaultACL
+testAbbr: crDefACL
+testTitle: voms-admin: Test "add-default-acl-entry GROUPNAME ALLOW OPERATION USER" option
+EOT

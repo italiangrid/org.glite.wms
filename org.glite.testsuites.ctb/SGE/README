@@ -1,0 +1,62 @@
+	README
+
+= SGE stress tests of lcg-CE =
+
+These tests are based on work made by Nikos Voutsinas, Dimitrios Apostolou and Kostantinos Koukopoulos:
+http://master.gridctb.uoa.gr/torque-report/Torque-Maui_testplan.html
+
+We had to change some scripts and commands for being used by SGE system.
+
+
+
+== INSTALLATION ==
+
+By default SGE queue only admits 100 jobs but to perform these tests we need 7000 queued jobs.
+To do the tests, we had to change the default configuration of SGE. Specifically we changed the scheduler
+(qconf -msconf) and global (qconf -mconf) configuration so SGE accepts 7000 jobs and qstat -s z also displays 7000 jobs.
+
+    * For successive tests, it's the same operation, i.e. to send 2000, 4000.. jobs 
+
+qconf -msconf
+
+...
+maxujobs                          7000
+max_functional_jobs_to_schedule   7000
+...
+
+qconf -mconf
+
+....
+finished_jobs                7000
+max_u_jobs                   7000
+
+Scripts to be installed on CE:
+	- monitor_BDIIsge.sh
+	- monitor_CEsge.sh
+	- qsub1.sh
+	- qsub_test.sh
+	- testSGE_CE.sh
+
+Scripts to be installed on WN:
+	- monitor_WNsge.sh
+	- testSGE_WN.sh 
+
+Scripts to be installed on UI:
+	- job_sub.sh
+
+
+== USING IT ==
+
+For tests these scripts must be run at same time:
+- testSGE_CE.sh on CE
+- testSGE_WN.sh on WN
+
+These scripts must be stopped by hand when our jobs finish.
+
+
+
+== SUPPORT ==
+For more information:
+https://twiki.cern.ch/twiki/bin/view/LCG/SGE_Stress#About_SGE_queue
+
+In case of problems contact egee-admin@cesga.es

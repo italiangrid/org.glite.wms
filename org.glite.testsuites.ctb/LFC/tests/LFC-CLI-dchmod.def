@@ -1,0 +1,4 @@
+testName: LFC-CLI-dchmod
+testAbbr: dchmod
+testTitle: Change access mode of  LFC subdirectory in the name server (lfc-chmod) 
+EOT

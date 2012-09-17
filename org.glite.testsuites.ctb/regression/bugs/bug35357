@@ -1,0 +1,183 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Alvaro Fernandez, IFIC (CSIC)
+#
+##############################################################################
+
+test_bug35357_pre () {
+OLD_PYTHONPATH=$PYTHONPATH
+export PYTHONPATH=/opt/glite/lib/:$PYTHONPATH
+
+LOCAL_FILE=${TMPDIR-/tmp}/bugtest35357_$$.py
+
+cat <<- FIN > $LOCAL_FILE 
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-
+import sys
+
+from wmproxymethods import *
+import SOAPpy  #Error Type
+
+#url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
+url="$WMPROXY_URL"
+client = Wmproxy(url)
+
+print "Testing WMPROXY python bug#35357 at url: " +url
+
+#Method to obtain information of the service itself
+
+###################
+# JDL preparation #
+###################
+#Method (not yet supported):  getJobTemplateFalse
+#IN =  jobType (JobTypeList)
+#IN =  executable (string)
+#IN =  arguments (string)
+#IN =  requirements (string)
+#IN =  rank (string)
+#OUT = jdl (string)
+
+jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\";OutputSandbox = {\"std.out\"};  Requirements = true; Rank = 1;"
+
+print jdl
+
+################
+# Sending Jobs #
+################
+#Before invoking services such as submission, a delegation process is needed to transfer client proxy credentials to the server host. Delegated credentials are uniquely identified by the association of the delegation identifier, provided by user, and the user’s DN within the credentials.
+
+
+#method=1 	# native method to delegate credentials (not yet implemented in python)
+#method=2 	# delegate credentials based on glite-proxy-cert
+#method=3	# delegate credentials using already available UI-client:glite-wms-job-delegate-proxy
+
+method=3
+delegateOk=0
+delegationId = "myDelegationId2"
+
+print "Delegate credentials using already available UI-client:glite-wms-job-delegate-proxy"
+commandString="glite-wms-job-delegate-proxy -d " + delegationId + " --endpoint " + url 
+print commandString
+ifile,ofile=os.popen4(commandString )
+sfile=ofile.read()
+if sfile.find("Error -")>=0:
+   print "Warning : \n" +sfile + '\n'
+else:	
+   delegateOk=1
+
+
+# Simple jobSubmission
+attempts=0
+finished=0
+
+while not finished and attempts < 3:
+ task = client.jobSubmit ( jdl, delegationId )
+
+ #Print info about job
+ jobId = task.getJobId()
+ print "Submitted job with JobID = " + jobId
+
+ #wait for job completion
+ print "Sleeping 20 seconds for job completion..."
+ os.system("sleep 20")
+
+ # This methods need job completion
+ tried=0
+ while tried<15 and not finished:
+  myCommand = " glite-wms-job-status " + jobId  +" | grep -i \"Current Status\"  "
+  print myCommand
+  ifile,ofile=os.popen4( myCommand )
+  sfile=ofile.read()
+  print sfile
+
+  if sfile.find("Ready")>=0:
+   print "Info : Job not yet finished "
+  elif sfile.find("Aborted")>=0:
+   print "Warning : Job Aborted "
+   break
+  elif sfile.find("Failed")>=0:
+   print "Warning : Job Failed "
+   break
+  elif sfile.find("Done")>=0:
+   print "Info: Job Done "
+   finished = 1
+   break
+
+  print "Sleeping 30 seconds for job completion..."
+  os.system("sleep 30")
+  tried+=1
+ #end while tried<10 and not finished: jobSubmission
+
+ if not finished:
+  print "Going for Resubmission"
+  attempts+=1
+
+#end JobSubmission bucle
+
+if finished:
+ #TEsting bug#35357. Job Should have finished, and in a correct state	
+ result = client.getOutputFileList(jobId)
+ print "File list contains " + str(len(result)) + "files" 
+
+ for i in range(len(result)):
+  print "File " + str(i)
+  filedict =  result[i]
+  for j in filedict.keys():
+   print "       " + j + " : " + filedict[j]
+
+ if len(result) != 1 :
+  print "Error: Bug#35357 present, it should contain 1 file"
+  sys.exit(1)
+ else:
+  print "Ok, it should contain 1 file"
+  sys.exit(0)
+
+else:
+   print "the Job: " + jobId 
+   print "did not finished. We cannot test more wmproxy bugs"
+   sys.exit(1)
+FIN
+
+chmod 755 $LOCAL_FILE
+
+}
+
+test_bug35357_post () {
+export PYTHONPATH=$OLD_PYTHONPATH
+#rm -f $LOCAL_FILE
+unset LOCAL_FILE
+}
+
+
+test_bug35357 () {
+
+echo "A job will be submmited and get its string representation... "
+$LOCAL_FILE
+
+if [ $? -ne ${REGTEST_OK} ]; then
+ return ${REGTEST_FAIL}
+fi
+
+
+#arrives here so everything fine
+return $REGTEST_OK
+ 
+}
+

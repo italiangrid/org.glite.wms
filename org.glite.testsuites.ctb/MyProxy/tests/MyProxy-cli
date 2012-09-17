@@ -1,0 +1,65 @@
+#!/bin/bash
+
+. $SAME_SENSOR_HOME/../functions.sh
+. $SAME_SENSOR_HOME/config.sh
+
+export DPM_HOST=$1
+export DPNS_HOST=$1
+
+echo "<pre>"
+echo "<b>Starting DPM-cli (command line interface) tests: </b>"
+echo "<ul>"
+echo -n "<li> Doing an dpns-ls on /dpm/ for DPM node $DPM_HOST:"
+listing=`dpns-ls /dpm 2>&1`
+RETVAL=$?
+if [ $RETVAL -ne 0 ] ; then
+    echo " "
+    samPrintERROR ; echo "The dpns-ls command returned with errors. Exiting !"
+    echo "</ul>"
+    failedmessage;
+    echo "</pre>"
+    exit $SAME_ERROR
+fi
+samPrintOK
+echo "$listing"
+
+echo -n "<br> <li> Doing an dpns-ls on /dpm/$listing/home/$SAME_VO for DPM node $DPM_HOST:"
+
+listing2=`dpns-ls /dpm/$listing/home/$SAME_VO`
+RETVAL=$?
+if [ $RETVAL -ne 0 ] ; then
+    echo " "
+    samPrintERROR ; echo "No directory (/dpm/$listing/home/$SAME_VO) found for the SAME VO: $SAME_VO. Exiting !"
+    echo "</ul>"
+    failedmessage;
+    echo "</pre>"
+    exit $SAME_ERROR
+fi
+samPrintOK
+    echo "Chunking output:"
+    echo "."
+    echo "."
+    echo "$listing2" | tail -n 10
+
+
+echo -n "<br> <li> Doing an dpns-mkdir within /dpm/$listing/home/$SAME_VO for DPM node $DPM_HOST:"
+myresult=`dpns-rm -rf /dpm/$listing/home/$SAME_VO/sametest`
+myresult=`dpns-mkdir /dpm/$listing/home/$SAME_VO/sametest`
+RETVAL=$?
+if [ $RETVAL -ne 0 ] ; then
+    echo " "
+    samPrintERROR ; echo "Cannot create directory (/dpm/$listing/home/$SAME_VO/sametest). Exiting ! "
+    echo "Set the correct permissions ! "
+    echo "</ul>"
+    failedmessage
+    echo "</pre>"
+    exit $SAME_ERROR
+fi
+myresult=`dpns-rm -rf /dpm/$listing/home/$SAME_VO/sametest`
+samPrintOK
+
+echo "</ul>"
+echo ""
+passedmessage
+echo "</pre>"
+exit $SAME_OK

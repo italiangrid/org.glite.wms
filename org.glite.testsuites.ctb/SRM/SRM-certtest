@@ -1,0 +1,277 @@
+#!/bin/sh
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Gianni Pucciani, CERN
+#
+##############################################################################
+
+showUsage ()
+{
+cat <<EOF
+Usage:  SRM-certtest.sh [-f <conf.file>] [--se <SE_HOST>]
+  <conf.file> Configuration file, default is SRM-certconfig
+  <SE_HOST> = specify an SE, defaults to the CTB one
+EOF
+}
+
+exitFailure ()
+{
+echo "------------------------------------------------"
+echo "END `date`"
+echo "-TEST FAILED-"
+exit -1
+}
+
+#######################
+#Parsing the arguments#
+#######################
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
+  showUsage
+  exit 2
+fi
+
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--se')
+      shift
+      SE_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
+
+###################################
+# Check for environment variables #
+###################################
+  
+if [ "x$conffile" = "x" ]; then
+  #Default value
+  conffile="./SRM-certconfig"
+fi
+echo "Using $conffile"
+
+if [ -e $conffile ]; then
+  source $conffile
+else
+  echo "The file $conffile must be sourced in order to run the tests"
+  exitFailure
+fi
+
+if [ -n "$SE_HOST_ARG" ]; then
+  sehost=$SE_HOST_ARG
+elif [ -n "$SE_HOST" ]; then
+  sehost=$SE_HOST
+else
+  echo "WARNING: an SE host has to be specified either with SE_HOST or --se"
+  exitFailure
+fi
+echo "SE host is: $sehost"
+
+if [ -z "$VO" ]; then
+  echo "You need to set VO in SRM-certconfig in order to run the tests"
+  exitFailure
+fi
+
+if [ -z "$S2_TESTS_LOCATION" ]; then
+  echo "You need to set S2_TESTS_LOCATION in SRM-certconfig in order to run the tests"
+  exitFailure
+else
+  export S2_TESTS_LOCATION="$S2_TESTS_LOCATION"
+fi
+
+if [ -z "$LOGS_DIR" ]; then
+  echo "You need to set LOGS_DIR in SRM-certconfig in order to run the tests"
+  exitFailure
+fi
+
+
+
+#########
+# START #
+#########
+
+echo "START `date` "
+echo "------------------------------------------------"
+echo "SE host: $sehost"
+
+####################################
+# Checking if there is valid proxy #
+####################################
+
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+  #nop
+  :
+else
+  echo "Valid proxy is needed for this test!"
+  if [ $ProxyExpired -gt 0 ]; then
+    echo "Proxy credential expired!"
+  fi
+  exitFailure
+fi
+
+####################################
+# Create a directory for log files #
+####################################
+
+cp=`pwd`
+id=`date +%y%m%d%H%M%S`
+if [ -z "$LOGS_DIR" ];then
+  loglocation=${cp}/logs_${id}
+  mkdir -p $loglocation
+else
+  loglocation=${LOGS_DIR}/logs_${id}
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
+  exitFailure
+else
+  echo "Log files will be stored in $loglocation"
+fi
+
+
+########################
+# Launch S2 tests      #
+########################
+
+export S2_LOGS_DIR=$loglocation
+if [ "x$S2" == "xyes" ]; then
+  echo "*Running S2 test set*"
+
+  declare -a tests_failed
+  failed=no
+
+  testdir=./tests
+  tests_list=(SRM-s2-srmv2.2-MoU)
+
+  pushd $testdir >> /dev/null
+
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "SRM test directory is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    ./$item $sehost > $loglocation/${item}_result.txt 2>&1 &
+  
+    # show a rotating dash while command is executing
+    while ps |grep $! &>/dev/null; do
+      echo -en "\b-"
+      sleep 1
+      echo -en "\b\\"
+      sleep 1
+      echo -en "\b|"
+      sleep 1
+      echo -en "\b/"
+      sleep 1
+    done
+  
+    res=$?
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else 
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else
+  echo "*S2 tests skipped"
+fi
+
+
+echo "------------------------------------------------"
+echo "END `date`"
+
+
+#############
+# SAME tests #
+#############
+if [ "x$SAME" == "xyes" ]; then
+  echo "*Running SAME test set*"
+
+  pushd ./tests/SAME/tests >> /dev/null
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "SAME tests direcotry is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
+  tests_list=( SRMv2-get-SURLs SRMv2-ls-dir SRMv2-put SRMv2-ls SRMv2-gt SRMv2-get SRMv2-del )
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    ./$item $sehost > $loglocation/${item}_result.txt 2>&1
+    res=$?
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else
+  echo "*SAME tests skipped"
+fi
+
+
+#########################
+# Analyse tests outcome #
+#########################
+
+if [ "x$failed" == "xyes" ]; then
+
+  echo "TEST_FAILED"
+  echo "The following tests failed:"
+  for item in ${tests_failed[*]}
+  do
+    echo "$item: results in $loglocation/${item}_result.txt"
+  done
+  exit 1
+else 
+  echo "TEST_PASSED"
+  exit 0
+fi
+

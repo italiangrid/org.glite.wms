@@ -1,0 +1,4 @@
+testName: VOMS-pr-genattr
+testAbbr: pr-gattr
+testTitle: voms-proxy-init: Test generic user attributes
+EOT

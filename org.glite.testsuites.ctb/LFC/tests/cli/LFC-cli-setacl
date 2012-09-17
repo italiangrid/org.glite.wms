@@ -1,0 +1,25 @@
+#!/bin/bash
+
+nodeName=$1
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+echo "<pre>"
+export LFC_HOST=$nodeName
+mydir="lfcmkdir$RANDOM"
+mydir2="lfcmkdir$RANDOM"
+echo "Setting the ACLs on /grid/$SAME_VO/$mydir"
+cmd1=`lfc-mkdir /grid/$SAME_VO/$mydir`
+echo "Before:<br>"
+lfc-getacl /grid/$SAME_VO/$mydir
+lfc-setacl -m d:u::7,d:g::7,d:o:7 /grid/$SAME_VO/$mydir
+echo "<br>After:<br>"
+lfc-getacl /grid/$SAME_VO/$mydir
+RETVAL=$?
+cmd1=`lfc-rm -r /grid/$SAME_VO/$mydir 2>/dev/null`
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; echo "<font color="green"> - OK </font>";
+    exit $SAME_OK
+else
+    echo "-TEST FAILED-"; echo "<font color="red"> - FAILED </font>";
+    exit $SAME_ERROR
+fi

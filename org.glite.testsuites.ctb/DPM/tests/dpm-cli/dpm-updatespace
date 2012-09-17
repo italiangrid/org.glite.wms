@@ -1,0 +1,194 @@
+#!/bin/bash
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+source helperFunctions
+
+error=0
+
+export DPNS_HOME="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO"
+TEST_DIR=d`date +%s%N`
+TEST_SUBDIR1=s1`date +%s%N`
+TEST_SUBDIR2=s2`date +%s%N`
+DUMMY_USERNAME=u`date +%s`
+G1=g1`date +%s`
+G2=g2`date +%s`
+
+POOLNAME=pool`date +%s`
+FSNAME1=fs1`date +%s`1
+FSNAME2=fs2`date +%s`1
+
+mkdir -p /tmp/$FSNAME1
+mkdir -p /tmp/$FSNAME2
+
+TOKEN=t`date +%s`
+
+STD_OUT=/tmp/stdout-`date +%s%N`
+STD_ERR=/tmp/stderr-`date +%s%N`
+
+TEMP_FILE=/tmp/_dpm_test_temp`date +%s%N`
+TEST_RESULT="SUCCESS"
+
+testName="Test 1:Update space lifetime (Inf->21mins)"
+
+r_current=0
+dpm-reservespace --gspace 10M --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-reservespace returned $ret:FAILURE"
+   reportOutput dpm-reservespace $STD_OUT $STD_ERR
+   r_current=1
+else
+   the_guid=$(cat $STD_OUT)
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-updatespace --space_token $the_guid --lifetime 1260 >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-updatespace returned $ret:FAILURE"
+      reportOutput dpm-updatespace $STD_OUT $STD_ERR
+      r_current=1
+   else
+      dpm-listspaces --reservation $TOKEN >$STD_OUT 2>$STD_ERR
+      ret=$?
+      if [ $ret -eq 0 ] && grep -q "Lifetime: 0-00:20:" $STD_OUT; then
+         reportComponent "$testName:dpm-updatespace returned 0 and lifetime matches:SUCCESS"
+      else
+         reportComponent "$testName:dpm-updatespace returned 0 but cannot confirm lifetime:FAILURE"
+         reportOutput dpm-listspaces $STD_OUT $STD_ERR
+         r_current=1
+      fi
+   fi
+fi
+
+if [ $r_current -eq 1 ]; then
+   error=1
+fi
+dpm-releasespace --token_desc $TOKEN
+
+
+testName="Test 2:Update guaranteed space size (1M->2M)"
+
+r_current=0
+dpm-reservespace --gspace 1000000 --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-reservespace returned $ret:FAILURE"
+   reportOutput dpm-reservespace $STD_OUT $STD_ERR
+   r_current=1
+else
+   the_guid=$(cat $STD_OUT)
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-updatespace --space_token $the_guid --gspace 2000000 >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-updatespace returned $ret:FAILURE"
+      reportOutput dpm-updatespace $STD_OUT $STD_ERR
+      r_current=1
+   else
+      dpm-listspaces --reservation $TOKEN >$STD_OUT 2>$STD_ERR
+      ret=$?
+      if [ $ret -eq 0 ] && grep -q "CAPACITY: 2.00M" $STD_OUT; then
+         reportComponent "$testName:dpm-updatespace returned 0 and new size matches:SUCCESS"
+      else
+         reportComponent "$testName:dpm-updatespace returned 0 but cannot confirm size:FAILURE"
+         reportOutput dpm-listspaces $STD_OUT $STD_ERR
+         r_current=1
+      fi
+   fi
+fi
+
+if [ $r_current -eq 1 ]; then
+   error=1
+fi
+dpm-releasespace --token_desc $TOKEN
+
+testName="Test 3:Update access group list"
+
+if ( dpns-entergrpmap --group t_group_gid_1 ) && \
+   ( dpns-entergrpmap --group t_group_gid_1/sub_gid_1 ) && \
+   ( dpns-entergrpmap --group t_group_gid_1/sub_gid_1/Role=gid_role_1 ); then
+
+   id1=$[$(dpns-listgrpmap --group t_group_gid_1 | cut -c1-8) + 0]
+   id2=$[$(dpns-listgrpmap --group t_group_gid_1/sub_gid_1 | cut -c1-8) + 0]
+   id3=$[$(dpns-listgrpmap --group t_group_gid_1/sub_gid_1/Role=gid_role_1 | cut -c1-8) + 0]
+
+   dpm-reservespace --gspace 1000000 --token_desc $TOKEN --gid "$id1,$id2" >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-reservespace returned $ret:FAILURE"
+      reportOutput dpm-reservespace $STD_OUT $STD_ERR
+      error=1
+   else
+      dpm-getspacemd --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+      if [ $? -ne 0 ]; then
+         reportComponent "$testName:dpm-getspacemd exited with an error:FAILURE"
+         error=1
+      else
+         if ( grep -q "t_group_gid_1,t_group_gid_1/sub_gid_1" $STD_OUT ) || \
+            ( grep -q "t_group_gid_1/sub_gid_1,t_group_gid_1" $STD_OUT ); then 
+
+             dpm-updatespace --token_desc $TOKEN --gid "-${id1},+${id3}" >$STD_OUT 2>$STD_ERR
+             if [ $ret -ne 0 ]; then
+                reportComponent "$testName:dpm-updatespace returned $ret(+/-usage):FAILURE"
+                reportOutput dpm-updatespace $STD_OUT $STD_ERR
+                error=1
+             else
+                dpm-getspacemd --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+                if [ $? -ne 0 ]; then
+                   reportComponent "$testName:dpm-getspacemd exited with an error:FAILURE"
+                   error=1
+                else
+                   if ( grep -q "t_group_gid_1/sub_gid_1,t_group_gid_1/sub_gid_1/Role=gid_role_1" $STD_OUT ) || \
+                      ( grep -q "t_group_gid_1/sub_gid_1/Role=gid_role_1,t_group_gid_1/sub_gid_1" $STD_OUT ); then
+
+                      reportComponent "$testName:dpm-updatespace OK, GID list verified:SUCCESS"
+                   else
+                      reportComponent "$testName:Newly set GID list does not match(+-):FAILURE"
+                      error=1
+                   fi
+                fi
+             fi
+         else
+            reportComponent "$testName:Original GID list does not match(non+-):FAILURE"
+            error=1
+         fi
+      fi
+   fi
+else
+   reportComponent "$testName:dpm-entergrpmap call(s) failed:FAILURE"
+   error=1
+fi
+
+dpns-rmgrpmap --group t_group_gid_1
+dpns-rmgrpmap --group t_group_gid_1/sub_gid_1
+dpns-rmgrpmap --group t_group_gid_1/sub_gid_1/Role=gid_role_1
+dpm-releasespace --token_desc $TOKEN
+
+
+rm -f $STD_OUT
+rm -f $STD_ERR
+

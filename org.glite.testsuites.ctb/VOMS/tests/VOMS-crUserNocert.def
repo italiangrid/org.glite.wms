@@ -1,0 +1,4 @@
+testName: VOMS-crUserNocert
+testAbbr: crUsrNo
+testTitle: voms-admin: Test "create-user --nousercert DN CA CN MAIL" option
+EOT

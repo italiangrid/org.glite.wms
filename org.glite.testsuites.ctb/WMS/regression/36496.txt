@@ -1,0 +1,20 @@
+Bug: #36496
+Link: https://savannah.cern.ch/bugs/?36496
+Summary: WMProxy Server: any-user does not work
+
+- Consider this /opt/glite/etc/glite_wms_wmproxy.gacl file:
+
+<?xml version="1.0"?>
+<gacl version="0.0.1">
+<entry>
+<any-user/>
+<allow><exec/></allow>
+</entry>
+</gacl>
+
+
+- Restart wmproxy: /opt/glite/etc/init.d/glite-wms-wmproxy restart
+
+- Try to issue some commands (e.g. glite-wms-job-list-match, 
+  glite-wms-job-submit, glite-wms-job-delegate-proxy, etc...) towards that WMS
+  They should succeed considering any proxy

@@ -1,0 +1,306 @@
+#!/bin/bash
+# Date: 01/12/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Test ACL  create default ACL entry  for group                    #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - groupname                                                                         #
+#       - fake user certificate file path                                                   #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+export voms_host=$1
+echo "<pre>"
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+date
+echo "<br>"
+echo "Test VOMS-crDefaltACL"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "group=$GROUP"
+echo "<br>"
+echo "fake user=$USER"
+echo "<br>"
+
+echo $USER_SUBJECT
+echo $USER_ISSUER
+
+ACE_RIGHTS=( CONTAINER_READ MEMBERSHIP_READ ACL_READ REQUESTS_READ ATTRIBUTES_READ CONTAINER_WRITE MEMBERSHIP_WRITE ACL_WRITE REQUESTS_WRITE ATTRIBUTES_WRITE ACL_DEFAULT ALL )
+
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+# Discover the subject of the user running the tests using the proxy
+EXEC_USER_SUBJECT=$(voms-proxy-info -identity -dont-verify-ac)
+if [ $? == 1 ]; then
+    echo "Cannot discover the subject of the user running the test. voms-proxy-info returned an error.Skipping the test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+# Discover the issuer for this user (this user should be granted ALL rights for the top group)
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name > $voms_tmp
+if [ $? == 1 ]; then
+    echo "Cannot fetch ACL for top group. Skipping test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+EXEC_USER_ISSUER=$(grep "$EXEC_USER_SUBJECT" $voms_tmp | head -1 | cut -f 2 -d ',' | cut -f 1 -d ')')
+if [ -z "$EXEC_USER_ISSUER" ]; then
+    echo "Cannot find the CA subject. Skipping the test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Starting the test..."
+echo "Executed by: $EXEC_USER_SUBJECT, $EXEC_USER_ISSUER"
+
+echo "<br>SCENARIO: empty VO"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host add-default-ACL-entry "/"$vo_name"/"$GROUP $USER ALL > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Adding default ACE for non-existing group did not generate an error."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create group <$GROUP> and set up a default ACL list for it"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
+
+echo "Add an ACE in the default ACL list of /$vo_name/$GROUP for the user executing the test"
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-default-ACL-entry "/"$vo_name"/"$GROUP "$EXEC_USER_SUBJECT" "$EXEC_USER_ISSUER" ALL
+
+for ind in 0 1 2 3 4 5 6 7 8 9 10 11
+do
+ OP=${ACE_RIGHTS[ind]}
+
+ echo "<br>Create default ACL entry with right $OP for user $USER_SUBJECT and context /$vo_name/$GROUP"
+ voms-admin --vo=$vo_name --host $voms_host add-default-ACL-entry "/"$vo_name"/"$GROUP $USER $OP
+
+ echo -n "<br>Check whether the right is properly set..."
+ voms-admin --vo=$vo_name --host $voms_host get-default-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+
+ SET_PERM_LIST=$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+ if [ "$SET_PERM_LIST" != "$OP" ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "FAILED"
+    echo "<br>Error in creating an ACE in the default ACL with right $OP"
+    echo "<br>Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+ fi
+ echo "OK"
+
+ echo "<br>Create a subgroup and check its ACL"
+ voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP"/"default_test
+
+ echo -n "<br>Check whether the right is set in the ACL of the child..."
+ voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP"/"default_test > $voms_tmp
+
+ SET_PERM_LIST=$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+ if [ "$SET_PERM_LIST" != "$OP" ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/default_test
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "FAILED"
+    echo "<br>Default ACL not copied in the child's ACL"
+    echo "<br>Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+ fi
+ echo "OK"
+
+ #Remove the child for the next iteration.
+ voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/default_test
+
+done
+
+echo "<br>SCENARIO: Check ACE with multiple rights set"
+echo "<br>"
+
+for ind in 1 2 3 4 5 6 7 8 9 10
+do
+ IFS=,
+ OP="${ACE_RIGHTS[*]:0:$ind}"
+
+ echo "<br>Create default ACL entry with rights $OP for user $USER_SUBJECT and context /$vo_name/$GROUP"
+ voms-admin --vo=$vo_name --host $voms_host add-default-ACL-entry "/"$vo_name"/"$GROUP $USER "$OP" 
+
+ echo -n "<br>Check whether the rights are properly set..."
+ voms-admin --vo=$vo_name --host $voms_host get-default-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+
+ SET_PERM_LIST="$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")"
+
+ for CURRENT_PERM in $SET_PERM_LIST; do
+    j=0
+    FOUND="no"
+
+    while [ $j -lt $ind ]; do
+       if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+          FOUND="yes"
+          break
+       fi
+       j=$[$j+1]
+    done
+
+    if [ "$FOUND" = "no" ]; then
+       voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP
+       echo "FAILED"
+       echo "<br>Permission $CURRENT_PERM should not be set but it is."
+       echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+       echo "<br>Test has failed."
+       echo "<br>"
+       exit $SAME_ERROR
+    fi
+
+  j=0
+  while [ $j -lt $ind ]; do
+
+     FOUND="no"
+     for CURRENT_PERM in $SET_PERM_LIST; do
+        if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+           FOUND="yes"
+           break
+        fi
+     done
+
+     if [ "$FOUND" = "no" ]; then
+        voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP
+        echo "FAILED"
+        echo "<br>Permission ${ACE_RIGHTS[$j]} should be set but it is not."
+        echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+        echo "<br>Test has failed."
+        echo "<br>"
+        exit $SAME_ERROR
+     fi
+  
+     j=$[$j+1]
+  done
+ done
+
+ echo "OK"
+
+ echo "<br>Create a subgroup and check its ACL"
+ voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP"/"default_test
+
+ echo -n "<br>Check whether the right is set in the ACL of the child..."
+ voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP"/"default_test > $voms_tmp
+
+ SET_PERM_LIST="$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")"
+
+ for CURRENT_PERM in $SET_PERM_LIST; do
+    j=0
+    FOUND="no"
+
+    while [ $j -lt $ind ]; do
+       if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+          FOUND="yes"
+          break
+       fi
+       j=$[$j+1]
+    done
+
+    if [ "$FOUND" = "no" ]; then
+       voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP"/"default_test
+       voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP
+       echo "FAILED"
+       echo "<br>Permission $CURRENT_PERM should not be set but it is."
+       echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+       echo "<br>Test has failed."
+       echo "<br>"
+       exit $SAME_ERROR
+    fi
+
+  j=0
+  while [ $j -lt $ind ]; do
+
+     FOUND="no"
+     for CURRENT_PERM in $SET_PERM_LIST; do
+        if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+           FOUND="yes"
+           break
+        fi
+     done
+
+     if [ "$FOUND" = "no" ]; then
+        voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP"/"default_test
+        voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP
+        echo "FAILED"
+        echo "<br>Permission ${ACE_RIGHTS[$j]} should be set but it is not."
+        echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+        echo "<br>Test has failed."
+        echo "<br>"
+        exit $SAME_ERROR
+     fi
+
+     j=$[$j+1]
+  done
+ done
+
+ echo "OK"
+
+ voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/default_test
+
+done
+
+echo "<BR>SCENARIO: Try to create an ACL entry for an unknown operation"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host=$voms_host add-ACL-entry "/"$vo_name"/"$GROUP $USER "lllist" 2> $voms_stderr
+grep "ValueError: lllist is not a supported VOMSPermission" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host=$voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

@@ -1,0 +1,212 @@
+#!/bin/bash
+
+#########################################################
+# Script for testing FTS services (BDII , List channels)#
+#########################################################
+# 							                            #	
+# Returned values:					                    #
+#							                            #
+#                 Exit  0: Test Passed			        #
+#		          Exit  1: Test Failed			        #
+#                 Exit  2: Wrong Input  		        #
+#							                            #
+#########################################################
+
+showUsage ()
+{
+ echo "Usage:   FTS-services --site <site name> [--bdii <bdii hostname> --fts <fts hostname>] "
+ echo "Options:                                                                                               "
+ echo "  obligatory:                                                                                          "
+ echo "          --site  <site name>                                                                          "
+ echo "                   The hostname of the site hosting the FTS server as it stored in the GOC DB and information system.             "
+ echo "                                                                                                       "
+ echo "  optional:                                                                                            "
+ echo "          --bdii  <bdii hostname>                                                                      "
+ echo "                   The hostname of the top level BDII. The default is lcg-bdii.cern.ch                     "
+ echo "          --fts  <fts hostname>                                                                      "
+ echo "                   The hostname of the fts to test. The default is the one found in the top level BDII     "
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+
+     --site)
+           if [ -z "$2" ]; then
+		shift 1
+           else
+		SITE_NAME=$2
+                shift 2
+           fi
+     ;;
+
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOSTNAME=$2
+                shift 2
+           fi
+     ;;
+
+
+
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+if [ -z "$SITE_NAME" ]; then
+   echo ""
+   echo ">>> NOTE: Site name is not specified. Option --site <site hostname> is obligatory! <<<"
+   showUsage
+   exit 2
+fi
+
+if [ -z "$BDII_HOST" ]; then
+   BDII_HOST=lcg-bdii.cern.ch
+fi
+
+
+######################################################################
+# >>>> NOTE:  Hardcoded port for top level BDII !!! <<<<
+######################################################################
+
+BDII_PORT=2170
+
+################################
+# Checks if there is valid proxy
+################################
+
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi
+         echo "-TEST FAILED-"
+         exit 1
+fi
+
+#####################
+# Exporting variables
+#####################
+
+echo ""
+echo "Exporting variables..."
+echo ""
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+##############################################################################
+# Getting Tomcart Port and FTS Server hostname from top level BDII: $BDII_HOST
+##############################################################################
+
+unset $GLITE_SD_SITE
+
+FTS_URL=`glite-sd-query -s $SITE_NAME -t org.glite.FileTransfer 2>/dev/null | grep Endpoint | sed -e 's/Endpoint://g'`
+FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
+
+if [ -z "$FTS_HOST" ]; then
+   echo ""
+   echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
+   echo "-TEST FAILED-"
+   exit 1
+fi 
+
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'
+
+if [ -n "$FTS_HOSTNAME" ]; then
+   if [ $FTS_HOST != $FTS_HOSTNAME ]; then
+      echo ">>> NOTE: The FTS host found in the BDII ($FTS_HOST) does not correspond to the one provided"
+      FTS_HOST=$FTS_HOSTNAME
+   fi
+fi
+
+
+echo ""
+echo "Using FTS Server: $FTS_HOST"
+echo ""
+echo "Using Site Name: $SITE_NAME"
+echo ""
+echo "Using BDII: $BDII_HOST"
+echo ""
+
+
+##########################################################
+# Checks if there is error message while listing channels
+##########################################################
+
+#glite-transfer-channel-list 1>/dev/null 2>message
+glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 1>/dev/null 2>message
+
+
+result=`cat message | grep Fail | wc -l`
+
+if [ $result -eq 0 ]; then
+	echo "Listing FTS channels"
+	echo ""
+
+	glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v
+      
+        Channel_List=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement`
+        
+        echo ""
+        echo "Listing FTS channels information"
+        echo ""
+        
+        for Channel_Name in $Channel_List
+        do
+         echo ""
+         glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name 2>message
+         result=`cat message|wc -l`
+         if [ $result -gt 0 ]; then 
+            echo ">>> NOTE:  `cat message`."
+            echo ">>> NOTE: `glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v | grep \"Service features:\" | sed -e 's/#//g'`"
+         break 
+         fi
+         echo ""
+	done
+
+	echo ""
+	echo "FTS Test: Passed."
+	echo ""
+        exit 0
+else
+	echo ">>> NOTE: `cat message`"
+	echo ""
+	echo "FTS Test: Failed."
+	echo "-TEST FAILED-"
+        exit 1
+fi
+
+

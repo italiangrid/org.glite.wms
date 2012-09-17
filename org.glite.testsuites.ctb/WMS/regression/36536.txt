@@ -1,0 +1,29 @@
+Bug: #36536
+Link: https://savannah.cern.ch/bugs/?36536
+Summary: The glite wms purge storage library should rely on LBProxy while
+logging CLEAR events
+
+  - submit a normal job
+  
+  - wait until it is finished successfully
+
+  - retrieve the job record from mysql LBProxy DB, say it jobid=https://devel17.cnaf.infn.it:9000/hLrG4YYebvYB0xsrPO4q8A:
+
+      mysql> select * from jobs where jobid like '%hLrG4YYebvYB0xsrPO4q8A%';
+      +------------------------+-----------------------------------------+----------------------------------+-------+
+      | jobid                  | dg_jobid | userid   | aclid |
++------------------------+------------------------------------------------+----------------------------------+-------+
+| hLrG4YYebvYB0xsrPO4q8A |https://devel17.cnaf.infn.it:9000/hLrG4YYebvYB0xsrPO4q8A |a3d13ba09b1f539f1f8216f4e05777f8 | NULL  |
++------------------------+------------------------------------------+----------------------------------+-------+
+      1 row in set (0.09 sec)
+     mysql>
+
+  - perform a glite-wms-job-output on the jobid:
+     glite-wms-job-output https://devel17.cnaf.infn.it:9000/hLrG4YYebvYB0xsrPO4q8A
+
+  - make sure the job record was deleted from the LBProxy DB:
+    mysql> select * from jobs where jobid like '%hLrG4YYebvYB0xsrPO4q8A%';
+    Empty set (0.09 sec)
+
+
+

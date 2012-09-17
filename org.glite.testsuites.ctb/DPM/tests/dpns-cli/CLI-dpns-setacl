@@ -1,0 +1,119 @@
+#!/bin/bash
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+export DPNS_HOME="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO"
+TEST_DIR=d`date +%s%N`
+TEST_SUBDIR1=s1`date +%s%N`
+TEST_SUBDIR2=s2`date +%s%N`
+DUMMY_USERNAME=u`date +%s%N`
+DUMMY_GROUPNAME=g`date +%s%N`
+TEMP_FILE=/tmp/_dpm_test_temp`date +%s%N`
+TEST_RESULT="SUCCESS"
+
+cleanup ()
+{
+   dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chmod 777\
+             $DPNS_HOME/$TEST_DIR/bash_copy_1"
+   lcg-del --nolfc srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/bash_copy_1
+   dpns-rm -r $TEST_DIR
+   rm -f $TEMP_FILE
+}
+
+report_failure ()
+{
+   echo 
+   echo "OVERALL RESULT: FAILURE"
+   exit 1
+}
+
+dpm_exec ()
+{
+   ssh root@"$DPM_HOST" "$1"
+}
+
+echo "Creating directory $TEST_DIR/$TEST_SUBDIR1"
+dpns-mkdir -p $TEST_DIR/$TEST_SUBDIR1/$TEST_SUBDIR2
+
+echo "Copying a file in $TEST_DIR/$TEST_SUBDIR1"
+lcg-cp /bin/bash srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/bash_copy_1
+
+echo
+echo -n "Looking up owning user id: "
+OWNER_UID=$(dpns-ls -l $DPNS_HOME/$TEST_DIR | \
+            grep bash_copy_1 | \
+            sed -e 's/[rwxd-]*\s*[0-9]*\s*\([0-9]*\)\s*.*/\1/')
+echo $OWNER_UID
+
+echo
+echo -n "Getting the subject corresponding to the owner user id: "
+OWNER_USERNAME=$(dpns-listusrmap --uid $OWNER_UID | \
+                 sed -e 's/\s*[0-9]*\s*//')
+echo $OWNER_USERNAME
+
+echo "Scenario 1: Test custom ACLs."
+echo "Adding custom ACE for the user executing the test for bash_copy_1"
+dpns-setacl -m u:$OWNER_UID:rwx,m::rwx $DPNS_HOME/$TEST_DIR/bash_copy_1
+ret=$?
+if [ $ret -ne 0 ]; then
+   echo "dpns-setacl exited with code $ret. Test has failed"
+   cleanup
+   report_failure
+fi
+
+echo "Checking the ACL using dpns-getacl"
+dpns-getacl $DPNS_HOME/$TEST_DIR/bash_copy_1 >$TEMP_FILE
+ret=$?
+if [ $ret -ne 0 ]; then
+   echo "dpns-getacl exited with code $ret. Test has failed"
+   cleanup
+   report_failure
+fi
+
+if ! grep -q "^user:$OWNER_USERNAME:rwx" $TEMP_FILE; then
+   echo "dpns-getacl does not display the new ACE. Test has failed."
+   cleanup
+   report_failure
+fi
+
+echo "Changing owners and standard access control properties"
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chown root:root \
+          $DPNS_HOME/$TEST_DIR/bash_copy_1; \
+          /opt/lcg/bin/dpns-chmod 770 $DPNS_HOME/$TEST_DIR/bash_copy_1;"
+
+echo "Trying to access the file with the help of the custom ACE"
+lcg-cp srm://$DPNS_HOST/$DPNS_HOME/$TEST_DIR/bash_copy_1 /$TEMP_FILE
+if [ $? -ne 0 ]; then
+   echo "Custom ACE does not grant access to the executing user. Failure"
+   cleanup
+   report_failure
+fi
+
+cleanup
+echo
+echo "OVERALL RESULT: SUCCESS"
+exit 0
+
+
+
+

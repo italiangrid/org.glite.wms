@@ -1,0 +1,228 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+# 18.11.2009
+# AUTHORS: Victor Galaktionov, JINR/CERN 
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS channel add operation
+
+showUsage()
+{
+ echo "Usage: FTS-channel-add --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function special-check-channel-add()
+{
+    echo "special-check-channel-add($1, $2, $3)"
+
+    local CHANNEL=$1
+
+    echo "1. glite-transfer-channel-add  -h"
+    glite-transfer-channel-add  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-add -h - failure"
+    return 1
+    fi
+
+
+    echo "2. glite-transfer-channel-add  -V"
+    glite-transfer-channel-add  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-add -V - failure"
+    return 1
+    fi
+
+    echo "3. glite-transfer-channel-add -q https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D"
+    glite-transfer-channel-add  -q #-s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-add -q - failure"
+    return 1
+    fi
+
+    echo "4. glite-transfer-channel-add -q"
+    glite-transfer-channel-add  -q
+    if [ $? == 0 ]; then
+        echo "glite-transfer-channel-add -q -  failure"
+        return 1
+    fi
+    return 0
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-add()
+{
+    echo "channel-add($1)"
+    if [ -z $1 ]; then
+         echo "Channel name must be given to channel-add()"
+     return 1
+    fi
+    
+    local CHANNEL=$1
+    local BANDWIDTH=10
+    local CONTACT="my.contact@cern.ch"
+    local STATE=Stopped
+    local STREAMS=2
+    local FILES=2
+    local THROUGHPUT=10
+    local SITE_S=SITEA
+    local SITE_D=SITEB
+    localNOTAUTH="You are not authorised"
+    
+    echo "1. Add channel: --verbose -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D"
+    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement --verbose \
+    -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D  2> message
+    if [ $? != 0 ]; then
+        cat message 
+    return 1
+    fi
+    echo "OK"
+
+    echo "2. Check added channel"
+    glite-transfer-channel-list  -x -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+    echo "Failure in checking  glite-transfer-channel-list"
+    cat message
+    return 1
+    fi
+    declare -a OPTIONS
+    OPTIONS=( $CHANNEL $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT)
+
+    for item in ${OPTIONS[*]}
+    do
+        grep $item message > /dev/null
+        if [ $? != 0 ]; then
+            echo "Noncorrect add channel"
+            return 1
+        fi
+    done
+    echo "OK"
+
+    echo "3. Check channel adding for existing channel"
+    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL  $SITE_S $SITE_D 2> message
+    if [ $? == 0 ]; then
+    echo "Failure in adding new channel"
+    return 1
+    fi
+    grep "already exists" message
+    if [ $? != 0 ]; then
+    echo "Failure in checking  glite-transfer-channel-list"
+    cat message
+    return 1
+    fi
+    echo "OK"
+    return 0
+}
+
+if [ $# -lt 4 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     *)
+          shift 1
+     ;;
+  esac
+done
+echo $FTS_HOST
+#0.1) Check for valid proxy
+if [ $FTS_HOST != "localhost" ]; then
+  ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+  ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+  if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+           echo ""
+           echo "Using proxy from: $X509_USER_PROXY"
+  else
+           echo ""
+           echo ">>> NOTE: Valid proxy is needed for this test!"
+           echo ""
+           if [ $ProxyExpired -gt 0 ]; then
+              echo ">>> NOTE: Proxy credential expired!"
+           fi
+           echo "-TEST FAILED-"
+           exit 1
+  fi
+fi
+
+echo "1) Test if channel exists"
+
+channel-exists $CHANNEL
+
+if [ $? != 0 ]; then
+    echo "Channel is not exists, create it"
+    channel-add $CHANNEL 
+    if [ $? != 0 ]; then
+	echo "Add channel - failed"
+	exit 1
+    fi        
+fi
+
+
+echo "Check special parameters for add channel command"
+special-check-channel-add $CHANNEL $SITE_A $SITE_B
+
+if [ $? != 0 ]; then
+    echo "Add channel - failed"
+    exit 1
+fi     
+
+echo "Drop channel"
+channel-drop $CHANNEL
+if [ $? != 0 ]; then
+    echo "Channel is not dropped"
+    exit 1
+fi
+echo "OK"
+
+echo "-TEST PASSED-"
+exit 0

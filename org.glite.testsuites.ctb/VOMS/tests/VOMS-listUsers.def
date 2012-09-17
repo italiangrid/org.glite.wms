@@ -1,0 +1,4 @@
+testName: VOMS-listUsers
+testAbbr: lstUsr
+testTitle: voms-admin: Test "list-users" option
+EOT

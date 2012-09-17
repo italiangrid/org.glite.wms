@@ -1,0 +1,4 @@
+testName: VOMS-pr-list
+testAbbr: pr-lst
+testTitle: voms-proxy-init: Test "list" option
+EOT

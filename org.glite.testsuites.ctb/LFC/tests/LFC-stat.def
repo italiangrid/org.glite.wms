@@ -1,0 +1,4 @@
+testName: LFC-stat
+testAbbr: LFCstat
+testTitle: get information about a LFC file or directory in the name server (lfc_stat) 
+EOT

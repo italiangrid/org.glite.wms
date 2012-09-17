@@ -1,0 +1,4 @@
+testName: LFC-unlink
+testAbbr: LFCunl
+testTitle: remove a LFC file entry in the name server (lfc_unlink) 
+EOT

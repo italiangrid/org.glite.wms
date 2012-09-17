@@ -1,0 +1,4 @@
+testName: VOMS-pr-hours
+testAbbr: pr-hrs
+testTitle: voms-proxy-init: Test "hours HOURS" option
+EOT

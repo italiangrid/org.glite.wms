@@ -1,0 +1,17 @@
+#!/bin/sh
+#output_dir
+#exit_code
+#exit_status
+#report_name
+#jdl
+
+if [ $exit_code -eq -2  ]; then
+	#log "too many iterations" # were we testing a stuck status? this is up to the application
+	report_line "$jdl" "yellow" "$report_name"
+elif [ $exit_code -ne 0 ]; then
+	#log "failed"
+	report_line "$jdl" "red" $report_name
+else
+	#log "success"
+	report_line "$jdl" "green" $report_name
+fi

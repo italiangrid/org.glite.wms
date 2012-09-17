@@ -1,0 +1,89 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andreas Unterkircher, CERN
+#
+##############################################################################
+
+test_bug32808_pre () {
+ if [ -z "${CLASSIC_SE}" ]; then
+  echo "Please define CLASSIC_SE"
+  return ${REGTEST_FAIL}
+ fi
+ if [ -z "${VO}" ]; then
+  echo "VO not defined"
+  return ${REGTEST_FAIL}
+ fi
+ return ${REGTEST_OK}
+}
+
+test_bug32808_post () {
+ rm -f ${LOCAL_FILE}
+ rm -f ${LOCAL_FILE_CP}
+ unset LOCAL_FILE
+ unset LOCAL_FILE_CP
+ unset LFN
+}
+
+test_bug32808 () {
+
+uni_pid=$$
+uni_time=`date +%s`
+name="$uni_pid$uni_time"
+
+LOCAL_FILE=${TMPDIR-/tmp}/bug32923.$$
+LOCAL_FILE_CP=${TMPDIR-/tmp}/bug32923cp.$$
+LFN="lfn:/grid/${VO}/$name"
+
+echo "$name" >> $LOCAL_FILE
+
+rm -f ${LOCAL_FILE_CP}
+
+command="lcg-cr --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${CLASSIC_SE}"
+message="Running lcg-cr with a classic SE"
+run_command "${command}" "${message}"
+
+if [ $? -ne ${REGTEST_OK} ]; then
+ return ${REGTEST_FAIL}
+fi
+
+command="lcg-cp --vo ${VO} ${LFN} file:${LOCAL_FILE_CP}"
+message="Running lcg-cp with classic SE"
+run_command "${command}" "${message}"
+
+if [ $? -ne ${REGTEST_OK} ]; then
+ return ${REGTEST_FAIL}
+fi
+
+if [ ! -f ${LOCAL_FILE_CP} ]; then
+ echo "lcg-cp failed, file has not been downloaded"
+ return ${REGTEST_FAIL}
+fi
+
+command="lcg-del -a --vo ${VO} ${LFN}"
+message="Running lcg-del"
+run_command "${command}" "${message}"
+
+if [ $? -ne ${REGTEST_OK} ]; then
+ return ${REGTEST_FAIL}
+fi
+
+return $REGTEST_OK
+
+}

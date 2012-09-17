@@ -1,0 +1,4 @@
+testName: LFC-getreplica
+testAbbr: LFCgetrep
+testTitle: Get the replica entries associated with a LFC file in the name server
+EOT

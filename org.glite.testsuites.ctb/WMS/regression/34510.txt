@@ -1,0 +1,26 @@
+Bug: #34510
+Link: https://savannah.cern.ch/bugs/?34510
+Summary: When a collection is aborted the "Abort" event should be logged for
+the sub-nodes as well
+
+- set the "ExpiryPeriod" parameter in the glite_wms.conf configuration file to
+  a very low value, such as the following:
+     ExpiryPeriod  =  2;
+
+- overload the wms, by submitting several collections sequentially, like for
+  example: 10 collections by 100 nodes 
+
+- check the jobstatus of the last submitted collections and keep submitting until the
+  status of the parent node is aborted because of the following:
+
+*************************************************************
+ BOOKKEEPING INFORMATION:
+
+ Status info for the Job : https://devel17.cnaf.infn.it:9000/qQe68ESYiRNDNXZPNsG-AA
+ Current Status:     Aborted
+ Status Reason:      request expired
+ Submitted:          Wed Jul 30 11:23:49 2008 CEST
+
+*************************************************************
+
+- stop submitted and check the status of all the children nodes is aborted as well

@@ -1,0 +1,24 @@
+[
+  nodes = {
+               [
+                 file = "data/example.jdl";
+               ],
+               [
+                 file = "data/example.jdl";
+               ],
+               [
+                 file = "data/example.jdl";
+               ],
+               [
+                 file = "data/example.jdl";
+               ],
+               [
+                 file = "data/example.jdl";
+               ]
+                                                                                                                       
+          };
+          SignificantAttributes = { "requirements", "rank" };
+          Type = "Collection";
+          VirtualOrganisation = "dteam";
+]
+

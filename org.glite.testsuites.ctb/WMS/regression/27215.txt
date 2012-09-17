@@ -1,0 +1,36 @@
+Bug: #27215
+Link: https://savannah.cern.ch/bugs/?27215
+Summary: WM to set the maximum output sandbox size
+
+- Set the parameter MaxOutputSandboxSize in the WorkloadManager
+  section of the configuration file /opt/glite/etc/glite_wms.conf
+  on the WMS to 100 and restart the workload manager.
+
+- Submit the jdl: 27215 jdl
+
+- When Done retrieving the output files, this should be the result
+  of an ls -l of the output dir:
+
+-rw-rw-r--  1 ale ale 30 Jul  8 16:02 out1.tail
+-rw-rw-r--  1 ale ale 70 Jul  8 16:02 out2
+-rw-rw-r--  1 ale ale  0 Jul  8 16:02 test.err
+-rw-rw-r--  1 ale ale  0 Jul  8 16:02 test.out
+
+Bug: #47447
+Link: https://savannah.cern.ch/bugs/?47447
+Summary: Cream doesn't handle the jdl parameter MaxOutputSandboxSize.
+
+- Like before set parameter MaxOutputSandboxSize in the WorkloadManager
+  section of the configuration file /opt/glite/etc/glite_wms.conf
+  on the WMS to 100 and restart the workload manager and _ice_.
+
+- Submit the jdl: 27215 jdl
+
+- When Done retrieving the output files, this should be the result
+  of an ls -l of the output dir:
+
+-rw-rw-r--  1 ale ale 50 Oct  8 10:27 out1
+-rw-rw-r--  1 ale ale 50 Oct  8 10:27 out2
+-rw-rw-r--  1 ale ale  0 Oct  8 10:27 test.err
+-rw-rw-r--  1 ale ale  0 Oct  8 10:27 test.out
+

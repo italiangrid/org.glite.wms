@@ -1,0 +1,82 @@
+#!/usr/bin/python
+'''
+This test gets the version of the service.
+If version >= "2.2.0" test gets available Tranfer Protocols.
+Following Wmproxy Methods are included in the test:
+getVersion
+getTransferProtocol
+The WMProxy_HOST name is obligatory commandline argument.
+Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
+
+'''
+def version (url):
+ client = Wmproxy(url)
+ try:
+    protocolVersion=client.getVersion()
+    fmsg.write("\n   |   OK   |  getVersion")  
+    flog.write( "\n========== OK  protocol version = " + protocolVersion +"===========\n")
+ except :
+       flog.write( "======= FAILED  Connection refused==========================\n")
+       flog.write( "\n\n**************** test getversion is ERROR *******************")
+       fmsg.write("\n   |  ERR   |  getVersion")
+       flog.close()
+       return 1
+ if ( protocolVersion >= "2.2.0" ) :
+    try:
+       TransferProtocols = client.getTransferProtocols()
+       fmsg.write("\n   |   OK   |  getTransferProtocol")
+       flog.write( "======= OK  get available Tranfer Protocols: ======== \n")
+       for line in TransferProtocols :
+                   flog.writelines("   " + line + "    ")
+#       flog.write( "======= OK  get available Tranfer Protocols:" + TransferProtocols + "======== \n")
+    except :
+       flog.write( "======= ERROR the getTransferProtocols service dosn't available======= \n")
+       fmsg.write("\n   |  ERR   |  getTransferProtocol")
+       flog.write( "\n\n**************** test getversion is ERROR *******************")
+       flog.close() 
+       return 1
+ flog.write( "\n\n**************** test getversion is OK *******************")
+ return 0
+if __name__=='__main__':
+    import sys
+    import os
+    import re
+    from datetime import *
+#    sys.path.append("/opt/fpconst/lib/python2.3/site-packages")
+#    fpconstpath = sys.argv[2]
+#    sys.path.append(fpconstpath)
+    import fpconst
+    from wmproxymethods import *
+    import SOAPpy  #Error Type
+    node = sys.argv[1]
+    scname = sys.argv[0]
+    m = re.search('(?<=/)\w+',scname )
+    script_name =  m.group(0)
+#    script_name = sys.argv[0]
+    fmsg = open('std.log','w')
+    flog =open ('std.tmp','w')
+    fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
+    datetime_now = datetime.now().isoformat(' ')
+    fmsg.write("     time is   " + datetime_now + "\n")
+    flog.write( "\n\n##################################################################################")
+    flog.write( "\n==================== script name is getversion ==========================\n")
+    flog.write( "WmProxy_host: " + node + "\n" )
+#    url=  "https://lxb2054.cern.ch:7443/glite_wms_wmproxy_server"
+    url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
+    out = version(url)
+    flog = open("std.tmp","r")
+    while flog:
+              line = flog.readline()
+              fmsg.write(line)
+              if not line:
+                         break
+    fmsg.close()
+    flog.close()
+    fmsg = open('std.log','r')
+    sfile= fmsg.read()
+    print sfile
+    os.remove("std.tmp")
+    os.remove("std.log")
+    fmsg.close()
+#    sys.exit(version (url))
+    sys.exit(out)

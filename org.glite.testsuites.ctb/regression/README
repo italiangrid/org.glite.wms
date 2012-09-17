@@ -1,0 +1,75 @@
+How to use the regTest script
+=============================
+Author: Andreas Unterkircher
+
+Directory structure:
+-------------------
+. 
+contains the main regTest.sh script
+
+bugs/
+contains regressions tests for the bugs. Every regression test has to be in a file named bug<bugnr> where <bugnr> is the bug number in Savannah.
+
+native/
+Source code for bugs that need binary tests.
+
+config/
+general configuration for the regTest script:
+config.sh: global variables used by the regTest script and bug<bugnr> functions
+commonFunctions.sh: functions that can be used in regression tests
+These two files are sourced at the beginning of a regTest run.
+
+testlists/
+list of regression tests to be done in one go
+
+How to run regression tests
+---------------------------
+Prepare a file <filename>.txt in testlist/ for the bugs you want to run regression tests. Every line of this file contains just the number of one bug to test. Lines starting with "#" are ignored. Have a look at lcg_util-standard.txt" as an example. Executing the command "./regTest.sh --testlist testlists/lcg_util-standard.txt" for every number bugnr found in lcg_util-list.txt regTest looks for a corresponding file bug<bugnr> in the directury bugs/. 
+In addition to <filename>.txt a file <filename>.sh has to exist in testlist/ and regTest.sh will source this file before executing the tests in <filename>.txt. This file can be used to define some special variables needed for the tests defined in <filename>.txt.
+The regression test file bugs/bug<bugnr> for bug <bugnr> must contain three functions:
+
+test_bug<bugnr>_pre
+test_bug<bugnr>_post
+test_bug<bugnr>
+
+regTest first executes test_bug<bugnr>_pre, then test_bug<bugnr> and finally test_bug<bugnr>_post. The test_bug<bugnr>_pre function is used to check for the prerequisites of the test (e.g. if certain environment variables are set), test_bug<bugnr> contains the test, and test_bug<bugnr>_post is used to do a clean up (e.g. delete files, unset variables). 
+
+Examples:
+
+./regTest.sh --testlist testlists/lcg_util-standard.txt or ./regTest.sh --tl testlists/lcg_util-standard.txt
+
+This runs all the tests listed in lcg_util-standard.txt. Before running them it sources the file testlists/lcg_util-standard.sh.
+
+./regTest.sh --pretestlist testlists/lcg_util-standard.txt or ./regTest.sh --ptl testlists/lcg_util-standard.tx
+
+This runs only the test_bug<bugnr>_pre functions. Useful to find out about missing prerequisites for the tests.
+
+./regTest.sh
+
+Displays the usage.
+
+At the end of the regTest run a summarizing message is being displayed. If any test failed regTest exits with REGTEST_EXIT_FAIL, otherwise the exit status is REGTEST_EXIT_OK (these variables are defined in config/config.sh).
+
+How to write a regression test
+------------------------------
+To write a regression test for bug <bugnr> place a file bug<bugnr> in the directury bugs/. This file must contain 3 functions:
+
+test_bug<bugnr>_pre
+test_bug<bugnr>_post
+test_bug<bugnr>
+
+regTest first executes test_bug<bugnr>_pre, then test_bug<bugnr> and finally test_bug<bugnr>_post. The main test should be contained in test_bug<bugnr>. The pre and post function can be used to set up resp. clean certain things specific for the test. In particular you should unset resp. restore any variables that were set in the main test with the post function. The pre function should also be used to test the existence of variables that are set up in the *.sh file (in testlists/ and corresponding to the *txt file) of this test run. 
+Use the file bugs/bug1 as a template and look at other files in bugs/ to get an idea on how to write tests. Use the return values REGTEST_OK, REGTEST_FAIL and REGTEST_TIMEOUT_ERROR.
+Finally add the bug number to an already existing *.txt file in testlists/ or create a new file. If necessary also create a corresponding *.sh file. The *.txt should group together tests that may be executed on the same node. E.g. the lcg_util-standard.txt contains tests that can be executed on a UI or WN as they test the lcg_utils.
+
+Use the return values REGTEST_OK and REGTEST_FAIL.
+
+Some utility functions are provided in config/commonFunctions.sh:
+
+regtest_timeout
+run_command_timeout
+unique_name
+run_command
+
+Look at bugs/bug1 or any other file in bugs/ for examples on how to use them.
+

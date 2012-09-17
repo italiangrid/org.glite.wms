@@ -1,0 +1,128 @@
+--- VOBOX TEST SCRIPT ---
+
+Description
+-----------
+The VOBOX test script (lcg_vobox_test.pl) is a Perl script that performs
+some checks to verify the correct functioning of the VOBOX.
+The script has been derived from an existing script developed for
+the ALICE VO.
+
+The tests that are performed are:
+  1- the proxy renewal service is up and running
+  2- the user proxy registration mechanism is up and working
+  3- the machine is properly defined within the myproxy server and that connections 
+     with BDII are properly established
+  4- the proxy of the machine is up and running
+  5- the delegation procedure is working properly
+  6- the access to the software area is guaranteed 
+
+Setting up the VOBOX
+--------------------
+In order to install and configure properly a VOBOX for patch certification purposes,
+the following steps must be done:
+
+- Register the VOBOX into the MyProxy server
+Edit /etc/myproxy-server.config on the CTB MyProxy host, if you do not
+have access to it, ask Louis.Poncet@cern.ch in order to include your VOBOX machine among the authorized renewers and retrievers.
+
+- Install and configure a VOBOX node
+On a virtual machine of the VTB, install the CAs (lcg-CA), set hostkey and 
+hostcert correctly, then download the glite-VOBOX.repo file and install the VOBOX 
+(glite-VOBOX).
+The variable that must be set in the site-info.def file in order to 
+configure the VOBOX with yaim are the following:
+PX_HOST
+VOBOX_HOST
+BDII_HOST
+SITE_BDII_HOST
+LB_HOST
+
+Configure the VOBOX with yaim.
+
+Logging into the VOBOX and calling the script
+---------------------------------------------
+The examples here reported have been done using the vobox  vtb-generic-28.cern.ch, the
+myproxy server on lxbra2304.cern.ch and the voms server lxbra2309.cern.ch.
+
+From a UI get a VOMS proxy with lcg-admin role (ensure that you have those roles
+beforehand).
+Example:
+voms-proxy-init --voms dteam:/dteam/Role=lcgadmin -voms lxbra2309.cern.ch
+
+Upload a long-lived proxy into the MyProxy server:
+Example:
+myproxy-init -s lxbra2304.cern.ch -d -n -t 48 -c 720
+
+Login into the VOBOX using the sgmdtm01 account:
+gsissh -p 1975 -l sgmdtm01 vtb-generic-28.cern.ch
+
+Make sure that the $MYPROXY_SERVER points to the correct server.
+
+Register the login proxy to the VO-Box Proxy Renewal Service:
+Example:
+[sgmdtm01@vtb-generic-28 ~]$ vobox-proxy --vo dteam --voms dteam:/dteam/Role=lcgadmin register
+
+Download the perl script from the CVS repository and run it:
+Example:
+[sgmdtm01@vtb-generic-28 ~]$ perl lcg_vobox_test.pl -node vtb-generic-28
+080820143243SCRIPTRESULT        Status  0
+
+Checking the output
+-------------------
+The script will create a directory with the host name (vtb-generic-28 in this case)
+and in this directory, for each test, a file named vobox-test-n.result (n=number of 
+the test) will be created with the outcome of the test.
+
+The following outcome must be verified:
+
+1- Proxy renewal service (/etc/init.d/dteam-box-proxyrenewal) is up and running
+2- User Proxy Registration mechanism is up and working
+3- succesfull test: The machine is properly defined within myproxy server and 
+   connections with BDII are properly established 
+4- The proxy of the machine is up and running
+5- The delegation procedure is working properly: 'timeleft' => 621330
+6- The access to the software area is guaranteed
+
+Bash wrapper script
+-------------------
+A bash wrapper script has been created to run and check the output 
+in an easier way.
+Example -positive outcome- :
+[sgmdtm01@vtb-generic-28 ~]$ ./lcg_vobox_test.sh --node vtb-generic-28
+Test PASSED
+
+Example -negative outcome- :
+[sgmdtm01@vtb-generic-28 ~]$ ./lcg_vobox_test.sh --node vtb-generic-28
+Test FAILED
+
+Couldn't find a valid proxy.
+
+DN not specified and unable to get DN from user proxy:
+  at /opt/lcg/bin/vobox-proxy line 52.
+
+The User Proxy Registration not working. Failed to execute vobox-proxy --vo dteam register --force
+Failed to check the timeleft for the user delegated proxy
+
+
+Troubleshooting
+----------------
+When the gsissh login fails with the message:
+Permission denied (gssapi-keyex,external-keyx,gssapi-with-mic,gssapi).
+
+Check:
+Is the gridmapfile properly populated? Is there a mapping from the user to sgmdtm01?
+
+Is the gsisshd demon running?
+
+Has the machine a proper host certificate?
+
+Is this host certificate registered into myproxy server at CERN?
+
+
+Is the certificates directory properly created onto the vobox?
+
+
+Questions/Bugs
+--------------
+Email gianni.pucciani@cern.ch
+

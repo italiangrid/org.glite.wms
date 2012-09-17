@@ -1,0 +1,245 @@
+#!/usr/bin/env python
+# create a new GFAL directory (gfal_mkdir)
+
+import os,sys,errno,lfc
+sys.path.append("/opt/lcg/lib/python2.3/site-packages/")
+sys.path.append("/opt/lcg/lib64/python2.4/site-packages/")
+import gfal
+from testClass import _test, _ntest
+global prot
+global vo_name
+global path
+
+#=== FUNCTION ================================================================
+# Prints the usage
+#=============================================================================
+
+def usage():
+    print "Usage:  " + sys.argv[0] + " <SE>"
+
+#=== FUNCTION ================================================================
+# Checks for a valid proxy.
+#=============================================================================
+
+def check_proxy():
+    vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+    if not vo_name:
+        print "Error: Couldn't find a valid proxy."
+        sys.exit(1)
+
+check_proxy()
+vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+
+
+#=== FUNCTION ================================================================
+# Parse input arguments 
+#=============================================================================
+def check_arguments(): 
+	if (len(sys.argv) != 2):
+        	usage()
+        	sys.exit(1)
+
+check_arguments()    
+
+se = sys.argv[1]
+
+infosys = result = os.popen("echo $LCG_GFAL_INFOSYS").read()[:-1]
+
+setype = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(objectClass=GlueSEControlProtocol)(GlueChunkKey=GlueSEUniqueid=" + se + "))' | grep 'GlueSEControlProtocolType' | awk 'BEGIN { FS = \" \" } ; {print $2 }' |uniq").read()[:-1]
+
+path = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }'").read()[2:-2]
+
+print path 
+
+path1 =  result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }' |awk 'BEGIN { FS = \"/\" } ; {print $2 }'").read()[2:-2]
+
+#=== FUNCTION ================================================================
+# test preperation
+#=============================================================================
+class test_create_dir_ok(_test):
+    def info(self):
+        return "gfal_mkdir: Dir creation"
+    def test(self):
+	self.name = prot + se + path + "/gfal_test_mkdir"
+	ret = gfal.gfal_mkdir(self.name,0755)
+	error1 = gfal.gfal_get_errno()
+	code = 0
+	print ("return", ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+	print "http://savannah.cern.ch/bugs/?52502"
+	if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+    #    gfal.gfal_unlink(self.name)
+    #	gfal.gfal_rmdir(os.path.dirname(self.name))
+    
+class test_EACCES(_ntest):
+    def info(self):
+        return "gfal_mkdir errors: Access denied (EACCES)"
+    def test(self):
+        self.name = prot + se + "/" + path1 + "/gfal_mkdir_test" 
+        ret = gfal.gfal_mkdir(self.name, 0755)
+	error1 = gfal.gfal_get_errno()
+	print ("return", ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EACCES", errno.EACCES)
+	print "http://savannah.cern.ch/bugs/?52502 STATUS NONE"
+#THIS HAS TO BE CHECKED
+#        code = errno.EACCES
+        code = 0
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+    #    gfal.gfal_rmdir(self.name)
+
+class test_ENOENT(_ntest):
+    def info(self):
+        return "gfal_mkdir errors: component doesn't exist (ENOENT)"
+    def test(self):
+        self.name =  prot + se + path + vo_name + "/gfal_mkdir_test"
+        ret = gfal.gfal_mkdir(self.name,0755)
+	error1 = gfal.gfal_get_errno()
+	print ("return", ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+	print ("ENOENT", errno.ENOENT)
+	print "http://savannah.cern.ch/bugs/?52502 STATUS NONE"
+#        code = errno.ENOENT
+        code = 0
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+    #	gfal.gfal_unlink(self.name)
+    #	gfal.gfal_rmdir(os.path.dirname(self.name))	
+	
+class test_EFAULT(_ntest):
+    def info(self):
+        return "gfal_mkdir errors: dirname is a NULL pointer (EFAULT)"
+    def test(self):
+        self.name = prot + se + path + ""
+        ret = gfal.gfal_mkdir(None,0755)
+	print ("return", ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EFAULT", errno.EFAULT)
+	error1 = gfal.gfal_get_errno()
+        code = errno.EFAULT
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+#    def clean(self):
+#        gfal.gfal_unlink(self.name)
+
+class test_EINVAL(_ntest):
+    def info(self):
+        return "gfal_mkdir: dirname has an invalid syntax (EINVAL)"
+    def test(self):
+        self.name = prot + "dummy.cern.ch" + path + "/gfal_mkdir_test"
+	#print ("self.name", self.name)
+        ret = gfal.gfal_mkdir(self.name,0755)
+	print ("return", ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EINVAL", errno.EINVAL)
+	error1 = gfal.gfal_get_errno()
+        code = errno.EINVAL
+        #print("code", code)
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+     #   gfal.gfal_unlink(self.name)
+
+class test_EPROTONOSUPPORT(_ntest):
+    def info(self):
+        return "gfal_rmdir errors: Access method not supported (EPROTONOSUPPORT)"
+    def test(self):
+        self.name = "sfn://" + se + path + "/gfal_rmdir_test"
+        #print ("self.name", self.name)
+        ret = gfal.gfal_mkdir(self.name,0755)
+	print ("return", ret)
+        print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EPROTONOSUPPORT", errno.EPROTONOSUPPORT)
+        error1 = gfal.gfal_get_errno()
+        code = errno.EPROTONOSUPPORT
+        #print("code", code)
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+     #   gfal.gfal_unlink(self.name)
+
+class gfal_mkdir_test:
+    def __init__(self):
+        self.tests=[test_create_dir_ok, test_EACCES, test_ENOENT, test_EFAULT, test_EINVAL, test_EPROTONOSUPPORT]
+
+    def run(self):
+	flag = 0
+        for testclass in self.tests:
+            testInstance = testclass()
+            testInstance.prepare()
+	    ret1 = testInstance.test()	
+            testInstance.clean()
+            if ret1:
+                print "%-60s[OK]" % testInstance.info()
+		print ""
+            else:
+                print "%-60s[FAILED]" % testInstance.info()
+		print ""
+		flag = 1
+	return flag
+
+#************* Interface for Python tests ***************
+
+if (setype == "SRM"):
+	print "===================================================="
+	print "Start test: create a new dir (gfal_mkdir)"
+	print "===================================================="
+	prot = "srm://"
+	ret = gfal_mkdir_test().run()
+	if ( ret == 1):
+                print "Test failed"
+		print ""
+		sys.exit(2)
+        else:
+                print "Test is OK"
+		print ""
+		sys.exit(0)
+
+if (setype == "classic"):
+	print "===================================================="
+	print sys.argv[1] +" - classic SE"
+	print "Classic SEs aren't officially supported GFAL"
+	print "Start test: create a new dir (gfal_mkdir)"
+	print "===================================================="
+        prot = "sfn://"
+	ret = gfal_mkdir_test().run()
+        if ( ret == 1):
+                print "Test failed"
+		print ""
+		sys.exit(2)
+        else:
+                print "Test is OK"
+		print ""
+		sys.exit(0)
+
+	#print sys.argv[1] + " - classic SE"
+	#print "You can't create directories on classic SE, there are created automatically when you upload a file."
+        #sys.exit(1)
+
+if (setype == ""):
+        print sys.argv[1] + " - unknown SE"
+        sys.exit(1)
+

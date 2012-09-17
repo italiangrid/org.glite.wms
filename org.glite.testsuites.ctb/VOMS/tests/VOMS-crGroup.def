@@ -1,0 +1,4 @@
+testName: VOMS-crGroup
+testAbbr: crGro
+testTitle: voms-admin: Test "create-group PARENT GROUPNAME" option
+EOT

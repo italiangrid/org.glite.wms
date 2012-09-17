@@ -1,0 +1,4 @@
+testName: LFC-getcwd
+testAbbr: LFCgcwd
+testTitle: Get LFC current directory used by the name server (lfc_getcwd)
+EOT

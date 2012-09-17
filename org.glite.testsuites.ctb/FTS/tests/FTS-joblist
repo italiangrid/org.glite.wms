@@ -1,0 +1,543 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+# 18.11.2009
+# AUTHORS: Victor Galaktionov, JINR/CERN 
+# Script based on Gianni Pucciani script FTS-submission
+#
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS file transfer submission
+
+showUsage()
+{
+ echo "Usage: FTS-joblist --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+ echo "          --gsiftp   [yes|no]"
+ echo "                   If set to 'yes', GSIFTP URLs will be used"
+ echo "                   (Optional. Default value: No)"
+}
+
+# Special tests for glite-transfer-list operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_file_transfer_list()
+{
+     declare -a states
+     #states=(Submitted Canceled Canceling Pending Active Waiting Hold Done Faled)
+     states=(Ready Submitted Finished Canceled Canceling Pending Active Hold Done Failed)
+     echo "1. simple correct command glite-transfer-list" 
+     echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+     glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+     if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK"
+
+    echo "2. Check with noncorrect service"
+    echo "glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2> message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-list command - failed"
+    cat message
+    return 1
+    fi
+    echo "OK"
+
+    echo "3. Check -h  parameter" 
+    echo "glite-transfer-list -h"
+    glite-transfer-list -h
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK" 
+    echo "4. Check -v  parameter" 
+    echo "glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK"    
+
+    echo "5. Check -V  parameter" 
+    echo "glite-transfer-list -V"
+    glite-transfer-list -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "6. Check -q  parameter" 
+    echo "glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "6.1. Check without -s   parameter" 
+    echo "glite-transfer-list -q"
+    glite-transfer-list -q
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "OK"     
+    echo "7. Check status jobs in list command"
+    for ST in ${states[*]}
+    do
+        echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST" 
+        glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST
+        if [ $? != 0 ]; then
+        echo "glite-transfer-list command - failed"
+        return 1
+    fi
+    done
+    echo "8. Check noncorrect states"
+    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla" 
+    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla 2>message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-list command - failed"
+    cat message
+    return 1
+    fi
+
+    return 0
+}
+
+#
+# get SE1_SRM_LOC, SE2_SRM_LOC  and submit
+# JOBLIST_NUMBER  file transfer. FTS_HOST must be set. The job Id is stored
+# in SUBID
+#
+# Added by Victor Galaktionov 18/11/209
+function file_transfer_list()
+{
+    echo "file_transfer_list($1, $2, $3)"
+    if [ -z $1 ];then
+        echo "An SE source SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+        echo "An SE destination SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE2_SRM_LOC=$2
+    fi
+
+    if [ -z $3 ];then
+        echo "An CHANNEL must be given to file_transfer()"
+        return 2
+    else
+        local CHANNEL=$3
+    fi
+
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+    echo "Creating 10MB temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC" 
+
+    GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+        echo ">>> NOTE: `cat message`"
+        echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+        return 1
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+
+    declare -a JOBID
+    count=1
+    JOBLIST_NUMBER=3
+    echo ""
+    while [ $count -le $JOBLIST_NUMBER ];
+    do
+    echo ""
+    echo "$count. Job submit"
+    echo "Creating the submission file in $SUB_FILE_LOC"
+    i=0
+    echo "" > $SUB_FILE_LOC
+
+    echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$count" >> $SUB_FILE_LOC
+
+    echo "Submitting the transfer"  
+
+    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+    if [ -z "$SUBID" ]; then
+            echo "Job submition failed!"
+            return 1
+    fi
+    echo "Job successfully submited"
+    echo "Transfer ID: $SUBID. " 
+    JOBID[$count]=$SUBID
+    JD=${JOBID[$count]}
+    echo "Job $JD submitted"
+    let count=count+1
+    done
+
+    echo ""
+    USERDN=`glite-voms-proxy-info -identity`
+    echo "User DN: $USERDN"    
+
+    echo "Check --verbose parameter"
+    echo "glite-transfer-list --verbose -s -verbose https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer > message
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list --verbose command - failed"
+    return 1
+    fi
+
+    echo "Check verbose string - User DN"
+    grep "$USERDN" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list --verbose command - noncorrect"
+    return 1
+    fi
+    echo "OK"
+
+    echo "Check parameters -s -c -u -o" 
+    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -c $CHANNEL -u '$USERDN' -o $VO"
+
+    echo "Sleep 3 sec"
+    sleep 3
+    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -c "$CHANNEL" -u "$USERDN" -o $VO > jlist
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    echo "Result job list:"
+    cat jlist
+
+    echo ""
+    echo "Check every job in this list"
+    for JID in ${JOBID[*]}
+    do
+    echo "Check job $JID"
+    grep $JID jlist > /dev/null
+    if [ $? == 1 ]; then
+        echo "Submitted job list noncorrect"
+        echo "Job $JID is missing in list"
+        return 1
+    fi
+    echo "OK"
+    done
+
+    echo "Special checking"
+
+    echo "Check with noncorrect user DN and VO"
+    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u 'USERDN' -o $VO"
+    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "USERDN" -o $VO > jlist
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    #echo "Result:"
+    result=`cat jlist | wc -l`
+    echo "Result:$result"
+    if [ $result -gt 0 ]; then
+        echo ">>> NOTE: `cat jlist`"
+        echo ">>> NOTE: glite-transfer-list -  failed!"
+        return 1
+    fi
+
+
+    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "$USERDN" -o 'VO'"
+    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "$USERDN" -o "VO" > jlist
+    if [ $? != 0 ]; then
+    echo "glite-transfer-list command - failed"
+    return 1
+    fi
+    result=`cat jlist | wc -l`
+
+    #echo "Result:$result"
+    if [ $result -gt 0 ]; then
+        echo ">>> NOTE: `cat jlist`"
+        echo ">>> NOTE: glite-transfer-list -  failed!"
+        return 1
+    fi
+
+    return 0
+
+}
+
+
+if [ $# -lt 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+     --gsiftp)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+if [ -z "$GSIFTP_URL" ]; then
+    GSIFTP_URL="no"
+fi
+
+#0.1) Check for valid proxy
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi
+         echo "-TEST FAILED-"
+         exit 1
+fi
+
+#1) Test if channel exists
+
+#Get Channels list
+echo
+echo "Retrieving channels list..."
+get_channels
+if [ "x$Channel_List" == "x" ]; then
+  echo "No channels retrieved"
+  exit 1
+fi
+
+found=0
+for Channel in $Channel_List
+do
+  if [ "$Channel" == "$CHANNEL" ];then 
+    echo "Channel exists"
+    found=1
+    break
+  fi
+done
+
+if [ $found -eq 0 ];then
+  echo "Channel $CHANNEL does not exist"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#2) Check that the channel is active
+echo
+echo "Checking that $CHANNEL is active..."
+is_channel_active $CHANNEL
+if [ $? -eq 0 ];then
+  echo "Channel $CHANNEL is Active"
+else
+  echo "Channel $CHANNEL is not Active"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+#3) Retrieve SEs from source and destination site
+echo
+echo "Retrieving SEs info from source and destination sites in $CHANNEL..."
+
+#3.a) Retrieve source and destination sites
+get_source_dest_from_channel $CHANNEL
+if [ $? -eq 1 ];then
+  echo "Failing retrieving source and destination sites"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+echo "Source: $Source_Site"
+echo "Dest: $Destin_Site"
+
+#3.b) Retrieve good SEs from source and destination sites
+get_def_se_from_site $Source_Site
+if [ $? -eq 1 ];then
+  echo "Failing retrieving good SE from site $Source_Site"
+  exit 1
+fi
+if [ "x$SE_HOST" != "x" ]; then
+  SE_SOURCE=$SE_HOST
+  echo "SE_source: $SE_SOURCE"
+else
+  echo "Failing retrieving good SE from site $Source_Site"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#get_def_se_from_site $Destin_Site
+if [ $? -eq 1 ];then
+  echo "Failing retrieving default SE from site $Destin_Site"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+if [ "x$SE_HOST" != "x" ]; then
+  SE_DEST=$SE_HOST
+  echo "SE_dest: $SE_DEST"
+else
+  echo "Failing retrieving default SE from site $Source_Site"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+#3.c) Retrieve SEs path to use for file transfer
+echo "Retrieve SEs path to use for file transfer, $SE_SOURCE"
+get_se_path $SE_SOURCE
+if [ $? -eq 1 ];then
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  SOURCE_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_source: $SOURCE_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+get_se_path $SE_DEST
+if [ $? -eq 1 ];then
+  echo "Failing retrieving SAPATH from SE $SE_DEST"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  DEST_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_destination: $DEST_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#4) Submitting a file transfer
+echo
+
+echo "Submitting $JOBLIST_NUMBER jobs and check their list"
+
+file_transfer_list $SOURCE_SAPATH $DEST_SAPATH $CHANNEL
+if [ $? != 0 ]; then
+   echo "-TEST FAILED-"
+   exit 1
+fi
+echo "OK"
+
+echo "Check special parameters "
+special_file_transfer_list
+if [ $? != 0 ]; then
+   echo "-TEST FAILED-"
+   exit 1
+fi
+echo "OK"
+echo "-TEST PASSED-"
+exit 0
+

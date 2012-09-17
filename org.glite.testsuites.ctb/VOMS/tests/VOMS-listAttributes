@@ -1,0 +1,140 @@
+#!/bin/bash
+# Date: 07/02/2007                                                                          #
+# Revised: March 2008                                                                       #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Test attributess list command                                    #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#                                                                                           #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "Test VOMS-listAttributes:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+
+att1="ATTRIBUTE_1"
+att2="ATTRIBUTE_2"
+att3="ATTRIBUTE_3"
+att4="ATTRIBUTE_4"
+
+echo "SCENARIO: empty VO"
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_stderr
+
+if [ -n "$(head -2 $voms_stderr)" ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "SCENARIO: Create 4 attributes : $att1, $att2, $att3, $att4"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att1 "$desc1" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att2 "$desc2" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att3 "$desc3" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att4 "$desc4" 0
+
+echo "SCENARIO: List created new attributes"
+echo "<br>"
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_tmp
+echo "Check attributes"
+echo "<br>"
+grep "$att1" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
+   echo "Error creating attribute $att1"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$att2" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
+    echo "Error creating attribute $att2"
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$att3" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
+    echo "Error creating attribute $att3"
+    
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+grep "$att4" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
+    echo "Error creating attribute $att2"
+
+   echo "<br>"
+   cat $voms_tmp
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "Cleaning tasks"
+echo "<br>"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

@@ -1,0 +1,4 @@
+testName: VOMS-listRoleAttributes
+testAbbr: lstRlAt
+testTitle: voms-admin: Test "list-role-attributes GROUPNAME ROLENAME" option
+EOT

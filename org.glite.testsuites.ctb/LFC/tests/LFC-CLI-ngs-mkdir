@@ -1,0 +1,236 @@
+#!/bin/bash
+# Date: 09/11/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Create LFC subdirectories for VO                                 #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - LFC host name                                                                     #
+# Requisites:                                                                               #
+#	- LFC server                                                                        #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export LFC_HOST=$1
+#echo $LFC_HOST
+
+access=( --- --x -w- -wx r-- r-x rw- rwx )
+
+function clear (){
+    #echo "clear(): remove directory: $1"
+    #$LCC_LOCATION/bin/lfc-ls $D_LFC
+    $LCG_LOCATION/bin/lfc-rm -r -f $1
+    #echo "Ret=$?"
+    #$LCC_LOCATION/bin/lfc-ls $1
+}
+
+
+function checkMode () {
+    cdir=$4
+    mode=$1$2$3
+    QAC="d${access[$1]}${access[$2]}${access[$3]}"
+    echo -n "   $QAC"    # " $mode"
+                
+    $LCG_LOCATION/bin/lfc-mkdir -m $mode $cdir
+                    
+    $LCG_LOCATION/bin/lfc-ls -l $main_dir > $lfc_tmp
+    cat $lfc_tmp
+    grep $QAC $lfc_tmp > /dev/null
+    if [ $? == 1 ]; then
+	echo "Test is failed"
+	echo "Set mode: $mode"
+	echo "Get mode:"
+	cat $lfc_tmp
+	$LCG_LOCATION/bin/lfc-chmod 777 $cdir
+	clear $main_dir
+	exit $STATE_CRITICAL
+    fi
+    echo "OK"
+    $LCG_LOCATION/bin/lfc-chmod 777 $cdir
+    clear $cdir
+}
+#echo "LFC dir: $LFCDIR"
+#echo "lfc_tmp=$lfc_tmp"
+#echo "lfc_stderr: $lfc_stderr"
+
+main_dir="$LFCDIR/test-mkdir"
+
+rm -rf $lfc_tmp
+rm -rf $lfc_stderr                                                                        
+date
+#echo "<br>"
+echo "Test LFC CLI mkdir"
+#echo "<br>"
+echo "Test main directory: $main_dir"
+
+echo "1. Create and remove directory"
+
+
+#echo "<br>"
+#============== check if glite command running 
+#echo "LCG=$LCG_LOCATION"
+#$LCG_LOCATION/bin/lcg-infosites --vo $VO se
+#===========================================
+
+echo "1.1. Create directory: $main_dir"
+
+echo "lfc-mkdir -p $main_dir"
+
+$LCG_LOCATION/bin/lfc-mkdir -p $main_dir # 2> $lfc_stderr
+ret=$?
+echo "Ret=$ret"
+
+$LCG_LOCATION/bin/lfc-ls -l $D_LFC
+#grep "File exists" $lfc_stderr > /dev/null
+
+if [ $ret != 0 ]; then
+    $LCG_LOCATION/bin/lfc-ls -l $D_LFC
+    echo "Test is failed"
+    clear $D_LFC                #     $main_dir
+    exit $STATE_CRITICAL
+fi
+
+echo "1.2. Remove directory"
+$LCG_LOCATION/bin/lfc-rm -r -f $main_dir 
+echo "Ret=$?"
+
+echo "2. SCENARIO: Create chain subdirectories"
+
+UMAX=$DMAX
+echo
+echo "2.1.  Create $UMAX  subdirectories"
+echo "<br>"
+counter=0
+dir=$main_dir
+pdir=$main_dir
+
+while [ $counter -lt $UMAX ]; do
+    subdir="subdir-$counter"
+    dir=$dir/$subdir
+    echo "Create new dir: lfc-mkdir -p $dir"
+    $LCG_LOCATION/bin/lfc-mkdir -p $dir
+    ret=$?
+
+    #    echo "ret=$ret"
+    if [ $ret == 1 ]; then
+	echo "Test is failed"
+	clear $D_LFC
+	exit $STATE_CRITICAL
+    fi
+    echo "OK"
+    echo "Check subdirectories list: lfc-ls $pdir"    
+    $LCG_LOCATION/bin/lfc-ls $pdir > $lfc_tmp
+    #echo "cat $lfc_tmp"
+    #cat $lfc_tmp
+    #echo "Check grep"
+    grep $subdir $lfc_tmp  > /dev/null
+            
+    if [ $? == 1 ]; then
+	echo "Test is failed"
+	clear $D_LFC
+	exit $STATE_CRITICAL
+    fi
+    echo "OK"
+    pdir=$dir
+    let counter=counter+1
+done
+
+clear $main_dir
+echo "Check all deletion result"
+$LCG_LOCATION/bin/lfc-ls -l $D_LFC
+
+
+echo
+echo "3. Scenario: test -p option"
+cdir="$main_dir/sub1/sub2/sub3/sub4"
+
+echo "3.1. Noncorrect request  mkdir for chain subdirectories"
+$LCG_LOCATION/bin/lfc-mkdir "$cdir/sub5" 2> $lfc_tmp
+cat $lfc_tmp
+grep "cannot create" $lfc_tmp #> /dev/null
+if [ $? == 1 ]; then
+    echo "Noncorrect -p option"
+    cat $lfc_tmp
+    echo "Test is failed"
+    clear $main_dir
+    exit $STATE_CRITICAL
+fi
+echo "OK"
+                    
+echo "3.2. Correct request with -p option"
+$LCG_LOCATION/bin/lfc-mkdir  -p "$cdir/sub5"
+$LCG_LOCATION/bin/lfc-ls -l $cdir
+
+clear $main_dir
+echo "Check lfc-ls after remove main directory"
+$LCG_LOCATION/bin/lfc-ls -l $main_dir
+echo "OK"
+
+echo
+echo "4. SCENARIO: check mode for make directory"
+
+default="drwxrwxr-x"
+echo "4.1. Check default mode: $default"
+echo "Create direcrory: $main_dir"
+
+$LCG_LOCATION/bin/lfc-mkdir -p $main_dir
+$LCG_LOCATION/bin/lfc-mkdir -p $main_dir/default-mode
+
+$LCG_LOCATION/bin/lfc-ls -l $main_dir > $lfc_tmp
+cat $lfc_tmp
+
+grep $default $lfc_tmp # > /dev/null
+if [ $? == 1 ]; then
+    echo "Noncorrect default mode, must be: $default"
+    echo "Created mode:"
+    cat $lfc_tmp
+    echo "Test is failed"
+    clear $main_dir
+    exit $STATE_CRITICAL
+fi
+echo "OK"
+clear $main_dir/default-mode
+                
+echo "4.2.  Test check up 512 (000-777) variants of access mode for new subdirectory"
+echo "SHORT=$SHORT, MODE=$MODE"
+
+if [ $SHORT == 1 ]; then
+    echo "Short mode: 000, 222, 333. 666, 777"
+    cdir=$main_dir/short
+    checkMode 0 0 0 $cdir
+    checkMode 2 2 2 $cdir
+    checkMode 3 3 3 $cdir
+    checkMode 6 6 6 $cdir
+    checkMode 7 7 7 $cdir
+else
+    echo "Long mode: all mode 000-nnn, n<$MODE"
+    UMAX=$MODE
+                                    
+    owner=0
+    cdir="$main_dir/qwerty"
+    while [ $owner -lt $UMAX ]; do              # cycle for owner access
+        group=0
+        echo
+        while [ $group -lt $UMAX ]; do          # cycle for group access
+            user=0
+            echo
+            while [ $user -lt $UMAX ]; do       # cycle for all users
+                checkMode $owner $group $user $cdir
+                let user=$user+1
+                                
+            done
+            let group=$group+1
+        done
+        let owner=$owner+1
+    done
+fi
+                                
+echo "Clear task"
+clear $D_LFC
+echo "Test OK - $STATE_OK"
+echo "====== end of test ======================"
+exit $STATE_OK

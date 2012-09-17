@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+open TMP, "<${ARGV[0]}";
+$s = join '', <TMP>;
+close TMP;
+$CEId = $ARGV[1];
+
+if(!$CEId){
+ print &getJobNum("Submitted");
+ exit 0;
+}
+
+
+@jobStatus = ('Waiting', 'Ready', 'Scheduled', 'Running', 'Done \(Success\)', 'Done \(Failed\)', 'Cancelled', 'Aborted');
+for($i = 0;$i <= $#jobStatus; $i++) {
+  print &getJobNum("${jobStatus[$i]}"); 
+  print $i == $#jobStatus ? "" : " ";
+}
+
+
+sub getJobNum {
+
+  my $pattern, $Status, $n = 0;
+
+  $Status = shift; 
+  $pattern = ( $Status =~/(Submitted)/ ) ? '\s(.*)\s(Current Status:.*' .$Status .')\s(.*)\s(.*)\s(.*)\s(.*)\s(.*)' : '\s(.*)\s(Current Status:.*' .$Status .')\s(.*)\s(.*)\s(.*)\s(.*)\s(Destination:.*' .$CEId .')\s(.*)\s(.*)\s(.*)\s';
+  while ($s =~ /$pattern/g) {
+    $n++;
+  }
+  return $n;
+}
+

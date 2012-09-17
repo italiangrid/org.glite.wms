@@ -1,0 +1,13 @@
+Bug: #32980
+Link: https://savannah.cern.ch/bugs/?32980
+Summary: Maradona file should be removed at resubmission
+
+- This bug can only verified manually using for example this procedure:
+
+1) Submit a jdl
+2) Log into the WMS
+3) Look into the SandBox dir of the job until you see the "Maradona" file
+4) Put the condor job (equivalent to your job previously submitted) on hold, 
+   this should trigger a resubmission
+5) When the job has been resubmitted check if the old "Maradona" file has 
+   been removed

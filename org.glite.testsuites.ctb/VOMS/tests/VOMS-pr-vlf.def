@@ -1,0 +1,4 @@
+testName: VOMS-pr-vlf
+testAbbr: pr-vlf
+testTitle: voms-proxy-init: Test "vomslife HH:MM" option
+EOT

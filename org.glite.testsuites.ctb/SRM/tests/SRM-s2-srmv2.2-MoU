@@ -1,0 +1,229 @@
+#!/bin/sh
+#
+# Wrapper script for the SRM 2.2 tests from the s2 package (http://s-2.sourceforge.net)
+# This script is has been derived from the SRM-s2-srmv2.2 script provided by Dmitry Zaborov
+# but it is meant to be used from the command line (SAM support has been removed).
+# The 25 MoU 'basic' tests included in the s2 package are run.
+#
+# This script needs the location of the basic SRM 2.2 tests to be defined in $S2_TESTS_LOCATION
+# (usually /opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic/).
+# It also needs the s2 binary in the $PATH (usually /opt/s2/bin).
+# By default VO name from voms proxy is used. Another VO name can be specified using $VO.
+# The s2 output files useful for debugging are stored in $S2_LOGS_DIR, if defined, oterwise
+# a directory in /tmp with the name of the target host is created and log files will be stored
+# there.
+#
+# Example usage:
+#
+# > ./SRM-s2-srmv2.2-MoU myse.cern.ch
+# - run the s2 tests on the SE "myse.cern.ch"
+#
+# Author: Gianni Pucciani <Gianni.Pucciani@cern.ch>
+
+function exit_failure() {
+  echo " =============== [ -TEST FAILED- ] =============== "
+  exit 1
+}
+
+function exit_untested() {
+  echo " =============== [ UNTESTED -TEST FAILED-] =============== "
+  exit 1
+}
+
+function usage() {
+  echo "Usage: ./SRM-s2-srmv2.2-MoU <hostname>"
+}
+
+if [ ! -n "$1" ]; then
+  echo "Hostname not provided"
+  usage
+  exit_untested
+fi
+
+OK="[ OK ]"
+FAILED="[ -TEST FAILED- ]"
+
+echo "  === basic s2 tests of SRM 2.2 === "
+echo ""
+echo "Running on" `hostname -f` "at" `date '+%Y-%b-%d %H:%M:%S'`
+echo ""
+
+# ... locate the tests
+
+if [ -n "$S2_TESTS_LOCATION" ]; then
+  echo "S2 test directory defined S2_TESTS_LOCATION=$S2_TESTS_LOCATION"
+else
+  echo "Please define S2 test directory in S2_TESTS_LOCATION (e.g. export S2_TESTS_LOCATION=~/testing/scripts/protos/srm/2.2/basic)"
+  exit_failure
+fi
+
+if [ ! -d $S2_TESTS_LOCATION ]; then
+  echo "S2 test directory $S2_TESTS_LOCATION does not exists"
+  exit_failure
+fi
+
+
+if [ -n "$S2_LOGS_DIR" ]; then
+  echo "Log files directory is $S2_LOGS_DIR"
+else
+  mkdir /tmp/$1
+  S2_LOGS_DIR=/tmp/$1
+  echo "Log files directory is $S2_LOGS_DIR"
+fi
+
+# ... make sure SRM host is specified
+
+SRM_HOST=$1
+
+if [ -z "$SRM_HOST" ]; then
+  echo "SRM host name must be given as first and only argument"
+  exit_failure
+fi
+
+# ... check proxy, determine user VO (needed for SAPath)
+
+echo ""
+echo "checking proxy ..."
+voms-proxy-info -exists -valid 0:10 || exit_untested
+
+if [ -z "$VO" ]; then
+  VO=`voms-proxy-info -vo`
+  if [ $? -ne 0 ] || [ -z "$VO" ]; then
+    echo "Warning: could not determine VO with voms-proxy-info - will use dteam"
+    VO="dteam"
+  fi
+fi
+
+echo " "
+echo "using VO                              : $VO"
+
+if test -z "{$SRM_HOST}" ; then
+  echo "SRM_HOST is not defined, TEST FAILED"
+  exit 1
+fi 
+
+if test -z "${SRM_PORT}" ; then
+  echo "SRM_PORT is not defined, TEST FAILED"
+  exit_failure
+fi
+
+if test -z "${SRM_BASEDIR}" ; then
+  echo "SRM_BASEDIR is not defined"
+  exit_failure
+fi
+export SRM_ENDPOINT="srm://${SRM_HOST}:${SRM_PORT}/srm/managerv2?SFN=/${SRM_BASEDIR}"
+
+echo "The following endpoint will be used   : $SRM_ENDPOINT"
+echo ""
+
+# ... define counters
+
+ndone=0
+nfailed=0
+
+# ... run tests one by one
+
+echo "running tests ..."
+echo ""
+
+#41 basic tests
+#for name in  AbortFiles AbortRequest BringOnline ChangeSpaceForFiles CheckPermission Copy ExtendFileLifeTimeInSpace \
+#             ExtendFileLifeTime GetPermission GetRequestSummary GetRequestTokens GetSpaceMetaData GetSpaceTokens \
+#             GetTransferProtocols LsRecursive Ls Mkdir Mv Ping PrepareToGet PrepareToPut PurgeFromSpace PutDone ReleaseFiles \
+#             ReleaseSpace ReserveSpace ResumeRequest RmdirRecursive Rmdir Rm SetPermission StatusOfBringOnlineRequest \
+#             StatusOfChangeSpaceForFilesRequest StatusOfCopyRequest StatusOfGetRequest StatusOfLsRequest StatusOfPutRequest \
+#             StatusOfReserveSpaceRequest StatusOfUpdateSpaceRequest SuspendRequest UpdateSpace 
+#do
+
+#25 MoU basic tests
+for name in  AbortFiles AbortRequest BringOnline \
+             ExtendFileLifeTime GetRequestSummary GetRequestTokens GetSpaceMetaData GetSpaceTokens \
+             GetTransferProtocols Ls Mkdir Mv Ping PrepareToGet PrepareToPut PutDone ReleaseFiles \
+             ReleaseSpace ReserveSpace Rmdir Rm StatusOfBringOnlineRequest \
+             StatusOfGetRequest StatusOfPutRequest\
+             StatusOfReserveSpaceRequest  
+do
+
+  echo "  ---" `date '+%H:%M:%S'` ": $name --- "
+
+  if [ -x $S2_TESTS_LOCATION/$name.sh ]; then
+
+    rm -f $S2_LOGS_DIR/$name.log
+    rm -f $S2_LOGS_DIR/$name.out
+ 
+    LASTDIR=`pwd`
+    cd $S2_TESTS_LOCATION
+    
+#    $S2_TESTS_LOCATION/$name.sh fast --timeout=120000000
+    $S2_TESTS_LOCATION/$name.sh 
+
+    TEST_RESULT=$?
+
+    cd $LASTDIR
+    
+    if [ -f $S2_LOGS_DIR/$name.log ]; then
+      cat $S2_LOGS_DIR/$name.log
+    else
+      echo ""
+      echo "(log output not available)"
+    fi
+
+    echo " "
+
+    if [ -f $S2_LOGS_DIR/$name.out ]; then
+      cat $S2_LOGS_DIR/$name.out
+    else
+      echo "(summary output not available)"
+    fi
+
+    echo ""
+    
+    if [ $TEST_RESULT -eq 0 ]; then
+      echo "  --- $name $OK --- "
+    else
+      ((nfailed=$nfailed+1))
+      echo "  --- $name $FAILED --- "
+    fi
+
+    ((ndone=$ndone+1))
+    
+  else
+
+    echo "Internal error! $name.sh not found"
+    echo "Please make sure that:"
+    echo "1. You have the s2 package installed"
+    echo "3. The s2 binary is in your PATH"
+    echo "2. S2_TESTS_LOCATION points to <path>/testing/scripts/protos/srm/2.2/basic"
+    echo "3. You have the symbolic links there (\"make ln\")"
+    echo "4. You have write access to the log files directory $S2_LOGS_DIR"
+    echo ""
+    exit_failure
+  fi
+
+  echo ""
+
+done
+
+# ... report results and finish
+
+echo ""
+echo "# tests performed: $ndone"
+echo "# tests failed   : $nfailed"
+
+if [ $ndone -eq $nfailed ]; then
+  echo ""
+  echo "All tests failed"
+  echo "Make sure you give correct SRM host name as command line argument \$1"
+  echo "If get complaints \"Couldn't find s2 binary.\" make sure that the s2 is in your PATH (e.g. export PATH=$PATH:/opt/s2/bin)"
+  echo "And of course don't forget to have a proxy"
+fi
+
+echo ""
+
+if [ $nfailed -ne 0 ]; then
+  echo "  === Overal status of $SRM_HOST [ FAILED ] ===  "
+  exit_failure
+fi
+
+echo "  === Overal status of $SRM_HOST [ OK ] ===  "
+exit 0

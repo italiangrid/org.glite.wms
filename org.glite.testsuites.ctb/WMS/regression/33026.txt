@@ -1,0 +1,12 @@
+Bug: #33026
+Link: https://savannah.cern.ch/bugs/?33026
+Summary: "no compatible resources" problem on SL4 WMS
+                                                                                                                        
+- set the II_Timeout parameter in the NetworkServr section of the
+  glite_wms.conf file on the WMS to a very low value, as for ex.:
+      II_Timeout  =  2;
+                                                                                                                        
+- re-start the WM and check the /var/glite/workload_manager/ismdump.fl does not get emptied
+                                                                                                                        
+- perform some job-list-match operation checking that it gets some match
+  results

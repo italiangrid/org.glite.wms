@@ -1,0 +1,186 @@
+#!/usr/bin/perl
+
+#glite-wmproxy-test-display [--help] [-i <user-defined id file>] [--log <user-defined log file>] [--xml] [-q <CE queue Id>] [-s <job Status>] <jobId>
+
+use Getopt::Long;
+exit 1 unless( GetOptions("help!"=>\$help, "log:s"=>\$logfile, "xml!"=>\$args{x}, "i=s"=>\$args{i}, "q=s"=>\$args{q}, "s=s"=>\$args{s}) );
+
+$wmproxyHome = "myPath";
+$wmproxyBase = defined($ENV{'WMPROXY_TEST_HOME'}) ? $ENV{'WMPROXY_TEST_HOME'} : $wmproxyHome;
+$jobCol = "$wmproxyBase/.wmproxy_test/rpt";
+$jobIdFile = "";
+$jobMonFile = ""; 
+$jobStatus = "";
+$jobCEId = ""; 
+$jobMonDisplay = -1; 
+$retryNum = 20;
+$retryTime = 2;
+$docType = 'chart';
+
+die("Please set the environment variable \$WMPROXY_TEST_HOME\n") unless (-e "$wmproxyBase");
+
+unshift(@INC, "$wmproxyBase/bin");
+require XML::Simple;
+
+
+if ($help) {
+  $s = `/bin/cat $wmproxyBase/readme/glite-wmproxy-test-display.readme`;
+  print "$s";
+  exit 0;
+}
+
+if (!($ARGV[0] || $args{i} || $logfile)) {
+  print "Usage : glite-wmproxy-test-display -i [user-defined id file] -q [CE queue Id] -s [job Status] jobId\n";
+  exit 0;
+}
+
+
+if ($ARGV[0]) {
+  $jobIdFile = &getJobIdFile($ARGV[0]);
+  $jobMonDisplay = 0;
+}
+
+if ($args{s}) {
+  $jobStatus = $args{s};
+  $jobMonDisplay = 1;
+}
+
+
+#Check if the file exists
+if ($args{i}) {
+  if ( ( $s = &getContent($args{i}) ) =~ m/http.*/g ){
+    $jobIdFile = &getJobIdFile($&);
+    $jobMonDisplay = 0;
+  }
+}
+
+
+if ($args{x}) {
+  $jobMonDisplay = 0;
+  $docType = 'xml';
+}
+
+
+if ($args{q}) {
+  $jobCEId = $args{q};
+  $jobMonDisplay = 1;
+}
+
+if ($args{s}) {
+  $jobStatus = $args{s};
+  $jobMonDisplay = 1;
+}
+
+
+#Check if the file exists
+$jobIdFile =~ m/(http.*)\.txt$/;
+$jobIdMon = "$jobCol/$1.mon";
+$jobIdLog = "$jobCol/$1.log";
+$jobIdLock = "$jobCol/$1.lock";
+
+
+if (defined($logfile)) {
+  $jobIdLog = $logfile if $logfile;
+  $jobMonDisplay = 0;
+  $docType = 'log';
+  die("Unable to locate the log file ($jobIdLog)\n") unless (-r $jobIdLog);
+}
+
+if ($jobMonDisplay == 1) {
+  $n = 0;
+  if ($jobStatus =~ /(Success|Failed)/) {
+    $jobStatus = 'Done \(' .$jobStatus .'\)';
+  }
+  $s = &getContent($jobIdFile);
+  $pattern = '(.*)\s(.*)\s(Current Status:.*' .$jobStatus .')\s(.*)\s(.*)\s(.*)\s(.*)\s(Destination:.*' .$jobCEId .')\s(.*)\s(.*)\s(.*)\s';
+  while ($s =~ /$pattern/g) {
+    if (!$n) {
+      print "\n" .'*' x 61 ."\n\n\n";
+    }
+    print "$&\n";
+    $n++;
+  }
+
+}
+
+if ($jobMonDisplay == 0) {
+  for($n = 0; $n < $retryNum; $n++) {
+    last if (-e $jobIdMon && !(-e $jobIdLock) );
+    sleep $retryTime;
+  }
+  if ($n >= $retryNum) {
+    print "Unable to browse the monitoring file, please try again\n";
+  } else {
+     if ($docType eq 'xml') {
+       print &getContent($jobIdMon);
+     } elsif ($docType eq 'chart') {
+       &plotChart($jobIdMon);
+     } elsif ($docType eq 'log') {
+       print &getContent($jobIdLog);
+     }
+     else {
+       ;;
+     }
+  }
+}
+
+sub getJobIdFile {
+  my $jobIdFile;
+  $_ = shift;
+  s/\///g ;
+  $jobIdFile = "$jobCol/$_.txt";
+  return $jobIdFile;
+}
+
+sub getContent {
+  my $s = '', $f = shift;
+  open TMP, "<$f" or die("Can't open $f:$!\n");
+  $s = join '', <TMP>;
+  close TMP;
+  return $s;
+}
+
+sub plotChart {
+
+format STDOUT =
+--------------------------------------------------------------------------------
+CEId Waiting Ready Scheduled Running Success Failed Cancelled Aborted
+--------------------------------------------------------------------------------
+.
+  my $f = shift;
+  my $WMProxyRef = XML::Simple->XMLin($f);
+  print "-------------------------------------------------------------------------------\n";
+  print "$WMProxyRef->{id}\n";
+  print "-------------------------------------------------------------------------------\n";
+  print "$WMProxyRef->{date}\n";
+  write;
+  $CEIdsRef = $WMProxyRef->{CEIds}->{CEId};
+  while ( ($CEId, $CEIdRef) = each( %{$CEIdsRef} ) ) {
+     if ( ref($CEIdRef) eq 'HASH') {
+       print "$CEId ";
+       while ( ($jobStatus, $jobNum) = each( %{$CEIdRef} ) ) {
+         $jobStat{$jobStatus} = $jobNum;
+       }
+       $mark = ( $jobStat{'Failed'} + $jobStat{'Cancelled'} + $jobStat{'Aborted'} > 0 ) ? '(X)' : '';
+       print "$jobStat{'Waiting'} $jobStat{'Ready'} $jobStat{'Scheduled'} $jobStat{'Running'} $jobStat{'Success'} $jobStat{'Failed'} $jobStat{'Cancelled'} $jobStat{'Aborted'} $mark";
+       print "\n";
+     }
+  }
+  print "-------------------------------------------------------------------------------\n";
+
+  $WMSRef = $WMProxyRef->{Summary};
+  print "Number of jobs staying in 'Submitted' status: $WMSRef->{Submitted}\n";
+  print "-------------------------------------------------------------------------------\n";
+  print "Number of jobs staying in 'Waiting' status: $WMSRef->{Waiting}\n";
+  print "Number of jobs staying in 'Ready' status: $WMSRef->{Ready}\n";
+  print "Number of jobs staying in 'Scheduled' status : $WMSRef->{Scheduled}\n";
+  print "Number of jobs staying in 'Running' status : $WMSRef->{Running}\n";
+  print "Number of jobs staying in 'Success' status : $WMSRef->{Success}\n";
+  print "Number of jobs staying in 'Failed' status : $WMSRef->{Failed}\n";
+  print "Number of jobs staying in 'Cancelled' status : $WMSRef->{Cancelled}\n";
+  print "Number of jobs staying in 'Aborted' status : $WMSRef->{Aborted}\n";
+  print "-------------------------------------------------------------------------------\n";
+  print "The bulk job status: $WMProxyRef->{status}\n";
+  print "-------------------------------------------------------------------------------\n";
+
+}

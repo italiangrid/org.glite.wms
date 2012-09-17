@@ -1,0 +1,155 @@
+#!/usr/bin/python
+'''
+This test makes the delegation procedure by sending the signed proxy certificate to the server.
+Following Wmproxy Methods are included in the test:
+getVersion
+getGrstNs
+proxyRequest
+putProxy
+getDelegatedProxyInfo
+The WMProxy_HOST name is obligatory commandline argument.
+Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
+
+'''
+
+def delegation (url):
+ delegationId="Testdelegation"
+ client = Wmproxy(url)
+ ERR=0
+ try:
+    protocolVersion=client.getVersion()
+    fmsg.write("\n   |   OK   |  getVersion")  
+    flog.write( "\n========== OK  protocol version = " + protocolVersion + "===========\n")
+ except :
+       flog.write( "======= FAILED  Connection refused==========================\n")
+       flog.write( "\n\n**************** test deligation is ERROR *******************")
+       fmsg.write("\n   |  ERR   |  getVersion")
+       flog.close()
+       return 1
+ flog.write( "\n\n======================  Delegation of user credential ================\n")
+ if ( protocolVersion >= "2.0.0" ) :
+    try:
+       namespace = client.getGrstNs() 
+       fmsg.write("\n   |   OK   |  getGrstNs")
+       flog.write( "=== OK GridSite Delegation namespace string representation :" +  namespace +  "=== \n")
+    except :
+       flog.write( "======= ERROR the getGrst service dosn't available======= \n")
+       flog.write( "\n\n**************** test deligation is ERROR *******************")
+       fmsg.write("\n   |  ERR   |  getGrstNs")
+       flog.close()
+       return 1
+ else:
+    try:
+      namespace = client.getDefaultNs()
+      fmsg.write("\n   |   OK   |  getDefaultNs")
+      flog.write( "===OK retrieve Wmproxy default namespace string representation" + namespace +  "===\n")
+    except :
+      fmsg.write("\n   |  ERR   |  getDefaultNs")
+      ERR=1
+ try :
+     proxyRequest = client.getProxyReq(delegationId )
+     fmsg.write("\n   |   OK   |  proxyRequest")
+     flog.write( "===============proxyRequest===============\n" +  proxyRequest + "\n")
+ except:
+     fmsg.write("\n   |  ERR   |  proxyRequest")
+     ERR=1
+# proxy1=os.getenv('X509_USER_PROXY','ERROR')
+# if proxy1=="ERROR":
+#                   flog.write( "\n*********** X509_USER_PROXY ERROR**********\n")
+#                   flog.write( "\n\n**************** test deligation is ERROR *******************")
+#                   flog.close()
+ PROXYString="voms-proxy-info -path"
+ ifile,ofile=os.popen4(PROXYString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+    flog.write( "\n Error : \n" + sfile + '\n')
+    fmsg.write("\n   |  ERR   |  voms-proxy-info -path")
+    flog.write( "\n\n**************** test delegation is ERROR *******************")
+    flog.close()
+    return 1
+ else:
+     proxy1=sfile.rstrip('\n')
+ flog.write( "\n ======= Path of X509_USER_PROXY is " +  proxy1 + "=============\n")   
+ os.putenv("DELEGATION_REQUEST",proxyRequest)
+ cmd = "glite-proxy-cert " + "-e DELEGATION_REQUEST"
+ 
+ flog.write( cmd )
+ ifile,ofile=os.popen4(cmd )
+ sfile=ofile.read()
+ f1=open("proxyresult.log","r")
+ proxy=f1.read()
+# flog.write( proxy )
+ try:
+      client.putProxy(delegationId, proxy)
+      fmsg.write("\n   |   OK   |  putProxy")
+      flog.write( "\n========== client.putProxy(delegationId,  proxyRequest) is OK =========")
+ except: 
+      fmsg.write("\n   |  ERR   |  putProxy") 
+      flog.write( "\n========== client.putProxy(delegationId, proxyRequest + proxy) is Error =========")
+      ERR=1
+ try :
+      client.getDelegatedProxyInfo(delegationId)
+      fmsg.write("\n   |   OK   |   getDelegatedProxyInfo")
+ except WMPException, err :
+      fmsg.write("\n   |  ERR   |   getDelegatedProxyInfo")
+      flog.write( "  putProxy Error: Unable to retrive VOMS Proxy information")
+      flog.write("\n==========   getDelegatedProxyInfo is Error =========")
+      flog.write( "\n\n**************** test deligation is ERROR *******************")
+      flog.close()
+       
+# fmsg.close()
+ if ( ERR > 0 ):
+               flog.write( "\n\n**************** test deligation is ERROR *******************")
+#               fmsg.close()
+               flog.close() 
+               return 1
+ else:  
+      flog.write( "\n\n**************** test deligation is OK *********************")
+      flog.close()
+      return 0
+if __name__=='__main__':
+    import sys
+    import os
+    import re
+    from datetime import *
+#    sys.path.append("/opt/fpconst/lib/python2.3/site-packages")
+#    fpconstpath = sys.argv[2]
+#    sys.path.append(fpconstpath)
+    import fpconst
+    from wmproxymethods import *
+    import SOAPpy  #Error Type
+    node = sys.argv[1]
+    scname = sys.argv[0]
+    m = re.search('(?<=/)\w+',scname )
+    script_name =  m.group(0)
+#    script_name = sys.argv[0]
+    fmsg = open('std.log','w')
+    flog =open ('std.tmp','w')
+    fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
+    datetime_now = datetime.now().isoformat(' ')
+    fmsg.write("     time is   " + datetime_now + "\n")
+    flog.write( "\n\n##################################################################################")
+    flog.write( "\n==================== script name is deligation  ==========================\n")
+    flog.write( "WmProxy_host: " + node + "\n")
+#    url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
+    url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
+    out = delegation (url)
+    flog = open("std.tmp","r")
+    while flog:
+             line = flog.readline()
+             fmsg.write(line)
+             if not line:
+                    break
+    fmsg.close()
+    flog.close()
+    fmsg = open('std.log','r')
+    sfile= fmsg.read()
+    print sfile
+    os.remove("std.tmp")
+    os.remove("std.log")
+    fmsg.close()
+    if ( os.path.exists("proxyresult.log") == 1) :
+                os.remove("proxyresult.log")
+                           
+#    sys.exit(delegation (url))
+    sys.exit(out) 

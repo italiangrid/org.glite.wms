@@ -1,0 +1,137 @@
+#!/bin/bash
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+source helperFunctions
+
+error=0
+
+export DPNS_HOME="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO"
+TEST_DIR=d`date +%s%N`
+TEST_SUBDIR1=s1`date +%s%N`
+TEST_SUBDIR2=s2`date +%s%N`
+DUMMY_USERNAME=u`date +%s`
+G1=g1`date +%s`
+G2=g2`date +%s`
+
+POOLNAME=pool`date +%s`
+FSNAME1=fs1`date +%s`1
+FSNAME2=fs2`date +%s`1
+
+mkdir -p /tmp/$FSNAME1
+mkdir -p /tmp/$FSNAME2
+
+STD_OUT=/tmp/stdout-`date +%s%N`
+STD_ERR=/tmp/stderr-`date +%s%N`
+
+TEMP_FILE=/tmp/_dpm_test_temp`date +%s%N`
+TEST_RESULT="SUCCESS"
+
+testName="Test 1:Create a pool with a disabled filesystems and change to Online"
+
+dpm-addpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-addpool returned $ret:FAILURE"
+   reportOutput dpm-addpool $STD_OUT $STD_ERR
+   error=1
+else
+   dpm-addfs --pool $POOLNAME --server $DPM_HOST --fs /tmp/$FSNAME1 --st 1 >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-addfs returned $ret:FAILURE"
+      reportOutput dpm-addfs $STD_OUT $STD_ERR
+      error=1
+   else
+      dpm-modifyfs --server $DPM_HOST --fs /tmp/$FSNAME1 --st 0 >$STD_OUT 2>$STD_ERR
+      if [ $ret -ne 0 ]; then
+         reportComponent "$testName:dpm-modifyfs returned $ret:FAILURE"
+         reportOutput dpm-addfs $STD_OUT $STD_ERR
+         error=1
+      else
+         dpm-listspaces --pool $POOLNAME --long >$STD_OUT 2>$STD_ERR
+         ret=$?
+         if [ $ret -ne 0 ]; then
+            reportComponent "$testName:dpm-listspaces return an error - cannot confirm:FAILURE"
+            error=1
+         else
+            if (grep "$DPM_HOST:/tmp/$FSNAME1" $STD_OUT | grep -q Online); then
+               reportComponent "$testName:dpm-modifyfs returned 0 and status change confirmed:SUCCESS"
+            else
+               reportComponent "$testName:dpm-modifyfs returned 0 but status change not confirmed:FAILURE"
+               error=1
+            fi
+         fi
+      fi
+   fi
+fi
+dpm-rmfs --server $DPM_HOST --fs /tmp/$FSNAME1
+dpm-rmpool --poolname $POOLNAME
+
+testName="Test 2:Create a pool with an online filesystems and change to read only"
+
+dpm-addpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-addpool returned $ret:FAILURE"
+   reportOutput dpm-addpool $STD_OUT $STD_ERR
+   error=1
+else
+   dpm-addfs --pool $POOLNAME --server $DPM_HOST --fs /tmp/$FSNAME1 >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-addfs returned $ret:FAILURE"
+      reportOutput dpm-addfs $STD_OUT $STD_ERR
+      error=1
+   else
+      dpm-modifyfs --server $DPM_HOST --fs /tmp/$FSNAME1 --st RDONLY >$STD_OUT 2>$STD_ERR
+      if [ $ret -ne 0 ]; then
+         reportComponent "$testName:dpm-modifyfs returned $ret:FAILURE"
+         reportOutput dpm-addfs $STD_OUT $STD_ERR
+         error=1
+      else
+         dpm-listspaces --pool $POOLNAME --long >$STD_OUT 2>$STD_ERR
+         ret=$?
+         if [ $ret -ne 0 ]; then
+            reportComponent "$testName:dpm-listspaces return an error - cannot confirm:FAILURE"
+            error=1
+         else
+            if (grep "$DPM_HOST:/tmp/$FSNAME1" $STD_OUT | grep -q "Read-only"); then
+               reportComponent "$testName:dpm-modifyfs returned 0 and status change confirmed:SUCCESS"
+            else
+               reportComponent "$testName:dpm-modifyfs returned 0 but status change not confirmed:FAILURE"
+               error=1
+            fi
+         fi
+      fi
+   fi
+fi
+dpm-rmfs --server $DPM_HOST --fs /tmp/$FSNAME1
+dpm-rmpool --poolname $POOLNAME
+
+rm -f $STD_OUT
+rm -f $STD_ERR
+
+rm -rf /tmp/$FSNAME1
+rm -rf /tmp/$FSNAME2
+

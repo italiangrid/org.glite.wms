@@ -1,0 +1,494 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS:
+# Victor Galaktionov, JINR
+#
+# Test program based on Gianni FTS-submission script
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS file transfer submission
+
+showUsage()
+{
+ echo "Usage: FTS-cancel --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+ echo "          --gsiftp   [yes|no]"
+ echo "                   If set to 'yes', GSIFTP URLs will be used"
+ echo "                   (Optional. Default value: No)"
+}
+
+# Special tests for glite-transfer-cancel operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_cancel_transfer()
+{
+  echo "1. Check -q  parameter" 
+    echo "glite-transfer-cancel -q"
+    glite-transfer-cancel -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 1 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "2. Check -h  parameter"
+    echo "glite-transfer-cancel -h"
+    glite-transfer-cancel -h
+    if [ $? != 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-cancel -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-cancel -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? == 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK"    
+    echo "3.1.  Check without -s   parameter" 
+    echo "glite-transfer-cancel -v"
+    glite-transfer-cancel -v
+    if [ $? == 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK"    
+
+    echo "4. Check -V  parameter" 
+    echo "glite-transfer-cancel -V"
+    glite-transfer-cancel -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+
+    echo "OK"     
+    return 0
+}
+
+#
+# Cancel transfer job.
+# FTS_HOST must be set.
+# The job Id is stored in SUBID
+#
+# Added by Victor Galaktionov 18/11/209
+function transfer_job_cancel()
+{
+    echo "transfer_job_cancel()"
+
+    echo "1. Check without SUBID"
+    echo "glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2>message
+    if [ $? == 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+
+    grep "No request ID specified" message > /dev/null
+    if [ $? !=  0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+    echo "OK"
+
+    echo "2. Check real cancel command" 
+    echo "glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID"
+    glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID 2>message
+
+    if [ $? -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+    return 0
+}
+
+# Add by Victor Galaktionov 18/11/2009
+#
+# get SUBID and TIMEOUT and poll the status until it is done (0), failed (3)
+# or failed for timeout exceeded (4). 1 ir returned on error and 2 for bad
+# input parameters
+#
+function poll_canceled_status_with_timeout()
+{
+  if [ -z $1 ];then
+    echo "A submission Id must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local SUBID=$1
+  fi
+
+  if [ -z $2 ];then
+    echo "A timeout must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local Timeout=$2
+  fi
+
+  echo "Checking status for job ID: $SUBID" 
+
+  previous_status="None"
+  t=0
+  while test $t -lt $Timeout
+  do
+    get_status_result $SUBID
+    status=$?
+
+    if [ "$status" -eq 1 ]; then
+            echo "error retrieving the status with get_status_result()"
+            return 1
+    fi
+
+    if [ "$status" -eq 6 ]; then
+            echo "Job done"
+            return 0
+    fi
+    if [ "$status" -eq 3 ]; then
+            echo "Job failed"
+            return 3
+    fi
+    #if [ "$status" -eq 4 ]; then
+        echo "Waiting for status changes" 
+        sleep 10
+        t=`expr $t + 10`
+        echo "Time is $t timeout is $Timeout"  
+    #fi
+
+    if [ "$t" -eq "$Timeout" ]; then
+            echo "Exceded timeout of $Timeout seconds"
+            return 4
+    else
+            continue
+    fi
+  done
+
+}
+
+
+if [ $# -lt 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+     --gsiftp)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+if [ -z "$GSIFTP_URL" ]; then
+    GSIFTP_URL="no"
+fi
+
+#0.1) Check for valid proxy
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi
+         echo "-TEST FAILED-"
+         exit 1
+fi
+
+#1) Test if channel exists
+
+#Get Channels list
+echo
+echo "Retrieving channels list..."
+get_channels
+if [ "x$Channel_List" == "x" ]; then
+  echo "No channels retrieved"
+  exit 1
+fi
+
+found=0
+for Channel in $Channel_List
+do
+  if [ "$Channel" == "$CHANNEL" ];then 
+    echo "Channel exists"
+    found=1
+    break
+  fi
+done
+
+if [ $found -eq 0 ];then
+  echo "Channel $CHANNEL does not exist"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#2) Check that the channel is active
+echo
+echo "Checking that $CHANNEL is active..."
+is_channel_active $CHANNEL
+if [ $? -eq 0 ];then
+  echo "Channel $CHANNEL is Active"
+else
+  echo "Channel $CHANNEL is not Active"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+#3) Retrieve SEs from source and destination site
+echo
+echo "Retrieving SEs info from source and destination sites in $CHANNEL..."
+
+#3.a) Retrieve source and destination sites
+get_source_dest_from_channel $CHANNEL
+if [ $? -eq 1 ];then
+  echo "Failing retrieving source and destination sites"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+echo "Source: $Source_Site"
+echo "Dest: $Destin_Site"
+
+#3.b) Retrieve good SEs from source and destination sites
+#get_good_se_from_site $Source_Site
+#get_def_se_from_site $Source_Site
+#if [ $? -eq 1 ];then
+#  echo "Failing retrieving good SE from site $Source_Site"
+#  exit 1
+#fi
+#if [ "x$SE_HOST" != "x" ]; then
+#  SE_SOURCE=$SE_HOST
+#  echo "SE_source: $SE_SOURCE"
+#else
+#  echo "Failing retrieving good SE from site $Source_Site"
+#  echo "-TEST FAILED-"
+#  exit 1
+#fi
+
+#get_good_se_from_site $Destin_Site
+#get_def_se_from_site $Destin_Site
+#if [ $? -eq 1 ];then
+#  echo "Failing retrieving default SE from site $Destin_Site"
+#  echo "-TEST FAILED-"
+#  exit 1
+#fi
+#if [ "x$SE_HOST" != "x" ]; then
+#  SE_DEST=$SE_HOST
+#  echo "SE_dest: $SE_DEST"
+#else
+#  echo "Failing retrieving default SE from site $Source_Site"
+#  echo "-TEST FAILED-"
+#  exit 1
+#fi
+
+SE_SOURCE=$CERN_SE
+SE_DEST=$CERN_SE2
+
+#3.c) Retrieve SEs path to use for file transfer
+echo "Retrieve SEs path to use for file transfer, $SE_SOURCE"
+get_se_path $SE_SOURCE
+if [ $? -eq 1 ];then
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  SOURCE_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_source: $SOURCE_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+get_se_path $SE_DEST
+if [ $? -eq 1 ];then
+  echo "Failing retrieving SAPATH from SE $SE_DEST"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  DEST_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_destination: $DEST_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#4) Submitting a file transfer
+echo
+echo "Submitting a file transfer job..."
+file_transfer $SOURCE_SAPATH $DEST_SAPATH
+
+if [ $? -eq 1 ];then
+  echo "file_transfer function failed"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+#5. Cancell transfer job
+echo "Cancel transfer job"
+transfer_job_cancel
+
+if [ $? -eq 1 ];then
+  echo "transfer_job_cancel  function failed"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+#6) Poll for cancel result with timeout
+echo
+echo "Poll for cancel result with timeout"
+echo "Retrieving the job status..."
+
+poll_canceled_status_with_timeout $SUBID $TIMEOUT
+return=$?
+
+if [ "$return" -eq 1 ];then
+  echo "Failing retrieving the job status"
+  echo "-TEST FAILED-"
+  exit 1
+elif [ "$return" -eq 2 ];then
+  echo "Failing retrieving the job status"
+  echo "-TEST FAILED-"
+  exit 1
+elif [ "$return" -eq 3 ];then
+  echo "Job failed"
+  echo "-TEST FAILED-"
+  exit 1
+elif [ "$return" -eq 4 ];then
+  echo "Timeout exceeded"
+  echo "-TEST FAILED-"
+  exit 1
+elif [ "$return" -gt 4 ];then
+  echo "return code unknown $?"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+echo "OK, job - canceled"
+
+#echo "Again cancel this job"
+#glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID 2>&1 > message
+#result=`cat message | wc -l`
+
+#echo "Result=$result"
+#if [ $result -ge 0 ]; then
+#    echo ">>> NOTE: `cat message`"
+#    exit 1
+#fi
+  
+
+#glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID
+
+echo ""
+echo "Check special parameters: -q -h -v --verbose -V"
+special_cancel_transfer
+
+if [ $? -eq 1 ];then
+  echo "Failing execute special operations for glite-trancfer-cancel"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+echo "-TEST PASSED-"
+exit 0

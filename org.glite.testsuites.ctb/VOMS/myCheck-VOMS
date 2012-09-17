@@ -1,0 +1,75 @@
+#!/bin/bash 
+
+counter=1
+workdir=`dirname $0`
+short_result="${workdir}/short_result"
+full_result="${workdir}/full_result"
+
+usage() {
+echo "USAGE: $0 -n <VOMS server hostname> -l <file with test list> [ -s <file with short test result> -f <file with full test result>]"
+echo "If -s or -f are not specified the test results will be written to the files ./short_result and ./full_result."
+}
+ 
+while getopts "n:s:f:l:h" opt
+do
+ case $opt in
+ n) nodename=$OPTARG
+    ;;
+ s) short_result=$OPTARG
+    ;;
+ f) full_result=$OPTARG
+    ;;
+ l) testlist=$OPTARG
+    ;;
+ h) usage
+    exit 0
+    ;;
+ '?') echo "$0: Invalid option -$OPTARG" >&2
+    usage
+    exit 1
+    ;; 
+ esac
+done
+
+echo $nodename 
+echo $testlist
+
+if [ -z $nodename ] || [ -z $testlist ]; then
+ echo "AU"
+ usage
+ exit 1
+fi
+
+SENSOR=VOMS
+export nodename
+export SAME_SENSOR_WORK=$workdir
+export SAME_SENSOR_HOME=$workdir
+export SAME_ERROR=50
+export SAME_OK=0
+
+rm -rf $short_result
+rm -rf $full_result
+
+echo "Test for $nodename: started"
+
+mkdir -p $SAME_SENSOR_WORK/nodes/$nodename
+
+for test in `cat $testlist` ; do
+ echo
+ echo "$count TEST: $test"
+ testDef=$SAME_SENSOR_HOME/tests/$test.def
+  if [ -e $testDef ];   then
+   $SAME_SENSOR_HOME/tests/$test  $nodename   >> $full_result
+   if [ $? == 0 ]; then
+    echo -e "Test $test\t- OK" >> $short_result
+   else
+    echo "Test $test has failed" >> $short_result
+   fi
+  else 
+   echo "Not exists definition file: $testDef"
+  fi
+done
+
+echo "Short report:"
+cat $short_result  
+echo "Full test report exists in $full_result"

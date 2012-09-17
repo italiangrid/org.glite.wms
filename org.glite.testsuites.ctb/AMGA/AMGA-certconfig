@@ -1,0 +1,3 @@
+#Configuration variables for AMGA testing scripts
+
+AMGA_HOST=vtb-generic-39.cern.ch

@@ -1,0 +1,4 @@
+proxy=${X509_USER_PROXY:-/tmp/x509up_u`id -u`}
+export X509_USER_CERT=$proxy
+export X509_USER_KEY=$proxy
+export HTTPS_CA_FILE=$proxy

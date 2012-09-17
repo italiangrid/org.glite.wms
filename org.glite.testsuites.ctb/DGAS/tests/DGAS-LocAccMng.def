@@ -1,0 +1,4 @@
+testName: DGAS-LocAccMng.def
+testAbbr: LocAccMng
+testTitle: Layer 2 - Test that the local accounting management commands work
+EOT

@@ -1,0 +1,11 @@
+[
+Executable = "/bin/echo";
+Arguments = "test";
+StdOutput = "out.log";
+StdError = "err.log";
+InputSandbox = {};
+OutputSandbox = {"out.log","err.log"};
+rank = - other.GlueCEStateEstimatedResponseTime;
+requirements = true;
+ShortDeadlineJob = false;
+]

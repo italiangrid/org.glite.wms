@@ -1,0 +1,5 @@
+testName: SRM-lcgdm-srm2.2
+testAbbr: srm2.2-lcgdm
+testTitle: Gilbert's tests of SRM 2.2
+testHelp: http://glite.cvs.cern.ch/cgi-bin/glite.cgi/LCG-DM/test/srmv2.2/
+EOT

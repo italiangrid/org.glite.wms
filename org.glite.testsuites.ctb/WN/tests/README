@@ -1,0 +1,15 @@
+Mon Jun 15 16:47:08 CEST 2009
+
+- WN-stage2.sh will return 1 if the variable VO_OPS_SW_DIR s not set in yaim.
+
+[root@vtb-generic-54 tests]# ./WN-stage2.sh ; echo $?
+summary: VO_OPS_SW_DIR not set
+1
+
+- WN-ver.sh will fail if GLITE_CE or GLOBUS_CE are not set in yaim.
+
+[root@vtb-generic-54 tests]# ./WN-ver.sh ; echo $?
+glite-version is /opt/glite/bin/glite-version
+summary: could not get CE name
+2
+

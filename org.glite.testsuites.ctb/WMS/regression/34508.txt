@@ -1,0 +1,8 @@
+Bug: #34508
+Link: https://savannah.cern.ch/bugs/?34508
+Summary: Any collection submitted while the WMS is down is not recovered upon WM startup
+
+- Stop the WM on the WMS.
+- Submit a collection
+- Restart the WM
+- Check if the status of the collection changes to Running

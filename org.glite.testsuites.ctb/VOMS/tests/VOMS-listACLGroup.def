@@ -1,0 +1,4 @@
+testName: VOMS-listACLGroup
+testAbbr: lstACLgr
+testTitle: voms-admin: Test "get-acl CONTAINER" with CONTAINER being a group 
+EOT

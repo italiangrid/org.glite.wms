@@ -1,0 +1,77 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+test_bug49498_pre () {
+
+   PREVIOUS_LFC_HOST=${LFC_HOST}
+
+   export LFC_HOST=${LFC_TESTHOST}
+   if [ -z "${LFC_HOST}" ]; then
+     echo "LFC_HOST not defined"
+     return ${REGTEST_FAIL}
+   fi
+
+   return $REGTEST_OK
+}
+
+test_bug49498_post () {
+
+   lfc-ls ${LFC_TESTHOME}/bug49498 > /dev/null 2>/dev/null
+   if [ $? -eq 0 ]; then
+      command='lfc-rm -r ${LFC_TESTHOME}/bug49345'
+      message="Remove test directory $LFC_TESTHOME/bug49345"
+      run_command "${command}" "${message}"
+      if [ $? -ne ${REGTEST_OK} ]; then
+         echo "Cannot remove path $LFC_TESTHOME/bug49498 on LFC server: $LFC_HOST"
+         return ${REGTEST_FAIL}
+      fi
+   fi
+
+   unset LFC_HOST
+   if [ -z "${PREVIOUS_LFC_HOST}" ]; then
+      export LFC_HOST=${PREVIOUS_LFC_HOST}
+   fi
+
+   return $REGTEST_OK
+}
+
+test_bug49498 () {
+
+   command='lfc-ls ${LFC_TESTHOME}'
+   message="Checking LFC_TESTHOME existence..."
+   run_command "${command}" "${message}"
+
+   if [ $? -ne ${REGTEST_OK} ]; then
+      echo "LFC_TESTHOME not found on LFC server: $LFC_HOST"
+      return ${REGTEST_FAIL}
+   fi
+
+   result=$(lfc-mkdir -p lfn:${LFC_TESTHOME}/bug49498/non-existing/subdirectory 2>&1)
+   if [ $? -eq 139 ]; then
+      echo "lfc-mkdir segfaults on -p with lfn: prefix"
+      return ${REGTEST_FAIL}
+   fi
+
+   return $REGTEST_OK
+}
+

@@ -1,0 +1,4 @@
+testName: VOMS-setGroupAttribute
+testAbbr: setGA
+testTitle: voms-admin: Test "set-group-attribute GROUP ATTRIBUTE ATTRIBUTEVALUE ATTRIBUEDESCRIPTION" option
+EOT

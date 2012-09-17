@@ -1,0 +1,31 @@
+Bug: #27899
+Link: https://savannah.cern.ch/bugs/?27899
+Summary: VO override does not work with JDLDefaultAttributes 
+
+- edit the configuration file in '/opt/glite/etc/<vo_name>/glite_wmsclient.conf' by changing 
+  the 'virtualorganisation' attribute in the JdlDefaultAttributes section to a <vo_name>
+  different from the one used to generate the user proxy, as in the following:
+
+    [emolinari@cream-15 ~]$ cat /opt/glite/etc/dteam/glite_wms.conf
+        [
+          OutputStorage  =  "/tmp/jobOutput";
+          JdlDefaultAttributes =  [
+          RetryCount  =  3;
+          rank  = - other.GlueCEStateEstimatedResponseTime;
+          PerusalFileEnable  =  false;
+          virtualorganisation  =  "infngrid";
+          AllowZippedISB  =  true;
+          requirements  =  other.GlueCEStateStatus == "Production";
+          ShallowRetryCount  =  10;
+          SignificantAttributes  =  {"Requirements", "Rank", "FuzzyRank"};
+          MyProxyServer  =  "myproxy.cnaf.infn.it";
+        ];
+        virtualorganisation  =  "dteam";
+        ErrorStorage  =  "/tmp";
+        ListenerStorage  =  "/tmp";
+        ]
+
+- submit a job and check the generated .jdl has the right virtualorganisation
+  defined, that is the same <vo_name> as the one used to generated the user proxy
+
+     

@@ -1,0 +1,7 @@
+VirtualOrganisation="cms";
+requirements = other.GlueCEPolicyMaxCPUTime >= 130 ;
+Executable = "testJob.sh";
+StdOutput = "testJob.out";
+StdError = "testJob.out";
+InputSandbox = {"./testJob.sh"};
+OutputSandbox = {"testJob.out","report"};

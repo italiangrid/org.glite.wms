@@ -1,0 +1,11 @@
+JobType = "MPICH";
+NodeNumber = 2;
+Executable = "mpi-start-wrapper.sh";
+Arguments = "mpi-test MPICH";
+StdOutput = "mpi-test.out";
+StdError = "mpi-test.err";
+InputSandbox = {"mpi-start-wrapper.sh","mpi-hooks.sh","mpi-test.f"};
+OutputSandbox = {"mpi-test.err","mpi-test.out"};
+lrms_type="pbs";
+Requirements =
+  Member("MPI-START", other.GlueHostApplicationSoftwareRunTimeEnvironment)  ;

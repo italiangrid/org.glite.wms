@@ -1,0 +1,4 @@
+testName: VOMS-delAttribute
+testAbbr: delAttr
+testTitle: voms-admin: Test "delete-attibute ATTRIBUTENAME" option
+EOT

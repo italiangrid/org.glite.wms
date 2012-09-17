@@ -1,0 +1,4 @@
+testName: VOMS-setUserAttribute
+testAbbr: setUA
+testTitle: voms-admin: Test "set-user-attribute USER ATTRIBUTE ATTRIBUTEVALUE ATTRIBUEDESCRIPTION" option
+EOT

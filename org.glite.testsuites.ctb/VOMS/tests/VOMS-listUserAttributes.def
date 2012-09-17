@@ -1,0 +1,4 @@
+testName: VOMS-listUserAttributes
+testAbbr: lstUsrAttr
+testTitle: voms-admin: Test "list-user-attributes USER" option
+EOT

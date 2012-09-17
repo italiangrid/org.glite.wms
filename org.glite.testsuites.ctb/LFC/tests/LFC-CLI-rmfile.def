@@ -1,0 +1,4 @@
+testName: LFC-CLI-rmfile
+testAbbr: rmfile
+testTitle: delete file in LFC directory in the name server (lfc-rm -r <dir>) 
+EOT

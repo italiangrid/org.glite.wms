@@ -1,0 +1,30 @@
+#!/bin/bash
+#Configuration variables for FTS testing scripts
+
+export FTS_HOST="vtb-generic-105.cern.ch"
+#FTS_HOST="lxbra2310.cern.ch"
+#The name of the top level BDII
+export BDII_HOST="lxbra2305.cern.ch"
+#The hostname of the LCG File Catalog
+export LFC_HOST="lxb7608v3.cern.ch"
+#The name of the site as it stored in the GOC DB and information system.
+export SITE_NAME="cert-tb-cern"
+#Name of VO to use
+export VO="dteam"
+#VO="org.glite.voms-test"
+#The channels to use for submitting file transfers
+CHANNELS=CERN-CERN
+#export CERN_SE="lxb7608v1.cern.ch"
+export CERN_SE="lxbra1910.cern.ch"
+#CHANNEL="CERN-DESY"
+export DESY_SE="swords.desy.de"
+#Timeout for waiting the job to finish. Default is 100 sec.
+TIMEOUT=100
+#The number of jobs to be submitted. Default is 10
+NJOBS=10
+#The number of files per job. Default is 10
+NFILES=10
+#Test channel name for channel management operation
+#NEW_CHANNEL="CERN-SINP"
+#The counter for check job transfer list
+#export JOBLIST_NUMBER=3

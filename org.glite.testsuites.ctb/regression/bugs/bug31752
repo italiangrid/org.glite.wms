@@ -1,0 +1,135 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andreas Unterkircher, CERN
+#
+##############################################################################
+
+test_bug31752_pre () {
+ export LFC_HOST=${DEFAULT_LFC}
+ if [ -z "${LFC_HOST}" ]; then
+  echo "LFC_HOST not defined"
+  return ${REGTEST_FAIL}
+ fi
+
+}
+
+test_bug31752_post () {
+ echo
+ #unset LFC_HOST 
+ unset GUID
+ unset SURL
+ rm -f ${LOCAL_FILE}
+ unset LOCAL_FILE
+ unset LFN
+ unset LFN_BASE
+}
+
+test_bug31752 () {
+
+uni_pid=$$
+uni_time=`date +%s`
+name="$uni_pid$uni_time"
+
+LOCAL_FILE=${TMPDIR-/tmp}/bug32923.$$
+LFN="lfn:/grid/${VO}/$name"
+LFN_BASE="/grid/${VO}/$name"
+
+echo "$name" >> $LOCAL_FILE
+
+command="lcg-cr --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${DEFAULT_SE}"
+message="Running lcg-cr"
+run_command_timeout "${command}" "${message}"
+
+retval=$?
+if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+elif [ $retval -ne $REGTEST_OK ]; then
+ return ${REGTEST_FAIL}
+fi
+
+command="lcg-lr --vo ${VO} ${LFN}"
+message="Running lcg-lr"
+run_command_timeout "${command}" "${message}"
+
+retval=$?
+if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+elif [ $retval -ne $REGTEST_OK ]; then
+ return ${REGTEST_FAIL}
+fi
+
+SURL=$(echo ${OUTPUT})
+
+command="lcg-lg --vo ${VO} ${LFN}"
+message="Running lcg-lg"
+run_command_timeout "${command}" "${message}"
+
+retval=$?
+if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+elif [ $retval -ne $REGTEST_OK ]; then
+ return ${REGTEST_FAIL}
+fi
+
+GUID=$(echo ${OUTPUT})
+
+command="lfc-ls ${LFN_BASE}"
+message="Running lfc-ls"
+run_command_timeout "${command}" "${message}"
+
+retval=$?
+if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+elif [ $retval -ne $REGTEST_OK ]; then
+ return ${REGTEST_FAIL}
+fi
+
+command="lcg-uf --vo ${VO} ${GUID} ${SURL}"
+message="Running lcg-uf"
+run_command_timeout "${command}" "${message}"
+
+#We don't check for the output because of bug #33638
+
+command="lfc-ls ${LFN_BASE}"
+message="Running lfc-ls"
+run_command "${command}" "${message}"
+
+# Here we expect an error as retval
+if [ $? -ne ${REGTEST_FAIL} ]; then
+ echo "Expected dir ${LFN_LFC} to be removed from LFC ${LFC_HOST} but it is still there."
+ return ${REGTEST_FAIL}
+fi
+echo "A failure is expected at this stage."
+
+echo "lcg-del --vo ${VO} --nolfc ${SURL}"
+
+command="lcg-del --vo ${VO} --nolfc ${SURL}"
+message="Run lcg-del --nolfc"
+run_command_timeout "${command}" "${message}"
+
+retval=$?
+if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+elif [ $retval -ne $REGTEST_OK ]; then
+ return ${REGTEST_FAIL}
+fi
+
+return $REGTEST_OK
+}

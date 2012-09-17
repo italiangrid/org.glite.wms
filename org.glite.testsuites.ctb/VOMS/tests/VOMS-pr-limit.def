@@ -1,0 +1,4 @@
+testName: VOMS-pr-limit
+testAbbr: pr-lim
+testTitle: voms-proxy-init: Test "limited" option
+EOT

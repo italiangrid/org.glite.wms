@@ -1,0 +1,9 @@
+Bug: #28235
+Link: https://savannah.cern.ch/bugs/?28235
+Summary: Previously used CEs are not considered at all in the resubmission
+
+- Change the jdl setting the name of an existing CE (in the requirements)
+- At the end of the jobs with this command:
+  glite-wms-job-logging-info -v 2 <jobid> | grep -A 2 Match | grep Dest
+  you should see 3 times the name of the previously choosen CE.
+  (The job must be Aborted with reason: hit job shallow retry count (2))

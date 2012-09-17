@@ -1,0 +1,62 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://project.eu-egee.org/index.php?id=115 for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andrew Elwell <Andrew.Elwell@cern.ch>
+#
+##############################################################################
+test_bug37701_pre () {
+ # normally aliases aren't expanded in non-interactive shells, but you never 
+ # know what users do with 'shopt expand_aliases'
+ echo -n 'Checking if "which" is aliased...'
+ BUG37701_TMP=`mktemp`
+ alias which > $BUG37701_TMP 2>/dev/null
+ if [ "$?" -ne 0 ] ; then 
+  echo  "no"
+  return $REGTEST_OK
+ if [ -s $BUG37701_TMP ] ; then
+  echo "yes"
+  cat $BUG37701_TMP
+ fi
+ fi
+# Check for variables that are needed in test_bug37701 and which should be defined globally in 
+# the *sh that is sourced in regTest
+# Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK 
+}
+
+test_bug37701_post () {
+# Cleanup after running test_bug37701. Unset all variables that were set in test_bug37701
+# Delete files created during the test run.
+ rm $BUG37701_TMP
+}
+
+test_bug37701 () {
+# Main test 
+# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+
+command="which which"
+message="is which in the path?"
+run_command "${command}" "${message}"
+
+if [ $? -ne ${REGTEST_OK} ]; then
+  return ${REGTEST_FAIL}
+fi
+# The output of command is available in the variable OUTPUT
+echo -n "RPM version is: "
+rpm -qf $OUTPUT
+}

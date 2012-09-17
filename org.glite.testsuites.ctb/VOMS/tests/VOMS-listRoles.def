@@ -1,0 +1,4 @@
+testName: VOMS-listRoles
+testAbbr: lstRol
+testTitle: voms-admin: Test "list-roles" option
+EOT

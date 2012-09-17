@@ -1,0 +1,7 @@
+Executable = "/bin/hostname";
+StdOutput  = "std.out";
+StdError   = "std.err";
+requirements = true;
+rank = 1;
+OutputSandbox = {"std.out","std.err"};
+

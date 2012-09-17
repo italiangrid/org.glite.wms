@@ -1,0 +1,4 @@
+testName: VOMS-removeMember
+testAbbr: rmMem
+testTitle: voms-admin: Test "remove-member GROUPNAME USER" option
+EOT

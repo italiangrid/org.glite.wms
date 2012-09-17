@@ -1,0 +1,38 @@
+Bug: #38739
+Link: https://savannah.cern.ch/bugs/?38739
+Summary: WMProxy Server: doesn't allow exec if there's only user DN in gacl 
+         file
+
+- Consider this /opt/glite/etc/glite_wms_wmproxy.gacl file:
+
+
+<?xml version="1.0"?>
+<gacl version="0.0.1">
+<entry>
+<any-user>
+</any-user>
+<deny><exec/></deny>
+</entry>
+<entry>
+<voms>
+<fqan>dteam</fqan>
+</voms>
+<deny><exec/></deny>
+</entry>
+<entry>
+<person>
+<dn>/C=IT/O=INFN/OU=Personal Certificate/L=Padova/CN=Massimo Sgaravatto</dn>
+</person>
+<allow><exec/></allow>
+</entry>
+</gacl>
+
+  replacing "/C=IT/O=INFN/OU=Personal Certificate/L=Padova/CN=Massimo Sgaravatto" 
+  with your user DN
+
+
+- Try to issue some commands (e.g. glite-wms-job-list-match, 
+  glite-wms-job-submit, glite-wms-job-delegate-proxy, etc...) towards that WMS
+  with your dteam VO proxy. They should succeed
+  
+

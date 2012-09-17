@@ -1,0 +1,4 @@
+testName: VOMS-listGroups
+testAbbr: lstGro
+testTitle: voms-admin: Test "list-groups" option
+EOT

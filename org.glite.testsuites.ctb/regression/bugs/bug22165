@@ -1,0 +1,51 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andreas Unterkircher, CERN
+#
+##############################################################################
+
+test_bug22165_pre() {
+ echo
+}
+
+test_bug22165_post() {
+ echo
+}
+
+test_bug22165 () {
+ regtest_timeout lcg-ls --version | grep -E 'lcg_util-[0-9]+\.[0-9]+\.[0-9]+'
+
+ retval=$?
+ if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+  return $REGTEST_TIMEOUT_ERROR
+ elif [ $retval -ne $REGTEST_OK ]; then
+  return ${REGTEST_FAIL}
+ fi
+
+ regtest_timeout lcg-ls --version | grep -E 'GFAL-client-[0-9]+\.[0-9]+\.[0-9]+'
+ retval=$?
+ if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+  return $REGTEST_TIMEOUT_ERROR
+ elif [ $retval -ne $REGTEST_OK ]; then
+  return ${REGTEST_FAIL}
+ fi
+
+ return $REGTEST_OK 
+}

@@ -1,0 +1,289 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Gianni Pucciani, CERN
+#
+##############################################################################
+
+#source functions definitions
+source FTS-common
+
+#Script for testing FTS behavior with space tokens
+# Scenario:
+#A valid token description is used at the source and the destination SE, the destination space has enough place to store the file. 
+#The transfer has to succeed and the file has to be placed in the right space at the destinations site. This can be checked by 
+#looking at the unused space of the space reserved at the destination site. 
+
+showUsage()
+{
+ echo "Usage: $0 --fts <fts hostname> --src <source SE> --dest <dest SE> --timeout <timeout> --bdii <bdii host> --vo <vo> --gsiftp [yes|no]"
+}
+
+if [ $# -lt 12 ];then
+  echo "One or more arguments are missing"
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+     --src)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                SRC_SE=$2
+                shift 2
+           fi
+     ;;
+     --dest)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                DEST_SE=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --gsiftp)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+if [ -z "$GSIFTP_URL" ]; then
+    GSIFTP_URL="no"
+fi
+
+
+#0.1) Check for valid proxy
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi
+         echo "-TEST FAILED-"
+         exit 1
+fi
+
+#3.c) Retrieve SEs path to use for file transfer
+get_se_path $SRC_SE
+if [ $? = 1 ];then
+  echo "Failing retrieving SAPATH from SE $SRC_SE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+SOURCE_SAPATH=$SE_SRM_LOC
+echo "SAPATH_source: $SOURCE_SAPATH"
+
+get_se_path $DEST_SE
+if [ $? = 1 ];then
+  echo "Failing retrieving SAPATH from SE $DEST_SE"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+DEST_SAPATH=$SE_SRM_LOC
+echo "SAPATH_destination: $DEST_SAPATH"
+
+#reserve space src
+SIZE=5M
+id=`date +%s`
+SRC_DESCR=src_descr_$id
+unset TOKEN
+echo "Reserving ${SIZE} on $SOURCE_SAPATH as $SRC_DESCR"
+#Export DPM_HOST in order to use the dpm CLI
+export DPM_HOST=$SRC_SE
+reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR
+#if [ "x${TOKEN}" == "x" ] || [ $? -ne 0 ]; then
+if [ $? -ne 0 ]; then
+  echo "Error calling function reserveSpace: reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR"
+  exit 1
+else
+  SRC_TOKEN=$TOKEN
+fi
+echo "SRC_TOKEN: $SRC_TOKEN"
+
+#reserve space dest
+unset TOKEN
+id=`date +%s`
+DEST_DESCR=dest_descr_$id
+echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
+#Export DPM_HOST in order to use the dpm CLI
+export DPM_HOST=$DEST_SE
+reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
+if [ $? -ne 0 ]; then
+  echo "Error calling function reserveSpace: reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR"
+  exit 1
+else
+  DEST_TOKEN=$TOKEN
+fi
+echo "DEST_TOKEN: $DEST_TOKEN"
+
+
+#4) Submitting a file transfer
+FILE_SIZE=1000
+echo
+echo "Submitting a file transfer job..."
+file_transfer_tokens $SOURCE_SAPATH $DEST_SAPATH $SRC_DESCR $DEST_DESCR $FILE_SIZE
+
+if [ $? = 1 ];then
+  echo "Failing submitting a job"
+  echo "-TEST FAILED-"
+  exit 1
+fi
+
+
+#5) Poll for results with timeout
+echo
+echo "Retrieving the job status..."
+#Hardcoded timeout
+#TIMEOUT=300
+poll_status_with_timeout $SUBID $TIMEOUT
+return=$?
+
+if [ "$return" = 1 ];then
+  echo "Failing retrieving the job status"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+elif [ "$return" = 2 ];then
+  echo "Failing retrieving the job status"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+elif [ "$return" = 3 ];then
+  echo "Job failed"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+elif [ "$return" = 4 ];then
+  echo "Timeout exceeded"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+elif [ "$return" -gt 4 ];then
+  echo "return code unknown $?"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+fi
+
+if [ "$return" -eq 0 ];then
+  echo "Job status is done"
+fi
+
+
+#3.2) check space
+get_unused_space $DEST_TOKEN $DEST_SAPATH
+if [ $? -ne 0 ]; then
+  echo "Error calling function check_unused_space: check_unused_space 5 $DEST_TOKEN $DEST_SAPATH"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+fi
+
+if [ $UNUSED == "5.00M" ]; then
+  echo "Test Failed: the unused space did not change"
+  echo "Space free at destination: $UNUSED"
+  echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+fi
+
+export DPM_HOST=$SRC_SE
+remove_space $SOURCE_SAPATH $SRC_TOKEN
+export DPM_HOST=$DEST_SE
+remove_space $DEST_SAPATH $DEST_TOKEN
+
+echo "-TEST PASSED-"
+exit 0
+
+

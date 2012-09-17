@@ -1,0 +1,574 @@
+#!/usr/bin/env python
+##############################################################################
+#
+# NAME:        samtest-run
+#
+# FACILITY:    SAM (Service Availability Monitoring)
+#
+# COPYRIGHT:
+#         Copyright (c) 2009-2011, Members of the EGEE Collaboration.
+#         http://www.eu-egee.org/partners/
+#         Licensed under the Apache License, Version 2.0.
+#         http://www.apache.org/licenses/LICENSE-2.0
+#         This software is provided "as is", without warranties
+#         or conditions of any kind, either express or implied.
+#
+# DESCRIPTION:
+#
+#         Wrapper script for SAM checks - ie. tests that return SAM compliant
+#         exit codes, summary and details data output.
+#
+# AUTHORS:     Konstantin Skaburskas, CERN
+#
+# CREATED:     16-Jan-2009
+#
+# NOTES:
+#
+# MODIFIED:
+#
+##############################################################################
+
+"""
+wrapper script for SAM checks.
+
+Wrapper script for SAM checks - ie. tests that return SAM compliant
+exit codes, summary and details data output.
+
+Konstantin Skaburskas <konstantin.skaburskas@cern.ch>, CERN
+SAM (Service Availability Monitoring)
+"""
+
+import os
+import sys
+import getopt
+import signal
+import re
+import commands
+
+version = '0.9'
+
+# global definitions
+testfullpath  = None # -f
+samsensorsdir = None # -d
+sensor        = None # -s
+test          = None # -m
+hostname      = 'localhost' # -H
+_hostname     = None        # -H
+prepare       = ''   # -p
+_prepare      = None # -p
+envvars       = {} # -e
+testargs      = '' # -o
+timeout_test  = 600 # -t
+VO            = 'ops' # -v
+same_work = '/var/lib/gridprobes/%s/same' # -w
+
+# order: -x, X509_USER_PROXY, /tmp/x509up_u${UID}
+if os.environ.has_key('X509_USER_PROXY'):
+    proxy = os.environ['X509_USER_PROXY']
+else:
+    proxy = '/tmp/x509up_u'+str(os.geteuid())
+nag_rcs = {'OK'      :0,
+          'WARNING'  :1,
+          'CRITICAL' :2,
+          'UNKNOWN'  :3}
+# SAM return codes
+sam_rcs = {'OK'         :10,
+           'INFO'       :20,
+           'NOTICE'     :30,
+           'WARNING'    :40,
+           'ERROR'      :50,
+           'CRITICAL'   :60,
+           'MAINTENANCE':100}
+process = None
+_SAME   = True
+
+usage_short = """Usage:
+%s [-d <path> -s <name> -m <test>] | [-f <pathToTest>] [-H <hostname>]
+[-p] [-e <env,..>] [-t|--timeout sec] [-V] [-h|--help] [-v|--vo <VO>]
+[-x proxy] [-w <path>] [-o "SAM test options"]
+"""%(os.path.basename(sys.argv[0]))
+
+usage_long = """   Mandatory parameters:
+-d <path>          Directory where SAM sensors are located. Absolute path.
+-s <name>          Name of SAM sensor
+-m <test>          Name of a test to be run. Eg. SRMv2-get-SURLs. Assumes tests
+                   are located under /<path>/<name>/tests/
+-f <pathToTest>    Test specified by an absolute path.
+   Optional parameters:
+-H <hostname>      Hostname the service is running on. (Default: %s)
+                   Usually, SAM tests assume that first positional parameter is
+                   the name of the host to test. However, this might not be the
+                   case for all the tests. Thus, if not provided 'localhost'
+                   default is used.
+-p                 If you want your '/<path>/<name>/prepare-<name>' script to
+                   be executed. Note: the script shouldn't contain any calls to
+                   SAM binaries (eg. same-publish-tuples) - only code really
+                   preparing an "environment" for the test to be executed.
+-e <env,..>        Comma delimited list of KEY=value environment variables that
+                   are required to be exported before launching the test.
+-h|--help          Displays help.
+-t|--timeout sec   Sets test's global timeout. (Default: %i)
+-v|--vo <VO>       VO name to set as SAME_VO environment variable.
+                   (Default: %s)
+-w <path>          Working directory for checks.
+                   (Default: %s)
+-x                 VOMS proxy (Order: X509_USER_PROXY, /tmp/x509up_u<UID>, -x)
+-o "options"       Options to be passed to the SAM test
+-V                 Displays version.
+
+You must specify test ([-d, -s, -m] | [-f]) and hostname (-H)
+
+This script runs a test script available as an executable in
+<directory>/<name>/tests/<test>
+  or
+<pathToTest>
+
+Arguments given with -o option are passed to the test script.
+
+The script captures (in line buffered mode) stdout and stderr of the test
+script and produces Nagios compliant output consisting of
+- test status (on the first line)
+- multi-line details data
+
+SAM exit codes are mapped to Nagios ones.
+    Nagios      | SAM
+    0, OK       | 0, (10, ok)
+    1, WARNING  | (40, warning)
+    2, CRITICAL | 1, (50, error), (60, critical)
+    3, UNKNOWN  | (20, info), (30, notice), (100, maintenance)
+                |
+    1, WARNING  | in other cases
+"""%(hostname,
+     timeout_test,
+     VO,
+     same_work%'<VO>')
+
+usage = usage_short + '\n' + usage_long
+
+def _exit(rc, msg):
+    sys.stdout.write(usage_short)
+    sys.stdout.write(msg)
+    sys.exit(rc)
+
+def check_opts(opts):
+    """Command line options sanity check.
+    """
+
+    rc = nag_rcs['UNKNOWN']
+
+    if len(opts) == 0:
+        _exit(rc, """
+    Provide test with
+ [-d <dir> -s <name> -m <test>] | [-f <pathToTest>]
+    or
+ -h for help\n""")
+
+    k = [x[0] for x in opts]
+    if '-h' in k or '--help' in k:
+        return
+#    if not '-H' in k:
+#        _exit(rc, '\nERROR: mandatory parameter missing: -H <hostname>\n')
+    if '-f' in k and '-m' in k:
+        _exit(rc, '\nERROR: -f and -m cannot be given together.\n')
+    if '-m' in k and (not '-d' in k or not '-s' in k):
+        _exit(rc, '\nERROR: -d and -s must be provided along with -m'+\
+                         '\n -m <test> -d <name> -s <name>\n')
+    elif '-d' in k and (not '-m' in k or not '-s' in k):
+        _exit(rc, '\nERROR: -m and -s must be provided along with -d'+\
+                         '\n -m <test> -d <name> -s <name>\n')
+    elif '-s' in k and (not '-m' in k or not '-d' in k):
+        _exit(rc, '\nERROR: -m and -d must be provided along with -s'+\
+                         '\n -m <test> -d <name> -s <name>\n')
+    if (not '-d' in k and not '-s' in k and not '-m' in k) and not '-f' in k:
+        _exit(rc, """
+    Provide test with
+ [-d <dir> -s <name> -m <test>] | [-f <pathToTest>]
+    or
+ -h for help\n""")
+
+def parse_args(argv):
+    "- argv - sys.argv"
+
+    global _SAME, testfullpath, test, sensor, timeout_test
+    global VO, proxy, testargs, samsensorsdir, same_work
+    global hostname, _hostname, _prepare
+
+    opts,args = (None, None)
+    try:
+        opts,args = getopt.getopt(argv[1:],'Vhm:d:s:f:t:v:x:o:w:H:e:p',
+                                ['help','timeout=','vo='])
+    except getopt.GetoptError, e:
+        sys.stdout.write(usage)
+        sys.stdout.write("Error : %s\n"% e)
+        sys.exit(0)
+
+    # command line options sanity check
+    check_opts(opts)
+
+    for o,v in opts:
+        if o in ('-V'):
+            sys.stdout.write(version+'\n')
+            sys.exit(0)
+        elif o in ('-h','--help'):
+            sys.stdout.write(usage)
+            sys.exit(0)
+        elif o == '-f':
+            testfullpath = v
+            _SAME = False
+        elif o == '-m':
+            test = v
+        elif o == '-s':
+            sensor = v
+        elif o == '-d':
+            samsensorsdir = v
+        elif o in ('-t','--timeout'):
+            timeout_test = int(v)
+        elif o in ('-v','--vo'):
+            VO = v
+        elif o == '-x':
+            proxy = v
+        elif o == '-o':
+            testargs = v
+        elif o == '-w':
+            same_work = v
+        elif o == '-H':
+            hostname = v
+            _hostname = True
+        elif o == '-p':
+            _prepare = True
+        elif o == '-e':
+            for s in v.split(','):
+                if not s:
+                    continue
+                try:
+                    a,b = s.split('=')
+                    if not a:
+                        raise ValueError
+                except ValueError:
+                    _exit(nag_rcs['UNKNOWN'],
+                          'ERROR: badly provided env. variable: %s\n' % s)
+                if not b:
+                    _exit(nag_rcs['UNKNOWN'],
+                          'ERROR: no value provided for env. variable: %s\n' % a)
+                else:
+                    envvars[a] = b
+        else:
+            pass
+    os.environ['X509_USER_PROXY'] = proxy
+
+def set_env():
+    "Set SAME environment."
+    global same_work
+
+    for status in sam_rcs.keys():
+        os.environ['SAME_'+status] = str(sam_rcs[status])
+    try:
+        same_work = same_work % VO
+    except TypeError:
+        pass
+    os.environ['SAME_VO'] = VO
+    # SAM: $HOME/.same/
+    # Nag: /var/lib/gridmonsam/$SAME_VO/same/
+    if not os.environ.has_key('SAME_WORK'):
+        os.environ['SAME_WORK'] = same_work
+    try:
+        if not os.path.isdir(os.environ['SAME_WORK']):
+            os.makedirs(os.environ['SAME_WORK'])
+    except OSError, e:
+        if re.search('File exists', str(e)):
+            pass
+        else:
+            status = 'UNKNOWN'
+            stsmsg = detmsg = status+": OSError: "+str(e)+'\n'
+            sys.stdout.write(stsmsg)
+            sys.stdout.write(detmsg)
+            sys.exit(nag_rcs[status])
+
+    ce_name = 'UNDEFINED'
+    try:
+        ce_name = os.environ['GLOBUS_CE']
+    except KeyError:
+        try:
+            ce_name = os.environ['GLITE_CE']
+        except KeyError:
+            try:
+                ce_name = os.environ['OSG_HOSTNAME']
+            except KeyError:
+                rc, o = commands.getstatusoutput('glite-brokerinfo getCE')
+                if rc == 0:
+                    ce_name = o
+    os.environ['SAME_NODE_NAME'] = ce_name.split('/')[0].split(':')[0]
+
+    try:
+        os.environ['SAME_SITE_NAME'] = os.environ['SITE_NAME']
+    except KeyError:
+        os.environ['SAME_SITE_NAME'] = 'UNDEFINED'
+
+    if _SAME:
+        #  /opt/lcg/same/client
+        if not os.environ.has_key('SAME_HOME'):
+            os.environ['SAME_HOME'] = samsensorsdir + '/..'
+        if not os.environ.has_key('SAME_SENSOR_NAME'):
+            os.environ['SAME_SENSOR_NAME'] = sensor
+        if not os.environ.has_key('SAME_SENSOR_HOME'):
+            os.environ['SAME_SENSOR_HOME'] = samsensorsdir+'/'+sensor
+        # SAM: $HOME/.same/$SAME_SENSOR_NAME
+        # Nag: /var/lib/gridmonsam/$SAME_VO/same/$SAME_SENSOR_NAME
+        if not os.environ.has_key('SAME_SENSOR_WORK'):
+            os.environ['SAME_SENSOR_WORK'] = same_work+'/'+sensor
+        if not os.environ.has_key('SAME_TEST_WORK'):
+            os.environ['SAME_TEST_WORK'] = same_work+'/'+sensor+\
+                                            '/nodes/'+hostname
+
+        for _dir in ['SAME_SENSOR_WORK','SAME_TEST_WORK']:
+            try:
+                if not os.path.isdir(os.environ[_dir]):
+                    os.makedirs(os.environ[_dir])
+            except OSError, e:
+                if re.search('File exists', str(e)):
+                    pass
+                else:
+                    status = 'UNKNOWN'
+                    stsmsg = detmsg = status+": OSError: "+str(e)+'\n'
+                    sys.stdout.write(stsmsg)
+                    sys.stdout.write(detmsg)
+                    sys.exit(nag_rcs[status])
+    else:
+        if not os.environ.has_key('SAME_TEST_DIRNAME'):
+            os.environ['SAME_TEST_DIRNAME'] = os.path.dirname(testfullpath)
+
+    for k,v in envvars.items():
+        os.environ[k] = v
+
+def map_rc_sam2nagios(rc):
+    """Maps SAM return codes and status to Nagios ones.
+
+    Nagios      | SAM
+    0, OK       | 0, (10, ok)
+    1, WARNING  | (40, warning)
+    2, CRITICAL | 1, (50, error), (60, critical)
+    3, UNKNOWN  | (20, info), (30, notice), (100, maintenance)
+                |
+    1, WARNING  | in other cases
+    """
+
+    s2n = {
+           'OK'       : {
+                         'map': [0,
+                                 10, 'ok', 'OK', 'Ok'],
+                         'rc' : (0, 'OK')
+                         },
+           'WARNING'  : {
+                         'map': [40, 'warning', 'WARNING', 'Warning'],
+                         'rc' : (1, 'WARNING')
+                         },
+           'CRITICAL' : {
+                         'map': [1,
+                                 50, 'error', 'ERROR', 'Error',
+                                 60, 'critical', 'CRITICAL', 'Critical'],
+                         'rc' : (2, 'CRITICAL')
+                         },
+           'UNKNOWN'  : {
+                         'map': [20, 'info', 'INFO', 'Info',
+                                 30, 'notice', 'NOTICE', 'Notice',
+                                 100, 'maintenance', 'MAINTENANCE', 'Maintenance'],
+                         'rc': (3, 'UNKNOWN')
+                         }
+           }
+
+    for k in s2n.keys():
+        if rc in s2n[k]['map']:
+            return s2n[k]['rc']
+
+    return s2n['WARNING']['rc']
+
+def spawn_pexpect(cmd):
+    """Use Pexpect to spawn a process.
+    Line-buffered pipes from/to child.
+    """
+    global process
+
+    try:
+        from gridmon.process.pexpectpgrp import SpawnPgrp
+        from gridmon.process.pexpect import ExceptionPexpect, EOF, TIMEOUT
+    except ImportError, e:
+        sys.stdout.write('ERROR: %s\n' % e)
+        sys.exit(nag_rcs['UNKNOWN'])
+
+    read_timeout = 30 # default value in Pexpect is 30 sec
+    process = SpawnPgrp(cmd, timeout=read_timeout)
+
+    process.alrm_timeout = process.sigterm = None
+
+    l       = True
+    lines   = []
+    status  = None
+    rc = None
+
+    while l:
+        try:
+            l = process.readline()
+        except TIMEOUT, e:
+            if not process.isalive():
+                lines+="\nTimed out after %.2f sec while waiting for stdout from child.\n"%\
+                        (float(read_timeout))
+                lines+="Child process(es) died.\n"
+                break
+        if not l:
+            break
+        else:
+            lines.append(l)
+
+    # Hack. Othervise obtaining of exit status and return code
+    # of the child process doesn't work properly.
+    if process.isalive():
+        pass
+
+    for i in range(len(lines)):
+        lines[i] = '\n'.join(reduce(lambda x,y: x[:-1]+[y[0]+x[-1][len(y[0]):]]+y[1:], \
+                                  [str(x).split('\n') for x in str(lines[i]).split('\r')]))
+
+    # As we could not get any exception (e.g., IOError) from Pexpect
+    # in case if child was sent a signal - lets rely on our variable
+    # set in signal handler. Otherwise, collect return code (exit status)
+    # and status from normally exited process.
+    if process.alrm_timeout:
+        if process.sigterm: # SIGTERM was sent
+            lines += "\nCaught SIGTERM while executing test! (test timeout %d)"% \
+                (timeout_test), "summary: SIGTERM caught"
+            rc = sam_rcs['WARNING']
+        else: # test timeout
+            lines += "\nTimeout while executing test after %d seconds!"% \
+                (timeout_test), "summary: test timeout"
+            rc = sam_rcs['CRITICAL']
+    else:
+        try:
+            pid, status = os.waitpid(process.pid,os.WNOHANG)
+        except OSError:
+            status = process.status
+        # exitstatus = os.WEXITSTATUS(status)
+        # 'return code of application' == 'exit status'
+        #rc=process.exitstatus
+        rc = os.WEXITSTATUS(status)
+
+    return (rc, lines)
+
+def spawn_popen(cmd):
+    """Use popen to spawn a process.
+    Block-buffered pipes from/to child.
+    """
+    from gridmon.process.popenpgrp import Popenpgrp
+
+    process = Popenpgrp(cmd)
+
+    l      = True
+    lines  = []
+    status = None
+    rc     = None
+
+    while l:
+        try:
+            l = process.fromchild.readline()
+        except IOError:
+            lines += process.fromchild.readlines()
+            lines += "Timeout when executing test after %d seconds!"%\
+                        (timeout),"summary: timeout"
+            l = None
+            rc = sam_rcs['WARNING']
+        if l:
+            lines.append(l)
+    if not rc:
+        status = process.poll()
+        while status<0:
+            process.wait()
+            status = process.poll()
+        rc = os.WEXITSTATUS(status)
+
+    return (rc, lines)
+
+def sig_alrm(sig, stack):
+    "SIGALARM handler."
+    global process
+    if process.isalive():
+        os.kill(-process.pid, sig)
+        process.alrm_timeout = True
+
+def sig_term(sig, stack):
+    "SIGTERM handler."
+    global process
+    sig_alrm(signal.SIGALRM, stack)
+    process.sigterm = True
+
+def outputsanitiser(str):
+    'Apply string substitutions to make our schedulers happy.'
+    patterns = {
+                # Nagios treats data after pipes as performance data
+                '\|\||\|' : 'OR'
+                }
+    for p,s in patterns.items():
+        str = re.sub(p, s, str)
+    return str
+
+# main block
+if __name__ == '__main__':
+    parse_args(sys.argv)
+    set_env()
+
+    if _hostname:
+        hn = hostname
+    else:
+        hn = ''
+    if testfullpath:
+        cmd = '%s %s %s 2>&1' % (testfullpath,
+                                 hn,
+                                 testargs.replace("'",""))
+    elif test:
+        if _prepare:
+            prepare = '%s/%s/prepare-%s;' % (samsensorsdir,
+                                             sensor, sensor)
+        cmd = '%s %s/%s/tests/%s %s %s 2>&1' % (prepare,
+                                            samsensorsdir,
+                                            sensor,
+                                            test,
+                                            hn,
+                                            testargs.replace("'",""))
+        cmd = cmd.strip()
+    else:
+        sys.stderr.write(usage)
+        sys.exit(1)
+
+    signal.signal(signal.SIGTERM, sig_term)
+    signal.signal(signal.SIGALRM, sig_alrm)
+    signal.alarm(timeout_test)
+    #print cmd
+    #for k,v in os.environ.items():
+    #    print k,v
+    #sys.exit()
+    # Try with Pexpect first. If it fails - fall-back to popen().
+    try:
+        from gridmon.process.pexpect import ExceptionPexpect
+        rc, lines = spawn_pexpect(cmd)
+    except ExceptionPexpect:
+        rc, lines = spawn_popen(cmd)
+
+    summary = None
+    if lines and lines[-1].find("summary: ")==0:
+        summary = lines[-1][9:].strip('\n')[:255]
+        lines.pop()
+    if not rc in sam_rcs.values():
+        lines += "\nWARINIG: Unknown test return code: %d" % rc
+        summary = "Unknown test return code: %d" % rc
+        rc = sam_rcs['NOTICE']
+
+    (rc, status) = map_rc_sam2nagios(rc)
+    if summary:
+        summary = '%s: %s' % (status, summary)
+    else:
+        summary = status
+
+    lines = outputsanitiser(''.join(lines).strip('\n'))
+    summary = outputsanitiser(summary)
+
+    sys.stdout.write(summary+'\n')
+    sys.stdout.write(lines+'\n')
+    sys.exit(rc)

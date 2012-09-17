@@ -1,0 +1,89 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+test_bug45814_pre () {
+
+
+   if [ -z "${VO}" ]; then
+     echo "VO is not defined."
+     return $REGTEST_FAIL
+   fi
+
+   if [ -z "${DPM_HOST}" ]; then
+     echo "DPM_HOST is not defined."
+     return $REGTEST_FAIL
+   fi
+
+   return $REGTEST_OK
+}
+
+test_bug45814_post () {
+
+   if [ $space1_reserved == "yes" ]; then 
+      dpm-releasespace --token_desc st_with_gparam 2>/dev/null
+   fi
+
+   if [ $space2_reserved == "yes" ]; then
+      dpm-releasespace --token_desc st_without_gparam 2>/dev/null
+   fi
+
+   if [ -f /tmp/gip_output_bug45814 ]; then
+      rm -f /tmp/gip_output_bug45814
+   fi
+
+   return $REGTEST_OK
+}
+
+test_bug45814 () {
+
+   dpm-reservespace --gspace 16M  --token_desc st_with_gparam --group "$VO,$SECOND_VO"
+   if [ $? -ne 0 ]; then
+      echo "Error reserving space"
+      return $REGTEST_FAIL
+   else
+      space1_reserved="yes"
+   fi
+
+   dpm-reservespace --gspace 16M  --token_desc st_without_gparam
+   if [ $? -ne 0 ]; then
+      echo "Error reserving space"
+      return $REGTEST_FAIL
+   else
+      space2_reserved="yes"
+   fi
+
+   dpm-listspaces -g > /tmp/gip_output_bug45814
+
+   if ! grep -q "^dn: GlueSALocalID=st_with_gparam:replica:online" /tmp/gip_output_bug45814; then
+      echo "Missing LDAP in the GIP output"
+      return $REGTEST_FAIL
+   fi
+
+   if ! grep -q "^dn: GlueSALocalID=st_without_gparam:replica:online" /tmp/gip_output_bug45814; then
+      echo "Missing LDAP in the GIP output"
+      return $REGTEST_FAIL
+   fi
+
+   return $REGTEST_OK
+}
+

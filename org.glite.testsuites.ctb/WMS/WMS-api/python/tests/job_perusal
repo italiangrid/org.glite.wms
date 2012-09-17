@@ -1,0 +1,210 @@
+#!/usr/bin/python
+'''
+This test checks functionality of WMProxy to submit job Perusal.
+Following Wmproxy Methods are included in the test:
+enableFilePerusal
+getPerusalFiles
+getJDL
+The WMProxy_HOST name is obligatory commandline argument.
+Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
+
+'''
+ 
+def Jdlprep():
+###################
+# JDL preparation #
+###################
+ VOString="voms-proxy-info -vo"
+ ifile,ofile=os.popen4(VOString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+    flog.write( "\n Error : \n" + sfile + '\n')
+    fmsg.write("\n   |  ERR   |  voms-proxy-info")
+    flog.write( "\n\n**************** test jobPerusal is ERROR *******************")
+    flog.close()
+    return 1
+ else:
+     VO=sfile.rstrip('\n')
+ flog.write( "\n =======VirtualOrganisation =" + VO + "=============\n") 
+ pwd=os.getenv('PWD','ERROR')
+ nameFileJdl=pwd + "/exampleperusal.jdl"
+ f=open(nameFileJdl, 'w')
+ f.write('[ '
+ 'Executable      = "sleeper.sh";\n'
+ 'VirtualOrganisation = '+ '"' + VO + '"' + ';\n'
+ 'requirements    = '+  REQ  + ';\n' 
+# 'Rank = '+  RANK  + ';\n'
+ 'Arguments = "sleeper.sh";\n'
+ 'StdOutput = "job.out";\n'
+ 'StdError = "job.err";\n'
+ 'inputSandbox = {"sleeper.sh" };\n'
+ 'OutputSandbox = {"job.err", "job.out", "out.txt" };\n'
+ 'PerusalFileEnable = true; \n' 
+ 'PerusalTimeInterval = 5;\n'
+ ']')
+ f.close()
+ return nameFileJdl
+
+def jobstart():
+ nameFileJdl=Jdlprep()
+ f = open( nameFileJdl, "r")
+ jdl = f.read()
+ ERR = 0
+ jobId  = ""
+########################################### glite-wms-job-submit ########################
+# commandString="glite-wms-job-submit -a "   +  " -r grmpice.inr.troitsk.ru:2119/jobmanager-pbs-dteam "  +  nameFileJdl 
+ commandString="glite-wms-job-submit -a " +  nameFileJdl 
+# print commandString
+ flog.write(  "\n=====================glite-wms-job-submit ===================\n") 
+ flog.write("\n" + commandString)
+ ifile,ofile=os.popen4(commandString )
+ for line in ofile.readlines():
+#     print  line
+     if line.find('9000') > 0 :
+        jobId = line.rstrip()
+     flog.write(line)
+ if jobId == "" :
+     flog.write( "\n\n**************** test jobdPerusal is ERROR *******************")
+     flog.close()
+     return 1 
+
+###################################### Perusal ##########################################
+ for i in range(20):
+        time.sleep(20)
+        funk="glite-job-status " +  jobId
+        ifile,ofile=os.popen4(funk)
+        for line in ofile.readlines():
+#            print line 
+            if line.find('Status') > 0 :
+               stat = line.split(':')[1]
+               if stat.find('Running') > 0 :
+                          allChunks = True
+                          file = "out.txt"
+                          fileList = ["job.err", "job.out","out.txt" ]
+                          time.sleep(60)
+                          try:
+                             client.enableFilePerusal(jobId , fileList)
+                             fmsg.write("\n   |   OK   |  enableFilePerusal")
+                             flog.write("\n" +  jobId )
+                          except:
+#                             print "ERROR  enableFilePerusal"
+                             fmsg.write("\n   |  ERR   |  enableFilePerusal")
+                             flog.write( "\n\n**************** test jobdPerusal is ERROR *******************")
+                             flog.close()
+                             return 1
+                          try:
+                            fl = client.getPerusalFiles(jobId , file, allChunks)
+#                            print type(fl)
+                            listSize = len(fl)
+                            if listSize == 0:
+                               fmsg.write("\n   |  Warn  | getPerusalFiles is empty")
+                               flog.write( "\nWarning getPerusalFiles is empty")
+                            else:
+                                fmsg.write("\n   |   OK   |  getPerusalFiles")
+                                for line in fl :
+                                    flog.write( line )   
+                          except:
+                                fmsg.write("\n  The Operation is not allowed: the job is not started")
+#                          for jdlType in [0,1]:
+                          jdlType = 0
+                          flog.write("\n getJDL:") 
+                          pi = client.getJDL(jobId, jdlType)
+                          for line in pi :
+                                      flog.write( line )  
+#                               print type(pi)
+                          jdlType = 1
+                          pi = client.getJDL(jobId, jdlType)
+#                               print "getJDL:", pi 
+                          flog.write("\n getJDL: \n" +  pi ) 
+                          fmsg.write("\n   |   OK   |  getJDL") 
+                          fileList = []
+#                          client.enableFilePerusal(jobId,fileList)
+#                          return 0
+################################## jobCancel  ##########################################
+
+                          time.sleep(20)          
+                          try:
+                              client.jobCancel( jobId )
+                              flog.write( "\n\n OK: Job " + jobId + " was cancel\n")
+                              fmsg.write("\n   |   OK   |  jobCancel " + jobId)
+                          except:
+                              fmsg.write( "\n Warning: Job " + jobId + " wasn't cancel\n")
+                              fmsg.write("\n   |  Warn  |  jobCancel " + jobId)
+#        ERR = 1
+                          if ( ERR > 0 ):
+                                      flog.write( "\n\n**************** test jobdPerusal is ERROR *******************")
+                                      flog.close()
+                                      return 1
+                          else:
+                              flog.write( "\n\n**************** test jobdPerusal is OK *********************")
+                              return 0
+ funk="glite-job-status " +  jobId
+ ifile,ofile=os.popen4(funk)
+ for line in ofile.readlines():
+             flog.write( line)
+ fmsg.write("\n   |  ERR   |  enableFilePerusal")        
+ flog.write( "\n\n**************** test jobdPerusal is  ERROR *******************")
+ flog.close()
+ return 1
+ 
+if __name__=='__main__':
+    import sys
+    import os
+    import re
+    import time
+    from datetime import datetime
+    import fpconst
+    from wmproxymethods import *
+    import SOAPpy  #Error Type
+    RANK = "other.GlueCEStateFreeCPUs"
+    scname = sys.argv[0]
+    m = re.search('(?<=/)\w+',scname )
+    script_name =  m.group(0)
+    tm = time.time()
+    tm = str(tm)
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm
+#    script_name = sys.argv[0]
+    fmsg = open(std_log,'w')
+    flog =open (std_tmp,'w')
+    fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
+    datetime_now = datetime.now().isoformat(' ')
+    fmsg.write("     time is   " + datetime_now + "\n")
+    flog.write( "\n\n##################################################################################" )
+    flog.write( "\n==================== script name is " + script_name + " ==========================\n")
+    node = sys.argv[1]
+    if len(sys.argv) > 2 :
+                      REQ = "other.GlueCEHostingCluster == " + "\"" + sys.argv[2] + "\""
+#                     print REQ
+    else :
+                      REQ = "other.GlueCEInfoTotalCPUs >=30"
+#                      print REQ
+    flog.write( "====================WmProxy_host: " + node + "===========\n")
+#    url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
+    url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
+    client = Wmproxy(url)
+#    SAME_ERROR=os.getenv('SAME_ERROR','ERROR')
+#    SAME_OK=os.getenv('SAME_OK','ERROR')
+#    sys.exit(jobstart())
+    out = jobstart()
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm
+    flog = open(std_tmp,"r")
+    while flog:
+              line = flog.readline()
+              fmsg.write(line)
+              if not line:
+                         break
+    fmsg.close()
+    flog.close()
+    fmsg = open(std_log,'r')
+    sfile= fmsg.read()
+    print sfile
+    os.remove(std_tmp)
+    os.remove(std_log)
+    if ( os.path.exists("proxyresult.log") == 1) :
+                   os.remove("proxyresult.log")
+#    if ( os.path.exists("example.jdl") == 1) :
+#                   os.remove("example.jdl")
+    fmsg.close()
+    sys.exit(out)                           

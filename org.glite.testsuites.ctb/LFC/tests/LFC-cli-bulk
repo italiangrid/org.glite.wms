@@ -1,0 +1,36 @@
+#!/bin/bash
+
+nodeName=$1
+export LFC_HOST=$nodeName
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+RETVAL=0;
+mylfcdir=/grid/dteam/generated/bulk_tests
+echo "<pre>"
+
+bulktest=$SAME_HOME/sensors/LFC/tests/bulk-methods/LFC_GET_TEST
+lfc-mkdir -p $mylfcdir
+loop="100 101 102 103 104 105"
+for i in $loop ; do
+ echo lcg-cr -v --vo $SAME_VO -d lxb1921.cern.ch -l lfn://$mylfcdir/bulk_test_$i file:///etc/hosts
+ lcg-cr -v --vo $SAME_VO -d lxb1921.cern.ch -l lfn://$mylfcdir/bulk_test_$i file:///etc/hosts
+done
+
+echo "<br>Launching get bulk opeartions type: 1"
+$bulktest 100 106 $nodeName 1
+if [ $? -ne 0 ]; then RETVAL=1;fi
+echo "<br><br>Launching get bulk opeartions type: 2"
+$bulktest 100 106 $nodeName 2
+if [ $? -ne 0 ]; then RETVAL=1;fi
+echo "<br><br>Launching get bulk opeartions type: 3"
+$bulktest 100 106 $nodeName 3
+if [ $? -ne 0 ]; then RETVAL=1;fi
+
+echo "<br><br>"
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; echo "<font color="green"> - OK </font>";
+    exit $SAME_OK
+else
+    echo "Test failed!"; echo "<font color="red"> - FAILED </font>";
+    exit $SAME_ERROR
+fi

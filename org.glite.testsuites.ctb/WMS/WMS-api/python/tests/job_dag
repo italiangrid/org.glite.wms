@@ -1,0 +1,238 @@
+#!/usr/bin/python
+'''
+This test checks possibility of WMProxy to provide an implementation for direct acyclic graphs (DAG),
+which are sets of jobs linked by relative dependencies.
+Following Wmproxy Methods are included in the test:
+getDelegatedProxyInfo
+jobRegister
+getJobProxyInfo
+jobSubmit
+getSandboxBulkDestURI
+getChildren
+getNodeName
+jobCancel
+The WMProxy_HOST name is obligatory commandline argument.
+Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
+
+'''
+def Jdlprep():
+###################
+# JDL preparation #
+###################
+ VOString="voms-proxy-info -vo"
+ ifile,ofile=os.popen4(VOString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+#    print "Error : \n" + sfile + '\n'
+    flog.write( "\n Error : \n" + sfile + '\n')
+    fmsg.write("\n   |  ERR   |  voms-proxy-info")
+    flog.write( "\n\n**************** test jobdag is ERROR *******************")
+    flog.close()
+    return 1
+ else:
+     VO=sfile.rstrip('\n')
+# print "=======VirtualOrganisation =",VO,"=============\n"
+ flog.write( "\n =======VirtualOrganisation =" + VO + "=============\n")  
+ 
+ pwd=os.getenv('PWD','ERROR')
+ nameFileJdl=pwd + "/exampledag.jdl"
+ f=open(nameFileJdl, 'w')
+ f.write('[ Type = "dag";\n'
+ 'Executable      = "/bin/hostname";\n'
+ 'VirtualOrganisation = '+ '"' + VO + '"' + ';\n'
+# 'Requirements = other.GlueCEUniqueid == "grce001.inr.troitsk.ru:2119/jobmanager-lcgpbs-dteam";\n'
+# 'Requirements = true;\n'
+ 'requirements    = '+  REQ  + ';\n'
+ 'Rank = '+  RANK  + ';\n' 
+# 'Rank = other.GlueCEPolicyMaxRunningJobs - other.GlueCEStateRunningJobs;\n'
+ 'FuzzyRank = true;\n'
+ 'nodes = [nodeA = [Description = [Executable = "/bin/hostname" ;\n'
+ 'StdOutput = "jobA.out";\n'
+ 'StdError = "jobA.err";\n'
+ 'OutputSandbox = {"jobA.err", "jobA.out" };'
+ '];\n'
+ '];\n'
+ 'nodeB = [Description = [Executable ="/bin/hostname";\n'
+ '];\n'
+ '];\n'
+ 'dependencies = 	{ { nodeA, nodeB}};\n'
+ '];\n'
+ ']')
+ f.close()
+ return nameFileJdl
+
+def jobstart():
+ nameFileJdl=Jdlprep()
+ ERR=0
+ f = open( nameFileJdl, "r")
+ jdl = f.read()
+ delegationId = "JobDagDelegationId"
+ commandString="glite-wms-job-delegate-proxy -d " + delegationId + " --endpoint " + url
+ flog.write( "\n=====================Delegating a proxy to WMProxy===================\n") 
+ flog.write(commandString)
+ ifile,ofile=os.popen4(commandString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+     flog.write( "Error : \n" + sfile + '\n')
+     flog.write( "\n\n**************** test jobdag is ERROR *******************")
+     fmsg.write("\n   |  ERR   |  glite-wms-job-delegate-proxy")
+     flog.close()
+     return 1
+ else:
+    flog.write(  "\n======================the Delegated Proxy information====================\n")
+    try:
+       Info = client.getDelegatedProxyInfo(delegationId)
+#       print Info
+       for line in Info :
+                  flog.writelines(line)
+       fmsg.write("\n   |   OK   |  getDelegatedProxyInfo")
+    except:
+       fmsg.write("\n   |  ERR   |  getDelegatedProxyInfo")
+    try:
+        jobIds = client.jobRegister(jdl, delegationId )
+        flog.write(  "\n================a preliminary server registration==========================\n")
+#        print jobIds
+        
+        jobIdstringform=jobIds.getJobId()
+#        print "              jobIds.getJobId()=",jobIdstringform
+        flog.write( "              jobIds.getJobId()=" + jobIdstringform)
+        fmsg.write("\n   |   OK   |  jobRegister")
+    except:
+        fmsg.write("\n   |  ERR   |  jobRegister")
+        flog.write(  "\n   jobRegister Error   ")
+        flog.write( "\n\n**************** test jobdag is ERROR *******************")
+        flog.close()
+        return 1
+    try:
+         flog.write(  "\n======================the Job Proxy information====================\n")
+         Jobinfo = client.getJobProxyInfo(jobIdstringform)
+         fmsg.write("\n   |   OK   |  getJobProxyInfo")
+         for line in Jobinfo :
+                             flog.writelines(line)
+    except:
+         fmsg.write("\n   |  ERR   |  getJobProxyInfo")
+         ERR = 1 
+  
+    try:
+         flog.write( "\n===============jobSubmit=============================\n")
+         task = client.jobSubmit ( jdl, delegationId )
+         jobId = task.getJobId()
+         flog.write( "\n OK:  Submitted job with JobID = " + jobId)
+         fmsg.write("\n   |   OK   |  jobSubmit " + jobId)
+    except WMPException:
+         flog.write(  "\n Error: Job  didn't Submit\n")
+         fmsg.write("\n   |  ERR   |  jobSubmit " + jobId)
+         flog.write( "\n\n**************** test jobdag is ERROR *******************")
+         flog.close()
+         return 1
+    try:
+       destUris= client.getSandboxBulkDestURI(jobIdstringform)
+       flog.write(  "\n=========the list of destination URIs associated to a compound job========\n")
+       for line in destUris.keys() :
+                                  flog.writelines(line + "\n")
+                                  for l in destUris[line] :
+                                                          flog.writelines(l)  
+       fmsg.write("\n   |   OK   |  getSandboxBulkDestURI")
+    except:
+       fmsg.write("\n   |  ERR   |  getSandboxBulkDestURI")
+       flog.write(  "\n   getSandboxBulkDestURI Error   ")
+       ERR = 1
+    nodeChildren = task.getChildren()
+    if len(nodeChildren) > 0 :
+            fmsg.write("\n   |   OK   |  getChildren")
+            flog.write( "\n=======================task.getChildren================\n") 
+            l = []
+            for child in nodeChildren:
+                               NodeJobId =  child.getJobId()
+                               l.append(NodeJobId)
+                               flog.write( "\nNodeJobId = " + NodeJobId )
+                               NodeName = child.getNodeName()
+                               flog.write( "\n NodeName = " + NodeName )
+                               fmsg.write("\n   |   OK   |  getNodeName = " + NodeName)
+    time.sleep(120)      
+    try:
+        client.jobCancel( jobId )
+        flog.write( "\n\n OK: Job " + jobId + " was cancel\n")
+        fmsg.write("\n   |   OK   |  jobCancel " + jobId)
+    except:
+        fmsg.write( "\n Warning: Job " + jobId + " wasn't cancel\n")
+        fmsg.write("\n   |  ERR   |  jobCancel " + jobId)
+        ERR = 1
+    for j in l :
+                          try:
+                                 client.jobCancel( j )
+                                 flog.write( "\n\n OK: Job " + j + " was cancel\n")
+                                 fmsg.write("\n   |   OK   |  jobCancel " + j)
+                          except:
+                                 flog.write( "\n Warning: Job " + j + " wasn't cancel\n")
+                                 fmsg.write("\n   |  ERR   |  jobCancel " + j)
+                                 ERR = 1
+
+    if ( ERR > 0 ):
+                  flog.write( "\n\n**************** test jobdag is ERROR *******************")
+                  flog.close()
+                  return 1
+    else:
+                  flog.write( "\n\n**************** test jobdag is OK *********************")  
+    return 0
+if __name__=='__main__':
+    import sys
+    import os
+    import re
+    import time
+    from datetime import datetime
+    import fpconst
+    from wmproxymethods import *
+    import SOAPpy  #Error Type
+    RANK = "other.GlueCEStateFreeCPUs"
+    scname = sys.argv[0]
+    m = re.search('(?<=/)\w+',scname )
+    script_name =  m.group(0)
+    tm = time.time()
+    tm = str(tm)
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm
+#    script_name = sys.argv[0]
+    fmsg = open(std_log,'w')
+    flog =open (std_tmp,'w')
+    fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
+    datetime_now = datetime.now().isoformat(' ')
+    fmsg.write("     time is   " + datetime_now + "\n")
+    flog.write( "\n\n##################################################################################" )
+    flog.write( "\n==================== script name is " + script_name + " ==========================\n")
+    node = sys.argv[1]
+    if len(sys.argv) > 2 :
+                      REQ = "other.GlueCEHostingCluster == " + "\"" + sys.argv[2] + "\""
+#                     print REQ
+    else :
+                      REQ = "other.GlueCEInfoTotalCPUs >=30"
+#                      print REQ
+    flog.write( "====================WmProxy_host: " + node + "===========\n")
+#    url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
+    url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
+    client = Wmproxy(url)
+#    SAME_ERROR=os.getenv('SAME_ERROR','ERROR')
+#    SAME_OK=os.getenv('SAME_OK','ERROR')
+#    sys.exit(jobstart())
+    out = jobstart()
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm
+    flog = open(std_tmp,"r")
+    while flog:
+              line = flog.readline()
+              fmsg.write(line)
+              if not line:
+                         break
+    fmsg.close()
+    flog.close()
+    fmsg = open(std_log,'r')
+    sfile= fmsg.read()
+    print sfile
+    os.remove(std_tmp)
+    os.remove(std_log)
+    if ( os.path.exists("proxyresult.log") == 1) :
+                   os.remove("proxyresult.log")
+#    if ( os.path.exists("example.jdl") == 1) :
+#                   os.remove("example.jdl")
+    fmsg.close()
+    sys.exit(out)  

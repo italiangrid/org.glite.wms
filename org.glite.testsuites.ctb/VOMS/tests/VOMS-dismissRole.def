@@ -1,0 +1,4 @@
+testName: VOMS-dismissRole
+testAbbr: disRol
+testTitle: voms-admin "dismiss-role GROUPNAME ROLENAME USER" option
+EOT

@@ -1,0 +1,4 @@
+testName: LFC-CLI-fchmod
+testAbbr: fchmod
+testTitle: Change access mode of files in  LFC in the name server (lfc-chmod) 
+EOT

@@ -1,0 +1,4 @@
+testName: VOMS-crACLGroup
+testAbbr: crACLgr
+testTitle: voms-admin: Test "add-acl-entry CONTAINER ALLOW OPERATION USER" option with CONTAINER being a group
+EOT
