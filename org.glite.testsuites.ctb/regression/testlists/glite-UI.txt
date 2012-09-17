@@ -1,4 +1,0 @@
-# regression tests for the UI - THIS NEEDS EXPANDING
-# $Id$
-50879
-50923

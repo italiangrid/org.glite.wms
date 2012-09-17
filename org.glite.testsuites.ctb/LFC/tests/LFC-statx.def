@@ -1,4 +1,0 @@
-testName: LFC-statx
-testAbbr: LFCstx
-testTitle: get information about a LFC file or directory in the name server (lfc_statgx) 
-EOT

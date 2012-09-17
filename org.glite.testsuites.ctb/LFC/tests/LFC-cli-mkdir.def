@@ -1,3 +1,0 @@
-testName: LFC-cli-mkdir
-testAbbr: lfcmkdir
-testTitle: Check we can do a lfc-mkdir on /grid/<SAME_VO>

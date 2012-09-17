@@ -1,6 +1,0 @@
-#Configuration file for MyProxy tests
-
-export MYPROXY_HOST=lxbra2304.cern.ch
-export BDII_HOST=lxbra2305.cern.ch
-export BDII_PORT=2170
-export LOGSLOCATION=/tmp

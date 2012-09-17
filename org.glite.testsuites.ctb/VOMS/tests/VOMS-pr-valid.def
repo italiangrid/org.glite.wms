@@ -1,4 +1,0 @@
-testName: VOMS-pr-valid
-testAbbr: pr-vld
-testTitle: voms-proxy-init: Test "valid HH:MM" option
-EOT

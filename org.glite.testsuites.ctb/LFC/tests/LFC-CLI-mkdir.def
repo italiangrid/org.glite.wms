@@ -1,4 +1,0 @@
-testName: LFC-CLI-mkdir
-testAbbr: mkdir
-testTitle: create a new LFC directory in the name server (lfc-mkdir) 
-EOT

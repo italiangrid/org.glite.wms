@@ -1,3 +1,0 @@
-#!/bin/bash
-export PORT=8446
-export SAPATH=dpm/cern.ch/home/dteam

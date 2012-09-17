@@ -1,4 +1,0 @@
-testName: LFC-setfsizeg
-testAbbr: LFCsfszg
-testTitle: Set filesize for a regular file having the given GUID set also last modification time to the current time (lfc_setfsizeg) 
-EOT

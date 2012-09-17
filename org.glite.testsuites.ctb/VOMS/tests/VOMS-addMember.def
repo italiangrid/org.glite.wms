@@ -1,4 +1,0 @@
-testName: VOMS-addMember
-testAbbr: addMem
-testTitle: voms-admin: Test "add-member GROUPNAME USER" option
-EOT

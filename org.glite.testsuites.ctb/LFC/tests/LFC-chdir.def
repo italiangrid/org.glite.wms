@@ -1,4 +1,0 @@
-testName: LFC-chdir
-testAbbr: LFCchd
-testTitle: Change LFC current directory used by the name server (lfc_chdir)
-EOT

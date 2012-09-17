@@ -1,4 +1,0 @@
-testName: VOMS-assignRole
-testAbbr: assRol
-testTitle: voms-admin: Test "assign-role GROUPNAME ROLENAME USER" option
-EOT

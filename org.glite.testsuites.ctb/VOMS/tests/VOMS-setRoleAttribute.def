@@ -1,4 +1,0 @@
-testName: VOMS-setRoleAttribute
-testAbbr: setRA
-testTitle: voms-admin: Test "set-role-attribute GROUP ROLE ATTRIBUTE ATTRIBUTEVALUE ATTRIBUEDESCRIPTION" option
-EOT

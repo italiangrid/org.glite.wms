@@ -1,4 +1,0 @@
-testName: VOMS-delRole
-testAbbr: delRol
-testTitle: Test "delete-role ROLENAME" option
-EOT

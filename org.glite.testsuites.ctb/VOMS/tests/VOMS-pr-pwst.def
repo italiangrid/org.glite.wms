@@ -1,4 +1,0 @@
-testName: VOMS-pr-pwst
-testAbbr: pr-pwst
-testTitle: voms-proxy-init: Test "pwstdin" option
-EOT

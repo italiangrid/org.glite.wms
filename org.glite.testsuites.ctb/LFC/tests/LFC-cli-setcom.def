@@ -1,3 +1,0 @@
-testName: LFC-cli-setcom
-testAbbr: lfcsetcom
-testTitle: Check we can do a lfc-setcomment on a file 

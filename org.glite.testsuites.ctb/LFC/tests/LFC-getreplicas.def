@@ -1,4 +1,0 @@
-testName: LFC-getreplicas
-testAbbr: LFCgtrs
-testTitle: get  the  replica entries associated with a list of GUIDs (lfc_getreplicas)
-EOT

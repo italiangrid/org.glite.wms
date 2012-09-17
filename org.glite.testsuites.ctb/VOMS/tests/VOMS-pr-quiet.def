@@ -1,4 +1,0 @@
-testName: VOMS-pr-quiet
-testAbbr: pr-quiet
-testTitle: voms-proxy-init: Test "quiet" option
-EOT

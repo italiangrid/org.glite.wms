@@ -1,4 +1,0 @@
-testName: VOMS-delGroupAttribute
-testAbbr: delGA
-testTitle: voms-admin "delete-group-attribute GROUPNAME ATTRIBUTE" option
-EOT

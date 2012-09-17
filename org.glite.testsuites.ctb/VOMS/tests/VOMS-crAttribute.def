@@ -1,4 +1,0 @@
-testName: VOMS-crAttribute
-testAbbr: crAttr
-testTitle: voms-admin: Test "create-attibute ATTRIBUTENAME" option
-EOT

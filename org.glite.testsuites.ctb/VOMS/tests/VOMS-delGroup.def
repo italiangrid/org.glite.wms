@@ -1,4 +1,0 @@
-testName: VOMS-delGroup
-testAbbr: delGro
-testTitle: voms-admin: Test "delete-group GROUPNAME" option
-EOT

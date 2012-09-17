@@ -1,4 +1,0 @@
-testName: LFC-opendirg
-testAbbr: LFCopdg
-testTitle: Open a LFC directory, having the specified GUID, in the name server (lfc_opendirg) 
-EOT

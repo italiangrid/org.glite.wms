@@ -1,4 +1,0 @@
-testName: VOMS-listUserRoles
-testAbbr: lstUsrRol
-testTitle: voms-admin: Test "list-user-roles USER" option
-EOT

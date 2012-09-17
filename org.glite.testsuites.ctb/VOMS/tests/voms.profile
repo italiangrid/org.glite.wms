@@ -1,4 +1,0 @@
---voms=test
---vomslife=50:15
---bits=512
---proxyver=2

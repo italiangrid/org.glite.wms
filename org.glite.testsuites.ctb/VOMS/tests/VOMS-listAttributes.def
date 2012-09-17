@@ -1,4 +1,0 @@
-testName: VOMS-listAttributes
-testAbbr: lstATT
-testTitle: voms-admin: Test "list-attributes" option
-EOT

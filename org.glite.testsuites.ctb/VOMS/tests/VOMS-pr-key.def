@@ -1,4 +1,0 @@
-testName: VOMS-pr-key
-testAbbr: pr-key
-testTitle: voms-proxy-init: Test "key KEYFILE" option
-EOT

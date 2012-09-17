@@ -1,4 +1,0 @@
-testName: LFC-del
-testAbbr: LFCdel
-testTitle: Logically delete a LFC file entry in the name server (lfc_delete) 
-EOT

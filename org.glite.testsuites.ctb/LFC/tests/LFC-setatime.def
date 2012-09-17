@@ -1,4 +1,0 @@
-testName: LFC-setatime
-testAbbr: LFCsatm
-testTitle: set last access time for a regular file to the current time (lfc_setatime)
-EOT

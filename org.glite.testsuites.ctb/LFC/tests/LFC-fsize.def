@@ -1,4 +1,0 @@
-testName: LFC-fsize
-testAbbr: LFCfsz
-testTitle: Set filesize for a regular file; set also last modification time to the current time (lfc_setfsize) 
-EOT

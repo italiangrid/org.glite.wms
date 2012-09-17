@@ -1,3 +1,0 @@
-#!/bin/bash
-export X509_USER_CERT=$X509_USER_PROXY
-export X509_USER_KEY=$X509_USER_PROXY

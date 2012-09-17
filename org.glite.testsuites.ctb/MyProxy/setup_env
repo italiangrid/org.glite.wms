@@ -1,7 +1,0 @@
-#!/bin/bash
-if [ "$X509_USER_PROXY" == "" ]
-then
-   export  X509_USER_PROXY="/tmp/x509up_u$UID"
-fi
-export X509_USER_CERT=$X509_USER_PROXY
-export X509_USER_KEY=$X509_USER_PROXY

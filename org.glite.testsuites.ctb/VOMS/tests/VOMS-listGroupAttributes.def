@@ -1,4 +1,0 @@
-testName: VOMS-listGroupAttributes
-testAbbr: lstGrAttr
-testTitle: voms-admin: Test "list-group-attributes GROUP" option
-EOT

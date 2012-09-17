@@ -1,4 +1,0 @@
-testName: LFC-rmdir
-testAbbr: LFCrmd
-testTitle: remove a LFC directory in the name server (lfc_rmdir)
-EOT

@@ -1,4 +1,0 @@
-testName: VOMS-pr-verify
-testAbbr: pr-vrf
-testTitle: voms-proxy-init: Test "verify" option
-EOT

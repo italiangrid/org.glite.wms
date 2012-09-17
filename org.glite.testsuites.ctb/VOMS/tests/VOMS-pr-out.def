@@ -1,4 +1,0 @@
-testName: VOMS-pr-out
-testAbbr: pr-out
-testTitle: voms-proxy-init: Test "out PROXYFILE" option
-EOT
