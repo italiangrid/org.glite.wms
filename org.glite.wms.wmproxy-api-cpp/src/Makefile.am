@@ -17,7 +17,8 @@ wm.h :
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include \
-	-t $(top_srcdir)/wmptypemap.dat  $(top_srcdir)/../org.glite.wms.wmproxy/src/server/WMProxy.wsdl
+	-t $(top_srcdir)/src/wmptypemap.dat \
+        $(top_srcdir)/src/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
