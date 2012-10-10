@@ -45,7 +45,7 @@ mkdir -p %{buildroot}
 if test "x%{extbuilddir}" == "x--" ; then
   make install
   mkdir -p %{buildroot}/%{_docdir}/%{name}
-  cp -R doc/html %{buildroot}/%{_docdir}/%{name}
+  cp -R autodoc/html %{buildroot}/%{_docdir}/%{name}
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
@@ -90,8 +90,6 @@ C/C++ libraries for the WM Proxy service (development files)
 %dir /usr/include/glite/wms/wmproxyapi/
 /usr/include/glite/wms/wmproxyapi/wmproxy_api_utilities.h
 /usr/include/glite/wms/wmproxyapi/wmproxy_api.h
-
-
 
 %package doc
 Summary: Documentation files for the WM Proxy service API
