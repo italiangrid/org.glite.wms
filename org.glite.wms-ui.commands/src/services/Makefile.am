@@ -59,7 +59,7 @@ libglite_wmsui_commands_jobperusal_la_SOURCES = \
 	lbapi.cpp \
 	job.cpp
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
         -I$(top_srcdir)/src \
