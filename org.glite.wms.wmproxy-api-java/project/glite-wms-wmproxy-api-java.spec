@@ -1,4 +1,4 @@
-Summary: Java libraries for the WM Proxy service
+Summary: Java libraries for the WMS Web Service
 Name: glite-wms-wmproxy-api-java
 Version: %{extversion}
 Release: %{extage}.%{extdist}
@@ -14,12 +14,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
 
-
 %description
-Java libraries for the WM Proxy service
+Java libraries for the WMS Web Service
 
 %prep
- 
 
 %setup -c -q
 
@@ -47,7 +45,6 @@ else
   mkdir -p %{buildroot}/%{_javadocdir}/%{name}
   ln -s %{extbuilddir}/usr/share/doc/glite-wms-wmproxy-api-java/html %{buildroot}/%{_javadocdir}/%{name}/html
 fi
- 
 
 %clean
 rm -rf %{buildroot} 
@@ -57,8 +54,6 @@ rm -rf %{buildroot}
 /usr/share/java/glite-wms-wmproxy-api-java.jar
 %dir /usr/share/doc/glite-wms-wmproxy-api-java-%{version}/
 %doc /usr/share/doc/glite-wms-wmproxy-api-java-%{version}/LICENSE
-
-
 
 %package doc
 Summary: Documentation files for Job Description Language library
@@ -85,8 +80,6 @@ Documentation files for dealing with Job Description Language
 %dir %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/
 %doc %{_javadocdir}/%{name}/html/org/glite/wms/wmproxy/class-use/*.html
 
-
 %changelog
 * %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
-

@@ -27,9 +27,6 @@ limitations under the License.
   <property name="docs-installdir" value="${dist.location}/usr/share/doc/${pkg-name}"/>
   <property name="pkg-jarname" value="${pkg-name}.jar"/>
 
-  <property name="util-java.location" value="${stage.location}"/>
-  <property name="org.glite.wms.wsdl.location" value="${stage.location}"/>
-
   <path id="axis2.classpath">
     <fileset dir="/usr/share/java/axis2" includes="**/*.jar"/>
   </path>
@@ -37,7 +34,7 @@ limitations under the License.
   <path id="compile.classpath">
     <path refid="axis2.classpath"/>
     <fileset file="/usr/share/java/bcprov.jar"/>
-    <fileset dir="${util-java.location}/usr/share/java">
+    <fileset dir="/usr/share/java">
         <include name="trustmanager.jar"/>
         <include name="trustmanager-axis.jar"/>
         <include name="delegation-java.jar"/>
@@ -53,7 +50,7 @@ limitations under the License.
   <target name="check" depends="init">
     <fail message="The module is not configured" unless="isConfigured"/>
     <uptodate property="alreadyCompiled" targetfile="lib/${pkg-jarname}">
-      <srcfiles dir= "${org.glite.wms.wsdl.location}/usr/share/wsdl"
+      <srcfiles dir= "${org.glite.wms.wsdl.location}"
                 includes="**/WMProxy.wsdl"/>
       <srcfiles dir= "src"
                 includes="**/*.java"/>
@@ -81,14 +78,14 @@ limitations under the License.
       </sequential>
     </macrodef>
     
-    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/WMProxy.wsdl"
                resourceDir="resources/wmproxy"
                packageName="org.glite.wms.wmproxy.ws"
                mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
                portName="WMProxy_PortType"
                binding="adb"/>
 
-    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/usr/share/wsdl/wms/WMProxy.wsdl"
+    <buildWSDL serviceWSDL="${org.glite.wms.wsdl.location}/WMProxy.wsdl"
                resourceDir="resources/delegation"
                packageName="org.gridsite.www.namespaces.delegation_2"
                mapping="http://glite.org/wms/wmproxy=org.glite.wms.wmproxy.ws, http://www.gridsite.org/namespaces/delegation-2=org.gridsite.www.namespaces.delegation_2"
