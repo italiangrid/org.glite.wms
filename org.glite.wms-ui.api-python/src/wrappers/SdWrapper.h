@@ -9,7 +9,6 @@
 
 #include <vector>
 #include <string>
-// Service Discovery include:
 #include "ServiceDiscovery.h"
 
 /**

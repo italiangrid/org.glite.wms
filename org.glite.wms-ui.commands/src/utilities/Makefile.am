@@ -35,7 +35,7 @@ libglite_wmsui_commands_utilities_la_SOURCES = \
 
 #libglite_wmsui_commands_utilities_la_LIBADD = 
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
 	$(GLITE_JDL_CFLAGS) \
 	$(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(BOOST_CFLAGS) \

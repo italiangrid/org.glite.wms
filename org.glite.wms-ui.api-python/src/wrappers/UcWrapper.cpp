@@ -7,7 +7,7 @@
 ***************************************************************************/
 #include <iostream>
 #include "UcWrapper.h"
-#include <pem.h>
+#include "openssl/pem.h"
 #include "openssl/ssl.h"
 
 

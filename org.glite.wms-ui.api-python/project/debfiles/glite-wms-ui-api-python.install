@@ -1,0 +1,6 @@
+/usr/lib64/*.so.0.0.0
+/usr/lib64/*.so.0
+/usr/lib64/*.so
+/usr/lib/python2.6/*.py
+/usr/lib/python2.6/*.pyc
+/usr/lib/python2.6/*.pyo
