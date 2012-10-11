@@ -7,6 +7,7 @@
 #include "AdWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/jdl/DAGAd.h"
+#include "glite/jdl/ExpDagAd.h"
 #include "glite/jdl/JDLAttributes.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
@@ -458,11 +459,6 @@ bool DagWrapper::removeAttribute ( int attr_name ){
 		return dagad->removeAttribute (      (glite::jdl::ExpDagAd::attribute)      attr_name) ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
-}
-void DagWrapper::setJobIds ( const std::vector <std::string>&  jobids ){
-	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		dagad->setJobIds (jobids) ;
-	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
 int  DagWrapper::size(){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR

@@ -11,7 +11,7 @@
 /*********************
 * VOMS includes:
 *********************/
-#include "glite/security/voms/voms_api.h"
+#include "voms/voms_api.h"
 
 /**
  * Provide a wrapper that manages user cerificate general information

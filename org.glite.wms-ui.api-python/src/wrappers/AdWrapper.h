@@ -221,11 +221,6 @@ class DagWrapper {
 	/** Set the specified jobid(s) into the current DagAd instance
 	* @param jobids a vector containing N job id (S) where N is the number of DagAd sub jobs
 	*/
-	void setJobIds ( const std::vector <std::string>&  jobids ) ;
-	/**Set an attribute value (of string type)
-	*@param attr_name the name of the attribute to be set
-	*@param attr_value the string value to be set
-	*/
 	bool setAttributeStr ( int attr_name , const std::string& attr_value ) ;
 	/**Permanetly remove an attribute from the Ad instance
 	*@param attr_name the name of the attribute to be removed

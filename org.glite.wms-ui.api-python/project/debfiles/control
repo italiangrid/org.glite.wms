@@ -1,0 +1,15 @@
+Source: glite-wms-ui-api-python
+Section:  libs
+Priority:  optional
+Maintainer:  WMS group <wms-support@lists.infn.it>
+Build-Depends: debhelper (>= 8.0.0~)
+Standards-Version:  3.9.1
+Homepage: http://glite.cern.ch/
+
+Package: glite-wms-ui-api-python
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Python libraries for WMS user interface
+ Python libraries for WMS user interface
+
+

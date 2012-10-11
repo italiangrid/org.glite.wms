@@ -5,6 +5,7 @@
 //#include "glite/lb/producer.h"
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include <string>
 
 #define USERINTERFACE_SEED "Userinterface"
