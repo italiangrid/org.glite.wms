@@ -25,7 +25,6 @@ noinst_HEADERS     = \
 	job.h \
 	lbapi.h 
 
-
 libglite_wmsui_commands_delegateproxy_la_SOURCES = \
 	delegateproxy.cpp \
 	job.cpp
@@ -59,7 +58,7 @@ libglite_wmsui_commands_jobperusal_la_SOURCES = \
 	lbapi.cpp \
 	job.cpp
 
-AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
+AM_CPPFLAGS = $(GLITE_WMS_WMPROXY_CFLAGS) \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
         -I$(top_srcdir)/src \
@@ -71,4 +70,3 @@ AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
 	$(ZLIB_CFLAGS)
 	
 MAINTAINERCLEANFILES = Makefile.in
-

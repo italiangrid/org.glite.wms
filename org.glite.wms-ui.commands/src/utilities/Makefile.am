@@ -14,7 +14,6 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
-
 noinst_LTLIBRARIES = libglite_wmsui_commands_utilities.la
 
 noinst_HEADERS = \
@@ -24,7 +23,6 @@ noinst_HEADERS = \
 	options_utils.h \
 	utils.h
 
-
 libglite_wmsui_commands_utilities_la_SOURCES = \
 	adutils.cpp \
 	excman.cpp \
@@ -32,10 +30,7 @@ libglite_wmsui_commands_utilities_la_SOURCES = \
 	options_utils.cpp \
 	utils.cpp
 
-
-#libglite_wmsui_commands_utilities_la_LIBADD = 
-
-AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
+AM_CPPFLAGS = $(GLITE_WMS_WMPROXY_CFLAGS) \
 	$(GLITE_JDL_CFLAGS) \
 	$(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(BOOST_CFLAGS) \
@@ -44,7 +39,4 @@ AM_CPPFLAGS = -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
 	-DHAVE_STRINGSTREAM \
 	-DWMP_CLT_SOFTWARE_VERSION=\"@VERSION@\"
 
-
 MAINTAINERCLEANFILES = Makefile.in
-
-
