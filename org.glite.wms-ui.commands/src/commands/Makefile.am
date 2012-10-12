@@ -193,9 +193,11 @@ glite_wms_job_perusal_LDADD = \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
-AM_CPPFLAGS = $(GLITE_WMS_WMPROXY_CFLAGS) \
+AM_CPPFLAGS = $() \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
         $(GLITE_JDL_CFLAGS) \
+        $(GLITE_WMS_WMPROXY_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
