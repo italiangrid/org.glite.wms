@@ -193,7 +193,7 @@ glite_wms_job_perusal_LDADD = \
 	$(WSSE_LIBS) \
         $(GSOAP_LIBS)
 
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_builddir)/../../org.glite.wms.wmproxy-api-cpp/interface/ \
+AM_CPPFLAGS = $(GLITE_WMS_WMPROXY_CFLAGS) \
 	-I$(top_srcdir)/build/src \
         $(GLITE_JDL_CFLAGS) \
         $(GLITE_WMSUTILS_EXCEPTION_CFLAGS) \
