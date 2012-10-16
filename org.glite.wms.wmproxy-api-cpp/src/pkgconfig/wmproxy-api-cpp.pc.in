@@ -1,7 +1,7 @@
-prefix=@OFFICIAL_INSTALL_PREFIX@
-exec_prefix=@OFFICIAL_INSTALL_PREFIX@
-libdir=@OFFICIAL_INSTALL_PREFIX@/@LIBDIR@
-includedir=@OFFICIAL_INSTALL_PREFIX@/include
+prefix=@PKG_INSTALL_PREFIX@
+exec_prefix=@PKG_INSTALL_PREFIX@
+libdir=@PKG_INSTALL_PREFIX@/@LIBDIR@
+includedir=@PKG_INSTALL_PREFIX@/include
 
 Name: wmproxy api cpp
 Description: WMProxy C/C++ APIs
