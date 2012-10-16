@@ -1,0 +1,12 @@
+prefix=@OFFICIAL_INSTALL_PREFIX@
+exec_prefix=@OFFICIAL_INSTALL_PREFIX@
+libdir=@OFFICIAL_INSTALL_PREFIX@/@LIBDIR@
+includedir=@OFFICIAL_INSTALL_PREFIX@/include
+
+Name: wmproxy api cpp
+Description: WMProxy C/C++ APIs
+Version: @VERSION@
+Requires: emi-gridsite-openssl
+Libs: -L${libdir} -lglite_wms_wmproxy_api_cpp
+Cflags: -I${includedir}
+

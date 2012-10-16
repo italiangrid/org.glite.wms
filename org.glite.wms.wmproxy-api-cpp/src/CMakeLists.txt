@@ -62,3 +62,5 @@ if(DEFINED INSTALL_BUILD)
 install(TARGETS glite_wms_wmproxy_api_cpp
         LIBRARY DESTINATION ${INSTALL_BUILD}/${LIBDIR})
 endif(DEFINED INSTALL_BUILD)
+
+add_subdirectory(pkgconfig)
