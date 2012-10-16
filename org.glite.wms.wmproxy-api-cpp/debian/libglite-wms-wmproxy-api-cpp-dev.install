@@ -1,0 +1,6 @@
+usr/lib/pkgconfig/wmproxy-api-cpp.pc
+usr/lib/libglite_wms_wmproxy_api_cpp.so
+usr/lib/libglite_wms_wmproxy_api_cpp.so.0
+usr/lib/libglite_wms_wmproxy_api_cpp.so.0.0.0
+usr/include/glite/wms/wmproxyapi/wmproxy_api_utilities.h
+usr/include/glite/wms/wmproxyapi/wmproxy_api.h
