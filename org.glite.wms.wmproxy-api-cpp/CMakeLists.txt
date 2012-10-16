@@ -2,9 +2,9 @@ project(wms-wmproxy-api-cpp CXX)
 cmake_minimum_required(VERSION 2.6)
 
 if(NOT DEFINED PVER)
-    message(WARNING " Undefined version number, selected 9.9.9. Please use
+    message(WARNING " Undefined version number, selected 0.0.0. Please use
 -DPVER=<version> to customize")
-    set(PVER "9.9.9")
+    set(PVER "0.0.0")
 endif(NOT DEFINED PVER)
 
 if(NOT DEFINED PREFIX)
