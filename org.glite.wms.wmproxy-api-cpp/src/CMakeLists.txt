@@ -34,8 +34,6 @@ add_custom_target(WMPROXYAPI DEPENDS
   wmproxy_api_utilities.cpp 
   dom_${GSOAP_VERSION}.cpp )
 
-
-
 add_library(glite_wms_wmproxy_api_cpp SHARED 
   wm.h 
   soapC.cpp 
@@ -44,23 +42,9 @@ add_library(glite_wms_wmproxy_api_cpp SHARED
   wmproxy_api_utilities.cpp 
   dom_${GSOAP_VERSION}.cpp )
 
-
-
 set_target_properties(glite_wms_wmproxy_api_cpp PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
 install(TARGETS glite_wms_wmproxy_api_cpp
   LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
-
-
-if(DEFINED INSTALL_BUILD_DEV)
-install(TARGETS glite_wms_wmproxy_api_cpp
-        LIBRARY DESTINATION ${INSTALL_BUILD_DEV}/${LIBDIR})
-endif(DEFINED INSTALL_BUILD_DEV)
-
-
-if(DEFINED INSTALL_BUILD)
-install(TARGETS glite_wms_wmproxy_api_cpp
-        LIBRARY DESTINATION ${INSTALL_BUILD}/${LIBDIR})
-endif(DEFINED INSTALL_BUILD)
 
 add_subdirectory(pkgconfig)

@@ -1,8 +1,3 @@
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/glite/wms/wmproxyapi
-        DESTINATION ${PREFIX}/include/glite/wms
-        FILES_MATCHING PATTERN "*.h"
-        PATTERN "CMakeFiles" EXCLUDE)
-
 if(DEFINED INSTALL_DEV)
   install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
     DESTINATION
