@@ -42,9 +42,12 @@ binary-arch: build install
 	dh_installdeb
 	dh_makeshlibs
 	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
+        dh_md5sums
+        mkdir -p ${PWD}/BINARIES
 	dh_builddeb --destdir=${PWD}/BINARIES
+###	dh_gencontrol
+###	dh_md5sums
+###	dh_builddeb --destdir=${PWD}/BINARIES
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install
