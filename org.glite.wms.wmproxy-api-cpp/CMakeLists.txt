@@ -62,7 +62,12 @@ endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegati
 #add_definitions( -pipe -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE )
 add_definitions( -pipe )
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap")
+if(NOT DEFINED BUILD_DGB)
+  set(CMAKE_CXX_FLAGS_DEBUG " -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap")
+else(set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap"))
+endif(NOT DEFINED BUILD_DGB)
+
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap")
 
 set(GSOAP_VERSION "")
 if(EXISTS "/usr/bin/dpkg")
