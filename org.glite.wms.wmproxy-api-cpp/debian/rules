@@ -7,7 +7,7 @@ build-stamp:
 	touch build-stamp
         
 build:build-stamp
-	cmake . -DPREFIX=$(INSTALLDIR) -DPKG_INSTALL_PREFIX=$(INSTALLDIR) -DPVER=$VERSION
+	cmake . -DPREFIX=$(INSTALLDIR)/usr -DPKG_INSTALL_PREFIX=$(INSTALLDIR)/usr -DPVER=$VERSION -UBUILD_DBG
 	make
 
 clean:
