@@ -59,15 +59,16 @@ if( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-
 else( message("*** ERROR: Required emi-delegation-interface package not found") )
 endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
 
-#add_definitions( -pipe -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE )
-add_definitions( -pipe )
 
-if(NOT DEFINED BUILD_DGB)
-  set(CMAKE_CXX_FLAGS_DEBUG " -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap")
-else(set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap"))
-endif(NOT DEFINED BUILD_DGB)
 
-#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap")
+if(DEFINED BUILD_DBG)
+  add_definitions( -pipe -g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+  
+else(DEFINED BUILD_DBG)
+    add_definitions( -pipe -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+endif(DEFINED BUILD_DBG)
+
+
 
 set(GSOAP_VERSION "")
 if(EXISTS "/usr/bin/dpkg")
