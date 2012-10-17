@@ -8,6 +8,7 @@ build-stamp:
         
 build:build-stamp
 	cmake . -DPREFIX=$(INSTALLDIR)/usr -DPKG_INSTALL_PREFIX=$(INSTALLDIR)/usr -DPVER=$VERSION -UBUILD_DBG
+	cp debian/deb-control-file.txt debian/control
 	make
 
 clean:
