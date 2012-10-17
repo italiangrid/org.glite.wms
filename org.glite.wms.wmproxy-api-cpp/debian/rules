@@ -44,6 +44,7 @@ binary-arch: build install
 	dh_shlibdeps
 	dh_md5sums
 	mkdir -p ${PWD}/BINARIES
+	cp debian/control debian/libglite-wms-wmproxy-api-cpp/DEBIAN/
 	dh_builddeb --destdir=${PWD}/BINARIES
 ###	dh_gencontrol
 ###	dh_md5sums
