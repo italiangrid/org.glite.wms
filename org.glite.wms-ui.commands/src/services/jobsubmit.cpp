@@ -1858,8 +1858,8 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 	//		       " into directory: " + jobpath, false);
 
 	string basenameFile = ::basename( file.c_str() );
-	boost::filesystem::path srcPath(file);
-	boost::filesystem::path dstPath(jobpath+"/"+basenameFile);
+	boost::filesystem::path srcPath(file, boost::filesystem::native);
+	boost::filesystem::path dstPath(jobpath+"/"+basenameFile, boost::filesystem::native);
 	boost::filesystem::copy_file( srcPath, dstPath );
 	//filesToTAR.push_back( file );
       }
