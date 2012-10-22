@@ -1,0 +1,6 @@
+Source:  libglite-wms-ui-api-python-src
+Section:  libs
+Priority:  optional
+Maintainer:  WMS Support <wms-support@cnaf.infn.it>
+Homepage: http://glite.cern.ch/
+Standards-Version: 3.5.0
