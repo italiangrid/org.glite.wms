@@ -71,3 +71,13 @@ install(TARGETS glite_wmsui_UcWrapper
   LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
 install(TARGETS glite_wmsui_AdWrapper 
   LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
+
+install(FILES 
+  glite_wmsui_LbWrapper.py
+  glite_wmsui_LogWrapper.py
+  glite_wmsui_UcWrapper.py
+  glite_wmsui_AdWrapper.py
+  glite_wmsui_SdWrapper.py
+  DESTINATION 
+  ${PREFIX}/${LIBDIR}/python${PYTHON_VERSION}/site-packages
+)
