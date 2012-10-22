@@ -77,7 +77,7 @@ install(FILES
   glite_wmsui_LogWrapper.py
   glite_wmsui_UcWrapper.py
   glite_wmsui_AdWrapper.py
-  glite_wmsui_SdWrapper.py
+#  glite_wmsui_SdWrapper.py
   DESTINATION 
   ${PREFIX}/${LIBDIR}/python${PYTHON_VERSION}/site-packages
 )
