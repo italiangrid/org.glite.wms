@@ -86,3 +86,21 @@ install(FILES
   DESTINATION
   ${PREFIX}/share/man/man1
 )
+
+if(DEFINED INSTALL_BUILD)
+install(FILES
+  glite-wms-job-cancel.1.gz
+  glite-wms-job-delegate-proxy.1.gz
+  glite-wms-job-info.1.gz
+  glite-wms-job-list-match.1.gz
+  glite-wms-job-logging-info.1.gz
+  glite-wms-job-output.1.gz
+  glite-wms-job-perusal.1.gz
+  glite-wms-job-status.1.gz
+  glite-wms-job-submit.1.gz
+  DESTINATION
+  ${INSTALL_BUILD}/share/man/man1
+)
+
+endif(DEFINED INSTALL_BUILD)
+

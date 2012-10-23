@@ -88,4 +88,18 @@ install(TARGETS
   )
 
 
-#add_subdirectory(pkgconfig)
+if(DEFINED INSTALL_BUILD)
+install(TARGETS
+  glite_wmsui_commands_delegateproxy
+  glite_wmsui_commands_jobinfo
+  glite_wmsui_commands_jobsubmit
+  glite_wmsui_commands_joboutput
+  glite_wmsui_commands_jobcancel
+  glite_wmsui_commands_joblistmatch
+  glite_wmsui_commands_jobperusal
+  LIBRARY
+  DESTINATION
+  ${INSTALL_BUILD}/${LIBDIR}
+  )
+endif(DEFINED INSTALL_BUILD)
+
