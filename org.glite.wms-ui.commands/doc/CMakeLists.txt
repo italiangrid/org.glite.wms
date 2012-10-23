@@ -63,15 +63,15 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/doc/glite-wms-job-cancel.1
 
 add_custom_target(GENMANS ALL 
   DEPENDS 
-  glite-wms-job-cancel.1
-  glite-wms-job-delegate-proxy.1
-  glite-wms-job-info.1
-  glite-wms-job-list-match.1
-  glite-wms-job-logging-info.1
-  glite-wms-job-output.1
-  glite-wms-job-perusal.1
-  glite-wms-job-status.1
-  glite-wms-job-submit.1 )
+  glite-wms-job-cancel.xml
+  glite-wms-job-delegate-proxy.xml
+  glite-wms-job-info.xml
+  glite-wms-job-list-match.xml
+  glite-wms-job-logging-info.xml
+  glite-wms-job-output.xml
+  glite-wms-job-perusal.xml
+  glite-wms-job-status.xml
+  glite-wms-job-submit.xml )
 
 install(FILES 
   glite-wms-job-cancel.1.gz

@@ -2,10 +2,15 @@ project(wms-ui-commands CXX)
 cmake_minimum_required(VERSION 2.6)
 
 if(NOT DEFINED PVER)
-    message(WARNING " Undefined version number, selected 0.0.0. Please use
+  message(WARNING " Undefined version number, selected 0.0.0. Please use
 -DPVER=<version> to customize")
     set(PVER "0.0.0")
 endif(NOT DEFINED PVER)
+
+if(NOT DEFINED CLI_VERSION)
+  message(WARNING " Undefined CLI_VERSION label. 1.0 will be used")
+  set(CLI_VERSION "0.0.0")
+endif(NOT DEFINED CLI_VERSION)
 
 if(NOT DEFINED PREFIX)
     message(WARNING " Undefined prefix, selected /usr/local")
@@ -87,11 +92,11 @@ endif(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl
 
 
 if(DEFINED BUILD_DBG)
-  add_definitions( -pipe -g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+  add_definitions( -pipe -g -O0 -Wall -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
   
 else(DEFINED BUILD_DBG)
-    add_definitions( -pipe -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+    add_definitions( -pipe -O2 -Wall -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
 endif(DEFINED BUILD_DBG)
 
-#add_subdirectory(src)
+add_subdirectory(src)
 add_subdirectory(doc)
