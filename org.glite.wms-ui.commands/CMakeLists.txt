@@ -67,6 +67,25 @@ pkg_check_modules(LIBXSLT REQUIRED libexslt)
 pkg_check_modules(LIBXSLTDEV REQUIRED libxslt)
 pkg_check_modules(WMPROXY_API_CPP REQUIRED wmproxy-api-cpp)
 
+
+if(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
+   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+  message(FATAL_ERROR "*** Missing docbook xsl style sheet required to parse man pages")
+endif(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
+   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+
+if(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+endif(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+
+if(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+endif(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+
+
+#message( "\nDOCBOOK_MAN_PAGES_STYLE=${DOCBOOK_MAN_PAGES_STYLE}\n")
+
+
 if(DEFINED BUILD_DBG)
   add_definitions( -pipe -g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
   
@@ -75,3 +94,4 @@ else(DEFINED BUILD_DBG)
 endif(DEFINED BUILD_DBG)
 
 #add_subdirectory(src)
+add_subdirectory(doc)
