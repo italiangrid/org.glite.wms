@@ -66,9 +66,25 @@ SOAP_FMAC1 int SOAP_FMAC2 soap_out_xsd__anyType(struct soap*, const char*, int, 
 SOAP_FMAC3 struct soap_dom_element * SOAP_FMAC4 soap_get_xsd__anyType(struct soap*, struct soap_dom_element *, const char*, const char*);
 SOAP_FMAC1 struct soap_dom_element * SOAP_FMAC2 soap_in_xsd__anyType(struct soap*, const char*, struct soap_dom_element *, const char*);
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+SOAP_FMAC1 void SOAP_FMAC2 soap_markelement(struct soap*, const void*, int);
+SOAP_FMAC1 int SOAP_FMAC2 soap_putelement(struct soap*, const void*, const char*, int, int);
+SOAP_FMAC1 void *SOAP_FMAC2 soap_getelement(struct soap*, int*);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+/*
 SOAP_FMAC3 void SOAP_FMAC4 soap_markelement(struct soap*, const void*, int);
 SOAP_FMAC3 int SOAP_FMAC4 soap_putelement(struct soap*, const void*, const char*, int, int);
 SOAP_FMAC3 void *SOAP_FMAC4 soap_getelement(struct soap*, int*);
+*/
 
 /* format string for generating DOM namespace prefixes (<= 16 chars total) */
 #define SOAP_DOMID_FORMAT "dom%d"
