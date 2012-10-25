@@ -62,10 +62,10 @@ endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegati
 
 
 if(DEFINED BUILD_DBG)
-  add_definitions( -pipe -g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+  add_definitions( -pipe -g -O0 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_DOM -DWITH_COOKIES -DWITH_GZIP -DWITH_OPENSSL -DHAVE_CONFIG_H -I/usr/include/gsoap)
   
 else(DEFINED BUILD_DBG)
-    add_definitions( -pipe -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -UHAVE_CONFIG_H -I/usr/include/gsoap)
+    add_definitions( -pipe -O2 -Wall -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_DOM -DWITH_COOKIES -DWITH_GZIP -DWITH_OPENSSL -DHAVE_CONFIG_H -I/usr/include/gsoap)
 endif(DEFINED BUILD_DBG)
 
 
