@@ -100,11 +100,12 @@ endif(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl
 
 
 if(DEFINED BUILD_DBG)
-  add_definitions( -pipe -g -O0 -Wall -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
+  add_definitions( -pipe -g -O0 -Wall ${CLASSAD_CFLAGS} -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
   
 else(DEFINED BUILD_DBG)
-    add_definitions( -pipe -O2 -Wall -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
+    add_definitions( -pipe -O2 -Wall ${CLASSAD_CFLAGS} -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
 endif(DEFINED BUILD_DBG)
+
 
 add_subdirectory(src)
 add_subdirectory(doc)
