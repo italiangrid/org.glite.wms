@@ -35,6 +35,11 @@ else( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
     endif( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
 endif( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
 
+if(NOT DEFINED SYSCONFIGDIR)
+    set(SYSCONFIGDIR "etc/")
+endif(NOT DEFINED SYSCONFIGDIR)
+
+
 set(BINDIR "bin")
 
 set(LIBEXEC "libexec")
