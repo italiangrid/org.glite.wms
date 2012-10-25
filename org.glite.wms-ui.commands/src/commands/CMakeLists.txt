@@ -32,9 +32,9 @@ install(TARGETS
 
 target_link_libraries(
   glite-wms-job-submit 
-  glite_wms_wmproxy_api_cpp
   glite_wmsui_commands_jobsubmit
   glite_wmsui_commands_utilities
+  glite_wms_wmproxy_api_cpp
   ${JOBMAN_EXCEPTION_LDFLAGS}
   ${JDL_API_CPP_LDFLAGS}
   ${LB_CLIENT_LDFLAGS}
@@ -50,6 +50,7 @@ target_link_libraries(
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
 )
+
 #  glite_wms_conf 
 #  glite_wms_util 
 #  glite_jobid
