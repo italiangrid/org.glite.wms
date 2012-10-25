@@ -47,4 +47,14 @@ set_target_properties(glite_wms_wmproxy_api_cpp PROPERTIES VERSION 0.0.0 SOVERSI
 install(TARGETS glite_wms_wmproxy_api_cpp
   LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
 
+if(DEFINED INSTALL_BUILD)
+  install(TARGETS glite_wms_wmproxy_api_cpp
+    LIBRARY DESTINATION ${INSTALL_BUILD}/${LIBDIR} )
+endif(DEFINED INSTALL_BUILD)
+
+if(DEFINED INSTALL_BUILD_DEV)
+  install(TARGETS glite_wms_wmproxy_api_cpp
+    LIBRARY DESTINATION ${INSTALL_BUILD_DEV}/${LIBDIR} )
+endif(DEFINED INSTALL_BUILD_DEV)
+
 add_subdirectory(pkgconfig)
