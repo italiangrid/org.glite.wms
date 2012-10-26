@@ -1,10 +1,10 @@
-Source: glite-wms-wmproxy-api-cpp
+Source: glite-wms-ui-commands
 Priority: optional
 Maintainer: WMS Support <wms-support@cnaf.infn.it>
-Section: libs
+Section: bin
 Homepage: http://glite.cern.ch
-Package: libglite-wms-wmproxy-api-cpp-dbg
+Package: glite-wms-ui-commands-dbg
 Architecture: any
-Depends: libgridsite1.7 (>=1.7.22~), gsoap (>=2.7.9l-0.2)
-Description: WMProxy CPP API binary libraries
+Depends: libgridsite1.7 (>=1.7.22~), gsoap (>=2.7.9l-0.2), libxslt1.1 (>=1.1.26), libglite-lb-client11 (>=5.1.6), libglite-jobid2 (>=2.1.2), libclassad0 (>=1.0.8), libboost-regex1.42.0 (>=1.42.0), libboost-filesystem1.42.0 (>=1.42.0), libjdl-api-cpp, libclassad_utils, libvomsapi0, libglobus-gss-assist3 (>=5.9), libwmproxy-api-cpp, libjobman-exception
+Description: WMProxy UI (debug symbols)
 Version: 3.5.0

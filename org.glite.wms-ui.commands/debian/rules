@@ -7,7 +7,7 @@ build-stamp:
 	touch build-stamp
         
 build:build-stamp
-	cmake . -DPREFIX=$(INSTALLDIR)/usr -DPKG_INSTALL_PREFIX=$(INSTALLDIR)/usr -DPVER=$VERSION -UBUILD_DBG -DINSTALL_DEV=1
+	cmake . -DPREFIX=$(INSTALLDIR)/usr -DPKG_INSTALL_PREFIX=$(INSTALLDIR)/usr -DPVER=$VERSION -UBUILD_DBG
 	cp debian/deb-control-file.txt debian/control
 	make
 
@@ -44,7 +44,7 @@ binary-arch: build install
 	dh_shlibdeps
 	dh_md5sums
 	mkdir -p ${PWD}/BINARIES
-	cp debian/control debian/libglite-wms-wmproxy-api-cpp/DEBIAN/
+	cp debian/control debian/glite-wms-ui-commands/DEBIAN/
 	dh_builddeb --destdir=${PWD}/BINARIES
 ###	dh_gencontrol
 ###	dh_md5sums

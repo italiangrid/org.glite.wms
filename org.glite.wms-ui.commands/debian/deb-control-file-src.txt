@@ -1,5 +1,5 @@
-Source:  libglite-wms-wmproxy-api-cpp-src
-Section:  libs
+Source:  glite-wms-ui-commands
+Section:  bin
 Priority:  optional
 Maintainer:  WMS Support <wms-support@cnaf.infn.it>
 Homepage: http://glite.cern.ch/
