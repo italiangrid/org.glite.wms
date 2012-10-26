@@ -3,7 +3,8 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/src
 		    ${PROJECT_SOURCE_DIR}/src/services
 		    ${PROJECT_SOURCE_DIR}/src/utilities
-		    ${PREFIX}/include)
+		    ${WMPROXY_API_CPP_INCLUDE_DIRS}
+		    )
 
 
 
