@@ -1,0 +1,10 @@
+Source: glite-wms-wmproxy-api-cpp
+Priority: optional
+Maintainer: WMS Support <wms-support@cnaf.infn.it>
+Section: libs
+Homepage: http://glite.cern.ch
+Package: libglite-wms-wmproxy-api-cpp-dbg
+Architecture: any
+Depends: libgridsite1.7 (>=1.7.22~), gsoap (>=2.7.9l-0.2)
+Description: WMProxy CPP API binary libraries
+Version: 3.5.0
