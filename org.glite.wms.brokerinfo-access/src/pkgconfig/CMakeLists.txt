@@ -1,5 +1,5 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brokerinfo-access.pc.in
-               ${CMAKE_CURRENT_BINARY_DIR}/wmproxy-api-cpp.pc
+               ${CMAKE_CURRENT_BINARY_DIR}/brokerinfo-access.pc
                @ONLY)
 
 if(DEFINED INSTALL_BUILD_DEV)
