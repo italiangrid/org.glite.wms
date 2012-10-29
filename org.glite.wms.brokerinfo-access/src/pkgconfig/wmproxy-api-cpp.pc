@@ -1,0 +1,11 @@
+prefix=/home/dorigoa/WORKAREA/stage/usr
+exec_prefix=/home/dorigoa/WORKAREA/stage/usr
+libdir=/home/dorigoa/WORKAREA/stage/usr/lib
+includedir=/home/dorigoa/WORKAREA/stage/usr/include
+
+Name: BrokerInfo access API
+Description: BrokerInfo access API
+Version: 
+Libs: -L${libdir} -lglite-brokerinfo
+Cflags: -I${includedir}
+
