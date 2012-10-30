@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
 """
 ***************************************************************************
     filename  : wmsui_utils.py
@@ -12,7 +12,7 @@
 """
 import sys
 import os
-import dl # dl flags used by queryLB/NS
+import ctypes as dl # dl flags used by queryLB/NS
 import os.path
 import glob #accessing file
 import time
