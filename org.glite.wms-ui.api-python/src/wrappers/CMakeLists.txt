@@ -95,6 +95,31 @@ set_target_properties(glite_wmsui_LogWrapper PROPERTIES VERSION 0.0.0 SOVERSION 
 set_target_properties(glite_wmsui_UcWrapper  PROPERTIES VERSION 0.0.0 SOVERSION 0)
 set_target_properties(glite_wmsui_AdWrapper   PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
+target_link_libraries(glite_wmsui_UcWrapper 
+  ${VOMS_LDFLAGS} 
+  ${GRIDSITE_OPENSSL_LDFLAGS}
+  )
+target_link_libraries(glite_wmsui_LbWrapper 
+  ${VOMS_LDFLAGS} 
+  ${CLASSAD_LDFLAGS} 
+  ${LB_CLIENT_LDFLAGS}
+  ${JDL_API_CPP}
+  ${BOOST_FILESYSTEM_LDFLAGS}
+  ${JOBMAN_EXCEPTION_LDFLAGS}
+  ${JOBID_LDFLAGS}
+  )
+target_link_libraries(glite_wmsui_AdWrapper
+  ${JOBID_LDFLAGS}
+  ${JDL_API_CPP_LDFLAGS}
+  ${BOOST_FILESYSTEM_LDFLAGS}
+  ${JOBMAN_EXCEPTION_LDFLAGS}
+  ${CLASSAD_LDFLAGS}
+  ${LB_CLIENT_LDFLAGS}
+  )
+
+
+#target_link_libraries(glite_wmsui_LbWrapper ${VOMS_LIBRARIES} )
+
 install(TARGETS glite_wmsui_LbWrapper 
   LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
 install(TARGETS glite_wmsui_LogWrapper 

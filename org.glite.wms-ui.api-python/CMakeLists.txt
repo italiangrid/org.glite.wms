@@ -58,6 +58,8 @@ pkg_check_modules(CLASSAD_UTILS REQUIRED classad-utils)
 pkg_check_modules(JOBMAN_EXCEPTION REQUIRED jobman-exception)
 pkg_check_modules(VOMS REQUIRED voms-2.0)
 pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
+pkg_check_modules(BOOST_FILESYSTEM emi-boost-filesystem)
+
 
 if(NOT EXISTS "/usr/bin/python")
   message(FATAL_ERROR "\n\n*** ERROR: Python installation missing. Cannot build this component\n\n")

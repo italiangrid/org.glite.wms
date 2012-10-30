@@ -24,7 +24,7 @@ from glite_wmsui_UcWrapper import UCredential
 
 
 # set dinamyc library management (dlopen would not work otherwise):
-sys.setdlopenflags(dl.RTLD_NOW|dl.RTLD_GLOBAL)
+sys.setdlopenflags(2 | dl.RTLD_GLOBAL)
 
 """
 Signal Handler
@@ -55,7 +55,7 @@ class Info:
       try:
          path=os.environ['GLITE_LOCATION']
       except:
-         print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+         print "Error: Please set the GLITE_LOCALTION or GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
          sys.exit(1)
    #pathe where the UI has been installed
    self.prefix=path
