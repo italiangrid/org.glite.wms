@@ -27,67 +27,37 @@ add_custom_command(OUTPUT
   COMMAND
   swig  -cpperraswarn -python -shadow -c++ -o ${PROJECT_SOURCE_DIR}/src/wrappers/AdWrapper_wrap.cpp ${PROJECT_SOURCE_DIR}/src/wrappers/glite_wmsui_AdWrapper.i  )
 
-add_custom_command(OUTPUT 
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so.0  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so.0.0.0
-  DEPENDS
-  ${PROJECT_SOURCE_DIR}/src/wrappers/libglite_wmsui_UcWrapper.so.0.0.0
-  COMMAND
-  rm -f _glite_wmsui_UcWrapper.so*
-  COMMAND
-  ln -s libglite_wmsui_UcWrapper.so.0.0.0 _glite_wmsui_UcWrapper.so.0.0.0
-  COMMAND
-  ln -s libglite_wmsui_UcWrapper.so.0 _glite_wmsui_UcWrapper.so.0
-  COMMAND
-  ln -s libglite_wmsui_UcWrapper.so _glite_wmsui_UcWrapper.so
-)
 
-add_custom_command(OUTPUT 
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so.0  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so.0.0.0
-  DEPENDS
-  ${PROJECT_SOURCE_DIR}/src/wrappers/libglite_wmsui_AdWrapper.so.0.0.0
-  COMMAND
-  rm -f _glite_wmsui_AdWrapper.so*
-  COMMAND
-  ln -s libglite_wmsui_AdWrapper.so.0.0.0 _glite_wmsui_AdWrapper.so.0.0.0
-  COMMAND
-  ln -s libglite_wmsui_AdWrapper.so.0 _glite_wmsui_AdWrapper.so.0
-  COMMAND
-  ln -s libglite_wmsui_AdWrapper.so _glite_wmsui_AdWrapper.so
-)
-
-add_custom_command(OUTPUT 
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so.0  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so.0.0.0
-  DEPENDS
-  ${PROJECT_SOURCE_DIR}/src/wrappers/libglite_wmsui_LogWrapper.so.0.0.0
-  COMMAND
-  rm -f _glite_wmsui_LogWrapper.so*
-  COMMAND
-  ln -s libglite_wmsui_LogWrapper.so.0.0.0 _glite_wmsui_LogWrapper.so.0.0.0
-  COMMAND
-  ln -s libglite_wmsui_LogWrapper.so.0 _glite_wmsui_LogWrapper.so.0
-  COMMAND
-  ln -s libglite_wmsui_LogWrapper.so _glite_wmsui_LogWrapper.so
-)
-
-add_custom_command(OUTPUT 
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so.0  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so.0.0.0
-  DEPENDS
-  ${PROJECT_SOURCE_DIR}/src/wrappers/libglite_wmsui_LbWrapper.so.0.0.0
-  COMMAND
-  rm -f _glite_wmsui_LbWrapper.so*
-  COMMAND
-  ln -s libglite_wmsui_LbWrapper.so.0.0.0 _glite_wmsui_LbWrapper.so.0.0.0
-  COMMAND
-  ln -s libglite_wmsui_LbWrapper.so.0 _glite_wmsui_LbWrapper.so.0
-  COMMAND
-  ln -s libglite_wmsui_LbWrapper.so _glite_wmsui_LbWrapper.so
-)
 
 add_custom_target(SYMLINKS ALL DEPENDS
   glite_wmsui_LbWrapper
   glite_wmsui_LogWrapper
   glite_wmsui_UcWrapper
   glite_wmsui_AdWrapper
+  COMMAND
+  ln -sf libglite_wmsui_UcWrapper.so.0.0.0 _glite_wmsui_UcWrapper.so.0.0.0
+  COMMAND
+  ln -sf libglite_wmsui_UcWrapper.so.0 _glite_wmsui_UcWrapper.so.0
+  COMMAND
+  ln -sf libglite_wmsui_UcWrapper.so _glite_wmsui_UcWrapper.so
+  COMMAND
+  ln -sf libglite_wmsui_AdWrapper.so.0.0.0 _glite_wmsui_AdWrapper.so.0.0.0
+  COMMAND
+  ln -sf libglite_wmsui_AdWrapper.so.0 _glite_wmsui_AdWrapper.so.0
+  COMMAND
+  ln -sf libglite_wmsui_AdWrapper.so _glite_wmsui_AdWrapper.so
+  COMMAND
+  ln -sf libglite_wmsui_LogWrapper.so.0.0.0 _glite_wmsui_LogWrapper.so.0.0.0
+  COMMAND
+  ln -sf libglite_wmsui_LogWrapper.so.0 _glite_wmsui_LogWrapper.so.0
+  COMMAND
+  ln -sf libglite_wmsui_LogWrapper.so _glite_wmsui_LogWrapper.so
+  COMMAND
+  ln -sf libglite_wmsui_LbWrapper.so.0.0.0 _glite_wmsui_LbWrapper.so.0.0.0
+  COMMAND
+  ln -sf libglite_wmsui_LbWrapper.so.0 _glite_wmsui_LbWrapper.so.0
+  COMMAND
+  ln -sf libglite_wmsui_LbWrapper.so _glite_wmsui_LbWrapper.so
 )
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
