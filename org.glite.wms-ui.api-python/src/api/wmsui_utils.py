@@ -29,7 +29,7 @@
 """
 import sys
 import os
-import dl # dl flags used by queryLB
+import ctypes as dl # dl flags used by queryLB
 import os.path
 import glob #accessing file
 import time
@@ -41,7 +41,7 @@ from glite_wmsui_UcWrapper import UCredential
 
 
 # set dinamyc library management (dlopen would not work otherwise):
-sys.setdlopenflags(dl.RTLD_NOW|dl.RTLD_GLOBAL)
+sys.setdlopenflags( 2 | dl.RTLD_GLOBAL)
 
 """
 Signal Handler

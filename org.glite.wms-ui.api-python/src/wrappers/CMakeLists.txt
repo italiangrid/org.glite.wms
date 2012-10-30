@@ -111,6 +111,7 @@ target_link_libraries(glite_wmsui_LbWrapper
 target_link_libraries(glite_wmsui_AdWrapper
   ${JOBID_LDFLAGS}
   ${JDL_API_CPP_LDFLAGS}
+  ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
   ${JOBMAN_EXCEPTION_LDFLAGS}
   ${CLASSAD_LDFLAGS}
