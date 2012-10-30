@@ -101,7 +101,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 				if (status.status==JobStatus::CLEARED){
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkCodes", DEFAULT_ERR_CODE,
-					"Output not Allowed",
+					"Output not allowed",
 					"Output files already retrieved");
 				}else if (status.status==JobStatus::SUBMITTED||status.status==JobStatus::WAITING){
 					throw WmsClientException(__FILE__,__LINE__,
@@ -158,7 +158,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 					} else {
 						throw WmsClientException(__FILE__,__LINE__,
 						"checkCodes", DEFAULT_ERR_CODE,
-						"Output not Allowed",
+						"Output not allowed",
 						"Output files already retrieved");
 					}
 				break;
@@ -169,7 +169,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 					} else {
 						throw WmsClientException(__FILE__,__LINE__,
 						"checkCodes", DEFAULT_ERR_CODE,
-						"Output not Allowed",
+						"Output not allowed",
 						"The Job has been cancelled");
 					}
 				break;
