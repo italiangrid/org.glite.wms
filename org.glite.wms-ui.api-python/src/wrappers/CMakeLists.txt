@@ -84,18 +84,10 @@ add_custom_command(OUTPUT
 )
 
 add_custom_target(SYMLINKS ALL DEPENDS
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so.0.0.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_UcWrapper.so
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so.0.0.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_AdWrapper.so
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so.0.0.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LogWrapper.so
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so.0.0.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so.0
-  ${PROJECT_SOURCE_DIR}/src/wrappers/_glite_wmsui_LbWrapper.so
+  glite_wmsui_LbWrapper
+  glite_wmsui_LogWrapper
+  glite_wmsui_UcWrapper
+  glite_wmsui_AdWrapper
 )
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
@@ -105,28 +97,28 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
 
 
 add_library(glite_wmsui_LbWrapper
-	    SHARED 
-	    LbWrapper_wrap.cpp
-            LbWrapper.cpp
-            glite_wmsui_LbWrapper.i )
+  SHARED 
+  LbWrapper_wrap.cpp
+  LbWrapper.cpp
+  glite_wmsui_LbWrapper.i )
 
 add_library(glite_wmsui_LogWrapper
-            SHARED
-	    LogWrapper_wrap.cpp 
-	    LogWrapper.cpp 
-	    glite_wmsui_LogWrapper.i )
+  SHARED
+  LogWrapper_wrap.cpp 
+  LogWrapper.cpp 
+  glite_wmsui_LogWrapper.i )
 
 add_library(glite_wmsui_UcWrapper
-           SHARED
-	    UcWrapper_wrap.cpp
-            UcWrapper.cpp
-            glite_wmsui_UcWrapper.i )
+  SHARED
+  UcWrapper_wrap.cpp
+  UcWrapper.cpp
+  glite_wmsui_UcWrapper.i )
 
 add_library(glite_wmsui_AdWrapper
-	    SHARED
-	    AdWrapper_wrap.cpp
-            AdWrapper.cpp
-            glite_wmsui_AdWrapper.i )
+  SHARED
+  AdWrapper_wrap.cpp
+  AdWrapper.cpp
+  glite_wmsui_AdWrapper.i )
 
 set_target_properties(glite_wmsui_LbWrapper  PROPERTIES VERSION 0.0.0 SOVERSION 0)
 set_target_properties(glite_wmsui_LogWrapper PROPERTIES VERSION 0.0.0 SOVERSION 0)
