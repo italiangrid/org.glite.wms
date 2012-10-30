@@ -1,13 +1,30 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
+
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.  
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0 
+# 
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+
 """
 ***************************************************************************
     filename  : wmsui_api.py
-    author    : Alessandro Maraschini
-    email     : egee@datamat.it
+    author    : Alessandro Maraschini, Alvise Dorigo
+    email     : alvise.dorigo@pd.infn.it
     copyright : (C) 2003 by DATAMAT
 ***************************************************************************
 //
-// $Id$
+// $Id: wmsui_api.py,v 1.7.2.1.2.5.2.5 2012/04/21 09:39:51 adorigo Exp $
 //
 """
 import os
@@ -28,8 +45,7 @@ import random # for  TCP port range
 """
 Initialise the LB Events Names variables
 """
-events = []
-events_names = [eventName.replace("_"," ").capitalize() for eventName in events.getEventsNames()]
+events_names = [eventName.replace("_"," ").capitalize() for eventName in Eve.getEventsNames()]
 EVENT_ATTR_MAX = len(events_names)
 
 """
@@ -105,6 +121,10 @@ def queryEvents(jobids, includes, excludes, userTags, issuer, fromT, toT, level,
 	Returns a dictionary with the JOB ID as a key and the value associted is the array of Events of the specific JOB ID
 	"""
 	
+	
+	
+	
+	
 	# Initialise the Job Id / Events dictionary
 	queriedEvents = {}
 	
@@ -131,6 +151,8 @@ def queryEvents(jobids, includes, excludes, userTags, issuer, fromT, toT, level,
 			lbDict[jobid.lbHost][jobid.lbPort]=[jobid.jobid]
 	
 	# Scan all LB Hosts e Ports to retrieve Events
+	
+	
 	for lbHost in lbDict.keys():
 	
 		# Scann all LB Ports
@@ -141,6 +163,7 @@ def queryEvents(jobids, includes, excludes, userTags, issuer, fromT, toT, level,
 				userTags.keys(), userTags.values(), excludes, includes, issuer, fromT, toT)
 
 			# Perform LB Query with the current LB Host and Port
+			
 			wrapEvent = Eve(lbDict[lbHost][lbPort], \
 			                lbHost, \
 					lbPort, \
@@ -151,9 +174,10 @@ def queryEvents(jobids, includes, excludes, userTags, issuer, fromT, toT, level,
 					issuer, \
 					fromT, \
 					toT)
-
+					
 			# Check for errors
 			err, apiMsg = wrapEvent.get_error ()
+			
 			if err and not suppressError:
 				errMsg ("Warning", "API_NATIVE_ERROR", "Eve::queryEvents", apiMsg)
 				sys_exit= -1
@@ -214,21 +238,58 @@ def queryCodeEvents(jid, eventAttribute, minLog, level):
 					reasons.append(reasonStr)
 	return reasons
 
-def printEvents(jobid, eventArray):
+def printEvents(jobid, eventArray, json, pprint):
+	
 	"""
 	printEvents: print all the Events of a specific Job ID"
 	"""
 
 	message=""
-
-	message += "\n"
-	message += "LOGGING INFORMATION:\n\n"
-	message += "Printing info for the Job : " + jobid.jobid
-	message += "\n \n"
-
+	thisMessage = ""
+	quote = "\""
+	carriage = ","
+	ccarriage = ""
+	tab = ""
+	
+	#print "******* jobid=" + jobid.jobid + "\n"
+	
+	if json is True:
+		if pprint is True:
+			quote = ""
+			carriage = "\n"
+			tab = "\t"
+			ccarriage = "\n"
+		
+	if json is False:
+		message += "\n"
+		message += "LOGGING INFORMATION:\n\n"
+		message += "Printing info for the Job : " + jobid.jobid
+		message += "\n \n"
+	else:
+		message += ccarriage + tab + quote + "JobID" + quote + ": " + quote + jobid.jobid + quote + carriage + tab + quote + "Events" + quote + ": {" + ccarriage
+		
+		
+	elements = [];
+		
 	for singleEvent in eventArray:
-		message += singleEvent.printEvent()
-
+		thisMessage = tab + tab + singleEvent.printEvent(json, pprint) + ccarriage
+		
+		elements.append( thisMessage );
+		
+	if json is True:
+		if pprint is True:	
+			message += "".join( elements )
+		else:
+			message += ", ".join( elements )
+	else:
+		message += "".join(elements)
+		
+	if json is True:
+		if pprint is True:
+			message += tab + "}\n"
+		else:
+			message += "}";
+		
 	return message 
 
 	for event in queriedEvents[jobid]:
@@ -236,7 +297,7 @@ def printEvents(jobid, eventArray):
 
 	return message
 
-def printQueriedEvents(jobids, queriedEvents):
+def printQueriedEvents(jobids, queriedEvents, json, pprint):
 	"""
 	printQueriedEvents: print all the Events of the list of Job ID's using a dictionary built from queryEvents function"
 	"""
@@ -250,11 +311,11 @@ def printQueriedEvents(jobids, queriedEvents):
 	
 		try:
 			# Build the output message
-			message += printEvents(jobid, queriedEvents[jobid.jobid])
+			message += printEvents(jobid, queriedEvents[jobid.jobid], json, pprint)
 		except KeyError, err :
 			errMsg ( em , "API_NATIVE_ERROR" , "Eve::queryEvents",errorMessage+jobid.jobid)
 
-	return message	
+	return message
 
 def getStatus(jobid, level):
 	"""getStatus: Return the status of a single Job ID"""
@@ -417,9 +478,7 @@ def queryStates(jobids, voName, includes, excludes, userTags, issuer, fromT, toT
 	return queriedStates
 	
 """
-####################################
-                         JobState Class
-####################################
+
 """
 class JobState:
   STATE_ID = "StateId"
@@ -686,7 +745,7 @@ def selectJobId (jobid_list , strjobs, multi = 1):
 """
 Read the specified input file and return a list containing the jobid (s)
 """
-def getJobIdfromFile (inFile ):
+def getJobIdfromFile (json, inFile ):
      comment = ""
      sys_exit = 0
      if not os.path.isfile(inFile):
@@ -711,11 +770,15 @@ def getJobIdfromFile (inFile ):
            elif ( job.find ('#') != 0) and ( job.find('//') != 0) and (job!=""):
               jobid = JobId()
               if jobid.fromString(job):
-                 wmsui_utils.errMsg( 'Warning','UI_WRONG_JOBID_FORMAT',job)
+	         if json == False:
+                    wmsui_utils.errMsg( 'Warning','UI_WRONG_JOBID_FORMAT',job)
+		 else:
+			print ", \"" + job + "\": \"JOBID HAS WRONG FORMAT\"" 
                  sys_exit = -1
               else:
                  if job in str_jobs:
-                    wmsui_utils.errMsg( 'Warning','UI_JOBID_REPEAT',job)
+		    if json == False:
+                       wmsui_utils.errMsg( 'Warning','UI_JOBID_REPEAT',job)
                     sys_exit = -1
                  else:
                     right_jobs.append( jobid )
@@ -728,19 +791,33 @@ def getJobIdfromFile (inFile ):
 """
    Retrieve JobId from a list of strings:
 """
-def getJobIdfromList (jobids):
+def getJobIdfromList (json, jobids):
      jobs= []
+
+##      for job in jobids:
+## 	     job= job.strip () 
+## 	     jobid = JobId ( job )
+## 	     jobs.append(jobid)
+
+##      return jobs
+     
      for job in jobids:
-       job= job.strip () 
-       jobid = JobId ( job )
-       if not jobid.set:
-          errMsg('Warning','UI_WRONG_JOBID_FORMAT',job)
-          pass
-       else:
-          if job in jobs:
-             errMsg('Warning','UI_JOBID_REPEAT',job)
-          else:
-            jobs.append(jobid)
+	     job= job.strip () 
+	     jobid = JobId ( job )
+	     if not jobid.set:
+		     if json == False:
+			     errMsg('Warning','UI_WRONG_JOBID_FORMAT',job)
+		     else:
+			     print ", \"" + job + "\": \"JOBID HAS WRONG FORMAT\"", 
+			     
+		     pass
+	     else:
+		     if job in jobs:
+			     if json == False:
+				     errMsg('Warning','UI_JOBID_REPEAT',job)
+		     else:
+			     jobs.append(jobid)
+	    
      return jobs
 
 """
@@ -957,7 +1034,7 @@ class Shadow:
 		else:
 			#No error found. Console successfully Started
 			if fromPort and toPort and wmsui_utils.info.debug:
-				wmsui_utils.print_message(wmsui_utils.info.logFile,"Firewall range port found. listening port forced to: " +repr (port )  )
+				wmsui_utils.print_message(False, wmsui_utils.info.logFile,"Firewall range port found. listening port forced to: " +repr (port )  )
 			break
 
 	if errConsoleInfo:
@@ -1021,7 +1098,7 @@ class Shadow:
 	   errMsg('Error', "UI_CAN_NOT_EXECUTE" ,  "glite-wms-grid-console-shadow","Wrong retrieved pid value")
 	   exit(1)
 	## HOST
-	self.host = socket.gethostbyaddr(socket.gethostname())[2][0]
+	self.host = socket.getfqdn()
 	return 0
 
 """
@@ -1053,22 +1130,39 @@ class Event:
 		# Return the requested attribute
 		return self.__eventAttributes[eventAttribute]
 		
-	def printEvent(self):
+	def printEvent(self, json, pprint):
 		"""Event printEvent: print all the Events retrieved."""
 
 		# Initialise the output
 		message = ""
 
+		quote = "\""
+		Return = ""
+		
+		if json is True:
+			if pprint is True:
+				quote = ""
+				Return = "\n";
 		
 		if self.__level:
-			message += "\t---\n"
-			message += "Event: "
+			if json is False:
+				message += "\t---\n"
+			if json is False:
+				message += "Event: "
+			else:
+				if pprint is True:
+					message += "  {" + "\n\t\t    "
+				else:
+					message += " { " 
 		else:
-			message +=" - "
+			if json is False:
+				message +=" - "
 
 		# Set the Event Name
-		message += self.__eventName + "\n"
-		
+		if json is False:
+			message += self.__eventName + "\n"
+		else:
+			message += quote + "EventName" + quote + ": " + quote + self.__eventName + quote 
 		if self.__level:
 		
 			# Initialie Standard and Ad messages
@@ -1086,7 +1180,8 @@ class Event:
 				
 				# Retrieve the Attribute value
 				attributeValue = self.getAttribute(attributeIndex).strip()
-
+				
+				
 				# Check for valid attribute name and value
 				if attributeName and attributeValue and attributeValue!="(nil)":
 				
@@ -1101,15 +1196,49 @@ class Event:
 							# Convert to time the attribute vale
 							attributeValue = time.asctime(time.localtime(  int (attributeValue ) ) )
 							
+							TS = ""
+							if json is False:
+								TS = attributeValue + DSTime
+							else:
+								TS = str(timeStamp)
+								
+							#print "TS=" + str(timeStamp);
+								
 							# Append the Timestamp to the Standard messages string
-							stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue + DSTime+"\n"
+							if json is False:
+								stStr += "- "+ attributeName.ljust(27) + "=    " + TS + "\n"
+							else:
+								if pprint is True:
+									stStr += "\n\t\t    " + quote + attributeName + quote + ": " + quote + TS + quote 
+								else:
+									stStr += ", " + quote + attributeName + quote + ": " + quote + TS + quote 
+							
+							#print "ALVI-DEBUG: attributeName=[" + attributeName +"]\n"
+							
+							#print "ALVI-DEBUG: >>" + stStr +"<<"	
+							
 						elif attributeName in [ "Arrived"]:
 							if self.__level > 1:
 								# Convert to time the attribute vale
+								
+								timestamp = attributeValue;
+								
 								attributeValue = time.asctime(time.localtime(  int (attributeValue ) ) )
 							
 								# Append the Timestamp to the Standard messages string
-								stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue + DSTime+"\n"
+								TS = ""
+								if json is True:
+									TS = timestamp
+								else:
+									TS = attributeValue + DSTime
+								
+								if json is False:
+									stStr += "- "+ attributeName.ljust(27) + "=    " + TS +"\n"
+								else:
+									if pprint is True:
+										stStr += "\n\t\t    " + quote + attributeName + quote + ": " + quote + TS + quote
+									else:
+										stStr += ", " + quote + attributeName + quote + ": " + quote + TS + quote
 						elif attributeName in ["Job" , "Jdl", "Classad"]:
 							if self.__level > 2:
 								if attributeValue[0]=="[":
@@ -1119,10 +1248,22 @@ class Event:
 										errMsg('Warning','UI_JDL_WRONG_SYNTAX' , apiMsg ) ;
 									attributeValue = jobad.toLines()
 									attributeValue = colsep + attributeValue.replace( "\n" , colsep )
-								adStr += "- " +attributeName.ljust(15) + "=   " + attributeValue +"\n"
+								if json is False:
+									adStr += "- " +attributeName.ljust(15) + "=   " + attributeValue +"\n"
+								else:
+									if pprint is True:
+										adStr += "\n\t\t    " + quote + attributeName + quote + ": " + quote + attributeValue + quote
+									else:
+										adStr += ", " + quote + attributeName + quote + ": " + quote + attributeValue + quote
 						elif attributeName in ["Level", "Seqcode"]:
 							if self.__level > 2:
-								stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+								if json is False:
+									stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+								else:
+									if pprint is True:
+										stStr += "\n\t\t    " + quote + attributeName + quote + ": " + quote + attributeValue + quote
+									else:
+										stStr += ", " + quote + attributeName + quote + ": " + quote + attributeValue + quote
 						elif attributeName in ["Priority"]:
 							if self.__level >2:
 								try:
@@ -1132,15 +1273,43 @@ class Event:
 										attributeValue="asynchronous"
 								except:
 									pass
-								stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+								if json is False:
+									stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+								else:
+									stStr += ", " + quote + attributeName + quote + ": " + quote + attributeValue + quote
 						elif attributeName in ["Source", "Destination", "Result", "Dest id"]:
-							stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+							if json is False:
+								stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+							else:
+								if pprint is True:
+									stStr += "\n\t\t    "+ quote + attributeName + quote + ": " + quote + attributeValue + quote
+								else:
+									stStr += ", "+ quote + attributeName + quote + ": " + quote + attributeValue + quote
 						elif self.__level > 1:
-							stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+							if json is False:
+								stStr += "- "+ attributeName.ljust(27) + "=    " + attributeValue +"\n"
+							else:
+								if pprint is True:
+									stStr += "\n\t\t    "+ quote + attributeName + quote + ": " + quote + attributeValue + quote
+								else:
+									stStr += ", "+ quote + attributeName + quote + ": " + quote + attributeValue + quote
+				#print "ALVI-DEBUG >>" + stStr + "<<\n";
+				#print "ALVI-DEBUG >>" + adStr + "<<\n";
 
 			# join the two pools
-			message += stStr + adStr
-
+			if json is True:
+				if pprint is True:
+					message += stStr + adStr + "\n\t\t  }"
+				else:
+					message += stStr + adStr + "}"
+			else:
+				message += stStr + adStr
+		else:
+			if json is True:
+				message = "{" + message + "}"
+			else:
+				pass
+					
 		return message
 		
 	def getJobId(self):
@@ -1177,7 +1346,7 @@ class JobStatus:
 		# Return the requested attribute
 		return self.__statusAttributes[statusAttribute]
 		
-	def printStatus(self, noNodes=0):
+	def printStatus(self, json, noNodes=0):
 		"""JobStatus printStatus: print the Status."""
 		# Map has to be initialised for each PrintStatus
 		self.jobidMap={}
@@ -1192,27 +1361,37 @@ class JobStatus:
 		for off in range ( intervals ):
 			offset = off*STATE_ATTR_MAX
 			
-			result +=self.__printSt__(self.__statusAttributes[ offset : offset + STATE_ATTR_MAX ] )
+			result +=self.__printSt__(json, self.__statusAttributes[ offset : offset + STATE_ATTR_MAX ] )
 
 			if noNodes:
 				break
 		return result
 
-	def __printSt__( self, info ):
+	def __printSt__( self, json, info ):
 	
 		hierarchy = int(info[states_names.index("Hierarchy") ])
 		indent = "    "*hierarchy
 		stStr = ""
 		adStr= ""
-		sepStart = "======================= glite-wms-job-status Success =====================\n"
-		sep = "==========================================================================\n" + indent
+		if json == False:
+			sepStart = "======================= glite-wms-job-status Success =====================\n"
+			sep = "==========================================================================\n" + indent
+		else:
+			sepStart = ""
+			sep=""
 		jobid =info[ states_names.index("Jobid")]
 		if not indent:
 			# Indentation is NOT present: main Job
 			self.jobid =jobid
-			Title= "\n" + indent+"" + sepStart +  "BOOKKEEPING INFORMATION:\n"
+			
+			if json == False:
+				Title= "\n" + indent+"" + sepStart +  "BOOKKEEPING INFORMATION:\n"
+			else:
+				Title=""
+				
 			# initialize jdl: this operation is not always present
 			self.jdl=info [ states_names.index("Jdl") ]
+			
 		elif hierarchy > self.hierarchy:
 			# Hierarchy increased: previous job was father
 			Title = "\n"+ "    "*(hierarchy-1)+"- Nodes information for: "
@@ -1226,8 +1405,14 @@ class JobStatus:
 			# Some Indentation Found: it's (not the first) children
 			Title= ""
 			self.jobid =jobid
-		Title = Title + "\n" +indent+"Status info for the Job : " + jobid
+		
 
+		
+		if json == False:
+			Title = Title + "\n" +indent+"Status info for the Job : " + jobid
+		else:
+			Title = Title + "\"" + jobid + "\": {"
+#			Title = Title + "\"ID\": \"" + jobid + "\""
 		if self.jobidMap:
 			if self.jobidMap.has_key(jobid):
 				self.nodeName=self.jobidMap[jobid]
@@ -1235,12 +1420,37 @@ class JobStatus:
 				errMsg('Warning','UI_SUBJOB_ERROR' , "Unable to find node id:"+jobid+"\ninside jdl of dag:\n"+self.jobid)
 
 		s = info [ states_names.index("Status") ]
-		Title = Title + "\n" + indent+"Current Status:".ljust(20) + s
+
+		s.rstrip()
+		s.lstrip()
+
+		
+		
+		if json == False:
+			Title = Title + "\n" + indent+"Current Status:".ljust(20) + s
+		else:
+			Title = Title + " " + "\"Current Status\": \"" + s 
 		#DONE_CODE check (only on Done )
 		done_code_str = ""
 		if s in ["Aborted","Cancelled"]:
 			# minLog is 1, i.e. even one event is taken into consideration
-			done_code_str += self.__printDoneEvents__(jobid,indent,1)
+			s.lstrip()
+
+			#print "\n\n~~~~~~~~~~~ TITLE=[" + Title +"]\n\n"
+			
+			if json == True:
+				Title += "\""
+				#				done_code_str = done_code_str +"\""
+				
+			#print "\n\n~~~~~~~~~~~ TITLE=[" + Title +"]\n\n"
+
+			#print "\n\n~~~~~~~~~~~ DONE_CODE_STR=[" + done_code_str +"]\n\n"
+				
+			done_code_str += self.__printDoneEvents__(json,jobid,indent,1)
+
+			done_code_str.rstrip()
+			done_code_str.lstrip()
+			
 		elif s=="Done":
 			done_code  = info[ states_names.index("Done code") ]
 			exit_code    = info[ states_names.index("Exit code") ]
@@ -1249,48 +1459,116 @@ class JobStatus:
 				done_code  = int ( done_code )
 			except ValueError:
 				done_code_str = "(Unable to retrieve  a valid done_code)"
+				
 			try:
 				exit_code  = int ( exit_code )
 			except ValueError:
 				exit_code = 1
 			if done_code== 2:
 				done_code_str = "(Cancelled)"
-				done_code_str += self.__printDoneEvents__(jobid,indent)
+					
+				done_code_str += self.__printDoneEvents__(json, jobid,indent)
 			elif done_code== 1:
 				done_code_str = "(Failed)"
-				done_code_str += self.__printDoneEvents__(jobid,indent)
+				done_code_str += self.__printDoneEvents__(json,jobid,indent)
 			elif done_code== 0 :
 				if exit_code==0:
 					done_code_str = "(Success)"
-					done_code_str += self.__printDoneEvents__(jobid,indent)
+					if json == True:
+						done_code_str += "\""
+					done_code_str += self.__printDoneEvents__(json,jobid,indent)
 				else:
 					done_code_str = "(Exit Code !=0)"
+					if json == True:
+						done_code_str += "\""
 			else:
 				done_code_str = "(Unexpected done code: " + repr(done_code) +" )"
-				done_code_str += self.__printDoneEvents__(jobid,indent)
+				
+				if json == True:
+					done_code_str += "\""
+				done_code_str += self.__printDoneEvents__(json,jobid,indent)
+			
+				
 			if self.__level:
 				#Add exit code information
-				done_code_str = done_code_str +"\n" + indent+"Exit code:".ljust(20) +  repr (exit_code)
-		Title = Title + " " + done_code_str
+				if json == False:
+					done_code_str = done_code_str +"\n" + indent+"Exit code:".ljust(20) +  repr (exit_code)
+				else:
+					done_code_str = done_code_str +", \"Exit code\": \"" + repr (exit_code) + "\""
+
+		#print "\n\n~~~~~~~~~~~ DONE_CODE_STR=[" + done_code_str +"]\n\n"
+		if done_code_str == "":
+			if self.__level == 1:
+				if json == True:
+					Title = Title.strip()
+					if not Title.endswith("\""):
+						done_code_str += "\""
+	
+					
+		Title = Title + done_code_str	
+
+#		if json == True:
+			#Title.rstrip(" " )
+#			Title += "\""
+		
 		if self.__level:
 			reason =  info[ states_names.index("Reason") ]
 			if reason.strip():
-				Title = Title +"\n" + indent+"Status Reason:".ljust(20) + reason
+				if json == False:
+					Title = Title +"\n" + indent+"Status Reason:".ljust(20) + reason
+				else:
+					Title = Title +", \"Status Reason\": \"" + reason + "\""
 			dest =  info[ states_names.index("Destination")]
 			if dest.strip():
-				Title = Title +"\n" + indent+"Destination:".ljust(20) +  dest
-
+				if json == False:
+					Title = Title +"\n" + indent+"Destination:".ljust(20) +  dest
+				else:
+					Title = Title +", \"Destination\": \"" + dest + "\""
+					
 			submissionTime =  int   (info[ states_names.index("Stateentertimes")].split(" ")[1].split("=")[1]   )
 
-			Title = Title + "\n" + indent+"Submitted:".ljust(20) + time.asctime(time.localtime( submissionTime )  ) + DSTime
+			if json == False:
+				Title = Title + "\n" + indent+"Submitted:".ljust(20) + time.asctime(time.localtime( submissionTime )  ) + DSTime
+			else:
+				jobIds = {}
+				Title = Title + ", \"Submitted\": \"" + time.asctime(time.localtime( submissionTime )  ) + DSTime + "\""
+				_wrapStatus = Status(jobid, 0)
+				_statusAttribute = _wrapStatus.getStatusAttributes(0)
+				_jobInfo = _statusAttribute
+				#_jobSchedId = str(_jobInfo[jobid])
+				#_job = jobid#jobIds[jobSchedId]
+				#_states = states_names
+				_stateEnterTimes = states_names.index('Stateentertimes')
+				timestamp = str(_jobInfo[_stateEnterTimes])
+				#print "\n ************ timestamp=" + str(timestamp) + "\n\n"
+#				print "\n####### STATUS=["+s+"]\n\n"
+				statiL = timestamp.split()
+#				print "\n~~~~~~~~ STATO(1)=["+statiL[1]+"]\n\n"
+				for stati in statiL:
+					if stati.startswith( s ):
+						#print "~~~~~~~~~~~~~ STATO CORRENTE=[" + stati + "]\n\n"
+						pieces = stati.split("=")[1]
+						if len(pieces) > 1:
+							statoTimestamp = stati.split("=")[1]
+							Title += ", \"" + s + "\": \""+statoTimestamp+"\""
+						#print "~~~~~~~~~~ STATO T=[" + statoTimestamp + "]\n\n"
 			if self.__level>2 or hierarchy==0:
 				parent = info[ states_names.index("Parent job")]
 				if parent.strip():
-					Title+= "\n" +indent + "Parent Job:".ljust(20) + parent
+					if json == False:
+						Title+= "\n" +indent + "Parent Job:".ljust(20) + parent
+					else:
+						Title+= ", \"Parent Job\": \"" + parent + "\""
+						
 			#Separator between jdl attributes:
-			colsep = "\n"+indent+"      "
+			colsep = ""
+			if json == False:
+				colsep = "\n"+indent+"      "
+			
 		if self.__level>1:
-		    stStr = stStr + "\n" + indent+"---\n\n" + indent+""
+		    if json == False:
+		    	stStr = stStr + "\n" + indent+"---\n\n" + indent+""
+			
 		    for val in range (len (states_names)-3 ): #cutting last tree parameters: status, status code, hierarchy
 			name = states_names[val]
 			value = info[val].strip()
@@ -1361,14 +1639,29 @@ class JobStatus:
 						adStr += "- " +name.ljust(16) + "=   " + value +"\n" + indent+""
 				else:
 					stStr += "- "+ name.ljust(27) + "=    " + value +"\n" + indent+""
+					
 		if self.nodeName:
 			Title = Title + "\n" +indent+"Node Name: ".ljust(20) + self.nodeName
 		if adStr:
 			adStr = "---\n" + indent+"" +adStr
+		
 		stStr= Title + stStr +adStr
+		
+#		if json == True:
+#			stStr = "{ " + stStr + " }"
+		
 		self.hierarchy = hierarchy
 		if self.__level:
-			stStr += "\n" +sep
+			if json == False:
+				stStr += "\n" +sep
+			
+		if json == True:
+			stStr.rstrip("\n");
+			stStr.lstrip("\n");
+			stStr.rstrip( );
+			stStr.lstrip( );
+			stStr += "} "
+			
 		return stStr
 
 	def __createJobIdMap__(self):
@@ -1386,7 +1679,7 @@ class JobStatus:
 						for i in range(len(vectMap)/2):
 							self.jobidMap[vectMap[i*2]] = vectMap[i*2+1]
 
-	def __printDoneEvents__(self,jobid,indent,minLog=2):
+	def __printDoneEvents__(self,json,jobid,indent,minLog=2):
 		"""
 		Collect all logged event reasons and create a reasonable string
 		jobid is the id of the job to be queried
@@ -1396,16 +1689,74 @@ class JobStatus:
 		"""
 		result=""
 
+		toJoin = list()
+
 		if self.__level:
 			# Retrieve DONE events
 			reasons = queryCodeEvents(jobid,"Done", minLog, self.__level)
 			if len(reasons)>=minLog:
-				result ="\n" +indent+"Logged Reason(s):"
+				if json == False:
+					result ="\n" +indent+"Logged Reason(s):"
+				else:
+					result = ", \"Logged Reason\": {"
+				counter = 0
 				for reason in reasons:
-					result+="\n".ljust(5)+ indent + "- "+ reason
+					if json == False:
+						result+="\n".ljust(5)+ indent + "- "+ reason
+					else:
+						_reason = reason.replace("\"", "\\\"");
+						toJoin.append( "\"" + str(counter) + "\": \"" + _reason +"\"")
+						counter += 1
+				if json == True:
+					result += ",".join(toJoin)
+					result += "}"
+					
 		return result
 
 	def getJobId(self):
 		"""JobStatus getJobId: return the JOB ID of the current Status."""
 		# Return the Job ID
 		return self.__statusAttributes[states_names.index("Jobid")]
+
+## 	def checkJobs( self, jobid, errors ):
+## 	       	"""
+## 		check a list of provided job id
+## 		"""
+		
+## 		jobId = jobid
+		
+## 		try:
+		
+## 			wrapStatus = Status(jobId, 0)
+## 			# Check for Errors
+## 			err , apiMsg = wrapStatus.get_error ()
+## 			if err:
+## 				# Print the error and terminate
+## 				raise Exception(apiMsg)
+				
+## 			# Retrieve the number of status (in this case is always 1)
+## 			# statusNumber = wrapStatus.getStatusNumber()
+ 
+##                 # Retrieve the list of attributes for the current UNIQUE event
+##                 statusAttribute = wrapStatus.getStatusAttributes(0)
+                
+##                 # Check for Errors
+##                 err , apiMsg = wrapStatus.get_error ()
+##                 if err:
+##                     # Print the error and terminate
+##                     raise Exception(apiMsg)
+
+##                 jobInfo = statusAttribute
+
+##                 # retrieve scheduler Id
+##                 jobSchedId = str(jobInfo[self.jobId])
+
+		
+## 		# update runningJob
+##                 self.getJobInfo(jobInfo, job )
+                
+##                 #jobIds[jobSchedId] = job
+                
+##             except Exception, err :
+##                 errors.append(
+##                     "skipping " + jobId + " : " +  str(err) )

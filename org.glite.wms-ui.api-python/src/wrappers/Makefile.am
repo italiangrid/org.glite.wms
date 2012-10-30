@@ -11,48 +11,44 @@ EXTRA_DIST = \
 	LbWrapper_wrap.cpp \
 	LogWrapper_wrap.cpp \
 	UcWrapper_wrap.cpp \
+	SdWrapper_wrap.cpp \
 	glite_wmsui_AdWrapper.py \
 	glite_wmsui_UcWrapper.py \
+	glite_wmsui_SdWrapper.py \
 	glite_wmsui_LbWrapper.py \
-	glite_wmsui_LogWrapper.py \
-	glite_wmsui_AdWrapper.pyc \
-	glite_wmsui_UcWrapper.pyc \
-	glite_wmsui_LbWrapper.pyc \
-	glite_wmsui_LogWrapper.pyc
-#	SdWrapper_wrap.cpp
-#	glite_wmsui_SdWrapper.py
-#	glite_wmsui_SdWrapper.pyc
+	glite_wmsui_LogWrapper.py 
 
 lib_LTLIBRARIES = \
 	libglite_wmsui_LbWrapper.la \
 	libglite_wmsui_LogWrapper.la \
 	libglite_wmsui_UcWrapper.la \
+	libglite_wmsui_SdWrapper.la \
 	libglite_wmsui_AdWrapper.la
-#	libglite_wmsui_SdWrapper.la
 
-uicommonlibdir = $(libdir)/python
+uicommonlibdir = $(libdir)/python$(PYTHON_MAJOR).$(PYTHON_MINOR)/site-packages
 uicommonlib_SCRIPTS= \
 	glite_wmsui_AdWrapper.py \
 	glite_wmsui_UcWrapper.py \
+	glite_wmsui_SdWrapper.py \
 	glite_wmsui_LbWrapper.py \
-	glite_wmsui_LogWrapper.py \
-	glite_wmsui_AdWrapper.pyc \
-	glite_wmsui_UcWrapper.pyc \
-	glite_wmsui_LbWrapper.pyc \
-	glite_wmsui_LogWrapper.pyc
-#	glite_wmsui_SdWrapper.py glite_wmsui_SdWrapper.pyc
+	glite_wmsui_LogWrapper.py 
 
 noinst_HEADERS = \
 	AdWrapper.h \
 	LbWrapper.h \
 	LogWrapper.h \
-	UcWrapper.h # SdWrapper.h
+	UcWrapper.h \
+	SdWrapper.h
 
 install-exec-hook:
 	cd $(DESTDIR)$(libdir); \
 	for file in $(WMS_UI_COM_GLITE); do \
 	ln -fs lib$$file _$$file; \
 	done
+
+install-data-hook:
+	python -m compileall -l $(DESTDIR)/$(uicommonlibdir)
+	python -O -m compileall -l $(DESTDIR)/$(uicommonlibdir)
 
 libglite_wmsui_LbWrapper_la_SOURCES = \
 	LbWrapper_wrap.cpp \
@@ -64,13 +60,11 @@ libglite_wmsui_LbWrapper_la_LDFLAGS = \
 	
 libglite_wmsui_LbWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(VOMS_CPP_NOTHR_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(VOMS_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
         $(EXPAT_LIBS) \
@@ -86,13 +80,11 @@ libglite_wmsui_LogWrapper_la_LDFLAGS = \
 
 libglite_wmsui_LogWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(VOMS_CPP_NOTHR_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-        $(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(VOMS_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+        $(GLITE_LB_CLIENTPP_LIBS) \
+        $(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
         $(BOOST_LIBS) \
         $(EXPAT_LIBS) \
@@ -109,25 +101,24 @@ libglite_wmsui_UcWrapper_la_LDFLAGS = \
 libglite_wmsui_UcWrapper_la_LIBADD = \
 	-lc \
 	$(GRIDSITE_OPENSSL_LIBS) \
-	$(VOMS_CPP_NOTHR_LIBS) \
+	$(VOMS_LIBS) \
 	-lstdc++
 
-#libglite_wmsui_SdWrapper_la_SOURCES = \
-#	SdWrapper_wrap.cpp \
-#	SdWrapper.cpp \
-#	glite_wmsui_SdWrapper.i
+libglite_wmsui_SdWrapper_la_SOURCES = \
+	SdWrapper_wrap.cpp \
+	SdWrapper.cpp \
+	glite_wmsui_SdWrapper.i
 
-#libglite_wmsui_SdWrapper_la_LDFLAGS = \
-#	-rpath @prefix@
+libglite_wmsui_SdWrapper_la_LDFLAGS = \
+	-rpath @prefix@
 
-#libglite_wmsui_SdWrapper_la_LIBADD = \
-#	-lc \
-#	$(VOMS_CPP_NOTHR_LIBS) \
-#	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#	$(CLASSAD_LIBS) \
-#	$(BOOST_LIBS) \
-#	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
-#	-lstdc++
+libglite_wmsui_SdWrapper_la_LIBADD = \
+	-lc \
+	$(VOMS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(BOOST_LIBS) \
+	-lstdc++
 
 libglite_wmsui_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
@@ -139,15 +130,13 @@ libglite_wmsui_AdWrapper_la_LDFLAGS = \
 
 libglite_wmsui_AdWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 	$(GLITE_JDL_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_CLIENTPP_LIBS) \
+	$(GLITE_LB_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
         $(BOOST_LIBS) \
         $(EXPAT_LIBS) \
@@ -156,57 +145,27 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
-	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -python -shadow -c++ -o $@ $<
+	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/typemaps -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/python -cpperraswarn -python -shadow -c++ -o $@ $<
 
 LogWrapper_wrap.cpp : glite_wmsui_LogWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
-	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -python -shadow -c++ -o $@ $<
+	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/typemaps -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/python -cpperraswarn -python -shadow -c++ -o $@ $<
 
 UcWrapper_wrap.cpp: glite_wmsui_UcWrapper.i
 	@#Create the files
 	@echo "Swig compiling file .CPP and .PY $< ...."
-	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -python -shadow -c++ -o $@ $<
+	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/typemaps -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/python -cpperraswarn -python -shadow -c++ -o $@ $<
 
-#SdWrapper_wrap.cpp: glite_wmsui_SdWrapper.i
-#	@#Create the files
-#	@echo "Swig compiling file .CPP and .PY $< ...."
-#	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -python -shadow -c++ -o $@ $<
+SdWrapper_wrap.cpp: glite_wmsui_SdWrapper.i
+	@#Create the files
+	@echo "Swig compiling file .CPP and .PY $< ...."
+	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/typemaps -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/python -cpperraswarn -python -shadow -c++ -o $@ $<
 
 AdWrapper_wrap.cpp : glite_wmsui_AdWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
-	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -python -shadow -c++ -o $@ $<
-
-glite_wmsui_AdWrapper.pyc:
-	/bin/touch glite_wmsui_AdWrapper.pyc
-
-glite_wmsui_UcWrapper.pyc:
-	/bin/touch glite_wmsui_UcWrapper.pyc
-
-#glite_wmsui_SdWrapper.pyc:
-#	/bin/touch glite_wmsui_SdWrapper.pyc
-
-glite_wmsui_LbWrapper.pyc:
-	/bin/touch glite_wmsui_LbWrapper.pyc
-
-glite_wmsui_LogWrapper.pyc:
-	/bin/touch glite_wmsui_LogWrapper.pyc
-
-glite_wmsui_AdWrapper.py:
-	/bin/touch glite_wmsui_AdWrapper.py
-
-glite_wmsui_UcWrapper.py:
-	/bin/touch glite_wmsui_UcWrapper.py
-
-glite_wmsui_SdWrapper.py:
-	/bin/touch glite_wmsui_SdWrapper.py
-
-glite_wmsui_LbWrapper.py:
-	/bin/touch glite_wmsui_LbWrapper.py
-
-glite_wmsui_LogWrapper.py:
-	/bin/touch glite_wmsui_LogWrapper.py
+	$(SWIG_BIN_PATH)/swig -I$(SWIG_INSTALL_PATH)/lib/swig1.3 -I$(SWIG_INSTALL_PATH)/lib/swig1.3/python -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/typemaps -I$(SWIG_INSTALL_PATH)/share/swig/$(SWIG_VERSION)/python -cpperraswarn -python -shadow -c++ -o $@ $<
 
 WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_AdWrapper.la \
@@ -227,22 +186,24 @@ WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_UcWrapper.la \
 	glite_wmsui_UcWrapper.so \
 	glite_wmsui_UcWrapper.so.0 \
-	glite_wmsui_UcWrapper.so.0.0.0
-#	glite_wmsui_SdWrapper.a \
-#	glite_wmsui_SdWrapper.la \
-#	glite_wmsui_SdWrapper.so \
-#	glite_wmsui_SdWrapper.so.0 \
-#	glite_wmsui_SdWrapper.so.0.0.0
+	glite_wmsui_UcWrapper.so.0.0.0 \
+	glite_wmsui_SdWrapper.a \
+	glite_wmsui_SdWrapper.la \
+	glite_wmsui_SdWrapper.so \
+	glite_wmsui_SdWrapper.so.0 \
+	glite_wmsui_SdWrapper.so.0.0.0
 
 AM_CPPFLAGS = -fPIC \
-	-I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
+	 -I$(top_srcdir)/src \
+	$(GLITE_LB_COMMON_CFLAGS) \
+	$(GLITE_LB_CLIENT_CFLAGS) \
+	$(GLITE_LB_CLIENTCPP_CFLAGS) \
+	$(GLITE_JDL_CFLAGS) \
+	$(VOMS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(PYTHON_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
-	$(GLOBUS_NOTHR_CFLAGS) \
-	$(GLOBUS_SSL_UTILS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	-DWANT_NAMESPACES
 
@@ -256,10 +217,6 @@ CLEANFILES = \
 	glite_wmsui_UcWrapper.py \
 	glite_wmsui_SdWrapper.py \
 	glite_wmsui_LbWrapper.py \
-	glite_wmsui_LogWrapper.py \
-	glite_wmsui_AdWrapper.pyc \
-	glite_wmsui_UcWrapper.pyc \
-	glite_wmsui_LbWrapper.pyc \
-	glite_wmsui_LogWrapper.pyc # glite_wmsui_SdWrapper.pyc
+	glite_wmsui_LogWrapper.py 
 
 MAINTAINERCLEANFILES = Makefile.in

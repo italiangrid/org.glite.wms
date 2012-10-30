@@ -1,3 +1,22 @@
+/*
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the
+copyright holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include "LbWrapper.h"
 #include <stdio.h>
 #include <sstream>
@@ -113,10 +132,20 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 					status_retrieved.getValString(attrList[i].first)  ;
 			}
 			break;
-			case JobStatus::JOBID_T    :{
-				 if( ((glite::jobid::JobId)status_retrieved.getValJobId(attrList[i].first)).c_jobid() != 0 )
-					result[VECT_OFFSET +  attrList[i].first ] =
-						status_retrieved.getValJobId(attrList[i].first).toString()  ;
+			case JobStatus::CCLASSAD_T:{
+                        // bug #48806: JDL_CLASSAD reflects a private field in the C jobstat structure, it is used internally by the LB library 
+			// Do Nothing
+                        }
+                        break;
+			case JobStatus::JOBID_T   :{
+				try {
+                                	result[VECT_OFFSET +  attrList[i].first ] = status_retrieved.getValJobId(attrList[i].first).toString()  ;
+			
+				} catch (Exception ex) {
+                                	result[VECT_OFFSET +  attrList[i].first ] = "";   
+                                } catch (exception e)  {
+                                        result[VECT_OFFSET +  attrList[i].first ] = "";
+                                } 
 			}
 			break;
 			case JobStatus::STSLIST_T    :{
@@ -151,9 +180,9 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 				result[VECT_OFFSET +  attrList[i].first ] = string(tmp) ;
 			}
 			break;
-			default : /* something is wrong */
-				cerr << "\n\nFATAL ERROR!!! 	 has gone bad for "
-					<< status_retrieved.getAttrName(attrList[i].first) << flush;
+			default : /* new attribute found and not catched */
+				cerr << "\n\nWarning: could not retrieve value for unknown JobStatus attribute: "
+					<< status_retrieved.getAttrName(attrList[i].first) << flush << endl;
 			break;
 		}// end switch
 	}// end for	
@@ -367,7 +396,7 @@ std::vector<std::string> Status::getStatesNames() {
 		// Insert a single State Name
 		result.push_back(JobStatus::getAttrName((JobStatus::Attr)lb_attr));
 	}
-	
+
 	// Return the vector of States Names
 	return result;
 }
@@ -730,10 +759,13 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 				break;
 			
 				case Event::JOBID_T :{
-
-					if(((glite::jobid::JobId)eventRequested.getValJobId(attribute)).c_jobid() != 0) {
-						eventAttributes[attribute] = eventRequested.getValJobId(attribute).toString();
-					}
+	                                try {
+                                        	eventAttributes[attribute] = eventRequested.getValJobId(attribute).toString();
+                                	} catch (Exception ex) {
+                                        	eventAttributes[attribute] = "";
+                                	} catch (exception e)  {
+                                        	eventAttributes[attribute] = "";
+                                	}
 				}
 				break;
 			
@@ -753,8 +785,8 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 				break;
 				
 				default : /* something is wrong */ {
-					cerr << "\n\nFATAL ERROR!!! 	 has gone bad for "
-						<< eventRequested.getAttrName(attribute) << flush;
+					cerr << "\n\nWarning: could not retrieve value for unknown Event: "
+						<< eventRequested.getAttrName(attribute) << flush << endl;
 				}					
 				break;
 	

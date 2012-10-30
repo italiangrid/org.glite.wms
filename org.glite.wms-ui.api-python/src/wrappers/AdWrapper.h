@@ -1,3 +1,22 @@
+/*
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the
+copyright holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #ifndef  ORG_GLITE_WMSUI_WRAPY_ADWRAPPER_H
 #define ORG_GLITE_WMSUI_WRAPY_ADWRAPPER_H
 /*
@@ -218,8 +237,10 @@ class DagWrapper {
 	* @param attr_name the name of the attribute to be retrieved
 	* @return a vector of string in pairs. Each pair contain the string representation of the jobid and a deep copy of the strin representation of the value of attr_name for this sub-job (if present) */
 	std::vector<std::string> getSubAttributes ( const std::string& attr_name ) ;
-	/** Set the specified jobid(s) into the current DagAd instance
-	* @param jobids a vector containing N job id (S) where N is the number of DagAd sub jobs
+
+	/**Set an attribute value (of string type)
+	*@param attr_name the name of the attribute to be set
+	*@param attr_value the string value to be set
 	*/
 	bool setAttributeStr ( int attr_name , const std::string& attr_value ) ;
 	/**Permanetly remove an attribute from the Ad instance

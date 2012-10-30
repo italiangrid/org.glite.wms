@@ -1,22 +1,39 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
+
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-e.org/partners/ for details on the copyright
+# holders.  
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0 
+# 
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+
 """
 ***************************************************************************
     filename  : wmsui_utils.py
     author    : Alessandro Maraschini
-    email     : egee@datamat.it
+    email     : job management <glite-jobmgmt-devel@lists.infn.it>
     copyright : (C) 2003 by DATAMAT
 ***************************************************************************
 //
-// $Id$
+// $Id: wmsui_utils.py,v 1.4.2.2.2.6.2.3 2012/04/26 13:03:10 adorigo Exp $
 //
 """
 import sys
 import os
-import ctypes as dl # dl flags used by queryLB/NS
+import dl # dl flags used by queryLB
 import os.path
 import glob #accessing file
 import time
-import socket  #gethostbyname getLB/NS
+import socket #getnameinfo getLB
 import random #  random number
 import math   #  random
 import time   #  random
@@ -24,14 +41,14 @@ from glite_wmsui_UcWrapper import UCredential
 
 
 # set dinamyc library management (dlopen would not work otherwise):
-sys.setdlopenflags(2 | dl.RTLD_GLOBAL)
+sys.setdlopenflags(dl.RTLD_NOW|dl.RTLD_GLOBAL)
 
 """
 Signal Handler
 """
 def ctc(signo, frame):
 	msg = "Keyboard interrupt raised by user, now exiting...\nbye"
-	print_message(info.logFile , msg , stderror=1 )
+	print_message(False, info.logFile , msg , stderror=1 )
 	exit(1)
 
 
@@ -49,15 +66,21 @@ class Info:
 ###### of swig generated modules                                 ##
   def __init__(self):
    # Initial Check: try to find UI configuration file path
-   try:
-     path=os.environ['GLITE_WMS_LOCATION']
-   except:
-      try:
-         path=os.environ['GLITE_LOCATION']
-      except:
-         print "Error: Please set the GLITE_LOCALTION or GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
-         sys.exit(1)
+#   try:
+#     path=os.environ['GLITE_WMS_LOCATION']
+#   except:
+##      try:
+#         path=os.environ['GLITE_LOCATION']
+#      except:
+#         print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+#         sys.exit(1)
    #pathe where the UI has been installed
+   #path = "/etc/glite-wms"
+   try:
+	   path=os.environ['EMI_UI_CONF']+"/usr"
+   except:
+	   path="/usr"
+   
    self.prefix=path
    # name of the script used
    self.prgname =""
@@ -195,7 +218,7 @@ def createErrMsg(cmd , extra,opts):
        else:
           opt="\n   --"+opt+short
        errMsg=errMsg + opt.ljust(24) +param
-   errMsg=errMsg + "\n\n Please report any bug at:\n     egee@datamat.it\n"
+   errMsg=errMsg + "\n\n Please report any bug at:\n     job management <glite-jobmgmt-devel@lists.infn.it>\n"
    return errMsg
 
 
@@ -204,16 +227,22 @@ def createErrMsg(cmd , extra,opts):
  it appends the message if the file exists from less then one day
  it writes a message on a new file if the file doesn't exist
 """
-def print_message(log_file , message , stderror=0 ):
+def print_message(json, log_file , message , stderror=0 ):
 	if log_file:
 		if (info.setLog) or (info.debug) or (info.noint):
 			# --logFile or --debug active: print to screen too (if it is a message)
 			if log_file != info.outFile:
 				# In this case it is not a message to be printed to screen too. but only in the file
 				if stderror:
-					sys.stderr.write ( message+ "\n" )
+					if json == False:
+						sys.stderr.write ( message+ "\n" )
+					else:
+						sys.stderr.write ( message )
 				else:
-					print message
+					if json == False:
+						print message
+					else:
+						print message,
 		try:
 			if os.path.isfile(log_file):
 				f=open(log_file,'a+')
@@ -234,9 +263,15 @@ def print_message(log_file , message , stderror=0 ):
 			exit(1)
 	else:
 		if stderror:
-			sys.stderr.write ( message+ "\n" )
+			if json == False:
+				sys.stderr.write ( message+ "\n" )
+			else:
+				sys.stderr.write ( message )
 		else:
-			print message
+			if json == False:
+				print message
+			else:
+				print message,
 
 
 """
@@ -257,7 +292,7 @@ def dbgMsg( fName , *arg ):
       message = message + "\n>> " + ar
    message = message + "\n#### End Debug ####"
  message = message +"\n"
- print_message(info.logFile , message) #print on the screen  (only if -noint is NOT selected)
+ print_message(False, info.logFile , message) #print on the screen  (only if -noint is NOT selected)
 
 
 """
@@ -324,7 +359,7 @@ def errMsg(errType,strDef,*arg):
  else:
    #This message should never be activated
    message = errType + ' ' + strDef + ':  ' + '(Error Message not available)' + '\n'
- print_message( info.logFile , message , stderror=1)
+ print_message( False, info.logFile , message , stderror=1)
 
 
 
@@ -441,10 +476,10 @@ def checkLb( lb):
 	return [0   , [address , port]   ]
 
 def resolveHostName(host):
-	return socket.gethostbyname_ex(host)[0]
-
-def resolveHostIp(host):
-	return socket.gethostbyaddr(host)[0]
+	for res in socket.getaddrinfo(host, "", socket.AF_UNSPEC, socket.SOCK_STREAM):
+		address_family, socket_type, proto, canon_name, socket_address = res
+	hostname, port_number = socket.getnameinfo (socket_address, 0)
+	return hostname
 
 def querySd(voName, serviceType):
 	"""
@@ -482,7 +517,7 @@ def queryLBs (voName, alreadyTested):
 	#YES replied
 	lbsToCheck = querySd(voName,LB_SERVICE_TYPE)
 	for lb in lbsToCheck:
-		if not ln in alreadyTested:
+		if not lb in alreadyTested:
 			err , lbAdd = checkLb (lb)
 			if not err:
 				lbs.append (lbAdd)
@@ -505,8 +540,9 @@ def printFullHelp(msg, noPager):
          sys.stderr.write (msg)
          return
      #Read Command specific Help
-     cmd="Job"+ info.prgname [9:]
+     cmd="Job"+ info.prgname [13:]
      #Find the command description
+     
      try:
          start = helpLines.index('%%begin'+cmd+'%%\n')
      except:

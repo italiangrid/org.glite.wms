@@ -6,7 +6,7 @@
     copyright : (C) 2006 by Datamat
  ***************************************************************************/
 //
-// $Id$
+// $Id: glite_wmsui_SdWrapper.i,v 1.1 2007/07/26 10:11:45 acava Exp $
 //
 
 %module glite_wmsui_SdWrapper
