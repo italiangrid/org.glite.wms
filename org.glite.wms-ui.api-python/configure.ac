@@ -118,8 +118,9 @@ AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
 AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
-AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
-AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+PKG_CHECK_MODULES(GLITE_LB_COMMON, emi-lb-common, , AC_MSG_ERROR(["GLITE_LB_COMMON not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENT, emi-lb-client, , AC_MSG_ERROR(["GLITE_LB_CLIENT not found"]))
+PKG_CHECK_MODULES(GLITE_LB_CLIENTPP, emi-lb-clientpp, , AC_MSG_ERROR(["GLITE_LB_CLIENTPP not found"]))
 
 AC_VOMS([], have_voms=yes, have_voms=no)
 AC_MSG_RESULT(["VOMS found $have_voms"])
