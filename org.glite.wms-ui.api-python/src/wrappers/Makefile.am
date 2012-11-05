@@ -25,7 +25,7 @@ lib_LTLIBRARIES = \
 	libglite_wmsui_SdWrapper.la \
 	libglite_wmsui_AdWrapper.la
 
-uicommonlibdir = $(libdir)/python$(PYTHON_MAJOR).$(PYTHON_MINOR)/site-packages
+uicommonlibdir = $(libdir)/python/
 uicommonlib_SCRIPTS= \
 	glite_wmsui_AdWrapper.py \
 	glite_wmsui_UcWrapper.py \

@@ -28,7 +28,6 @@ Source: %{name}-%{version}-%{release}.tar.gz
 Python libraries for WMS user interface
 
 %prep
- 
 
 %setup -c -q
 
@@ -64,22 +63,15 @@ rm -rf %{buildroot}
 /usr/lib64/*.so.0
 /usr/lib64/*.so
 
-/usr/lib64/python/glite_wmsui_AdWrapper.py
-/usr/lib64/python/glite_wmsui_AdWrapper.pyc
-/usr/lib64/python/glite_wmsui_LbWrapper.py
-/usr/lib64/python/glite_wmsui_LbWrapper.pyc
-/usr/lib64/python/glite_wmsui_LogWrapper.py
-/usr/lib64/python/glite_wmsui_LogWrapper.pyc
-/usr/lib64/python/glite_wmsui_UcWrapper.py
-/usr/lib64/python/glite_wmsui_UcWrapper.pyc
-/usr/lib64/python/wmsui_api.py
-/usr/lib64/python/wmsui_api.pyc
-/usr/lib64/python/wmsui_checks.py
-/usr/lib64/python/wmsui_checks.pyc
-/usr/lib64/python/wmsui_listener.py
-/usr/lib64/python/wmsui_listener.pyc
-/usr/lib64/python/wmsui_utils.py
-/usr/lib64/python/wmsui_utils.pyc
+/usr/lib64/python/glite_wmsui_AdWrapper.*
+/usr/lib64/python/glite_wmsui_SdWrapper.*
+/usr/lib64/python/glite_wmsui_LbWrapper.*
+/usr/lib64/python/glite_wmsui_LogWrapper.*
+/usr/lib64/python/glite_wmsui_UcWrapper.*
+/usr/lib64/python/wmsui_api.*
+/usr/lib64/python/wmsui_checks.*
+/usr/lib64/python/wmsui_listener.*
+/usr/lib64/python/wmsui_utils.*
 
 #%{python_sitearch}/*.py
 #%{python_sitearch}/*.pyc
