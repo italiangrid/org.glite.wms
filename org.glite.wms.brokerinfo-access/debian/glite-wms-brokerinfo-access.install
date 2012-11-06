@@ -1,7 +1,0 @@
-usr/bin/glite-brokerinfo
-usr/lib/libglite-brokerinfo.so.0.0.0
-usr/lib/libglite-brokerinfo.so.0
-usr/lib/libglite-brokerinfo.so
-usr/include/glite/wms/brokerinfo-access/BrokerInfo.h
-usr/include/glite/wms/brokerinfo-access/bi_result.h
-usr/lib/pkgconfig/brokerinfo-access.pc
