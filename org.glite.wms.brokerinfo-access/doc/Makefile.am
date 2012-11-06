@@ -17,7 +17,7 @@
 dist_man1_MANS = glite-brokerinfo.1
 
 %.1: %.xml
-   xsltproc $(GLITE_DB_MANPAGES_STYLESHEET) $<
+	xsltproc $(GLITE_DB_MANPAGES_STYLESHEET) $<
 
 install-data-hook:
 	gzip $(DESTDIR)$(mandir)/man1/*.1
