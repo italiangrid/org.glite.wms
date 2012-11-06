@@ -1,0 +1,63 @@
+#=================================================================
+#
+# Author  : Workload Management Team <wp1-help@infn.it>.
+# Author  : Massimo Mezzadri <massimo.mezzadri@mi.infn.it>.
+# Version : $Id: README.in,v 1.5 2007/07/11 07:41:18 mezzadri Exp $
+#
+# Release : @VERSION@
+# Title   : workload brokerinfo-access.
+#
+#=================================================================
+
+workload/brokerinfo-access
+--------------------
+
+Thank you for trying workload/brokerinfo-access, and we appreciate your
+feedback in the mailing lists.
+
+For each problem you can reach the Workload Management
+Team at the following mailing list wp1-help@infn.it.
+
+For basic installation and usage instruction refer to the
+Workload Management Installation and Guide at the links
+
+Description:
+============
+-) Using glite-brokerinfo ( the follow parameter list can be obtained with [--help] ):
+
+# ./glite-brokerinfo [-v] [-f filename] function [parameter] [parameter] ...
+-v : for verbose, formatted output
+-f : for specify a brokerinfo file
+
+supported funtions are:
+./glite-brokerinfo getDataAccessProtocol
+./glite-brokerinfo getInputData
+./glite-brokerinfo getSEs
+./glite-brokerinfo getCloseSEs
+./glite-brokerinfo getSEMountPoint <SE>
+./glite-brokerinfo getSEFreeSpace <SE>
+./glite-brokerinfo getLFN2SFN <PFN>
+./glite-brokerinfo getSEProtocols <SE>
+./glite-brokerinfo getSEPort <SE> <Protocol>
+./glite-brokerinfo getVirtualOrganization
+
+-) If you don't specify a file with -f option, please check that GLITE_WMS_RB_BROKERINFO or EDG_WL_RB_BROKERINFO environment variable is defined or exist a regular .BrokerInfo file, otherwise programm will exit with an error message.
+
+Client:
+-------
+
+RPM: 
+	glite-wms-brokerinfo-access	binaries
+
+Exported libraries: N/A 
+
+Exported programs:
+	glite-brokerinfo
+
+Internal dependencies: N/A
+
+External dependencies:
+	 classads >= 0.9.6
+
+
+

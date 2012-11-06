@@ -1,0 +1,123 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY dhtitle "User Manuals">
+    <!ENTITY dhcommand "glite-brokerinfo">
+    <!ENTITY dhsection "1">
+    
+    <!ENTITY dhfirstname "Massimo">
+    <!ENTITY dhsurname "Mezzadri">
+    <!ENTITY dhemail "Massimo.Mezzadri@mi.infn.it">
+    <!ENTITY dhcontrib "Developer of the WMS broker info access">
+    
+]>
+
+
+
+<refentry>
+
+    <refentryinfo>
+        <title>&dhtitle;</title>
+        <productname>&dhcommand;</productname>
+        <authorgroup>
+            <author>
+                <firstname>&dhfirstname;</firstname>
+                <surname>&dhsurname;</surname>
+                <contrib>&dhcontrib;</contrib>
+                <address>
+                    <email>&dhemail;</email>
+                </address>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>&dhcommand;</refentrytitle>
+        <manvolnum>&dhsection;</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>&dhcommand;</refname>
+        <refpurpose>Returns specific information contained in the brokerinfo metadata file.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>&dhcommand;</command>
+            <arg choice="opt"><option>options</option></arg>
+            <arg choice="plain"><replaceable><![CDATA[<function>]]></replaceable></arg>
+            <arg choice="opt" rep="repeat"><replaceable><![CDATA[<parameter>]]></replaceable></arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para><command>&dhcommand;</command> is used to extract information from the brokerinfo metadata file.</para>
+
+        <para>The complete list of functions that can be used as arguments for this command are listed with the <option>--help</option> flag.</para>
+        
+        <para>The location of the brokerinfo file that is parsed by the command can be specified in different ways:
+            <itemizedlist>
+                <listitem><para>passed in command line with the <option>-f</option> flag</para></listitem>
+                <listitem><para>using the variable <envar>GLITE_WMS_RB_BROKERINFO</envar></para></listitem>
+                <listitem><para>using the variable <envar>EDG_WL_RB_BROKERINFO</envar></para></listitem>
+            </itemizedlist>
+        if none of these is used it defaults to <filename>.BrokerInfo</filename> in the directory  where the command is executed.
+        </para>
+
+        <para>For a verbose and formatted output the <option>-v</option> flag can be used.</para>
+        
+        <para>Supported functions are:
+            <itemizedlist>
+                <listitem><para>getCE</para></listitem>
+                <listitem><para>getDataAccessProtocol</para></listitem>
+                <listitem><para>getInputData</para></listitem>
+                <listitem><para>getSEs</para></listitem>
+                <listitem><para>getCloseSEs</para></listitem>
+                <listitem><para>getSEMountPoint <![CDATA[<SE>]]></para></listitem>
+                <listitem><para>getSEFreeSpace <![CDATA[<SE>]]></para></listitem>
+                <listitem><para>getLFN2SFN <![CDATA[<LFN>]]></para></listitem>
+                <listitem><para>getSEProtocols <![CDATA[<SE>]]></para></listitem>
+                <listitem><para>getSEPort <![CDATA[<SE>]]> <![CDATA[<protocol>]]></para></listitem>
+                <listitem><para>getVirtualOrganization</para></listitem>
+            </itemizedlist>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+        <variablelist>
+
+            <varlistentry>
+                <term><option>--help</option></term>
+                <term><option>-h</option></term>
+                <listitem>
+                    <para>Displays command usage.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <listitem>
+                    <para>Prints verbose and formatted output</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-f <replaceable class="parameter">file_name</replaceable></option></term>
+                <listitem>
+                    <para>Specifies the location of the brokerinfo metadata file.</para>
+                </listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>ENVIRONMENT</title>
+        <para><envar>GLITE_WMS_RB_BROKERINFO</envar>: location of the brokerinfo metadata file</para>
+        <para><envar>EDG_WL_RB_BROKERINFO</envar>: location of the brokerinfo metadata file (deprecated)</para>
+    </refsect1>
+
+</refentry>

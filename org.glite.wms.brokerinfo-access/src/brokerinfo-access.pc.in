@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: BrokerInfo access API
+Description: BrokerInfo access API
+Version: @VERSION@
+Libs: -L${libdir} -lglite-brokerinfo
+Cflags: -I${includedir}
