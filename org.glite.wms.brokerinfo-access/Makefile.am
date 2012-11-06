@@ -80,7 +80,7 @@ stage:
         fi; test -z "$$fail"
 
 distsrc: dist
-   mv $(distdir).tar.gz $(DISTTAR)/$(distdir)_src.tar.gz
+	mv $(distdir).tar.gz $(DISTTAR)/$(distdir)_src.tar.gz
 
 distbin:
 	@set fnord $(MAKEFLAGS); amf=$$2; \

@@ -6,19 +6,14 @@
 ## *********************************************************************
 
 lib_LTLIBRARIES = libglite-brokerinfo.la
-libglite_brokerinfo_la_SOURCES = BrokerInfo.C  \
-                           	BrokerInfo.h  \
-				bi_result.h
-
+libglite_brokerinfo_la_SOURCES = BrokerInfo.C  BrokerInfo.h bi_result.h
 
 bin_PROGRAMS = glite-brokerinfo
 
 glite_brokerinfo_SOURCES = BrokerCLI.C
-glite_brokerinfo_LDADD = libglite-brokerinfo.la \
-			$(CLASSAD_LIBS)
+glite_brokerinfo_LDADD = libglite-brokerinfo.la $(CLASSAD_LIBS)
 
-AM_CPPFLAGS = -I. -I$(top_srcdir)/src \
-		$(CLASSAD_CFLAGS)
+AM_CPPFLAGS = -I. -I$(top_srcdir)/src $(CLASSAD_CFLAGS)
 
 brokerinfoincludedir = $(includedir)/glite/wms/brokerinfo-access
 brokerinfoinclude_HEADERS = BrokerInfo.h  bi_result.h
