@@ -14,7 +14,6 @@ add_custom_command(
   ${PROJECT_SOURCE_DIR}/src/soapC.cpp 
   ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
   DEPENDS /var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl
-  ${PROJECT_SOURCE_DIR}/src/wm.h
   COMMAND
   wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
          -I/usr/include/gsoap 
@@ -26,7 +25,6 @@ add_custom_command(
 
 
 add_custom_target(GENSTUBS ALL DEPENDS 
-  ${PROJECT_SOURCE_DIR}/src/wm.h
   ${PROJECT_SOURCE_DIR}/src/soapC.cpp 
   ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
   )
@@ -48,8 +46,6 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
 #  dom_${GSOAP_VERSION}.cpp )
 
 add_library(glite_wms_wmproxy_api_cpp SHARED 
-  wm.h 
-  soapC.cpp 
   soapClient.cpp 
   wmproxy_api.cpp 
   wmproxy_api_utilities.cpp 
