@@ -1,22 +1,35 @@
 
-add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/wm.h
+#add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/wm.h
+#  DEPENDS /var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl
+#  COMMAND wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
+#          -I/usr/include/gsoap 
+#          -t ${PROJECT_SOURCE_DIR}/src/wmptypemap.dat 
+#	  ${PROJECT_SOURCE_DIR}/src/WMProxy.wsdl
+#	  )
+
+
+
+add_custom_command(
+  OUTPUT 
+  ${PROJECT_SOURCE_DIR}/src/soapC.cpp 
+  ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
   DEPENDS /var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl
-  COMMAND wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
-          -I/usr/include/gsoap 
-          -t ${PROJECT_SOURCE_DIR}/src/wmptypemap.dat 
-	  ${PROJECT_SOURCE_DIR}/src/WMProxy.wsdl
-	  )
+  ${PROJECT_SOURCE_DIR}/src/wm.h
+  COMMAND
+  wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
+         -I/usr/include/gsoap 
+         -t ${PROJECT_SOURCE_DIR}/src/wmptypemap.dat 
+         ${PROJECT_SOURCE_DIR}/src/WMProxy.wsdl
+  COMMAND 
+  soapcpp2 ${PROJECT_SOURCE_DIR}/src/wm.h
+  )
 
 
-
-add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/soapC.cpp ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
-  DEPENDS ${PROJECT_SOURCE_DIR}/src/wm.h
-  COMMAND soapcpp2 
-	  ${PROJECT_SOURCE_DIR}/src/wm.h
-	  )
-
-
-add_custom_target(GENSTUBS ALL DEPENDS ${PROJECT_SOURCE_DIR}/src/wm.h ${PROJECT_SOURCE_DIR}/src/soapC.cpp ${PROJECT_SOURCE_DIR}/src/soapClient.cpp)
+add_custom_target(GENSTUBS ALL DEPENDS 
+  ${PROJECT_SOURCE_DIR}/src/wm.h
+  ${PROJECT_SOURCE_DIR}/src/soapC.cpp 
+  ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
+  )
 
 
 
@@ -26,13 +39,13 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
 
 
 
-add_custom_target(WMPROXYAPI DEPENDS 
-  wm.h 
-  soapC.cpp 
-  soapClient.cpp 
-  wmproxy_api.cpp 
-  wmproxy_api_utilities.cpp 
-  dom_${GSOAP_VERSION}.cpp )
+#add_custom_target(WMPROXYAPI DEPENDS 
+#  wm.h 
+#  soapC.cpp 
+#  soapClient.cpp 
+#  wmproxy_api.cpp 
+#  wmproxy_api_utilities.cpp 
+#  dom_${GSOAP_VERSION}.cpp )
 
 add_library(glite_wms_wmproxy_api_cpp SHARED 
   wm.h 
