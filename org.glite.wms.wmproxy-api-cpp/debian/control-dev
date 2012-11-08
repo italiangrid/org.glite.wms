@@ -4,7 +4,7 @@ Priority:  optional
 Maintainer:  WMS Support <wms-support@cnaf.infn.it>
 Version:  @VERSION@
 Homepage: http://glite.cern.ch/
-Package:  glite-wms-wmproxy-api-cpp
+Package:  glite-wms-wmproxy-api-cpp-dev
 Architecture: any
-Depends: libclassad0, libglite-wms-utils-classad, libgridsite1.7, emi-delegation-interface, gsoap
+Depends: libclassad0, libclassad0-dev, libglite-wms-utils-classad-dev, libglite-wms-utils-classad, libgridsite-dev, libgridsite1.7, emi-delegation-interface, gsoap
 Description:  WMProxy CPP API libraries

@@ -2,12 +2,9 @@ Source:  glite-wms-wmproxy-api-cpp
 Section:  libs
 Priority:  optional
 Maintainer:  WMS Support <wms-support@cnaf.infn.it>
-Build-Depends: debhelper (>= 8.0.0~), cmake, emi-pkgconfig-compat,
- libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libglite-jobid-api-cpp-dev, libgridsite-dev, gsoap
-Standards-Version:  3.5.0
+Version:  @VERSION@
 Homepage: http://glite.cern.ch/
-
 Package:  glite-wms-wmproxy-api-cpp-dbg
 Architecture: any
-Depends: \${shlibs:Depends}, \${misc:Depends}
+Depends: libclassad0, libglite-wms-utils-classad, libgridsite1.7, emi-delegation-interface, gsoap
 Description:  WMProxy CPP API libraries
