@@ -7,7 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: noarch
-Requires: emi-delegation-java
+Requires: emi-delegation-java, bouncycastle
 BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface, emi-delegation-java,} ant
 BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, } axis2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
