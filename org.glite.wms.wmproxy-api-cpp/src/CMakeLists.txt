@@ -52,6 +52,10 @@ add_library(glite_wms_wmproxy_api_cpp SHARED
   wmproxy_api_utilities.cpp 
   dom_${GSOAP_VERSION}.cpp )
 
+target_link_libraries(glite_wms_wmproxy_api_cpp
+  ${GRIDSITE_OPENSSL_LIBRARIES}
+  )
+
 set_target_properties(glite_wms_wmproxy_api_cpp PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
 install(TARGETS glite_wms_wmproxy_api_cpp
