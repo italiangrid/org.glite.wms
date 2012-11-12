@@ -8,7 +8,7 @@ URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: noarch
 Requires: emi-delegation-java, bouncycastle
-BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-interface, emi-delegation-java,} ant
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy, emi-delegation-java,} ant
 BuildRequires: %{!?extbuilddir: emi-trustmanager-axis, } axis2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
@@ -25,9 +25,9 @@ Java libraries for the WMS Web Service
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
   printf "dist.location=%{buildroot}
-stage.location=
-docs-installdir=%{buildroot}/%{_javadocdir}/%{name}
-module.version=%{version}">.configuration.properties
+  org.glite.wms.wsdl.location=/usr/share/wsdl/wms/
+  docs-installdir=%{buildroot}/%{_javadocdir}/%{name}
+  module.version=%{version}">.configuration.properties
   ant
 fi
 
