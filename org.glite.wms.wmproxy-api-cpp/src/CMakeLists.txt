@@ -46,6 +46,7 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
 #  dom_${GSOAP_VERSION}.cpp )
 
 add_library(glite_wms_wmproxy_api_cpp SHARED 
+  soapC.cpp
   soapClient.cpp 
   wmproxy_api.cpp 
   wmproxy_api_utilities.cpp 
