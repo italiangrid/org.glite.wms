@@ -1,6 +1,4 @@
 
-#message(
-
 include_directories( 
   ${PROJECT_SOURCE_DIR}/src/utilities 
   ${PROJECT_SOURCE_DIR}/src/services
@@ -10,7 +8,6 @@ include_directories(
   ${JDL_API_CPP_INCLUDE_DIRS} 
   ${CLASSAD_INCLUDE_DIRS} 
   )
-
 
 add_custom_target(WMSUISERVICES DEPENDS
   delegateproxy.cpp
@@ -23,7 +20,6 @@ add_custom_target(WMSUISERVICES DEPENDS
   jobsubmit.cpp
   lbapi.cpp
   )
-
 
 add_library(glite_wmsui_commands_delegateproxy SHARED         
   delegateproxy.cpp
@@ -73,6 +69,34 @@ set_target_properties(glite_wmsui_commands_joboutput PROPERTIES VERSION 0.0.0 SO
 set_target_properties(glite_wmsui_commands_jobcancel PROPERTIES VERSION 0.0.0 SOVERSION 0)
 set_target_properties(glite_wmsui_commands_joblistmatch PROPERTIES VERSION 0.0.0 SOVERSION 0)
 set_target_properties(glite_wmsui_commands_jobperusal PROPERTIES VERSION 0.0.0 SOVERSION 0)
+
+target_link_libraries(glite_wmsui_commands_delegateproxy
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_jobinfo
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_jobsubmit
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_joboutput
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_jobcancel
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_joblistmatch
+  ${VOMS_LIBRARIES}
+  )
+
+target_link_libraries(glite_wmsui_commands_jobperusal
+  ${VOMS_LIBRARIES}
+  )
 
 install(TARGETS  
   glite_wmsui_commands_delegateproxy 
