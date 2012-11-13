@@ -8,7 +8,7 @@
 ##########################################################################
 
 # User Interface Version
-UI_VERSION = @VERSION@
+UI_VERSION = @PVER@
 
 #Files and Dir
 UI_OPEN_ERR = Unable to open file "%"

@@ -1,0 +1,22 @@
+####################################
+#   UI python command line specific configuration file
+#   path: CVSROOT/edg/workload/userinterface/commandline/etc
+####################################
+
+[
+ requirements = other.GlueCEStateStatus == "Production" ;
+ rank = - other.GlueCEStateEstimatedResponseTime ;
+ RetryCount = 3 ;
+ ErrorStorage= "/tmp" ;
+ OutputStorage="/tmp";
+ ListenerStorage = "/tmp" ;
+ LoggingTimeout = 30 ;
+ LoggingSyncTimeout = 30 ;
+ #LoggingDestination = "ibm139.cnaf.infn.it:9002" ;
+ #Default NS logger level is set to 0 (null)
+ #max value is 6 (veryugly)
+ NSLoggerLevel = 0;
+ DefaultStatusLevel = 1 ;
+ DefaultLogInfoLevel = 1;
+ DefaultVo = "unspecified";
+]
