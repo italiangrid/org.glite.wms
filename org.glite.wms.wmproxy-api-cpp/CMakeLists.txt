@@ -72,7 +72,7 @@ endif(DEFINED BUILD_DBG)
 
 
 
-set(GSOAP_VERSION "")
+#set(GSOAP_VERSION "")
 if(EXISTS "/usr/bin/dpkg")
   EXEC_PROGRAM(/usr/bin/dpkg ARGS -s gsoap|grep Version|/usr/bin/awk '{print $2}'
     OUTPUT_VARIABLE GSOAP_VERSION)
