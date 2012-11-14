@@ -56,7 +56,8 @@ pkg_check_modules(GSOAP_SSL_PLUSPLUS REQUIRED gsoapssl++)
 message("-- checking for module 'emi-delegation-interface'")
 if( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
   message("--   found emi-delegation-interface")
-else( message("*** ERROR: Required emi-delegation-interface package not found") )
+else( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl"))
+  message("*** ERROR: Required emi-delegation-interface package not found") )
 endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
 
 
