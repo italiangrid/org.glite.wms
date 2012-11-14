@@ -13,7 +13,6 @@ add_custom_command(
   OUTPUT 
   ${PROJECT_SOURCE_DIR}/src/soapC.cpp 
   ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
-  DEPENDS /var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl
   COMMAND
   wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
          -I/usr/include/gsoap 

@@ -53,12 +53,13 @@ pkg_check_modules(GSOAP REQUIRED gsoap)
 pkg_check_modules(GSOAP_PLUSPLUS REQUIRED gsoap++)
 pkg_check_modules(GSOAP_SSL REQUIRED gsoapssl)
 pkg_check_modules(GSOAP_SSL_PLUSPLUS REQUIRED gsoapssl++)
-message("-- checking for module 'emi-delegation-interface'")
-if( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
-  message("--   found emi-delegation-interface")
-else( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
-  message("*** ERROR: Required emi-delegation-interface package not found") 
-endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
+
+#message("-- checking for module 'emi-delegation-interface'")
+#if( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
+#  message("--   found emi-delegation-interface")
+#else( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
+#  message("*** ERROR: Required emi-delegation-interface package not found") 
+#endif( EXISTS "/var/lib/delegation-interface/interface/www.gridsite.org-delegation-2.0.0.wsdl")
 
 
 
