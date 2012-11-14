@@ -20,7 +20,7 @@ add_custom_command(
          -t ${PROJECT_SOURCE_DIR}/src/wmptypemap.dat 
          ${PROJECT_SOURCE_DIR}/src/WMProxy.wsdl
   COMMAND 
-  soapcpp2 ${PROJECT_SOURCE_DIR}/src/wm.h
+  soapcpp2 -I/usr/share/gsoap/import ${PROJECT_SOURCE_DIR}/src/wm.h
   )
 
 
