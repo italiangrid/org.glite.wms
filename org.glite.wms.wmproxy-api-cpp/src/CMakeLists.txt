@@ -15,11 +15,10 @@ add_custom_command(
   ${PROJECT_SOURCE_DIR}/src/soapClient.cpp
   COMMAND
   wsdl2h -o ${PROJECT_SOURCE_DIR}/src/wm.h 
-         -I/usr/include 
          -t ${PROJECT_SOURCE_DIR}/src/wmptypemap.dat 
          ${PROJECT_SOURCE_DIR}/src/WMProxy.wsdl
   COMMAND 
-  soapcpp2 -I/usr/include:/usr/import:/usr/share/gsoap/import ${PROJECT_SOURCE_DIR}/src/wm.h
+  soapcpp2 -I/usr/include:/usr/import:/usr/share/gsoap/import:/usr/include/gsoap ${PROJECT_SOURCE_DIR}/src/wm.h
   )
 
 
