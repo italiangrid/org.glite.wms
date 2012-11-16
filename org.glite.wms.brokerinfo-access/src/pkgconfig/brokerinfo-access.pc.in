@@ -1,7 +1,7 @@
 prefix=@PKG_INSTALL_PREFIX@
-exec_prefix=@PKG_INSTALL_PREFIX@
-libdir=@PKG_INSTALL_PREFIX@/@LIBDIR@
-includedir=@PKG_INSTALL_PREFIX@/include
+exec_prefix=${prefix}
+libdir=${prefix}/@LIBDIR@
+includedir=${prefix}/include
 
 Name: BrokerInfo access API
 Description: BrokerInfo access API
