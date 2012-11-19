@@ -54,11 +54,10 @@ BrokerInfo::BrokerInfo(void) {
 
   fbrokerinfo_.open(BrokerInfoFile_.c_str());
   if (! fbrokerinfo_.is_open()) {
-    // throw BrokerInfoEx();
     std::cerr << "Error:" << std::endl;
     std::cerr << " - environment GLITE_WMS_RB_BROKERINFO or EDG_WL_RB_BROKERINFO not defined" << std::endl;
     std::cerr << " - ./BrokerInfo file is not found" << std::endl;
-    exit(-1);
+    throw BrokerInfoEx();
   } else {
     while(! fbrokerinfo_.eof()) {
       std::string line;
@@ -87,7 +86,7 @@ CLASSAD(ClassAd*) BrokerInfo::parserAD(std::string buffer) {
 	clAd = parser.ParseClassAd(buffer, PARSE_RULE);
   if(clAd == NULL) {
     std::cout << "Error: not ClassAd compliant file" << std::endl;
-    exit(-1);
+    throw BrokerInfoEx();
   }
 	return clAd;
 }
