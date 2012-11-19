@@ -39,7 +39,6 @@ else
 fi
 sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/brokerinfo-access.pc > %{buildroot}/usr/lib64/pkgconfig/brokerinfo-access.pc.new
 mv %{buildroot}/usr/lib64/pkgconfig/brokerinfo-access.pc.new %{buildroot}/usr/lib64/pkgconfig/brokerinfo-access.pc
-rm -f %{buildroot}/usr/lib64/*.la
 chrpath --delete %{buildroot}/usr/lib64/libglite-brokerinfo.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/glite-brokerinfo
 strip -s %{buildroot}/usr/lib64/libglite-brokerinfo.so.0.0.0
