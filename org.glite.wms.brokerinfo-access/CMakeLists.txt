@@ -77,3 +77,4 @@ endif(DEFINED BUILD_DBG)
 
 
 add_subdirectory(src)
+add_subdirectory(doc)
