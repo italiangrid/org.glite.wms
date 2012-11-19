@@ -2,7 +2,7 @@ Summary: Brokerinfo component for the WMS user interface
 Name: glite-wms-brokerinfo-access
 Version: %{extversion}
 Release: %{extage}.%{extdist}
-License: Apache Software License
+License: ASL 2.0
 Vendor: EMI
 URL: http://glite.cern.ch/
 Group: Applications/Internet
@@ -20,7 +20,6 @@ Source: %{name}-%{version}-%{release}.tar.gz
 Brokerinfo component for the WMS user interface
 
 %prep
- 
 
 %setup -c -q
 
@@ -32,15 +31,14 @@ if test "x%{extbuilddir}" == "x--" ; then
   make doxygen-doc
 fi
 
-
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}
 %{!?extbuilddir:%define extbuilddir "--"}
 if test "x%{extbuilddir}" == "x--" ; then
   make install
-  mkdir -p %{buildroot}/%{_docdir}/%{name}
-  cp -R autodoc/html %{buildroot}/%{_docdir}/%{name}
+  mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
+  cp -R autodoc/html %{buildroot}/%{_docdir}/%{name}-%{version}
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
@@ -49,6 +47,8 @@ mv %{buildroot}/usr/lib64/pkgconfig/brokerinfo-access.pc.new %{buildroot}/usr/li
 rm -f %{buildroot}/usr/lib64/*.la
 chrpath --delete %{buildroot}/usr/lib64/libglite-brokerinfo.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/glite-brokerinfo
+strip -s %{buildroot}/usr/lib64/libglite-brokerinfo.so.0.0.0
+strip -s %{buildroot}/usr/bin/glite-brokerinfo
 export QA_SKIP_BUILD_ROOT=yes
 
 %clean
@@ -58,8 +58,6 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 /usr/bin/glite-brokerinfo
 %doc /usr/share/man/man1/glite-brokerinfo.1.gz
-
-
 
 %package lib
 Summary: Brokerinfo component for the WMS user interface (libraries)
@@ -78,8 +76,6 @@ Brokerinfo component for the WMS user interface (libraries)
 %post lib -p /sbin/ldconfig
 
 %postun lib -p /sbin/ldconfig
-
-
 %package devel
 Summary: Brokerinfo component for the WMS user interface (development files)
 Group: System Environment/Libraries
@@ -107,16 +103,12 @@ Documentation files for the brokerinfo access component
 
 %files doc
 %defattr(-,root,root)
-%dir %{_docdir}/%{name}/html
-%doc %{_docdir}/%{name}/html/*.html
-%doc %{_docdir}/%{name}/html/*.css
-%doc %{_docdir}/%{name}/html/*.png
-%doc %{_docdir}/%{name}/html/*.gif
-
-
+%dir %{_docdir}/%{name}-%{version}/html
+%doc %{_docdir}/%{name}-%{version}/html/*.html
+%doc %{_docdir}/%{name}-%{version}/html/*.css
+%doc %{_docdir}/%{name}-%{version}/html/*.png
+%doc %{_docdir}/%{name}-%{version}/html/*.gif
 
 %changelog
 * %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
-
-
