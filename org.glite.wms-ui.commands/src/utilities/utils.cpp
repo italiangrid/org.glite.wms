@@ -1569,7 +1569,7 @@ const std::string Utils::cleanString(std::string str) {
 			len = str.size();
 		}
 		// 1 white space
-		if (len == 1 & str.compare(ws)==0) {
+		if ((len == 1) & (str.compare(ws) == 0)) {
 			str = "";
 		}
 	}
