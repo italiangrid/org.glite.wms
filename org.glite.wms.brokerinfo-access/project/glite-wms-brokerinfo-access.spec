@@ -7,9 +7,9 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: Applications/Internet
 BuildArch: %{_arch}
-BuildRequires: chrpath, libtool
+BuildRequires: chrpath, cmake
 BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } classads-devel
-BuildRequires: doxygen, docbook-style-xsl, libxslt
+BuildRequires: doxygen, docbook-style-xsl, libxslt-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -20,25 +20,20 @@ Source: %{name}-%{version}-%{release}.tar.gz
 Brokerinfo component for the WMS user interface
 
 %prep
-
+%{!?extbuilddir:%define extbuilddir "-"}
 %setup -c -q
 
 %build
-%{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr --disable-static PVER=%{version}
-  make
-  make doxygen-doc
+if test "x%{extbuilddir}" == "x-" ; then
+  cmake -DPREFIX:string=%{buildroot}/usr -DPVER:string=%{version} .
 fi
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}
-%{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
+if test "x%{extbuilddir}" == "x-" ; then
   make install
-  mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
-  cp -R autodoc/html %{buildroot}/%{_docdir}/%{name}-%{version}
+  cp -R ./doc/autodoc/html %{buildroot}/%{_docdir}/%{name}-%{version}
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
