@@ -106,6 +106,12 @@ else(DEFINED BUILD_DBG)
     add_definitions( -pipe -O2 -Wall ${CLASSAD_CFLAGS} -DWMP_CLT_SOFTWARE_VERSION="${CLI_VERSION}")
 endif(DEFINED BUILD_DBG)
 
+install(FILES
+        LICENSE
+        CHANGES
+        DESTINATION ${PREFIX}/share/doc/glite-wms-ui-command-${PVER}
+)
+
 
 add_subdirectory(src)
 add_subdirectory(doc)
