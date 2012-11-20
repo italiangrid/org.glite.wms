@@ -7,7 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
-BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, libtool
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, cmake
 BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-jdl-api-cpp-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-lb-client-devel, glite-wms-ui-api-python,} libtar-devel
@@ -30,22 +30,19 @@ Source: %{name}-%{version}-%{release}.tar.gz
 Command line user interface for the WMS
 
 %prep
- 
-
+%{!?extbuilddir:%define extbuilddir "-"}
 %setup -c -q
 
 %build
-%{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr --sysconfdir=%{buildroot}/etc --disable-static PVER=%{version}
+if test "x%{extbuilddir}" == "x-" ; then
+  cmake -DPREFIX:string=%{buildroot}/usr -DPVER:string=%{version} .
   make
 fi
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}
-%{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
+if test "x%{extbuilddir}" == "x-" ; then
   make install
 else
   cp -R %{extbuilddir}/* %{buildroot}
@@ -61,18 +58,15 @@ chrpath --delete %{buildroot}/usr/bin/glite-wms-job-submit
 %clean
 rm -rf %{buildroot}
  
-
 %files
 %defattr(-,root,root)
 %config(noreplace) /etc/glite_wmsui_cmd_*
-/usr/bin/glite-wms-job-*
 %dir /usr/share/doc/glite-wms-ui-commands-%{version}/
 %doc /usr/share/doc/glite-wms-ui-commands-%{version}/LICENSE
 %doc /usr/share/man/man1/*.1.gz
-
+/usr/lib64/libglite_wmsui*
+/usr/bin/glite-wms-job-*
 
 %changelog
 * %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
 - %{extclog}
-
- 
