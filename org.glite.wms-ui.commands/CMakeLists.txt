@@ -109,7 +109,7 @@ endif(DEFINED BUILD_DBG)
 install(FILES
         LICENSE
         CHANGES
-        DESTINATION ${PREFIX}/share/doc/glite-wms-ui-command-${PVER}
+        DESTINATION ${PREFIX}/share/doc/glite-wms-ui-commands-${PVER}
 )
 
 
