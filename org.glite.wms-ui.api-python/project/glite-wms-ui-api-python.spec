@@ -10,7 +10,7 @@ BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-jobid-api-cpp-devel,} swig
 BuildRequires: %{!?extbuilddir: glite-lb-client-devel, voms-devel, gridsite-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-wms-utils-exception-devel,} boost-devel, python-devel
-BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } chrpath, cmake
+BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } chrpath, cmake, globus-gss-assist-devel
 BuildRequires: cppunit-devel, libxml2-devel
 Requires: swig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
