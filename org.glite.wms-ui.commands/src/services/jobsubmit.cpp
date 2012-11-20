@@ -1868,6 +1868,18 @@ std::string JobSubmit::getJobPath(const std::string& node) {
     string command = string("tar cf ") + tarfile + " ";
     command += join(filesToTAR, " ");
     system(command.c_str());
+
+    boost::uintmax_t tarSize = boost::filesystem::file_size( tarfile );
+    if(tarSize > api::getMaxInputSandboxSize(getContext( ))) {
+      logInfo->print(WMS_FATAL,
+		     "ISB tarball size for [" + tarfile + "] is " 
+		     + boost::lexical_cast<string>(tarSize) 
+		     + " exceeds the MaxInputSandboxSize specified in the JDL ("
+		     + boost::lexical_cast<string>(api::getMaxInputSandboxSize(getContext( )))
+		     + ")", false);
+      exit(1);
+    }
+
     system((string("gzip -9 ")+tarfile).c_str());
     system((string("\\rm -rf ")+join(filesToTAR, " ")).c_str());
 
