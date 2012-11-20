@@ -2,7 +2,7 @@ Summary: Python libraries for WMS user interface
 Name: glite-wms-ui-api-python
 Version: %{extversion}
 Release: %{extage}.%{extdist}
-License: Apache Software License
+License: ASL 2.0
 Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
@@ -46,6 +46,7 @@ else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
 chrpath --delete %{buildroot}/usr/lib64/*.so.0.0.0
+strip -s %{buildroot}/usr/lib64/*.so.0.0.0
 
 %clean
 rm -rf %{buildroot}

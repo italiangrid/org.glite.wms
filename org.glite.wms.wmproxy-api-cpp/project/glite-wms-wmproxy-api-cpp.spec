@@ -2,7 +2,7 @@ Summary: C/C++ libraries for the WM Proxy service
 Name: glite-wms-wmproxy-api-cpp
 Version: %{extversion}
 Release: %{extage}.%{extdist}
-License: Apache Software License
+License: ASL 2.0
 Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
@@ -46,6 +46,7 @@ else
 fi
 sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}/usr/lib64/pkgconfig/wmproxy-api-cpp.pc > %{buildroot}/usr/lib64/pkgconfig/wmproxy-api-cpp.pc.new
 mv %{buildroot}/usr/lib64/pkgconfig/wmproxy-api-cpp.pc.new %{buildroot}/usr/lib64/pkgconfig/wmproxy-api-cpp.pc
+strip -s %{buildroot}/usr/lib64/libglite_wms_wmproxy_api_cpp.so.0.0.0
 chrpath --delete %{buildroot}/usr/lib64/libglite_wms_wmproxy_api_cpp.so.0.0.0
 
 %clean
