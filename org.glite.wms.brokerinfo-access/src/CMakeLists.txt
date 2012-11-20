@@ -29,6 +29,13 @@ install(FILES glite-brokerinfo-cli
   )
 
 
+install( FILES
+	 BrokerInfo.h
+	 bi_result.h
+	 DESTINATION
+	 ${PREFIX}/include/glite/wms/brokerinfo-access
+)
+
 install(TARGETS 
   glite-brokerinfo
   LIBRARY

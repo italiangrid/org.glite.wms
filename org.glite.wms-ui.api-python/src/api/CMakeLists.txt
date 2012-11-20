@@ -17,6 +17,6 @@ add_custom_target(GENPYC ALL DEPENDS
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
   DESTINATION
-  ${PREFIX}/${LIBDIR}/python${PYTHON_VERSION}/site-packages
+  ${PREFIX}/${LIBDIR}/python
   FILES_MATCHING PATTERN "*.py*"
   PATTERN "CMakeFiles" EXCLUDE)

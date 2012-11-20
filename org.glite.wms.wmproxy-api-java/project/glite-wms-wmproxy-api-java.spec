@@ -2,7 +2,7 @@ Summary: Java libraries for the WMS Web Service
 Name: glite-wms-wmproxy-api-java
 Version: %{extversion}
 Release: %{extage}.%{extdist}
-License: Apache Software License
+License: ASL 2.0
 Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries

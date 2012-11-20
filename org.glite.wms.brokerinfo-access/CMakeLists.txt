@@ -75,5 +75,10 @@ else(DEFINED BUILD_DBG)
    add_definitions( -pipe -O2 -Wall ${CLASSAD_CFLAGS} )
 endif(DEFINED BUILD_DBG)
 
+install(FILES
+	LICENSE
+	DESTINATION ${PREFIX}/share/doc/glite-wms-brokerinfo-access-${PVER}/
+)
 
 add_subdirectory(src)
+add_subdirectory(doc)

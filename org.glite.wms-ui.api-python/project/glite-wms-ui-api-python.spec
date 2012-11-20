@@ -2,7 +2,7 @@ Summary: Python libraries for WMS user interface
 Name: glite-wms-ui-api-python
 Version: %{extversion}
 Release: %{extage}.%{extdist}
-License: Apache Software License
+License: ASL 2.0
 Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
@@ -10,7 +10,7 @@ BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: glite-jdl-api-cpp-devel, glite-jobid-api-cpp-devel,} swig
 BuildRequires: %{!?extbuilddir: glite-lb-client-devel, voms-devel, gridsite-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-wms-utils-exception-devel,} boost-devel, python-devel
-BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } chrpath, libtool
+BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } chrpath, cmake
 BuildRequires: cppunit-devel, libxml2-devel
 Requires: swig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -28,27 +28,25 @@ Source: %{name}-%{version}-%{release}.tar.gz
 Python libraries for WMS user interface
 
 %prep
-
+%{!?extbuilddir:%define extbuilddir "-"}
 %setup -c -q
 
 %build
-%{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
-  ./configure --prefix=%{buildroot}/usr --disable-static PVER=%{version}
-  make
+if test "x%{extbuilddir}" == "x-" ; then
+  cmake -DPREFIX:string=%{buildroot}/usr -DPVER:string=%{version} .
 fi
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}
 %{!?extbuilddir:%define extbuilddir "--"}
-if test "x%{extbuilddir}" == "x--" ; then
+if test "x%{extbuilddir}" == "x-" ; then
   make install
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-rm %{buildroot}/usr/lib64/*.la %{buildroot}/usr/lib64/*.a
 chrpath --delete %{buildroot}/usr/lib64/*.so.0.0.0
+strip -s %{buildroot}/usr/lib64/*.so.0.0.0
 
 %clean
 rm -rf %{buildroot}

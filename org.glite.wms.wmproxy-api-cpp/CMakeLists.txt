@@ -87,5 +87,28 @@ endif(DEFINED BUILD_DBG)
 
 
 message("\n\nGSOAP_VERSION=${GSOAP_VERSION}\n\n")
+
+install(FILES
+        LICENSE
+	CHANGES
+        DESTINATION ${PREFIX}/share/doc/glite-wms-wmproxy-api-cpp-${PVER}/
+)
+
+add_custom_command(OUTPUT 
+        ${CMAKE_CURRENT_SOURCE_DIR}/autodoc/html/index.html
+        COMMAND 
+        SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}" PROJECT="glite-wms-wmproxy-api-cpp" DOCDIR="autodoc" VERSION="${PVER}" PERL_PATH="/usr/bin/perl" HAVE_DOT="NO" GENERATE_MAN="NO" GENERATE_RTF="NO" GENERATE_XML="NO" GENERATE_HTMLHELP="NO" GENERATE_CHI="NO" GENERATE_HTML="YES" GENERATE_LATEX="NO" /usr/bin/doxygen ${CMAKE_CURRENT_SOURCE_DIR}/project/doxygen/doxygen.cfg
+)
+
+add_custom_target(DOXPROC ALL DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/autodoc/html/index.html
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/autodoc/html
+        DESTINATION
+        ${PREFIX}/share/doc/glite-wms-wmproxy-api-cpp
+)
+
+
 add_subdirectory(src)
 add_subdirectory(interface)

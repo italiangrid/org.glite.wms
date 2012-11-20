@@ -101,4 +101,11 @@ else(DEFINED BUILD_DBG)
     add_definitions( -pipe -O2 -Wall ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
 endif(DEFINED BUILD_DBG)
 
+#install(FILES
+#        LICENSE
+#        CHANGES
+#        DESTINATION ${PREFIX}/share/doc/glite-wms-ui-api-python
+#)
+
+
 add_subdirectory(src)
