@@ -95,7 +95,7 @@ endif(EXISTS "/usr/bin/swig"
 #EXEC_PROGRAM(python-config ARGS --includes
 #  OUTPUT_VARIABLE PYTHON_INCLUDES)
 
-set(PYTHON_INCLUDES "/usr/include${PYTHON_VERSION}")
+set(PYTHON_INCLUDES "/usr/include/python${PYTHON_VERSION}")
 
 if(DEFINED BUILD_DBG)
   add_definitions( -pipe -g -O0 -Wall -I${PYTHON_INCLUDES} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
