@@ -47,6 +47,7 @@ endif(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
 find_package(PkgConfig REQUIRED)
 find_package(Perl REQUIRED)
 find_program(Make REQUIRED)
+find_program(Python REQUIRED)
 
 pkg_check_modules(GRIDSITE_GLOBUS REQUIRED gridsite-globus)
 pkg_check_modules(GRIDSITE_OPENSSL REQUIRED gridsite-openssl)
@@ -61,13 +62,13 @@ pkg_check_modules(VOMS REQUIRED voms-2.0)
 pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
 pkg_check_modules(BOOST_FILESYSTEM emi-boost-filesystem) 
 
-if(NOT EXISTS "/usr/bin/python")
-  message(FATAL_ERROR "\n\n*** ERROR: Python installation missing. Cannot build this component\n\n")
-endif(NOT EXISTS "/usr/bin/python" )
+#if(NOT EXISTS "/usr/bin/python")
+#  message(FATAL_ERROR "\n\n*** ERROR: Python installation missing. Cannot build this component\n\n"#)
+#endif(NOT EXISTS "/usr/bin/python" )
 
-if(NOT EXISTS "/usr/bin/python-config")
-  message(FATAL_ERROR "\n\n*** ERROR: Python devel installation missing. Cannot build this component\n\n")
-endif(NOT EXISTS "/usr/bin/python-config" )
+#if(NOT EXISTS "/usr/bin/python-config")
+#  message(FATAL_ERROR "\n\n*** ERROR: Python devel installation missing. Cannot build this componen#t\n\n")
+#endif(NOT EXISTS "/usr/bin/python-config" )
 
 EXEC_PROGRAM(python ARGS
   "-c 'import platform; print platform.python_version()' | awk -F'.' '{print $1\".\"$2}' "
@@ -95,10 +96,10 @@ EXEC_PROGRAM(python-config ARGS --includes
   OUTPUT_VARIABLE PYTHON_INCLUDES)
 
 if(DEFINED BUILD_DBG)
-  add_definitions( -pipe -g -O0 -Wall ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
+  add_definitions( -pipe -g -O0 -Wall -I/usr/include/python${PYTHON_VERSION} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
 
 else(DEFINED BUILD_DBG)
-    add_definitions( -pipe -O2 -Wall ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
+    add_definitions( -pipe -O2 -Wall -I/usr/include/python${PYTHON_VERSION} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
 endif(DEFINED BUILD_DBG)
 
 #install(FILES
