@@ -92,14 +92,16 @@ endif(EXISTS "/usr/bin/swig"
     OR EXISTS "/usr/local/bin/swig"
     OR EXISTS "/opt/local/bin/swig")
 
-EXEC_PROGRAM(python-config ARGS --includes
-  OUTPUT_VARIABLE PYTHON_INCLUDES)
+#EXEC_PROGRAM(python-config ARGS --includes
+#  OUTPUT_VARIABLE PYTHON_INCLUDES)
+
+set(PYTHON_INCLUDES "/usr/include${PYTHON_VERSION}")
 
 if(DEFINED BUILD_DBG)
-  add_definitions( -pipe -g -O0 -Wall -I/usr/include/python${PYTHON_VERSION} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
+  add_definitions( -pipe -g -O0 -Wall -I${PYTHON_INCLUDES} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
 
 else(DEFINED BUILD_DBG)
-    add_definitions( -pipe -O2 -Wall -I/usr/include/python${PYTHON_VERSION} ${CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
+    add_definitions( -pipe -O2 -Wall -I $${PYTHON_INCLUDES} {CLASSAD_CFLAGS} ${PYTHON_INCLUDES} ${JOBMAN_EXCEPTION_CFLAGS})
 endif(DEFINED BUILD_DBG)
 
 #install(FILES
