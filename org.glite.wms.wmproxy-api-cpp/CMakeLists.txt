@@ -56,26 +56,54 @@ pkg_check_modules(GSOAP_PLUSPLUS REQUIRED gsoap++)
 pkg_check_modules(GSOAP_SSL REQUIRED gsoapssl)
 pkg_check_modules(GSOAP_SSL_PLUSPLUS REQUIRED gsoapssl++)
 
-if(NOT EXISTS "/usr/bin/lsb_release")
-  message(FATAL_ERROR "\n\nMissing /usr/bin/lsb_release required to determine Linux Release\n\n")
-endif(NOT EXISTS "/usr/bin/lsb_release")
+#if(NOT EXISTS "/usr/bin/lsb_release")
+#  message(FATAL_ERROR "\n\nMissing /usr/bin/lsb_release required to determine Linux Release\n\n")
+#endif(NOT EXISTS "/usr/bin/lsb_release")
 
-EXEC_PROGRAM(/usr/bin/lsb_release ARGS -d |/usr/bin/awk '{print $2}'
-  OUTPUT_VARIABLE LINUX_VENDOR)
+#EXEC_PROGRAM(/usr/bin/lsb_release ARGS -d |/usr/bin/awk '{print $2}'
+#  OUTPUT_VARIABLE LINUX_VENDOR)
 
-EXEC_PROGRAM(/usr/bin/lsb_release 
-  ARGS 
-  -r |/usr/bin/awk '{print $2}'|/usr/bin/awk -F"." '{print $1}' 
-  OUTPUT_VARIABLE LINUX_VENDOR_VERSION)
-
-#message("Linux Platform = ${LINUX_VENDOR} ${LINUX_VENDOR_VERSION}")
+#EXEC_PROGRAM(/usr/bin/lsb_release 
+#  ARGS 
+#  -r |/usr/bin/awk '{print $2}'|/usr/bin/awk -F"." '{print $1}' 
+#  OUTPUT_VARIABLE LINUX_VENDOR_VERSION)
 
 
-if(EXISTS "/usr/bin/dpkg")
-  EXEC_PROGRAM(/usr/bin/dpkg ARGS -s gsoap|grep Version|/usr/bin/awk '{print $2}'
-    OUTPUT_VARIABLE GSOAP_VERSION)
+
+if(EXISTS "/etc/debian_version")
   set(ONDEB "1")
-endif(EXISTS "/usr/bin/dpkg")
+endif(EXISTS "/etc/debian_version")
+
+
+
+if(EXISTS "/etc/redhat-release")
+  set(ONRH "1")
+endif(EXISTS "/etc/redhat-release")
+
+
+
+if(DEFINED ONDEB)
+EXEC_PROGRAM(cat
+  ARGS /etc/debian_version | /usr/bin/awk -F"." '{print $1}'
+  OUTPUT_VARIABLE DEB_VER)
+endif(DEFINED ONDEB)
+
+
+
+if(DEFINED ONRH)
+EXEC_PROGRAM(cat
+  ARGS  /etc/redhat-release | /usr/bin/awk '{print $(NF-1)}' | /usr/bin/awk -F"." '{print $1}'
+  OUTPUT_VARIABLE RH_VER)
+endif(DEFINED ONRH)
+
+
+
+if(DEFINED ONDEB)
+  EXEC_PROGRAM(/usr/bin/dpkg 
+    ARGS -s gsoap|grep Version|/usr/bin/awk '{print $2}'
+    OUTPUT_VARIABLE GSOAP_VERSION)
+endif(DEFINED ONDEB)
+
 
 
 
@@ -101,17 +129,17 @@ endif(DEFINED BUILD_DBG)
 #endif("${LINUX_VENDOR}" STREQUAL "Debian")
 
 
-if("${LINUX_VENDOR}" STREQUAL "Scientific")
+if(DEFINED ONRH)
   
-  if("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+  if("${RH_VER}" STREQUAL "5")
     add_definitions( -DGSOAP_VERSION_NUM=20713 )
-  endif("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+  endif("${RH_VER}" STREQUAL "5")
 
-  if("${LINUX_VENDOR_VERSION}" STREQUAL "6")
+  if("${RH_VER}" STREQUAL "6")
     add_definitions( -DGSOAP_VERSION_NUM=20716 )
-  endif("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+  endif("${RH_VER}" STREQUAL "6")
 
-endif("${LINUX_VENDOR}" STREQUAL "Scientific")
+endif(DEFINED ONRH)
 
 
 message("\n\nGSOAP_VERSION=${GSOAP_VERSION}\n\n")
