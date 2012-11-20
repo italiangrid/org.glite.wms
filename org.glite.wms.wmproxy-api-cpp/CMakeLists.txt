@@ -56,6 +56,19 @@ pkg_check_modules(GSOAP_PLUSPLUS REQUIRED gsoap++)
 pkg_check_modules(GSOAP_SSL REQUIRED gsoapssl)
 pkg_check_modules(GSOAP_SSL_PLUSPLUS REQUIRED gsoapssl++)
 
+if(NOT EXISTS "/usr/bin/lsb_release")
+  message(FATAL_ERROR "\n\nMissing /usr/bin/lsb_release required to determine Linux Release\n\n")
+endif(NOT EXISTS "/usr/bin/lsb_release")
+
+EXEC_PROGRAM(/usr/bin/lsb_release ARGS -d |/usr/bin/awk '{print $2}'
+  OUTPUT_VARIABLE LINUX_VENDOR)
+
+EXEC_PROGRAM(/usr/bin/lsb_release 
+  ARGS 
+  -r |/usr/bin/awk '{print $2}'|/usr/bin/awk -F"." '{print $1}' 
+  OUTPUT_VARIABLE LINUX_VENDOR_VERSION)
+
+#message("Linux Platform = ${LINUX_VENDOR} ${LINUX_VENDOR_VERSION}")
 
 
 if(EXISTS "/usr/bin/dpkg")
@@ -68,22 +81,37 @@ endif(EXISTS "/usr/bin/dpkg")
 
 if(DEFINED BUILD_DBG)
 
-  if(DEFINED ONDEB)
-    add_definitions( -pipe -g -O0 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DWITH_GZIP -I/usr/include)
-  else(DEFINED ONDEB)
-    add_definitions( -pipe -g -O0 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DGSOAP_VERSION_NUM=20716 -DWITH_GZIP -I/usr/include)
-  endif(DEFINED ONDEB)
+  add_definitions( -pipe -g -O0 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DWITH_GZIP -I/usr/include)
 
 else(DEFINED BUILD_DBG)
-  
-  if(DEFINED ONDEB)
-    add_definitions( -pipe -O2 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DWITH_GZIP -I/usr/include)
-    else(DEFINED ONDEB)
-      add_definitions( -pipe -O2 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DWITH_GZIP -DGSOAP_VERSION_NUM=20716 -I/usr/include)      
-    endif(DEFINED ONDEB)
+
+  add_definitions( -pipe -O2 -Wall -DWITH_OPENSSL -DWITH_DOM -DWITH_GZIP -DHAVE_CONFIG_H -DWITH_IPV6 -DUSE_GSOAP_PARSER -DWITH_COOKIES -DWITH_GZIP -I/usr/include)
 
 endif(DEFINED BUILD_DBG)
 
+
+
+
+
+
+
+
+#if("${LINUX_VENDOR}" STREQUAL "Debian")
+  
+#endif("${LINUX_VENDOR}" STREQUAL "Debian")
+
+
+if("${LINUX_VENDOR}" STREQUAL "Scientific")
+  
+  if("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+    add_definitions( -DGSOAP_VERSION_NUM=20713 )
+  endif("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+
+  if("${LINUX_VENDOR_VERSION}" STREQUAL "6")
+    add_definitions( -DGSOAP_VERSION_NUM=20716 )
+  endif("${LINUX_VENDOR_VERSION}" STREQUAL "5")
+
+endif("${LINUX_VENDOR}" STREQUAL "Scientific")
 
 
 message("\n\nGSOAP_VERSION=${GSOAP_VERSION}\n\n")
