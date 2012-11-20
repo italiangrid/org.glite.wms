@@ -12,13 +12,7 @@ link_directories(${PREFIX}/${LIBDIR})
 
 
 add_executable(
-#  glite-wms-job-cancel 
-#  glite-wms-job-delegate-proxy 
-#  glite-wms-job-info 
   glite-wms-job-submit wmp-job-submit.cpp
-#  glite-wms-job-list-match 
-#  glite-wms-job-output 
-#  glite-wms-job-perusal )
 )
 
 add_executable(
@@ -60,6 +54,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -77,6 +72,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -94,6 +90,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -110,6 +107,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -126,6 +124,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -142,6 +141,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 target_link_libraries(
@@ -158,6 +158,7 @@ target_link_libraries(
   ${CLASSAD_UTILS_LDFLAGS}
   ${BOOST_REGEX_LDFLAGS}
   ${BOOST_FILESYSTEM_LDFLAGS}
+  ${WMPROXY_API_CPP_LDFLAGS}
 )
 
 install(TARGETS 
