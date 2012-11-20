@@ -261,6 +261,8 @@ BaseException* createWmpException(struct soap *soap){
 						// case SOAP_TYPE_delegationns__DelegationExceptionType:
 						case SOAP_TYPE__delegationns__DelegationException:
 							soap_print_fault(soap, stderr);
+                                                        GenericException* ge;
+                                                        throw *createWmpException(ge, "Soap Error", "Unknown Soap fault");
 							exit(-1);
 						default:
 							b_ex=new BaseException ;
