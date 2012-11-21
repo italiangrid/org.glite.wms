@@ -54,19 +54,19 @@ if(NOT EXISTS "/usr/bin/doxygen")
   message(FATAL_ERROR "*** Missing doxygen")
 endif(NOT EXISTS "/usr/bin/doxygen")
 
-if(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
-   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
-  message(FATAL_ERROR "*** Missing docbook xsl style sheet required to parse man pages")
-endif(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
-   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+#if(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
+#   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+#  message(FATAL_ERROR "*** Missing docbook xsl style sheet required to parse man pages")
+#endif(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
+#   AND NOT EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
 
-if(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
-  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
-endif(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+#if(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+#  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
+#endif(EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl")
 
-if(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
-  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
-endif(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+#if(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+#  set(DOCBOOK_MAN_PAGES_STYLE "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
+#endif(EXISTS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl")
 
 
 if(DEFINED BUILD_DBG)

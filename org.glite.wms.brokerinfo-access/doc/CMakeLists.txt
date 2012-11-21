@@ -4,16 +4,17 @@ add_custom_command(OUTPUT
   COMMAND gzip -c ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1 > ${PREFIX}/share/man/man1/glite-brokerinfo.1.gz
 )
 
-#add_custom_command(OUTPUT 
-#  ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1
-#  COMMAND 
-#  xsltproc /usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
-#)
+find_file(DB_MANPAGES_STYLESHEET "docbook.xsl"
+          PATHS "/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages"
+                "/usr/share/sgml/docbook/xsl-stylesheets/manpages")
+if( NOT DB_MANPAGES_STYLESHEET )
+    message(FATAL_ERROR "Cannot find stylesheet for man pages")
+endif( NOT DB_MANPAGES_STYLESHEET )
 
 add_custom_command(OUTPUT
   ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1
   COMMAND
-  xsltproc ${DOCBOOK_MAN_PAGES_STYLE} ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
+  xsltproc ${DB_MANPAGES_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
 )
 
 add_custom_target(ZIPMAN ALL DEPENDS 
