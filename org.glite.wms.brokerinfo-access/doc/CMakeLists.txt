@@ -4,10 +4,16 @@ add_custom_command(OUTPUT
   COMMAND gzip -c ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1 > ${PREFIX}/share/man/man1/glite-brokerinfo.1.gz
 )
 
-add_custom_command(OUTPUT 
+#add_custom_command(OUTPUT 
+#  ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1
+#  COMMAND 
+#  xsltproc /usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
+#)
+
+add_custom_command(OUTPUT
   ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1
-  COMMAND 
-  xsltproc /usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
+  COMMAND
+  xsltproc ${DOCBOOK_MAN_PAGES_STYLE} ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.xml
 )
 
 add_custom_target(ZIPMAN ALL DEPENDS 
