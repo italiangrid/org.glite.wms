@@ -45,6 +45,12 @@ Depends: ${PKGNAME} (= \${binary:Version}), debhelper (>= 8.0.0~), cmake, emi-pk
  libxslt1.1, libxslt1-dev, xsltproc, libclassad0-dev, libclassad0, libglite-wms-utils-classad, libglite-wms-utils-classad-dev, \${misc:Depends}
 Description: WMS Brokerinfo libraries and header files
 
+Package:  ${PKGNAME}-doc
+Section: doc
+Architecture: any
+Depends: ${PKGNAME} (= \${binary:Version}), debhelper (>= 8.0.0~), cmake, emi-pkgconfig-compat,
+ libxslt1.1, libxslt1-dev, xsltproc, libclassad0-dev, libclassad0, libglite-wms-utils-classad, libglite-wms-utils-classad-dev, \${misc:Depends}
+Description: WMS Brokerinfo documentation and man pages
 
 EOF
 
@@ -81,10 +87,13 @@ usr/bin/glite-brokerinfo
 EOF
 
 cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-dev.install
-usr/share/doc*
 usr/include/glite/wms/brokerinfo-access/*
 usr/lib/lib*.so
 usr/lib/pkgconfig/brokerinfo-access.pc
+EOF
+
+cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-doc.install
+usr/share/doc*
 usr/share/doc/*
 usr/share/man/*
 EOF
