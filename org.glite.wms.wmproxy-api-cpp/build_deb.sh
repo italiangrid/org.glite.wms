@@ -46,6 +46,13 @@ Architecture: any
 Depends: ${PKGNAME} (= \${binary:Version}), libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libclassad0-dev, libgridsite-dev, gsoap, \${misc:Depends}
 Description: WMProxy CPP API libraries, headers and pc files
 
+Package:  ${PKGNAME}-doc
+Section: doc
+Architecture: any
+Depends: ${PKGNAME} (= \${binary:Version}), libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libclassad0-dev, libgridsite-dev, gsoap, \${misc:Depends}
+Description: WMProxy CPP API documentation
+
+
 EOF
 
 ###########################################################################
@@ -83,6 +90,9 @@ cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-dev.install
 usr/include/glite/wms/wmproxyapi/*
 usr/lib/lib*.so
 usr/lib/pkgconfig/wmproxy-api-cpp.pc
+EOF
+
+cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-doc.install
 usr/share/doc/*
 EOF
 
