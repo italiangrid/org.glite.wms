@@ -37,7 +37,11 @@ Architecture: any
 Depends: \${shlibs:Depends}, \${misc:Depends}
 Description:  WMS UI executable command line tools
 
-
+Package:  ${PKGNAME}-doc
+Section:  doc
+Architecture: any
+Depends: \${shlibs:Depends}, \${misc:Depends}
+Description:  WMS UI man pages
 
 EOF
 
@@ -71,11 +75,15 @@ EOF
 cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}.install
 usr/lib/libglite_wmsui_commands*.so*
 usr/bin/glite-wms-job*
-usr/share/man/man1/glite-wms-job*
 etc/glite_wmsui_cmd_var.conf
 etc/glite_wmsui_cmd_help.conf
 etc/glite_wmsui_cmd_err.conf
 EOF
+
+cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-doc.install
+usr/share/man/man1/glite-wms-job*
+EOF
+
 
 ###########################################################################
 #
