@@ -77,7 +77,6 @@ pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
 pkg_check_modules(BOOST_REGEX emi-boost-regex)
 pkg_check_modules(BOOST_FILESYSTEM emi-boost-filesystem)
 pkg_check_modules(LIBXSLT REQUIRED libxslt)
-pkg_check_modules(LIBXSLTDEV REQUIRED libxslt-devel)
 pkg_check_modules(WMPROXY_API_CPP REQUIRED wmproxy-api-cpp)
 
 
