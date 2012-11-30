@@ -1,12 +1,10 @@
 #!/bin/bash
 
-INITIALPWD=${PWD}
-
 PKGVERSION=3.5.0
 PKGAGE=1
-PKGNAME=libglite-wms-wmproxy-api-cpp
+PKGNAME=libglite-wms-core
 
-PRJNAME=org.glite.wms.wmproxy-api-cpp
+PRJNAME=org.glite.wms.core
 
 set -e
 
@@ -16,7 +14,6 @@ if [ "x$1" == "x-s" ]; then
 fi
 
 mkdir -p BINARIES org.glite.wms/${PRJNAME}/debian/source
-mkdir -p ${INITIALPWD}/STAGE
 
 ###########################################################################
 #
@@ -28,30 +25,14 @@ Source:  ${PKGNAME}
 Section:  libs
 Priority:  optional
 Maintainer:  WMS Support <wms-support@cnaf.infn.it>
-Build-Depends: debhelper (>= 8.0.0~), cmake, emi-pkgconfig-compat,
- libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libclassad0-dev, libgridsite-dev, gsoap
+Build-Depends: debhelper (>= 8.0.0~), cmake
 Standards-Version:  3.5.0
 Homepage: http://glite.cern.ch/
 
 Package:  ${PKGNAME}
 Architecture: any
 Depends: \${shlibs:Depends}, \${misc:Depends}
-Description:  WMProxy CPP API libraries
-
-
-
-Package:  ${PKGNAME}-dev
-Section: libdevel
-Architecture: any
-Depends: ${PKGNAME} (= \${binary:Version}), libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libclassad0-dev, libgridsite-dev, gsoap, \${misc:Depends}
-Description: WMProxy CPP API libraries, headers and pc files
-
-Package:  ${PKGNAME}-doc
-Section: doc
-Architecture: any
-Depends: ${PKGNAME} (= \${binary:Version}), libglite-wms-utils-classad-dev , libglite-wms-utils-exception-dev, libclassad0-dev, libgridsite-dev, gsoap, \${misc:Depends}
-Description: WMProxy CPP API documentation
-
+Description:  WMS core
 
 EOF
 
@@ -83,19 +64,16 @@ EOF
 #
 ###########################################################################
 cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}.install
-usr/lib/lib*.so.*
+usr/bin/glite-wms-workload_manager
+usr/bin/glite-wms-query-job-state-transitions
+usr/lib/libglite_wms*.so.*
+etc/rc.d/init.d/glite-wms-wm
+usr/include/glite/wms/helper/*.h
+usr/include/glite/wms/helper/jobadapter/*.h
+usr/include/glite/wms/ism/*.h
+usr/include/glite/wms/ism/purchaser/*.h
+usr/lib/libglite_wms*.so
 EOF
-
-cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-dev.install
-usr/include/glite/wms/wmproxyapi/*
-usr/lib/lib*.so
-usr/lib/pkgconfig/wmproxy-api-cpp.pc
-EOF
-
-cat << EOF > org.glite.wms/${PRJNAME}/debian/${PKGNAME}-doc.install
-usr/share/doc/*
-EOF
-
 ###########################################################################
 #
 # Rule file
@@ -112,8 +90,6 @@ build-stamp:
 	touch build-stamp
 	
 build:build-stamp
-	#mkdir -p build && cd build && cmake -DCMAKE_INSTALL_PREFIX:string=\$(INSTALLDIR) -DPVER:string=${PKGVERSION} \$(CURDIR) && cd -
-	#mkdir -p build && cd build && cmake -DPREFIX:string=\$(INSTALLDIR) -DPVER:string=${PKGVERSION} \$(CURDIR) && cd -
 	cmake -DPREFIX:string=\$(INSTALLDIR)/usr -DPVER:string=${PKGVERSION} \$(CURDIR)
 	make
 
@@ -134,8 +110,6 @@ install: build
 	make install
 	cmake -DPREFIX:string=${INITIALPWD}/STAGE/usr -DPVER:string=${PKGVERSION} \$(CURDIR)
 	make install
-	sed 's|^prefix=.*|prefix=/usr|g' \$(INSTALLDIR)/usr/lib/pkgconfig/wmproxy-api-cpp.pc > \$(INSTALLDIR)/usr/lib/pkgconfig/wmproxy-api-cpp.pc.new
-	mv \$(INSTALLDIR)/usr/lib/pkgconfig/wmproxy-api-cpp.pc.new \$(INSTALLDIR)/usr/lib/pkgconfig/wmproxy-api-cpp.pc
 	
 binary-indep: build install
 
@@ -152,7 +126,10 @@ binary-arch: build install
 	dh_fixperms
 	dh_installdeb
 	dh_makeshlibs
-	dh_shlibdeps
+
+        # temporary disable untill proxyrenewal will be disable
+        # otherwise this command will fail on the self built proxyrenewal library (built by us by hand)
+	#dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb --destdir=${PWD}/BINARIES
@@ -193,4 +170,7 @@ cd org.glite.wms/${PRJNAME}
 fakeroot make -f debian/rules binary
 rm -rf build debian build-stamp
 cd -
+
+#sudo dpkg -i BINARIES/libglite-wms-configuration_3.5.0-1_amd64.deb
+
 

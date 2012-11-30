@@ -105,6 +105,7 @@ clean:
 	rm -rf configure-stamp
 	rm -rf \$(INSTALLDIR)
 	dh_clean
+	find -iname '*cmake*' -not -name CMakeLists.txt -exec rm -rf {} \+
 	
 install: build
 	dh_testdir
