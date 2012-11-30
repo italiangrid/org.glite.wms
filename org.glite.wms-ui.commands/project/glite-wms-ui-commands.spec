@@ -7,7 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
-BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,} chrpath, cmake
+BuildRequires: %{!?extbuilddir: glite-wms-wmproxy-api-cpp-devel,glite-wms-wmproxy-api-cpp,} chrpath, cmake
 BuildRequires: %{!?extbuilddir: gridsite-devel, glite-wms-utils-exception-devel,} classads-devel
 BuildRequires: %{!?extbuilddir: glite-jobid-api-cpp-devel, glite-jdl-api-cpp-devel,} boost-devel
 BuildRequires: %{!?extbuilddir: glite-lb-client-devel, glite-wms-ui-api-python,} libtar-devel
