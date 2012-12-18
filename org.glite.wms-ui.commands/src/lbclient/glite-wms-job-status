@@ -34,22 +34,12 @@ import os
 import re
 
 
-#try:
-#     path=os.environ['GLITE_WMS_LOCATION']
-#except:
-#   try:
-#      path=os.environ['GLITE_LOCATION']
-#   except:
-#      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
-#      sys.exit(1)
-
 try:
         path=os.environ['EMI_UI_CONF']+"/usr"
 except:
         path="/usr"
 
 
-#path="/usr"
 
 # append lib/lib64 directories to search path
 for app in ["lib","lib64"]:
@@ -391,7 +381,11 @@ else:
 											
 				# Show on screen the error
 				if json == False:
-					errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
+					pieces = apiMsg[0].split('\n')
+					print "*** Warning: " + pieces[0] + "\n"
+					cause = pieces[1]
+					print cause.split(": ")[2] + " - " + cause.split(": ")[3] + "\n\n"
+                                        #errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
 
 				# Set the exit code
 				if json == False:
@@ -416,13 +410,13 @@ if not st:
 		# JOBID SPECIFICATED
 		if len(jobs) !=1:
 			#not only 1 JobId: Warning Message only printed so far. print the last message
-			errMsg('Error','LB_API_OPEN_ALL')
+			print ""#errMsg('Error','LB_API_OPEN_ALL')
 	elif  atLeastOneSuccess:
 		#  query on LB server performed but no job found
-		errMsg("Error","UI_NO_JOB_FOUND")
+		print ""#errMsg("Error","UI_NO_JOB_FOUND")
 	else:
 		# All LB Queries went wrong (only warning so far)
-		errMsg('Error','LB_API_OPEN_ALL')
+		print ""#errMsg('Error','LB_API_OPEN_ALL')
 	exit(1)
 else:
 	if outFile:
