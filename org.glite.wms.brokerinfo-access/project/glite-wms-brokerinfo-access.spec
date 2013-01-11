@@ -9,7 +9,7 @@ Group: Applications/Internet
 BuildArch: %{_arch}
 BuildRequires: chrpath, cmake
 BuildRequires: %{!?extbuilddir:glite-build-common-cpp, } classads-devel
-BuildRequires: doxygen, docbook-style-xsl, libxslt-devel
+BuildRequires: doxygen, docbook-style-xsl, libxslt-devel, emi-pkgconfig-compat
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
