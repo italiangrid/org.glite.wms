@@ -60,7 +60,13 @@ pkg_check_modules(CLASSAD_UTILS REQUIRED classad-utils)
 pkg_check_modules(JOBMAN_EXCEPTION REQUIRED jobman-exception)
 pkg_check_modules(VOMS REQUIRED voms-2.0)
 pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
-pkg_check_modules(BOOST_FILESYSTEM REQUIRED emi-boost-filesystem) 
+#pkg_check_modules(BOOST_FILESYSTEM REQUIRED emi-boost-filesystem) 
+
+if( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
+    set(BOOST_LIBRARYDIR "/usr/lib64")
+endif( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
+
+find_package( Boost COMPONENTS date_time filesystem regex system thread program_options REQUIRED)
 
 #if(NOT EXISTS "/usr/bin/python")
 #  message(FATAL_ERROR "\n\n*** ERROR: Python installation missing. Cannot build this component\n\n"#)
