@@ -37,7 +37,7 @@ set(LIBEXEC "libexec")
 
 
 set(ENV{PKG_CONFIG_PATH}
-"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}")
+"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}:/usr/lib64/pkgconfig:/usr/lib/pkgconfig")
 
 if(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
   set(ENV{PKG_CONFIG_PATH}
