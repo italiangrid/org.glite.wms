@@ -66,7 +66,7 @@ if( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
     set(BOOST_LIBRARYDIR "/usr/lib64")
 endif( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
 
-find_package( Boost COMPONENTS date_time filesystem regex system thread program_options REQUIRED)
+find_package( Boost COMPONENTS REQUIRED date_time filesystem regex thread program_options)
 
 #if(NOT EXISTS "/usr/bin/python")
 #  message(FATAL_ERROR "\n\n*** ERROR: Python installation missing. Cannot build this component\n\n"#)
