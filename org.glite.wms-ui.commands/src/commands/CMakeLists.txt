@@ -8,7 +8,8 @@ include_directories(${CLASSAD_INCLUDE_DIRS}
 
 
 
-link_directories(${PREFIX}/${LIBDIR})
+link_directories(${PREFIX}/${LIBDIR}
+		 ${WMPROXY_API_CPP_LIBRARY_DIRS})
 
 
 add_executable(
