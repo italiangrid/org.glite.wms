@@ -8,7 +8,7 @@ URL: http://glite.cern.ch/
 Group: System Environment/Libraries
 BuildArch: %{_arch}
 BuildRequires: %{!?extbuilddir: gridsite-devel,} chrpath, cmake, openssl-devel, gsoap-devel
-BuildRequires: %{!?extbuilddir: glite-build-common-cpp, emi-pkgconfig-compat, } doxygen, docbook-style-xsl, libxslt-devel, libxml2-devel
+BuildRequires: %{!?extbuilddir: glite-build-common-cpp, emi-pkgconfig-compat, } doxygen, docbook-style-xsl, libxslt-devel, libxml2-devel, globus-gssapi-gsi-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz

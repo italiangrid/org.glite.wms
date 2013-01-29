@@ -47,7 +47,7 @@ set(LIBEXEC "libexec")
 
 
 set(ENV{PKG_CONFIG_PATH}
-"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}")
+"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}:/usr/lib64/pkgconfig:/usr/lib/pkgconfig")
 
 if(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
   set(ENV{PKG_CONFIG_PATH}
@@ -74,10 +74,17 @@ pkg_check_modules(CLASSAD_UTILS REQUIRED classad-utils)
 pkg_check_modules(JOBMAN_EXCEPTION REQUIRED jobman-exception)
 pkg_check_modules(VOMS REQUIRED voms-2.0)
 pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
-pkg_check_modules(BOOST_REGEX emi-boost-regex)
-pkg_check_modules(BOOST_FILESYSTEM emi-boost-filesystem)
+#pkg_check_modules(BOOST_REGEX emi-boost-regex)
+#pkg_check_modules(BOOST_FILESYSTEM emi-boost-filesystem)
 pkg_check_modules(LIBXSLT REQUIRED libxslt)
 pkg_check_modules(WMPROXY_API_CPP REQUIRED wmproxy-api-cpp)
+
+if( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
+    set(BOOST_LIBRARYDIR "/usr/lib64")
+endif( NOT DEFINED BOOST_LIBRARYDIR AND IS_DIRECTORY "/usr/lib64" )
+
+find_package( Boost COMPONENTS REQUIRED date_time filesystem regex thread
+program_options)
 
 
 if(NOT EXISTS "/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl"
