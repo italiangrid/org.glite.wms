@@ -14,7 +14,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@PVER@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = config doc interface src examples
+SUBDIRS = config doc interface src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

@@ -87,12 +87,19 @@ getDelegatedProxyPath(string const& delegation_id, std::string const& dn)
    GLITE_STACK_TRY("getDelegatedProxyPath()");
    edglog_fn("getDelegatedProxyPath");
 
+   if (delegation_id.find('/') != std::string::npos) {
+      // this could be exploited
+      throw wmputilities::JobOperationException(__FILE__, __LINE__,
+            "getDelegatedProxyPath()", wmputilities::WMS_DELEGATION_ERROR,
+            "invalid delegation id");
+   }
+
    char* delegated_proxy = GRSTx509CachedProxyFind((char*) getProxyDir().c_str(),
                            (char*) delegation_id.c_str(), const_cast<char*>(dn.c_str()));
    if (delegated_proxy == NULL) {
       edglog(critical)<<"Unable to get delegated Proxy"<<endl;
       throw wmputilities::JobOperationException(__FILE__, __LINE__,
-            "regist()", wmputilities::WMS_DELEGATION_ERROR,
+            ")", wmputilities::WMS_DELEGATION_ERROR,
             "Unable to get delegated Proxy");
    }
    string path = "";
@@ -158,12 +165,19 @@ putProxy(const string& original_delegation_id, const string& proxy_req)
    if (original_delegation_id== "" ) {
 #ifndef GRST_VERSION
       throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-            "renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+            "putProxy()", wmputilities::WMS_PROXY_ERROR,
             "Empty delegation id not allowed with delegation 1");
 #else
       delegation_id=string(GRSTx509MakeDelegationID());
       edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
 #endif
+   } else {
+      if (delegation_id.find('/') != std::string::npos) {
+         // this could be exploited
+         throw wmputilities::JobOperationException(__FILE__, __LINE__,
+            "putProxy()", wmputilities::WMS_DELEGATION_ERROR,
+            "invalid delegation id");
+      }
    }
 
    edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
