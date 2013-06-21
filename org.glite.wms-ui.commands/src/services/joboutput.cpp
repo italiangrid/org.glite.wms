@@ -118,6 +118,7 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	  m_dirCfg = "/tmp";
 	  // init of the boolean attributes
 	  m_listOnlyOpt = false;
+	  m_ok_gsiftp = true;
 	  m_nosubdir = false;
 	  m_json = false;
 	  m_pprint = false;
@@ -432,6 +433,37 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	 *	PRIVATE METHODS:
 	 **********************************************/
 	int JobOutput::retrieveOutput (std::string &result, Status& status, const std::string& dirAbs, bool firstCall, const bool &child){
+
+	  classad::ClassAdParser parser;
+          classad::ClassAd *rootAD = parser.ParseClassAd( status.getJdl( ) );
+
+          if (!rootAD) {
+            logInfo->print(WMS_ERROR, "Error parsing Job's JDL! Aobrting...", "");
+            exit(1);
+          }
+
+          boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
+
+          string _vo_("");
+          if ( !classad_safe_ptr->EvaluateAttrString( "virtualorganisation", _vo_ ) ) {
+            logInfo->print(WMS_ERROR, "VirtualOrganisation attribute NOT present in the Job's JDL ! Aborting...", ""); 
+            exit(1);
+          }
+
+          logInfo->print(WMS_DEBUG,"Job's VirtualOrganisation: " , _vo_);
+          logInfo->print(WMS_DEBUG,"Proxy's VirtualOrganisation: " , this->getVO());
+
+	  if(_vo_ != this->getVO() ) {
+	    m_nopgOpt = true;
+	    string message = "Job's VirtualOrganisation is different from that one contained in your proxy file.";
+	    message += " GridFTP could be unable to retrieve the output file.";
+	    message += " Do you want to continue (JobPurge will be disabled) ?";
+	    if (!wmcUtils->answerYes ( message, false, true)){
+		cout << "bye" << endl ;
+              wmcUtils->ending(DEFAULT_ERR_CODE);
+	    }
+	  }
+
 	  string errors = "";
 	  string wmsg = "" ;
 	  string id = "";
@@ -598,11 +630,18 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	      logInfo->print (WMS_WARNING, "JobPurging not allowed",wmsg, true );
 	    }
 	  } else if ( m_nopgOpt == true ) {
-	    string wmsg = "Option --nopurge specified" ;
+	    string wmsg = "Option --nopurge specified or its has been automatically disabled" ;
 	    logInfo->print (WMS_DEBUG, "Skipping JobPurging: ",wmsg, true );
 	  }
 	  return 0;
 	}
+
+	/**
+ 	 *
+ 	 *
+ 	 *
+ 	 *
+ 	 */
 	bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const std::string& jobid, const std::string& dirAbs, const bool &child){
 	  vector <pair<string , long> > files ;
 	  vector <pair<string,string> > paths ;
@@ -620,6 +659,8 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	    logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 	    m_hasFiles = m_hasFiles || (files.size()>0);
 	  } catch (BaseException &exc) {
+	    logInfo->result("ERROR", "CATCHED EXCP in ::retrieveFiles !!! **********" );
+	    m_ok_gsiftp = false;
 	    string desc = "";
 	    if (exc.Description){ desc =" (" + *(exc.Description)+ ")"; }
 	    if (child) {
@@ -690,7 +731,12 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	  }
 	  return ret;
 	}
-	/*
+        /**
+	 *          
+	 *                   
+	 *                            
+	 *                                     
+	 *                                              
 	 *	prints file list on std output
 	 */
 	void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, const std::string jobid, const bool &child){
@@ -728,8 +774,12 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
 	    m_fileList += out.str();
 	  }
 	}
-	/*
+
+	/**
+ 	 *
+ 	 *
 	 * Creates the final Warning Msg
+	 *
 	 */
 	void JobOutput::createWarnMsg(const std::string &msg ){
 	  int size = msg.size();

@@ -300,6 +300,11 @@ class Job{
 		/** List of already trialed endpoints
 		* (this list is needed for avoiding re-trial to same endpoint)*/
 		std::vector<std::string> doneUrls;
+
+		std::string getVO( void ) {
+		  if(wmcUtils) return wmcUtils->getVirtualOrganisation( );
+		  return "";
+		}
 	private :
 		/*
 		* Version numbers of the server

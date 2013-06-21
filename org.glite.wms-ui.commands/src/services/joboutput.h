@@ -109,6 +109,7 @@ class JobOutput  : public Job {
                 /**
                 *	Boolean input arguments
                 */
+	bool m_ok_gsiftp ;
         bool m_listOnlyOpt ;
         bool m_json;
 	bool m_pprint;
