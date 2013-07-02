@@ -1845,7 +1845,6 @@ std::string JobSubmit::getJobPath(const std::string& node) {
     vector <JobFileAd>::iterator const end1 = fileads.end( );
     for ( ; it1 != end1; it1++ ) { 
       jobpath = this->getJobPath(it1->node);
-      logInfo->print(WMS_INFO, "*********** ALVISE DEBUG ********* Handling file [" + jobpath + "]", "", false);
       system((string("mkdir -p ")+jobpath).c_str());
       filesToTAR.push_back( jobpath );
       
@@ -1855,7 +1854,7 @@ std::string JobSubmit::getJobPath(const std::string& node) {
  	file = it2->file;
   	//path = jobpath + "/" + Utils::getFileName(it2->file);
 
-		logInfo->print(WMS_DEBUG, "*********** ALVISE DEBUG ********* tar - Copying local file: " + file,
+		logInfo->print(WMS_DEBUG, "tar - Copying local file: " + file,
 			       " into directory: " + jobpath, false);
 
 	string basenameFile = ::basename( file.c_str() );
@@ -1883,7 +1882,6 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 		     + boost::lexical_cast<string>( maxISBSize )
 		     + ")", false); */
 	
-	logInfo->print(WMS_FATAL, "CIAO !", "", false);
        throw WmsClientException(__FILE__,__LINE__,
                                     "FileSize problem",  DEFAULT_ERR_CODE,
                                     "\n",
