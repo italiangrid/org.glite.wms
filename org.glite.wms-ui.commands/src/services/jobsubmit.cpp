@@ -656,9 +656,10 @@ void JobSubmit::checkUserServerQuota() {
 		// (2) MAX ISB size -----------
 		if (maxIsbSize>0 ) {
 			logInfo->result(WMP_MAXISBSIZE_SERVICE, "Max ISB size information successfully retrieved");
-			if (maxJobIsbSize > maxIsbSize) {
+			if (maxJobIsbSize > maxIsbSize | isbSize > maxIsbSize ) {
 				ostringstream err ;
-				err << "The max job size of the InputSandbox (" << maxJobIsbSize <<" bytes) ";
+				err << "The max job size of the InputSandbox (" << maxJobIsbSize <<" bytes) or of the total InputStandbox (";
+				err << isbSize << " bytes) ";
 				err << "exceeds the MAX InputSandbox size limit on the server (" << maxIsbSize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
 					"checkUserServerQuota",  DEFAULT_ERR_CODE,
@@ -1872,9 +1873,9 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 
     boost::uintmax_t tarSize = boost::filesystem::file_size( tarfile );
 
-    string maxISBSize = boost::lexical_cast<string>( api::getMaxInputSandboxSize(getContext( )) );
+    //string maxISBSize = boost::lexical_cast<string>( api::getMaxInputSandboxSize(getContext( )) );
 
-    if(tarSize > api::getMaxInputSandboxSize(getContext( ))) {
+    if(tarSize > api::getMaxInputSandboxSize(getContext( )) ) {
 /*      logInfo->print(WMS_FATAL,
 		     "ISB tarball size for [" + tarfile + "] is " 
 		     + boost::lexical_cast<string>( tarSize ) 
@@ -1885,7 +1886,8 @@ std::string JobSubmit::getJobPath(const std::string& node) {
        throw WmsClientException(__FILE__,__LINE__,
                                     "FileSize problem",  DEFAULT_ERR_CODE,
                                     "\n",
-                                    "The tar archive size is greater than the maximum allowed by WMS (" + maxISBSize+" bytes)" );	
+                                    "The tar archive size is greater than the maximum allowed by WMS (" 
+				    + boost::lexical_cast<string>(api::getMaxInputSandboxSize(getContext( )) ) + " bytes)" );	
 //      exit(1);
     }
 
