@@ -78,7 +78,7 @@ cmake_build()
 if [ $PACKAGER = "rpm" ]; then
    create_source_tarball ${PACKAGE_NAME} ${VERSION} ${AGE} ${PLATFORM}
 
-   cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION .
+   cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
    make VERBOSE=1
    if [ $? -ne 0 ]; then
       echo ERROR
@@ -90,6 +90,11 @@ if [ $PACKAGER = "rpm" ]; then
       exit
    fi
 #   if [ $PACKAGER = "rpm" ]; then
+
+#       echo ""
+#       echo "********* VERSION=$VERSION - AGE=$AGE ***********"
+#       echo ""
+
       rpm_package $VERSION $AGE $PLATFORM $PACKAGE_NAME $COMPONENT $LOCAL_STAGE_DIR
 #   elif [ $PACKAGER = "deb" ]; then
 #      deb_package $VERSION $AGE $PLATFORM $PACKAGE_NAME $COMPONENT $LOCAL_STAGE_DIR
@@ -275,7 +280,8 @@ COMPONENT=( org.glite.wms.configuration org.glite.wms.common org.glite.wms.purge
 BUILD_TYPE=( autotools autotools autotools autotools autotools autotools autotools python metapackage cmake cmake python cmake cmake )
 PACKAGE_NAME=( glite-wms-configuration glite-wms-common glite-wms-purger glite-wms-core glite-wms-jobsubmission glite-wms-interface glite-wms-ice emi-wms-nagios emi-wms glite-wms-brokerinfo-access glite-wms-wmproxy-api-cpp glite-wms-wmproxy-api-python glite-wms-ui-api-python glite-wms-ui-commands )
 VERSION=( 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 )
-AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 3 3 4 )
+#AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 3 3 3 )
+AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 4 3 3 )
 START=$9
 END=${10}
 
@@ -405,6 +411,11 @@ for i in `seq $START $END`; do
          autotools_build ${COMPONENT[$i]} ${VERSION[$i]} ${AGE[$i]} ${PACKAGE_NAME[$i]} $STAGE
          ;;
      "cmake" )
+     
+#     	  echo " "
+#	  echo "************** i=$i ${AGE[i]}=${AGE[$i]} **************"
+#	  echo ""
+     
          cmake_build ${COMPONENT[$i]} ${VERSION[$i]} ${AGE[$i]} ${PACKAGE_NAME[$i]} $STAGE $BUILD_DIR
          ;;
      "ant" )
