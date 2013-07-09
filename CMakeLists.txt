@@ -419,7 +419,7 @@ set(SYSCONFIGDIR "${PREFIX}/etc/")
 
 add_subdirectory(org.glite.wms.configuration)
 add_subdirectory(org.glite.wms.common)
-#add_subdirectory(purger)
+add_subdirectory(org.glite.wms.purger)
 #add_subdirectory(core)
 #add_subdirectory(jobsubmission)
 #add_subdirectory(interface)
