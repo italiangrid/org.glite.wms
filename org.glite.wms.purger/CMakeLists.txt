@@ -1,110 +1,51 @@
-project(wms-purger CXX)
-cmake_minimum_required(VERSION 2.6)
+message("*\n*\n*\n* Configuring build for org.glite.wms.purger component\n*\n*\n*")
 
+set(PROJECT_SOURCE_DIR "${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.purger/")
 
-if(NOT DEFINED PVER)
-    message(WARNING " Undefined version number, selected 0.0.0. Please use
--DPVER=<version> to customize")
-    set(PVER "0.0.0")
-endif(NOT DEFINED PVER)
+set(PREFIX "${PROJECT_SOURCE_DIR}/stage")
 
-if(NOT DEFINED PREFIX)
-    message(WARNING " Undefined prefix, selected /usr/local")
-    set(PREFIX "/usr/local")
-endif(NOT DEFINED PREFIX)
+set(SYSCONFIGDIR "${PREFIX}/etc/")
 
-if(NOT DEFINED PKG_INSTALL_PREFIX)
-    set(PKG_INSTALL_PREFIX ${PREFIX})
-endif(NOT DEFINED PKG_INSTALL_PREFIX)
+ADD_CUSTOM_TARGET (RPM)
 
-if( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" )
-else( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-endif( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
+set(PKG_CONFIG_PATH "${PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/lib64/pkgconfig:${PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/lib/pkgconfig")
 
-IF (UNIX)
-  # since it's unix-specific we will use bash
-  ADD_CUSTOM_TARGET (distclean @echo cleaning ${FASTLIB_SOURCE_DIR}
-for source distribution)
-        
-  ADD_CUSTOM_COMMAND(TARGET distclean
-    COMMAND make ARGS clean
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname CMakeCache.txt
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname cmake_install.cmake
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname Makefile -delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -depth -type d -iname
-CMakeFiles -exec rm -rf {} \;
-    COMMAND rm ARGS -rf bin lib include
-    VERBATIM )
-ENDIF(UNIX)
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.purger VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$2}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE PVER
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+		
+#message(WARNING " RES=${RES} PVER=${PVER} ERR=${ERR}")
+	
 
-
-set(BINDIR "bin")
-
-set(SBINDIR "sbin")
-
-set(LIBEXEC "libexec")
-
-
-
-set(ENV{PKG_CONFIG_PATH}
-"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}")
-
-if(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
-  set(ENV{PKG_CONFIG_PATH}
-"${ADDITIONAL_PKG_CONFIG_PATH}:$ENV{PKG_CONFIG_PATH}")
-endif(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
-
-set(BOOST_ROOT "/usr/lib64:/usr/lib")
-
-find_package(PkgConfig REQUIRED)
-find_package(Perl REQUIRED)
-find_program(Make REQUIRED)
-pkg_check_modules(WMS_COMMON_UTIL REQUIRED wms-common-util)
-#pkg_check_modules(WMS_COMMON_QUOTA REQUIRED wms-common-quota)
-#pkg_check_modules(WMS_COMMON_PROCESS REQUIRED wms-common-process)
-#pkg_check_modules(WMS_COMMON REQUIRED wms-common)
-pkg_check_modules(WMS_COMMON_LOGGER REQUIRED wms-common-logger)
-#pkg_check_modules(WMS_COMMON_II REQUIRED wms-common-ii)
-pkg_check_modules(WMS_COMMON_CONF REQUIRED wms-common-conf)
-pkg_check_modules(WMSUTILS_CLASSADS REQUIRED classad-utils)
-pkg_check_modules(GLOBUS_GSS_ASSIST REQUIRED globus-gss-assist)
-pkg_check_modules(GLOBUS_OPENSSL REQUIRED globus-openssl-module)
-pkg_check_modules(GLOBUS_COMMON REQUIRED globus-common)
-pkg_check_modules(LB_CLIENT REQUIRED emi-lb-client)
-pkg_check_modules(LB_CLIENTPP REQUIRED emi-lb-clientpp)
-pkg_check_modules(LB_COMMON REQUIRED emi-lb-common)
-pkg_check_modules(JOBID REQUIRED emi-jobid)
-pkg_check_modules(CLASSAD REQUIRED emi-classad-ns)
-pkg_check_modules(CARES REQUIRED libcares)
-pkg_check_modules(WMSUTILS_JOBMAN_EXCEPTION REQUIRED jobman-exception)
-pkg_check_modules(RENEWAL REQUIRED emi-proxyrenew)
-pkg_check_modules(LOG4CPP REQUIRED log4cpp)
-find_package( Boost COMPONENTS date_time filesystem regex thread
-program_options REQUIRED)
-
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.purger VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$3}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE AGE
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+		
 if(EXISTS "/etc/debian_version")
   set(ONDEB "1")
 endif(EXISTS "/etc/debian_version")
 
-
-
 if(EXISTS "/etc/redhat-release")
   set(ONRH "1")
 endif(EXISTS "/etc/redhat-release")
-
-
 
 if(DEFINED ONDEB)
 EXEC_PROGRAM(cat
@@ -112,37 +53,28 @@ EXEC_PROGRAM(cat
   OUTPUT_VARIABLE DEB_VER)
 endif(DEFINED ONDEB)
 
-
-
 if(DEFINED ONRH)
 EXEC_PROGRAM(cat
   ARGS  /etc/redhat-release | /usr/bin/awk '{print $(NF-1)}' | /usr/bin/awk -F"." '{print $1}'
   OUTPUT_VARIABLE RH_VER)
 endif(DEFINED ONRH)
 
-# this is an hack: emi-boost-thread provides ldflag -lboost_thread; SL5 has libboost_thread.so, but SL6 has libboost_thread-mt (v. 1.41 instead of 1.33)
-set(BOOST_THREAD_HACK_LDFLAGS "-lboost_thread-mt")
-if("${RH_VER}" STREQUAL "5") 
-	set(BOOST_THREAD_HACK_LDFLAGS "-lboost_thread")
-endif("${RH_VER}" STREQUAL "5") 
-
-add_definitions( -pipe -Wall -DHAVE_STRINGSTREAM=1 ${CLASSAD_CFLAGS})
-
-if(DEFINED BUILD_DBG)
-
-  add_definitions( -g -O0 )
-
-
-else(DEFINED BUILD_DBG)
-
-  add_definitions( -O2 )
-
-endif(DEFINED BUILD_DBG)
+ADD_CUSTOM_COMMAND(TARGET RPM   
+    COMMAND make ARGS install
+    COMMAND rm ARGS -f /tmp/glite-wms-purger-${PVER}-${AGE}.${OS}.tar.gz
+    COMMAND ${PROJECT_SOURCE_DIR}/maketarball.sh ARGS ${PVER} ${AGE} ${OS} "${PROJECT_SOURCE_DIR}"
+${PROJECT_SOURCE_DIR}
+    COMMAND mkdir ARGS -p ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SRPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/BUILD ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/RPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES
+    COMMAND mv ARGS /tmp/glite-wms-purger-${PVER}-${AGE}.${OS}.tar.gz ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES/
+    COMMAND sed ARGS -e 's/%{extversion}/${PVER}/g' -e 's/%{extage}/${AGE}/g' -e 's/%{extdist}/${OS}/g' -e 's/%{extcdate}/${DATE}/g' -e 's/%{extclog}/Bug fixing/g' < project/glite-wms-purger.spec > ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS/glite-wms-purger.spec
+    COMMAND rpmbuild ARGS -ba --define "_topdir `pwd`/../rpmbuild" --define "extbuilddir ${PROJECT_SOURCE_DIR}/stage" `pwd`/../rpmbuild/SPECS/glite-wms-purger.spec
+  )
 
 install(FILES
         LICENSE
-        DESTINATION ${PREFIX}/share/doc/glite-wms-purger-${PVER}/
+        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-purger-${PVER}/
 )
+add_definitions( ${CLASSAD_CFLAGS})
 
 add_subdirectory(src)
 add_subdirectory(config)
