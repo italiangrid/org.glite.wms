@@ -28,14 +28,16 @@ add_custom_target(GENCONF ALL DEPENDS ${PROJECT_SOURCE_DIR}/src/configuration/Co
 				      ${PROJECT_SOURCE_DIR}/src/configuration/WMCConfiguration.h 
 				      ${PROJECT_SOURCE_DIR}/src/configuration/WMConfiguration.h 
 				      ${PROJECT_SOURCE_DIR}/src/configuration/WMPConfiguration.h)
+				      
+#SET_SOURCE_FILES_PROPERTIES(${PROJECT_SOURCE_DIR}/src/configuration/CommonConfiguration.h PROPERTIES GENERATED 1)
 
+link_directories(${PREFIX}/usr/${LIBDIR})
 
-link_directories(${PREFIX}/${LIBDIR})
 
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/interface
-                    ${PREFIX}/include
+                    ${PREFIX}/usr/include
                     ${WMSUTILS_CLASSADS_ALT_INCLUDE_DIRS}
                     ${WMSUTILS_CLASSADS_INCLUDE_DIRS}
 		    ${PROJECT_SOURCE_DIR}/interface/glite/wms/common
@@ -59,6 +61,9 @@ add_custom_target(CONF DEPENDS
   WMPConfiguration.cpp
 )
 
+add_dependencies( CONF GENCONF )
+#ADD_DEPENDENCIES(CommonConfiguration.cpp generate_CommonConfiguration.h)
+
 
 add_library(glite_wms_conf SHARED 
   CommonConfiguration.cpp
@@ -76,42 +81,19 @@ add_library(glite_wms_conf SHARED
   WMConfiguration.cpp
   WMPConfiguration.cpp)
 
-
+add_dependencies( glite_wms_conf GENCONF )
 
 set_target_properties(glite_wms_conf PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
 
 
 install(TARGETS glite_wms_conf 
-        LIBRARY DESTINATION ${PREFIX}/${LIBDIR})
+        LIBRARY DESTINATION ${PREFIX}/usr/${LIBDIR})
 
 
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION
-	${PREFIX}/include/glite/wms/common/configuration
+	${PREFIX}/usr/include/glite/wms/common/configuration
         FILES_MATCHING PATTERN "*.h"
         PATTERN "CMakeFiles" EXCLUDE)
-
-
-
-
-#if(DEFINED INSTALL_BUILD_DEV)
-#  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-#    DESTINATION
-#    ${INSTALL_BUILD_DEV}/include/glite/wms/common/configuration
-#    FILES_MATCHING PATTERN "*.h"
-#    PATTERN "CMakeFiles" EXCLUDE)
-#  install(TARGETS glite_wms_conf 
-#    LIBRARY DESTINATION ${INSTALL_BUILD_DEV}/${LIBDIR})
-#endif(DEFINED INSTALL_BUILD_DEV)
-
-
-
-
-
-#install(TARGETS glite_wms_conf 
-#  LIBRARY 
-#  DESTINATION 
-#  ${INSTALL_BUILD}/${LIBDIR}
-#  )

@@ -1,64 +1,58 @@
-project(wms-configuration CXX)
-cmake_minimum_required(VERSION 2.6)
+message("*\n*\n*\n* Configuring build for org.glite.wms.configuration component\n*\n*\n*")
 
+ADD_CUSTOM_TARGET (RPM)
 
-if(NOT DEFINED PVER)
-    message(WARNING " Undefined version number, selected 0.0.0. Please use
--DPVER=<version> to customize")
-    set(PVER "0.0.0")
-endif(NOT DEFINED PVER)
+set(PROJECT_SOURCE_DIR "${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.configuration")
 
-if(NOT DEFINED PREFIX)
-    message(WARNING " Undefined prefix, selected /usr/local")
-    set(PREFIX "/usr/local")
-endif(NOT DEFINED PREFIX)
+set(PREFIX "${PROJECT_SOURCE_DIR}/stage")
 
-if(NOT DEFINED PKG_INSTALL_PREFIX)
-    set(PKG_INSTALL_PREFIX ${PREFIX})
-endif(NOT DEFINED PKG_INSTALL_PREFIX)
+set(SYSCONFIGDIR "${PREFIX}/etc/")
 
-if( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" )
-else( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-endif( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.configuration VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$2}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE PVER
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+		
+#message(WARNING " RES=${RES} PVER=${PVER} ERR=${ERR}")
+	
 
-IF (UNIX)
-  # since it's unix-specific we will use bash
-  ADD_CUSTOM_TARGET (distclean @echo cleaning ${FASTLIB_SOURCE_DIR}
-for source distribution)
-        
-  ADD_CUSTOM_COMMAND(TARGET distclean
-    COMMAND make ARGS clean
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname CMakeCache.txt
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname cmake_install.cmake
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname Makefile -delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -depth -type d -iname
-CMakeFiles -exec rm -rf {} \;
-    COMMAND rm ARGS -rf bin lib include
-    VERBATIM )
-ENDIF(UNIX)
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.configuration VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$3}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE AGE
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-
-set(BINDIR "bin")
-
-set(SBINDIR "sbin")
-
-set(LIBEXEC "libexec")
+#message(WARNING " org.glite.wms.configuration ${PVER}-${AGE}")
 
 install(FILES
-  LICENSE
-  DESTINATION ${PREFIX}/share/doc/glite-wms-configuration-${PVER}
+        LICENSE
+        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-configuration-${PVER}/
 )
+
+ADD_CUSTOM_COMMAND(TARGET RPM   
+    COMMAND make ARGS install
+    COMMAND rm ARGS -f /tmp/glite-wms-configuration-${PVER}-${AGE}.${OS}.tar.gz
+    COMMAND ${PROJECT_SOURCE_DIR}/maketarball.sh ARGS ${PVER} ${AGE} ${OS} "${PROJECT_SOURCE_DIR}"
+${PROJECT_SOURCE_DIR}
+    COMMAND mkdir ARGS -p ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SRPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/BUILD ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/RPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES
+    COMMAND mv ARGS /tmp/glite-wms-configuration-${PVER}-${AGE}.${OS}.tar.gz ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES/
+    COMMAND sed ARGS -e 's/%{extversion}/${PVER}/g' -e 's/%{extage}/${AGE}/g' -e 's/%{extdist}/${OS}/g' -e 's/%{extcdate}/${DATE}/g' -e 's/%{extclog}/Bug fixing/g' < project/glite-wms-configuration.spec > ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS/glite-wms-configuration.spec
+    COMMAND rpmbuild ARGS -ba --define "_topdir `pwd`/../rpmbuild" --define "extbuilddir ${PROJECT_SOURCE_DIR}/stage" `pwd`/../rpmbuild/SPECS/glite-wms-configuration.spec
+  )
 
 add_subdirectory(config)

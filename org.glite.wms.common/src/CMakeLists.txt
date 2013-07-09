@@ -1,6 +1,7 @@
 add_subdirectory(configuration)
-add_subdirectory(pkgconfig)
+#add_subdirectory(pkgconfig)
 add_subdirectory(logger)
 add_subdirectory(process)
 add_subdirectory(utilities)
 add_subdirectory(programs)
+add_subdirectory(pkgconfig)

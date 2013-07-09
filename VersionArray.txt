@@ -1,0 +1,19 @@
+org.glite.testsuites.ctb
+org.glite.wms
+org.glite.wms.brokerinfo-access
+org.glite.wms.common			9.8.7 6
+org.glite.wms.configuration		3.5.0 4
+org.glite.wms.core
+org.glite.wms.ice
+org.glite.wms.interface
+org.glite.wms.jobsubmission
+org.glite.wms.nagios
+org.glite.wms.purger
+org.glite.wms-ui
+org.glite.wms-ui.api-cpp
+org.glite.wms-ui.api-java
+org.glite.wms-ui.api-python
+org.glite.wms-ui.commands
+org.glite.wms.wmproxy-api-cpp
+org.glite.wms.wmproxy-api-java
+org.glite.wms.wmproxy-api-python
