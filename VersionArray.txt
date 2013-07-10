@@ -3,7 +3,7 @@ org.glite.wms
 org.glite.wms.brokerinfo-access
 org.glite.wms.common			3.5.0 3
 org.glite.wms.configuration		3.5.0 4
-org.glite.wms.core
+org.glite.wms.core			3.5.0 7
 org.glite.wms.ice
 org.glite.wms.interface
 org.glite.wms.jobsubmission
