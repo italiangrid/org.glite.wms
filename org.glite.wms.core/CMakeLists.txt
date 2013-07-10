@@ -58,7 +58,7 @@ install(FILES
         DESTINATION ${PREFIX}/usr/share/doc/glite-wms-core-${PVER}/
 )
 
-message(WARNING "${PROJECT_SOURCE_DIR}/maketarball.sh ARGS ${PVER} ${AGE} ${OS} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}")
+#message(WARNING "${PROJECT_SOURCE_DIR}/maketarball.sh ARGS ${PVER} ${AGE} ${OS} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}")
 
 ADD_CUSTOM_COMMAND(TARGET RPM   
     COMMAND make ARGS install

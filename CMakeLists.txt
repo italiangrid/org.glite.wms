@@ -69,17 +69,17 @@ IF (UNIX)
   # since it's unix-specific we will use bash
   ADD_CUSTOM_TARGET (distclean @echo cleaning ${FASTLIB_SOURCE_DIR}
 for source distribution)
-  ADD_CUSTOM_TARGET (configuration @echo building only configuration)
-  ADD_CUSTOM_TARGET (common @echo building only common)
-  ADD_CUSTOM_TARGET (purger @echo building only purger)
-  ADD_CUSTOM_TARGET (core @echo building only core)
-  ADD_CUSTOM_TARGET (interface @echo building only interface)
-  ADD_CUSTOM_TARGET (jobsubmission @echo building only jobsubmission)
-  ADD_CUSTOM_TARGET (ice @echo building only ice)
-  ADD_CUSTOM_TARGET (brokerinfo @echo building only brokerinfo)
-  ADD_CUSTOM_TARGET (wmproxyapicpp @echo building only wmproxy-api-cpp)
-  ADD_CUSTOM_TARGET (wmsuiapipython @echo building only wms-ui.api-python)
-  ADD_CUSTOM_TARGET (wmsuicommands @echo building only wms-ui.commands)  
+#  ADD_CUSTOM_TARGET (configuration @echo building only configuration)
+#  ADD_CUSTOM_TARGET (common @echo building only common)
+#  ADD_CUSTOM_TARGET (purger @echo building only purger)
+#  ADD_CUSTOM_TARGET (core @echo building only core)
+#  ADD_CUSTOM_TARGET (interface @echo building only interface)
+#  ADD_CUSTOM_TARGET (jobsubmission @echo building only jobsubmission)
+#  ADD_CUSTOM_TARGET (ice @echo building only ice)
+#  ADD_CUSTOM_TARGET (brokerinfo @echo building only brokerinfo)
+#  ADD_CUSTOM_TARGET (wmproxyapicpp @echo building only wmproxy-api-cpp)
+#  ADD_CUSTOM_TARGET (wmsuiapipython @echo building only wms-ui.api-python)
+#  ADD_CUSTOM_TARGET (wmsuicommands @echo building only wms-ui.commands)  
 #  ADD_CUSTOM_TARGET (RPM @echo packaging RPMS and SRPMS)
 #  ADD_CUSTOM_TARGET (MOCK @echo trying to build in the mock environment)
 
@@ -103,20 +103,20 @@ for source distribution)
 #"extbuilddir ${PREFIX}" `pwd`/rpmbuild/SPECS/wms.spec
 #  )
   
-  ADD_CUSTOM_COMMAND(TARGET configuration 
-    COMMAND make ARGS -C org.glite.wms.configuration)
-  ADD_CUSTOM_COMMAND(TARGET common 
-    COMMAND make ARGS -C org.glite.wms.common)
-  ADD_CUSTOM_COMMAND(TARGET purger 
-    COMMAND make ARGS -C org.glite.wms.purger)
-  ADD_CUSTOM_COMMAND(TARGET core 
-    COMMAND make ARGS -C org.glite.wms.core)
-  ADD_CUSTOM_COMMAND(TARGET jobsubmission 
-    COMMAND make ARGS -C org.glite.wms.jobsubmission)
-  ADD_CUSTOM_COMMAND(TARGET interface 
-    COMMAND make ARGS -C org.glite.wms.interface)
-  ADD_CUSTOM_COMMAND(TARGET ice 
-    COMMAND make ARGS -C org.glite.wms.ice)
+#  ADD_CUSTOM_COMMAND(TARGET configuration 
+#    COMMAND make ARGS -C org.glite.wms.configuration)
+#  ADD_CUSTOM_COMMAND(TARGET common 
+#    COMMAND make ARGS -C org.glite.wms.common)
+#  ADD_CUSTOM_COMMAND(TARGET purger 
+#    COMMAND make ARGS -C org.glite.wms.purger)
+#  ADD_CUSTOM_COMMAND(TARGET core 
+#    COMMAND make ARGS -C org.glite.wms.core)
+#  ADD_CUSTOM_COMMAND(TARGET jobsubmission 
+#    COMMAND make ARGS -C org.glite.wms.jobsubmission)
+#  ADD_CUSTOM_COMMAND(TARGET interface 
+#    COMMAND make ARGS -C org.glite.wms.interface)
+#  ADD_CUSTOM_COMMAND(TARGET ice 
+#    COMMAND make ARGS -C org.glite.wms.ice)
   
   
   ADD_CUSTOM_COMMAND(TARGET distclean
