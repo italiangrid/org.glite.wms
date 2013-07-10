@@ -6,7 +6,7 @@ org.glite.wms.configuration		3.5.0 4
 org.glite.wms.core			3.5.0 7
 org.glite.wms.ice
 org.glite.wms.interface
-org.glite.wms.jobsubmission
+org.glite.wms.jobsubmission		3.5.0 3
 org.glite.wms.nagios
 org.glite.wms.purger			3.5.0 3
 org.glite.wms-ui

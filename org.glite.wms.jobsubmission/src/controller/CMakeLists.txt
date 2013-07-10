@@ -1,17 +1,21 @@
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/interface
-		    ${PREFIX}/include
+		    ${PREFIX}/usr/include
 		    ${WMSUTILS_CLASSADS_ALT_INCLUDE_DIRS}
 		    ${WMSUTILS_CLASSADS_INCLUDE_DIRS}
 		    ${PROJECT_SOURCE_DIR}/src
+		    ${MAIN_PROJECT_SOURCE_DIR}
+		    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
 		    ${WMS_COMMON_UTIL_INCLUDE_DIRS}
 		    ${WMS_COMMON_LOGGER_INCLUDE_DIRS}
 		    ${WMS_COMMON_CONF_INCLUDE_DIRS}
+		    ${CONDOR_INCLUDE_DIRS}
+		    /usr/include/condor
 		    ${PROJECT_SOURCE_DIR}/src/)
 
 link_directories(
-  ${PREFIX}/${LIBDIR}
+  ${PREFIX}/usr/${LIBDIR}
   ${CMAKE_SOURCE_DIR}/src/common
   ${CMAKE_BIN_DIR}/src/common
   ${CONDOR_LIBRARY_DIRS}
@@ -59,5 +63,5 @@ install(TARGETS
   glite_wms_jss_controller_wrapper
   LIBRARY
   DESTINATION 
-  ${PREFIX}/${LIBDIR}
+  ${PREFIX}/usr/${LIBDIR}
   )
