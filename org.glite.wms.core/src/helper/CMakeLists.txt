@@ -3,9 +3,13 @@ add_subdirectory(jobadapter)
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
 	 	    ${WMS_COMMON_UTIL_INCLUDE_DIRS}
+                    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
+                    ${MAIN_PROJECT_SOURCE_DIR}/
                     ${PROJECT_SOURCE_DIR}/interface
                     ${PROJECT_SOURCE_DIR}/src
-		    ${CMAKE_INSTALL_PREFIX}/include)
+		    ${MAIN_PROJECT_SOURCE_DIR}
+ 		    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+		    ${CMAKE_INSTALL_PREFIX}/stage/usr/include)
 
 add_custom_target(HELPER DEPENDS 
 			         Helper.cpp 
@@ -41,7 +45,7 @@ target_link_libraries(glite_wms_helper
 
 
 install(TARGETS glite_wms_helper
-        LIBRARY DESTINATION ${PREFIX}/${LIBDIR})
+        LIBRARY DESTINATION ${PREFIX}/usr/${LIBDIR})
 
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
 #        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/glite/wms/helper

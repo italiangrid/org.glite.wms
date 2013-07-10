@@ -5,8 +5,13 @@ add_subdirectory(helper)
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/interface
-		    ${PREFIX}/include
-		    ${PROJECT_SOURCE_DIR}/src
+		    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+                    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
+		    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.purger/stage/usr/include
+                    ${MAIN_PROJECT_SOURCE_DIR}/
+		    ${MAIN_PROJECT_SOURCE_DIR}
+		    ${PREFIX}/usr/include
+		    ${PROJECT_SOURCE_DIR}/src		    
 ${Boost_INCLUDE_DIRS}
 ${CARES_INCLUDE_DIRS}
 ${GSOAP_INCLUDE_DIRS}
@@ -26,13 +31,18 @@ ${WMS_COMMON_QUOTA_INCLUDE_DIRS}
 ${LB_COMMON_INCLUDE_DIRS}
 ${LB_CLIENT_INCLUDE_DIRS}
 ${LB_CLIENTPP_INCLUDE_DIRS}
-${PROXYRENEW_INCLUDE_DIRS}
+${RENEWAL_INCLUDE_DIRS}
 ${PURGER_INCLUDE_DIRS}
 ${JOBID_INCLUDE_DIRS}
 ${GLOBUS_GSSAPI_INCLUDE_DIRS}
+${LOG4CPP_INCLUDE_DIRS}
 )
 
-link_directories(${PREFIX}/${LIBDIR}
+link_directories(${PREFIX}/usr/${LIBDIR}
+${MAIN_PROJECT_SOURCE_DIR}/common/src/utilities
+${MAIN_PROJECT_SOURCE_DIR}/common/src/logger
+${MAIN_PROJECT_SOURCE_DIR}/common/src/configuration
+${MAIN_PROJECT_SOURCE_DIR}/purger/src
 ${Boost_LIBRARY_DIRS}
 ${CARES_LIBRARY_DIRS}
 ${GSOAP_LIBRARY_DIRS}
@@ -44,18 +54,14 @@ ${CLASSAD_LIBRARY_DIRS}
 ${WMSUTILS_CLASSADS_LIBRARY_DIRS}
 ${WMSUTILS_JOBMAN_EXCEPTION_LIBRARY_DIRS}
 ${JDL_API_CPP_LIBRARY_DIRS}
-${WMS_COMMON_CONF_LIBRARY_DIRS}
-${WMS_COMMON_LOGGER_LIBRARY_DIRS}
-${WMS_COMMON_PROCESS_LIBRARY_DIRS}
-${WMS_COMMON_UTIL_LIBRARY_DIRS}
-${WMS_COMMON_QUOTA_LIBRARY_DIRS}
 ${LB_COMMON_LIBRARY_DIRS}
 ${LB_CLIENT_LIBRARY_DIRS}
 ${LB_CLIENTPP_LIBRARY_DIRS}
-${PROXYRENEW_LIBRARY_DIRS}
+${RENEWAL_LIBRARY_DIRS}
 ${PURGER_LIBRARY_DIRS}
 ${JOBID_LIBRARY_DIRS}
 ${GLOBUS_GSSAPI_LIBRARY_DIRS}
+${LOG4CPP_LIBRARY_DIRS}
 )
 
 add_executable(glite-wms-query-job-state-transitions
@@ -101,7 +107,7 @@ install(TARGETS
   glite-wms-workload_manager
   glite-wms-query-job-state-transitions
   DESTINATION 
-  ${PREFIX}/${BINDIR}
+  ${PREFIX}/usr/${BINDIR}
 )
 
 target_link_libraries(glite-wms-query-job-state-transitions
@@ -110,6 +116,9 @@ glite_wms_ism_ii_purchaser
 glite_wms_helper_broker_ism
 glite_wms_helper_jobadapter
 glite_wms_helper
+glite_wms_conf
+glite_wms_util
+glite_wms_logger
 ${Boost_LIBRARIES}
 ${CARES_LIBRARIES}
 ${GSOAP_LIBRARIES}
@@ -121,18 +130,14 @@ ${CLASSAD_LIBRARIES}
 ${WMSUTILS_CLASSADS_LIBRARIES}
 ${WMSUTILS_JOBMAN_EXCEPTION_LIBRARIES}
 ${JDL_API_CPP_LIBRARIES}
-${WMS_COMMON_CONF_LIBRARIES}
-${WMS_COMMON_LOGGER_LIBRARIES}
-${WMS_COMMON_PROCESS_LIBRARIES}
-${WMS_COMMON_UTIL_LIBRARIES}
-${WMS_COMMON_QUOTA_LIBRARIES}
 ${LB_COMMON_LIBRARIES}
 ${LB_CLIENT_LIBRARIES}
 ${LB_CLIENTPP_LIBRARIES}
-${PROXYRENEW_LIBRARIES}
+${RENEWAL_LIBRARIES}
 ${PURGER_LIBRARIES}
 ${JOBID_LIBRARIES}
 ${GLOBUS_GSSAPI_LIBRARIES}
+${LOG4CPP_LIBRARIES}
 )
 
 
@@ -142,6 +147,10 @@ glite_wms_ism_ii_purchaser
 glite_wms_helper_broker_ism
 glite_wms_helper_jobadapter
 glite_wms_helper
+glite_wms_conf
+glite_wms_util
+glite_wms_logger
+glite_wms_purger
 expat
 ${Boost_LIBRARIES}
 ${CARES_LIBRARIES}
@@ -154,27 +163,29 @@ ${CLASSAD_LIBRARIES}
 ${WMSUTILS_CLASSADS_LIBRARIES}
 ${WMSUTILS_JOBMAN_EXCEPTION_LIBRARIES}
 ${JDL_API_CPP_LIBRARIES}
-${WMS_COMMON_CONF_LIBRARIES}
-${WMS_COMMON_LOGGER_LIBRARIES}
-${WMS_COMMON_PROCESS_LIBRARIES}
-${WMS_COMMON_UTIL_LIBRARIES}
-${WMS_COMMON_QUOTA_LIBRARIES}
 ${LB_COMMON_LIBRARIES}
 ${LB_CLIENT_LIBRARIES}
 ${LB_CLIENTPP_LIBRARIES}
-${PROXYRENEW_LIBRARIES}
+${RENEWAL_LIBRARIES}
 ${PURGER_LIBRARIES}
 ${JOBID_LIBRARIES}
 ${GLOBUS_GSSAPI_LIBRARIES}
+${LOG4CPP_LIBRARIES}
 )
 
+install(FILES
+  glite-wms-stats.py
+  DESTINATION ${PREFIX}/usr/${BINDIR}
+  RENAME glite-wms-stats
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  )
 
-add_custom_target(SYMLINKS ALL DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/glite-wms-stats.py
-  COMMAND
-  mkdir -p ${PREFIX}/${BINDIR}
-  COMMAND
-  cp -f ${CMAKE_CURRENT_SOURCE_DIR}/glite-wms-stats.py ${PREFIX}/${BINDIR}/glite-wms-stats
-  COMMAND
-  chmod 755 ${PREFIX}/${BINDIR}/glite-wms-stats
-)
+#add_custom_target(SYMLINKS ALL DEPENDS
+#  ${CMAKE_CURRENT_SOURCE_DIR}/glite-wms-stats.py
+#  COMMAND
+#  mkdir -p ${PREFIX}/usr/${BINDIR}
+#  COMMAND
+#  cp -f ${CMAKE_CURRENT_SOURCE_DIR}/glite-wms-stats.py ${PREFIX}/usr/${BINDIR}/glite-wms-stats
+#  COMMAND
+#  chmod 755 ${PREFIX}/usr/${BINDIR}/glite-wms-stats
+#)

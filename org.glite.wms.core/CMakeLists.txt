@@ -1,139 +1,74 @@
-project(wms-core CXX)
-cmake_minimum_required(VERSION 2.6)
+message("*\n*\n*\n* Configuring build for org.glite.wms.core component\n*\n*\n*")
 
+set(PROJECT_SOURCE_DIR "${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.core")
 
-if(NOT DEFINED PVER)
-    message(WARNING " Undefined version number, selected 0.0.0. Please use
--DPVER=<version> to customize")
-    set(PVER "0.0.0")
-endif(NOT DEFINED PVER)
+set(PREFIX "${PROJECT_SOURCE_DIR}/stage")
 
-if(NOT DEFINED PREFIX)
-    message(WARNING " Undefined prefix, selected /usr/local")
-    set(PREFIX "/usr/local")
-endif(NOT DEFINED PREFIX)
+set(SYSCONFIGDIR "${PREFIX}/etc/")
 
-if(NOT DEFINED PKG_INSTALL_PREFIX)
-    set(PKG_INSTALL_PREFIX ${PREFIX})
-endif(NOT DEFINED PKG_INSTALL_PREFIX)
+set(PKG_CONFIG_PATH "${PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/lib64/pkgconfig:${PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/lib/pkgconfig:")
 
-if( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" )
-else( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-    if( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib64")
-    else( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-        set(LIBDIR "lib")
-    endif( IS_DIRECTORY "/usr/lib64" AND NOT IS_SYMLINK "/usr/lib64" )
-endif( ${CMAKE_VERSION} VERSION_LESS "2.8.2" )
-
-IF (UNIX)
-  # since it's unix-specific we will use bash
-  ADD_CUSTOM_TARGET (distclean @echo cleaning ${FASTLIB_SOURCE_DIR}
-for source distribution)
-	
-  ADD_CUSTOM_COMMAND(TARGET distclean
-    COMMAND make ARGS clean
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname CMakeCache.txt
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname cmake_install.cmake
--delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -iname Makefile -delete
-    COMMAND find ARGS ${FASTLIB_SOURCE_DIR} -depth -type d -iname
-CMakeFiles -exec rm -rf {} \;
-    COMMAND rm ARGS -rf bin lib include
-    VERBATIM )
-ENDIF(UNIX)
-
-set(BINDIR "bin")
-
-set(SBINDIR "sbin")
-
-set(LIBEXEC "libexec")
-
-
-
-set(ENV{PKG_CONFIG_PATH}
-"${PREFIX}/lib/pkgconfig/:${PREFIX}/lib64/pkgconfig/:$ENV{PKG_CONFIG_PATH}")
-
-if(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
-  set(ENV{PKG_CONFIG_PATH}
-"${ADDITIONAL_PKG_CONFIG_PATH}:$ENV{PKG_CONFIG_PATH}")
-endif(DEFINED ADDITIONAL_PKG_CONFIG_PATH)
-
-set(BOOST_ROOT "/usr/lib64:/usr/lib")
-
-find_package(PkgConfig REQUIRED)
-find_package(Perl REQUIRED)
-find_program(Make REQUIRED)
-pkg_check_modules(CARES REQUIRED libcares)
-pkg_check_modules(GSOAP REQUIRED gsoap)
-pkg_check_modules(GSOAP_PLUSPLUS REQUIRED gsoap++)
-pkg_check_modules(GSOAP_SSL REQUIRED gsoapssl)
-pkg_check_modules(GSOAP_SSL_PLUSPLUS REQUIRED gsoapssl++)
-pkg_check_modules(GSOAP_PLUGIN REQUIRED glite-security-gsoap-plugin++)
-pkg_check_modules(CLASSAD REQUIRED emi-classad-ns)
-pkg_check_modules(WMSUTILS_CLASSADS REQUIRED classad-utils)
-pkg_check_modules(WMSUTILS_JOBMAN_EXCEPTION REQUIRED jobman-exception)
-pkg_check_modules(JDL_API_CPP REQUIRED jdl-api-cpp)
-pkg_check_modules(WMS_COMMON_CONF REQUIRED wms-common-conf)
-pkg_check_modules(WMS_COMMON_LOGGER REQUIRED wms-common-logger)
-pkg_check_modules(WMS_COMMON_PROCESS REQUIRED wms-common-process)
-pkg_check_modules(WMS_COMMON_UTIL REQUIRED wms-common-util)
-pkg_check_modules(WMS_COMMON_II REQUIRED wms-common-ii)
-pkg_check_modules(WMS_COMMON_QUOTA REQUIRED wms-common-quota)
-pkg_check_modules(LB_COMMON REQUIRED emi-lb-common)
-pkg_check_modules(LB_CLIENT REQUIRED emi-lb-client)
-pkg_check_modules(LB_CLIENTPP REQUIRED emi-lb-clientpp)
-pkg_check_modules(PROXYRENEW REQUIRED emi-proxyrenew)
-pkg_check_modules(PURGER REQUIRED wms-purger)
-pkg_check_modules(JOBID REQUIRED emi-jobid)
-pkg_check_modules(GLOBUS_GSSAPI REQUIRED globus-gssapi-gsi)
-find_package( Boost COMPONENTS filesystem thread regex program_options REQUIRED )
+ADD_CUSTOM_TARGET (RPM)
 
 if(EXISTS "/etc/debian_version")
   set(ONDEB "1")
 endif(EXISTS "/etc/debian_version")
 
-
-
 if(EXISTS "/etc/redhat-release")
   set(ONRH "1")
 endif(EXISTS "/etc/redhat-release")
 
-
-add_definitions(-DHAVE_STRINGSTREAM=1  -pipe -Wall ${CLASSAD_CFLAGS}
--DLDAP_DEPRECATED)
+add_definitions(${CLASSAD_CFLAGS} -DLDAP_DEPRECATED)
 
 if(DEFINED ONDEB)
   add_definitions( -DGSOAP_279_TRICK )
 endif(DEFINED ONDEB)
 
-if(DEFINED BUILD_DBG)
-  
-  add_definitions( -g -O0 )
-  
-  
-else(DEFINED BUILD_DBG)
-  
-  add_definitions( -O2 )
-  
-endif(DEFINED BUILD_DBG)
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.core VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$2}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE PVER
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+		
+#message(WARNING " RES=${RES} PVER=${PVER} ERR=${ERR}")
+	
+
+EXECUTE_PROCESS(COMMAND
+		/bin/grep
+		org.glite.wms.core VersionArray.txt
+		COMMAND
+		/bin/awk
+		"{print \$3}"
+		WORKING_DIRECTORY ${MAIN_PROJECT_SOURCE_DIR}
+		TIMEOUT 5
+		RESULT_VARIABLE RES
+                OUTPUT_VARIABLE AGE
+                ERROR_VARIABLE ERR 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 install(FILES
         LICENSE
-        DESTINATION ${PREFIX}/share/doc/glite-wms-core-${PVER}/
+        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-core-${PVER}/
 )
 
-if(NOT DEFINED SYSCONFIGDIR)
-    set(SYSCONFIGDIR "${PREFIX}/../etc/")
-endif(NOT DEFINED SYSCONFIGDIR)
-
-
+ADD_CUSTOM_COMMAND(TARGET RPM   
+    COMMAND make ARGS install
+    COMMAND rm ARGS -f /tmp/glite-wms-core-${PVER}-${AGE}.${OS}.tar.gz
+    COMMAND ${PROJECT_SOURCE_DIR}/maketarball.sh ARGS ${PVER} ${AGE} ${OS} "${PROJECT_SOURCE_DIR}"
+${PROJECT_SOURCE_DIR}
+    COMMAND mkdir ARGS -p ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SRPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/BUILD ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/RPMS ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES
+    COMMAND mv ARGS /tmp/glite-wms-core-${PVER}-${AGE}.${OS}.tar.gz ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES/
+    COMMAND sed ARGS -e 's/%{extversion}/${PVER}/g' -e 's/%{extage}/${AGE}/g' -e 's/%{extdist}/${OS}/g' -e 's/%{extcdate}/${DATE}/g' -e 's/%{extclog}/Bug fixing/g' < project/glite-wms-core.spec > ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS/glite-wms-core.spec
+    COMMAND rpmbuild ARGS -ba --define "_topdir `pwd`/../rpmbuild" --define "extbuilddir ${PROJECT_SOURCE_DIR}/stage" `pwd`/../rpmbuild/SPECS/glite-wms-core.spec
+  )
+  
 add_subdirectory(src)
 add_subdirectory(interface)
 add_subdirectory(doc)
