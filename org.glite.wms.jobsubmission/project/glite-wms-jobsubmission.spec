@@ -58,7 +58,7 @@ sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmon
 mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-logmonitor.pc
 sed 's|^prefix=.*|prefix=/usr|g' %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc > %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc.new
 mv %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc.new %{buildroot}%{_libdir}/pkgconfig/wms-jss-common.pc
-rm %{buildroot}%{_libdir}/*.la
+rm -f %{buildroot}%{_libdir}/*.la
 chrpath --delete %{buildroot}%{_libdir}/libglite_wms_jss_*.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/glite-wms-log_monitor
 chrpath --delete %{buildroot}/usr/libexec/glite-wms-lm-job_status

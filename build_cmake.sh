@@ -1,5 +1,6 @@
 #!/bin/bash
-cmake . -DOS=$1
+OS=`uname -a | awk '{print $2}' | awk -F"-" '{print $1}'`
+cmake . -DOS=$OS
 make -C org.glite.wms.configuration install
 make -C org.glite.wms.common install
 make -C org.glite.wms.purger install
