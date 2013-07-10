@@ -2,8 +2,8 @@
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/interface
 		    ${MAIN_PROJECT_SOURCE_DIR}
-		    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
-		    ${MAIN_PROJECT_SOURCE_DIR}/purger/src
+		    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
+		    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.purger/stage/usr/include
 		    ${PREFIX}/usr/include
 		    ${WMSUTILS_CLASSADS_ALT_INCLUDE_DIRS}
 		    ${WMSUTILS_CLASSADS_INCLUDE_DIRS}
