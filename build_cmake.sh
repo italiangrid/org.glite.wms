@@ -4,4 +4,5 @@ make -C org.glite.wms.configuration install
 make -C org.glite.wms.common install
 make -C org.glite.wms.purger install
 make -C org.glite.wms.core install
+make -C org.glite.wms.jobsubmission install
 make RPM
