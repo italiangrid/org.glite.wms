@@ -49,7 +49,7 @@ find_package(Perl REQUIRED)
 find_program(Make REQUIRED)
 find_program(Python REQUIRED)
 
-pkg_check_modules(GRIDSITE_GLOBUS REQUIRED gridsite-globus)
+#pkg_check_modules(GRIDSITE_GLOBUS REQUIRED gridsite-globus)
 pkg_check_modules(GRIDSITE_OPENSSL REQUIRED gridsite-openssl)
 pkg_check_modules(JDL_API_CPP REQUIRED jdl-api-cpp)
 pkg_check_modules(CLASSAD REQUIRED emi-classad-ns)

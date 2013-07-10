@@ -58,7 +58,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Perl REQUIRED)
 find_program(Make REQUIRED)
 
-pkg_check_modules(GRIDSITE_GLOBUS REQUIRED gridsite-globus)
+#pkg_check_modules(GRIDSITE_GLOBUS REQUIRED gridsite-globus)
 pkg_check_modules(GRIDSITE_OPENSSL REQUIRED gridsite-openssl)
 pkg_check_modules(GSOAP REQUIRED gsoap)
 pkg_check_modules(GSOAP_PLUSPLUS REQUIRED gsoap++)
