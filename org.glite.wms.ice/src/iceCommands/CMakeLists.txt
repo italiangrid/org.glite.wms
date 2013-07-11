@@ -1,40 +1,41 @@
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/src
+                    ${MAIN_PROJECT_SOURCE_DIR}
+                    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+                    ${MAIN_PROJECT_SOURCE_DIR}/purger/src
 		    ${WMS_COMMON_CONF_INCLUDE_DIRS}
 		    ${Boost_INCLUDE_DIRS}
 		    /usr/include)
 
 add_custom_target(ICECOMMANDS 
   DEPENDS 
-  iceCommandSubmit.cpp
-  iceCommandCancel.cpp
-  iceCommandFactory.cpp
-  iceCommandStatusPoller.cpp
+  IceCommandSubmit.cpp
+  IceCommandCancel.cpp
+  IceCommandStatusPoller.cpp
   Request_source_purger.cpp
-  iceCommandDelegationRenewal.cpp
-  iceCommandEventQuery.cpp
-  iceCommandLBLogging.cpp
-  iceCommandReschedule.cpp
+  IceCommandDelegationRenewal.cpp
+  IceCommandEventQuery.cpp
+  IceCommandLBLogging.cpp
+  IceCommandReschedule.cpp
 )
 
-add_library(glite_wms_iceCommands
+add_library(glite_wms_ice_commands
   SHARED 
-  iceCommandSubmit.cpp
-  iceCommandCancel.cpp
-  iceCommandFactory.cpp
-  iceCommandStatusPoller.cpp
+  IceCommandSubmit.cpp
+  IceCommandCancel.cpp
+  IceCommandStatusPoller.cpp
   Request_source_purger.cpp
-  iceCommandDelegationRenewal.cpp
-  iceCommandEventQuery.cpp
-  iceCommandLBLogging.cpp
-  iceCommandReschedule.cpp
+  IceCommandDelegationRenewal.cpp
+  IceCommandEventQuery.cpp
+  IceCommandLBLogging.cpp
+  IceCommandReschedule.cpp
   )
 
-set_target_properties(glite_wms_iceCommands PROPERTIES VERSION 0.0.0 SOVERSION 0)
+set_target_properties(glite_wms_ice_commands PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
-install(TARGETS glite_wms_iceCommands
+install(TARGETS glite_wms_ice_commands
   LIBRARY 
   DESTINATION 
-  ${PREFIX}/${LIBDIR}
+  ${PREFIX}/usr/${LIBDIR}
   )

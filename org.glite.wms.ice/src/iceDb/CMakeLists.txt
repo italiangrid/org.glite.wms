@@ -1,14 +1,13 @@
-add_subdirectory( sqlite)
+add_subdirectory(sqlite)
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/src
-		    ${PROJECT_SOURCE_DIR}/src/iceDb/sqlite
-		    #${VOMS_INCLUDE_DIRS}
+		    ${PROJECT_SOURCE_DIR}/src/db/sqlite
+                    ${MAIN_PROJECT_SOURCE_DIR}
+                    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+                    ${MAIN_PROJECT_SOURCE_DIR}/purger/src
 		    ${WMS_COMMON_CONF_INCLUDE_DIRS}
-		    #${LOG4CPP_INCLUDE_DIRS}
-		    #${CLASSAD_INCLUDE_DIRS}
 		    ${Boost_INCLUDE_DIRS}
-		    
 		    /usr/include)
 
 add_custom_target(ICEDB
@@ -55,16 +54,19 @@ add_custom_target(ICEDB
 				GetAllDN.cpp 
                                 RemoveJobsByDbID.cpp 
                                 InsertStat.cpp 
+				InsertStartedJob.cpp
                                 GetStats.cpp 
                                 GetJobsByDN.cpp 
                                 GetJobsByDNMyProxy.cpp 
                                 UpdateProxyCounterByDN.cpp 
                                 RemoveJobByUserDN.cpp 
                                 UpdateJob.cpp
+				GetStartedJobs.cpp
+				PurgeStartedJob.cpp
 
 )
 
-add_library( glite_wms_iceDb
+add_library( glite_wms_ice_db
   SHARED
     Transaction.cpp 
                                 GetCEUrl.cpp 
@@ -108,18 +110,21 @@ add_library( glite_wms_iceDb
 				GetAllDN.cpp 
                                 RemoveJobsByDbID.cpp 
                                 InsertStat.cpp 
+				InsertStartedJob.cpp
                                 GetStats.cpp 
                                 GetJobsByDN.cpp 
                                 GetJobsByDNMyProxy.cpp 
                                 UpdateProxyCounterByDN.cpp 
                                 RemoveJobByUserDN.cpp 
                                 UpdateJob.cpp  
+				GetStartedJobs.cpp
+				PurgeStartedJob.cpp
   )
 
-set_target_properties( glite_wms_iceDb PROPERTIES VERSION 0.0.0 SOVERSION 0)
+set_target_properties( glite_wms_ice_db PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
-install(TARGETS glite_wms_iceDb
+install(TARGETS glite_wms_ice_db
   LIBRARY 
   DESTINATION 
-  ${PREFIX}/${LIBDIR}
+  ${PREFIX}/usr/${LIBDIR}
   )
