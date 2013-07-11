@@ -5,7 +5,7 @@ include_directories(
   ${WMS_COMMON_CONF_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/src
   ${MAIN_PROJECT_SOURCE_DIR}
-  ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+  ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
   ${WMSUTILS_JOBMAN_EXCEPTION_INCLUDE_DIRS}
   ${JDL_API_CPP_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}

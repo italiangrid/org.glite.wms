@@ -5,7 +5,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/src/server
   ${PROJECT_SOURCE_DIR}/src/server/autogen
   ${MAIN_PROJECT_SOURCE_DIR}
-  ${MAIN_PROJECT_SOURCE_DIR}/common/interface
+  ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
   ${WMSUTILS_JOBMAN_EXCEPTION_INCLUDE_DIRS}
   ${WMSUTILS_CLASSADS_INCLUDE_DIRS}
   ${JDL_API_CPP_INCLUDE_DIRS}
