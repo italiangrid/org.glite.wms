@@ -1,8 +1,8 @@
-add_subdirectory(commands)
-add_subdirectory(utils)
-add_subdirectory(threads)
-add_subdirectory(db)
-add_subdirectory(main)
+add_subdirectory(iceCommands)
+add_subdirectory(iceUtils)
+add_subdirectory(iceThreads)
+add_subdirectory(iceDb)
+add_subdirectory(ice)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}/src
