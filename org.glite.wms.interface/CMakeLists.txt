@@ -70,9 +70,14 @@ EXECUTE_PROCESS(COMMAND
                 ERROR_VARIABLE ERR 
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+#install(FILES
+#        LICENSE
+#        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-interface-${PVER}/
+#)
+
 install(FILES
         LICENSE
-        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-interface-${PVER}/
+        DESTINATION ${PREFIX}/usr/share/doc/glite-wms-wmproxy-${PVER}/
 )
 
 ADD_CUSTOM_COMMAND(TARGET RPM   
