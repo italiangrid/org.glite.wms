@@ -68,7 +68,7 @@ if test "x%{extbuilddir}" == "x--" ; then
 else
   cp -R %{extbuilddir}/* %{buildroot}
 fi
-rm %{buildroot}%{_libdir}/*.la
+rm -f %{buildroot}%{_libdir}/*.la
 strip -s %{buildroot}%{_libdir}/*.so.0.0.0
 strip -s %{buildroot}/usr/bin/glite_wms_wmproxy_server
 strip -s %{buildroot}/usr/libexec/glite_wms_wmproxy_dirmanager
