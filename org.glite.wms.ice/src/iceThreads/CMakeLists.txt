@@ -1,10 +1,8 @@
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/src
-		    #${VOMS_INCLUDE_DIRS}
 		    ${WMS_COMMON_CONF_INCLUDE_DIRS}
-		    #${LOG4CPP_INCLUDE_DIRS}
-		    #${CLASSAD_INCLUDE_DIRS}
+		    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
 		    ${Boost_INCLUDE_DIRS}
 		    
 		    /usr/include)
