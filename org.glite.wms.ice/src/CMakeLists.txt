@@ -409,6 +409,6 @@ install(TARGETS
   queryDb
   queryStats
   DESTINATION 
-  ${PREFIX}/${BINDIR}
+  ${PREFIX}/usr/${BINDIR}
   )
 
