@@ -1,7 +1,7 @@
 #!/bin/sh
-\rm -f /tmp/glite-wms-interface-$1-$2.$3.tar.gz
+\rm -f /tmp/glite-wms-ice-$1-$2.$3.tar.gz
 
-tar czvf /tmp/glite-wms-interface-$1-$2.$3.tar.gz \
+tar czvf /tmp/glite-wms-ice-$1-$2.$3.tar.gz \
             --exclude CMakeCache.txt \
             --exclude cmake_install.cmake \
             --exclude "*$4*" \
