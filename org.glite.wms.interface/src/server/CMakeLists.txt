@@ -59,7 +59,7 @@ link_directories(${PREFIX}/usr/${LIBDIR}
   )
 
 add_executable(glite_wms_wmproxy_server
-  autogen/wm.h
+#  autogen/wm.h
   autogen/soapC.cpp
   autogen/soapServer.cpp
   autogen/soapClient.cpp
