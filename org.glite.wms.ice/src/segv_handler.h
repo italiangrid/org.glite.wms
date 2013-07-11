@@ -17,7 +17,7 @@
  * Copyright (C) 2005 - 2009 Jaco Kroon
  */
 
-#include "config.h"
+//#include "config.h"
 
 #ifdef RUN_ON_LINUX
 #ifndef _GNU_SOURCE

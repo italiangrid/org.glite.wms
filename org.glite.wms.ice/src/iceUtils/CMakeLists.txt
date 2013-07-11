@@ -1,11 +1,10 @@
 
 include_directories(${CLASSAD_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/src
-                    ${MAIN_PROJECT_SOURCE_DIR}
-                    ${MAIN_PROJECT_SOURCE_DIR}/common/interface
-                    ${MAIN_PROJECT_SOURCE_DIR}/purger/src
-		    ${WMS_COMMON_CONF_INCLUDE_DIRS}
+		    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.common/stage/usr/include
+	 	    ${MAIN_PROJECT_SOURCE_DIR}/org.glite.wms.purger/stage/usr/include
 		    ${Boost_INCLUDE_DIRS}
+		    
 		    /usr/include)
 
 add_custom_target(ICEUTILS
@@ -18,16 +17,16 @@ add_custom_target(ICEUTILS
   CreamProxyMethod.cpp 
   IceConfManager.cpp 
   IceLBContext.cpp 
-  IceLBEventFactory.cpp 
+  iceLBEventFactory.cpp 
   IceLBEvent.cpp 
-  IceLBLogger.cpp 
+  iceLBLogger.cpp 
   Request_jobdir.cpp 
   Request_source_jobdir.cpp 
   RequestParser.cpp 
   Url.cpp
 )
 
-add_library(glite_wms_ice_utils
+add_library(glite_wms_iceUtils
   SHARED 
   IceUtils.cpp
   CreamJob.cpp 
@@ -37,19 +36,19 @@ add_library(glite_wms_ice_utils
   CreamProxyMethod.cpp 
   IceConfManager.cpp 
   IceLBContext.cpp 
-  IceLBEventFactory.cpp 
+  iceLBEventFactory.cpp 
   IceLBEvent.cpp 
-  IceLBLogger.cpp 
+  iceLBLogger.cpp 
   Request_jobdir.cpp 
   Request_source_jobdir.cpp 
   RequestParser.cpp 
   Url.cpp
   )
 
-set_target_properties(glite_wms_ice_utils PROPERTIES VERSION 0.0.0 SOVERSION 0)
+set_target_properties(glite_wms_iceUtils PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
-install(TARGETS glite_wms_ice_utils
+install(TARGETS glite_wms_iceUtils
   LIBRARY 
   DESTINATION 
-  ${PREFIX}/usr/${LIBDIR}
+  ${PREFIX}/${LIBDIR}
   )
