@@ -497,8 +497,12 @@ argus_authZ(
 // // proxies, you have to set the cacert to the proxy itself
    pep_rc = pep_setoption(pep, PEP_OPTION_ENDPOINT_SERVER_CERT, userproxypath.c_str());
    if (pep_rc != PEP_OK) {
-     edglog(error) << "failed to set client cert " << userproxypath << '('
-                   << std::string(pep_strerror(pep_rc)) << ')' << std::endl;
+     edglog(error) << "failed to set proxy " << userproxypath
+                   << " as server cert ("
+                   << std::string(pep_strerror(pep_rc)) << ')' 
+		   << std::endl;
+//     edglog(error) << "failed to set client cert " << userproxypath << '('
+//                   << std::string(pep_strerror(pep_rc)) << ')' << std::endl;
      return error;
    } 
    //int timeout = 10;
