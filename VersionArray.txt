@@ -7,7 +7,7 @@ org.glite.wms.core			3.5.0 7
 org.glite.wms.ice			3.5.0 4
 org.glite.wms.interface			3.5.0 9
 org.glite.wms.jobsubmission		3.5.0 3
-org.glite.wms.nagios
+org.glite.wms.nagios			3.5.0 3
 org.glite.wms.purger			3.5.0 3
 org.glite.wms-ui
 org.glite.wms-ui.api-cpp
