@@ -57,6 +57,6 @@ target_link_libraries(glite_wms_wmproxy_api_cpp
 set_target_properties(glite_wms_wmproxy_api_cpp PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
 install(TARGETS glite_wms_wmproxy_api_cpp
-  LIBRARY DESTINATION ${PREFIX}/${LIBDIR} )
+  LIBRARY DESTINATION ${PREFIX}/usr/${LIBDIR} )
 
 add_subdirectory(pkgconfig)

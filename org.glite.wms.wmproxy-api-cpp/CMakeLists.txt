@@ -59,6 +59,8 @@ install(FILES
         DESTINATION ${PREFIX}/usr/share/doc/glite-wms-wmproxy-api-cpp-${PVER}/
 )
 
+message(WARNING " ${PROJECT_SOURCE_DIR}/maketarball.sh ${PVER} ${AGE}
+${OS} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}" )
 
 ADD_CUSTOM_COMMAND(TARGET RPM   
     COMMAND make ARGS install
