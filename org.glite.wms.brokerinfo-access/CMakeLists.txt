@@ -75,7 +75,7 @@ ${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SOURCES/
     COMMAND sed ARGS -e 's/%{extversion}/${PVER}/g' -e 's/%{extage}/${AGE}/g'
 -e 's/%{extdist}/${OS}/g' -e 's/%{extcdate}/${DATE}/g' -e 's/%{extclog}/Bug
 fixing/g' < project/glite-wms-brokerinfo-access.spec >
-${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS/glite-wms-ice.spec
+${MAIN_PROJECT_SOURCE_DIR}/rpmbuild/SPECS/glite-wms-brokerinfo-access.spec
     COMMAND rpmbuild ARGS -ba --define "_topdir `pwd`/../rpmbuild" --define
 "extbuilddir ${PROJECT_SOURCE_DIR}/stage"
 `pwd`/../rpmbuild/SPECS/glite-wms-brokerinfo-access.spec
