@@ -9,4 +9,5 @@ make -C org.glite.wms.jobsubmission install
 make -C org.glite.wms.interface install
 make -C org.glite.wms.ice install
 make -C org.glite.wms.nagios nagios
+make -C org.glite.wms.brokerinfo-access install
 make RPM
