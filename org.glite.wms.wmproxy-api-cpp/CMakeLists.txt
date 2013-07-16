@@ -56,6 +56,7 @@ EXECUTE_PROCESS(COMMAND
 
 install(FILES
         LICENSE
+	CHANGES
         DESTINATION ${PREFIX}/usr/share/doc/glite-wms-wmproxy-api-cpp-${PVER}/
 )
 
