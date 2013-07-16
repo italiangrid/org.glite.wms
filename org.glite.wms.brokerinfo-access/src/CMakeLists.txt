@@ -23,7 +23,7 @@ set_target_properties(glite-brokerinfo PROPERTIES VERSION 0.0.0 SOVERSION 0)
 
 
 install(FILES glite-brokerinfo-cli
-  DESTINATION ${PREFIX}/${BINDIR} 
+  DESTINATION ${PREFIX}/usr/${BINDIR} 
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   RENAME glite-brokerinfo
   )
@@ -33,18 +33,18 @@ install( FILES
 	 BrokerInfo.h
 	 bi_result.h
 	 DESTINATION
-	 ${PREFIX}/include/glite/wms/brokerinfo-access
+	 ${PREFIX}/usr/include/glite/wms/brokerinfo-access
 )
 
 install(TARGETS 
   glite-brokerinfo
   LIBRARY
-  DESTINATION ${PREFIX}/${LIBDIR})
+  DESTINATION ${PREFIX}/usr/${LIBDIR})
 
 if(DEFINED INSTALL_BUILD_DEV)
   install(FILES BrokerInfo.h  bi_result.h
     DESTINATION
-    ${PREFIX}/include/glite/wms/brokerinfo-access
+    ${PREFIX}/usr/include/glite/wms/brokerinfo-access
     )
 endif(DEFINED INSTALL_BUILD_DEV)
 

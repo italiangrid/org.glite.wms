@@ -37,5 +37,5 @@ add_custom_target(DOXPROC ALL DEPENDS
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/autodoc/html
 	DESTINATION
-	${PREFIX}/share/doc/glite-wms-brokerinfo-access-${PVER}
+	${PREFIX}/usr/share/doc/glite-wms-brokerinfo-access-${PVER}
 )
