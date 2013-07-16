@@ -1,5 +1,5 @@
 add_custom_command(OUTPUT 
-  ${PREFIX}/share/man/man1/glite-brokerinfo.1.gz
+  ${PREFIX}/usr/share/man/man1/glite-brokerinfo.1.gz
   COMMAND mkdir -p ${PREFIX}/usr/share/man/man1
   COMMAND gzip -c ${CMAKE_CURRENT_SOURCE_DIR}/glite-brokerinfo.1 >
 ${PREFIX}/usr/share/man/man1/glite-brokerinfo.1.gz
