@@ -14,9 +14,9 @@ ADD_CUSTOM_TARGET (RPM)
 
 EXEC_PROGRAM(/bin/mkdir ARGS -p ${PREFIX}/usr)
 
-EXEC_PROGRAM(/bin/echo ARGS \"[global]\" > nagios/setup.cfg 2>/dev/null OUTPUT_VARIABLE FIRST)
+EXEC_PROGRAM(/bin/echo ARGS \"[global]\" > org.glite.wms.nagios/setup.cfg 2>/dev/null OUTPUT_VARIABLE FIRST)
 
-EXEC_PROGRAM(/bin/echo ARGS \"pkgversion=${PVER}\" >> nagios/setup.cfg 2>/dev/null OUTPUT_VARIABLE SECOND)
+EXEC_PROGRAM(/bin/echo ARGS \"pkgversion=${PVER}\" >> org.glite.wms.nagios/setup.cfg 2>/dev/null OUTPUT_VARIABLE SECOND)
 
 EXEC_PROGRAM(cd ARGS nagios; ${PYTHON_EXECUTABLE} setup.py install -O1 --prefix ${PREFIX}/usr --install-data ${PREFIX}; cd - OUTPUT_VARIABLE THIRD)
 
