@@ -1,6 +1,6 @@
 org.glite.testsuites.ctb
 org.glite.wms
-org.glite.wms.brokerinfo-access
+org.glite.wms.brokerinfo-access		3.5.0 3
 org.glite.wms.common			3.5.0 4
 org.glite.wms.configuration		3.5.0 5
 org.glite.wms.core			3.5.0 7
