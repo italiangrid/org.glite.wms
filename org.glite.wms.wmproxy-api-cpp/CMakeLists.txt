@@ -37,9 +37,6 @@ EXECUTE_PROCESS(COMMAND
                 ERROR_VARIABLE ERR 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
                 
-#message(WARNING " RES=${RES} PVER=${PVER} ERR=${ERR}")
-        
-
 EXECUTE_PROCESS(COMMAND
                 /bin/grep
                 org.glite.wms.wmproxy-api-cpp VersionArray.txt
@@ -59,9 +56,6 @@ install(FILES
 	CHANGES
         DESTINATION ${PREFIX}/usr/share/doc/glite-wms-wmproxy-api-cpp-${PVER}/
 )
-
-message(WARNING " ${PROJECT_SOURCE_DIR}/maketarball.sh ${PVER} ${AGE}
-${OS} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}" )
 
 ADD_CUSTOM_COMMAND(TARGET RPM   
     COMMAND make ARGS install
