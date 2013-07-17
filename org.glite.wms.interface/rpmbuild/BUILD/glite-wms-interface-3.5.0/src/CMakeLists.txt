@@ -1,7 +1,0 @@
-add_subdirectory(utilities)
-add_subdirectory(eventlogger)
-add_subdirectory(security)
-add_subdirectory(commands)
-add_subdirectory(dirmanager)
-add_subdirectory(server)
-add_subdirectory(scripts)
