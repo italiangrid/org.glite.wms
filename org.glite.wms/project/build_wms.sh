@@ -78,6 +78,8 @@ cmake_build()
 if [ $PACKAGER = "rpm" ]; then
    create_source_tarball ${PACKAGE_NAME} ${VERSION} ${AGE} ${PLATFORM}
 
+#echo cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
+
    cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
    make VERBOSE=1
    if [ $? -ne 0 ]; then
@@ -279,9 +281,10 @@ DEB_DEPS_LIST=( libglite-jobid-api-c-dev libglite-jobid-api-cpp-dev libglite-job
 COMPONENT=( org.glite.wms.configuration org.glite.wms.common org.glite.wms.purger org.glite.wms.core org.glite.wms.jobsubmission org.glite.wms.interface org.glite.wms.ice org.glite.wms.nagios org.glite.wms org.glite.wms.brokerinfo-access org.glite.wms.wmproxy-api-cpp org.glite.wms.wmproxy-api-python org.glite.wms-ui.api-python org.glite.wms-ui.commands )
 BUILD_TYPE=( autotools autotools autotools autotools autotools autotools autotools python metapackage cmake cmake python cmake cmake )
 PACKAGE_NAME=( glite-wms-configuration glite-wms-common glite-wms-purger glite-wms-core glite-wms-jobsubmission glite-wms-interface glite-wms-ice emi-wms-nagios emi-wms glite-wms-brokerinfo-access glite-wms-wmproxy-api-cpp glite-wms-wmproxy-api-python glite-wms-ui-api-python glite-wms-ui-commands )
-VERSION=( 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 )
+VERSION=( 3.6.0 3.6.0 3.5.0 3.5.0 3.5.0 3.6.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 3.5.0 3.5.0 )
 #AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 3 3 3 )
-AGE=( 5 4 3 7 3 9 4 3 5 3 3 3 3 4 3 3 )
+#AGE=( 1 1 3 7 3 1 4 3 5 3 3 3 3 1 3 1 )
+AGE=( 1 1 3 7 3 1 4 3 5 3 3 3 3 1 )
 START=$9
 END=${10}
 
@@ -415,6 +418,9 @@ for i in `seq $START $END`; do
 #     	  echo " "
 #	  echo "************** i=$i ${AGE[i]}=${AGE[$i]} **************"
 #	  echo ""
+#          echo " "
+#          echo "************** i=$i ${VERSION[i]}=${VERSION[$i]} **************"
+#          echo ""
      
          cmake_build ${COMPONENT[$i]} ${VERSION[$i]} ${AGE[$i]} ${PACKAGE_NAME[$i]} $STAGE $BUILD_DIR
          ;;
