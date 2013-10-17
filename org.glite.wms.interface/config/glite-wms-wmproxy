@@ -46,6 +46,12 @@ case "$1" in
     fi
     ;;
   start)
+    logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
+    for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
+    do 
+      eval "chmod 700 ${logfiles[$i]} 2>&1 1>&/dev/null"
+    done
+
     if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1; then
       echo "$wmp already running"
     else
@@ -54,7 +60,7 @@ case "$1" in
       RETVAL=$?
       if [ $RETVAL -eq 0 ]; then
         echo "ok"
-	chmod -R 700 ${WMS_LOCATION_LOG}
+	#chmod -R 700 ${WMS_LOCATION_LOG}
       else
         echo "failure"
       RETVAL=1

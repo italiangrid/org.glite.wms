@@ -102,6 +102,12 @@ check_input() # first parameter is the input, second is the input type
 
 start()
 {
+    logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
+    for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
+    do 
+      eval "chmod 700 ${logfiles[$i]} 2>&1 1>&/dev/null"
+    done
+
     conf_file=glite_wms.conf
     parse_attribute=WorkloadManager
     . ${WMS_LOCATION_LIBEXEC}/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}

@@ -39,6 +39,12 @@ ret_code=0
 start()
 {
     chmod 600 ${WMS_LOCATION_VAR}/ice/persist_dir/*.betterproxy >& /dev/null
+    logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
+    for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
+    do 
+      eval "chmod 700 ${logfiles[$i]} 2>&1 1>&/dev/null"
+    done
+    
     conf_file=glite_wms.conf
     GET_CONF=${WMS_LOCATION_BIN}/glite-wms-get-configuration
     if [ -f ${GET_CONF} ]; then

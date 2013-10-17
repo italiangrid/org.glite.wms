@@ -72,6 +72,12 @@ do_failure()
 
 start()
 {   
+    logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
+    for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
+    do 
+      eval "chmod 700 ${logfiles[$i]} 2>&1 1>&/dev/null"
+    done
+
     wm_input=`${WMS_LOCATION_BIN}/glite-wms-get-configuration WorkloadManager.input`
     if [ -z ${wm_input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - WM section"
