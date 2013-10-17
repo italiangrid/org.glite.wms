@@ -49,8 +49,13 @@ case "$1" in
     logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
     for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
     do 
-      eval "chmod 700 ${logfiles[$i]} 2>&1 1>&/dev/null"
+      eval "chmod 600 ${logfiles[$i]} 2>&1 1>&/dev/null"
     done
+    chmod 600 ${WMS_LOCATION_LOG}/create_proxy.log 2>&1 1>&/dev/null
+    chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log 2>&1 1>&/dev/null
+    chmod 600 ${WMS_LOCATION_LOG}/glite-wms-wmproxy-purge-proxycache.log 2>&1 1>&/dev/null
+    chmod 600 ${WMS_LOCATION_LOG}/glite-wms-wmproxy-purge-proxycache-keys.log 2>&1 1>&/dev/null
+    chmod 600 ${WMS_LOCATION_LOG}/glite-wms-wmproxy.restart.cron.log 2>&1 1>&/dev/null
 
     if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1; then
       echo "$wmp already running"
