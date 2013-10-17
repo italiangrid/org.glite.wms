@@ -458,10 +458,10 @@ argus_authZ(
    FILE* log = 0;
    if (!log_dir) {
       log = fopen("/var/log/glite/argus.log", "w");
-      if(log) fchmod( log, S_IRUSR|S_IWUSR);
+      chmod( "/var/log/glite/argus.log", S_IRUSR|S_IWUSR);
    } else {
       log = fopen(std::string(log_dir + std::string("/argus.log")).c_str(), "w");
-      if(log) fchmod( log, S_IRUSR|S_IWUSR);
+      chmod( std::string(log_dir + std::string("/argus.log")).c_str(), S_IRUSR|S_IWUSR);
    }
    pep_setoption(pep, PEP_OPTION_LOG_STDERR, log);
 
