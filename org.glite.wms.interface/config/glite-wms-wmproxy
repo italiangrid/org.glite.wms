@@ -54,6 +54,11 @@ case "$1" in
       RETVAL=$?
       if [ $RETVAL -eq 0 ]; then
         echo "ok"
+        wmplogfile=`cat /etc/glite-wms/glite_wms.conf | awk '{if(/WorkloadManagerProxy/) wmp=1}{if(/LogFile/ && wmp==1) {print $0; wmp=0}}'|awk -F"=" '{print $2}'|sed 's+\"++g'|sed 's+;++g'|sed 's+{++'|sed 's+}++'`
+        eval "touch ${wmplogfile}"
+        eval "chown ${GLITE_USER}:${GLITE_USER} ${wmplogfile}"
+        eval "chmod 600 $wmplogfile"
+
 	logfiles=(`egrep -i 'logfile' /etc/glite-wms/glite_wms.conf |grep -v max|awk -F"=" '{print \$2}'|sed 's/\"//g'|sed 's/;//g'`)
 	for (( i = 0 ; i < ${#logfiles[@]} ; i++ ))
 	do
