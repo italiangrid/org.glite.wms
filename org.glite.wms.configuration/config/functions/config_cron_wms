@@ -63,13 +63,13 @@ HOME=/
 MAILTO=$SITE_EMAIL
 
 # Execute the 'purger' command at every day except on Sunday with a frequency of six hours
-#3 */6 * * mon-sat glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -t 604800 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log  2>&1
-3 */6 * * mon-sat glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -t 604800 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log  2>&1
+#3 */6 * * mon-sat glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -t 604800 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log*  2>&1
+3 */6 * * mon-sat glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -t 604800 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log*  2>&1
 
 # Execute the 'purger' command on each Sunday (sun) forcing removal of dag nodes,
 # orphan dag nodes without performing any status checking (threshold of 2 weeks).
 #0 1 * * sun glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -o -s -t 1296000 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log  2>&1
-0 1 * * sun glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -o -s -t 1296000 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log  2>&1
+0 1 * * sun glite . ${GRID_ENV_LOCATION}/grid-env.sh ; ${WMS_LOCATION_SBIN}/glite-wms-purgeStorage.sh -l ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log -p ${WMS_LOCATION_VAR}/SandboxDir -o -s -t 1296000 > /dev/null 2>&1; chmod 600 ${WMS_LOCATION_LOG}/glite-wms-purgeStorage.log*  2>&1
 EOF
 
   # glite-wms-wmproxy-purge-proxycache.cron
