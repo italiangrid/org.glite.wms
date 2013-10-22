@@ -286,7 +286,7 @@ PACKAGE_NAME=( glite-wms-configuration glite-wms-common glite-wms-purger glite-w
 VERSION=( 3.6.1 3.6.1 3.5.0 3.5.1 3.5.1 3.6.1 3.5.1 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 )
 #AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 3 3 3 )
 #AGE=( 1 1 3 7 3 1 4 3 5 3 3 3 3 1 3 1 )
-AGE=( 1 1 4 1 1 1 1 4 6 4 4 4 4 2 )
+AGE=( 1 1 3 1 1 1 1 3 5 3 3 3 3 1 )
 START=$9
 END=${10}
 
