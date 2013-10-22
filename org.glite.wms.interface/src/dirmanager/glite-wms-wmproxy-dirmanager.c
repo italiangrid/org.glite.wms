@@ -40,6 +40,7 @@ limitations under the License.
 #include <errno.h> // errno
 #include <unistd.h> // rmdir, chown
 #include <sys/stat.h> // stat
+#include <string.h> // strstr
 
 #include <fcntl.h> // O_RDONLY
 #include <sys/param.h> // MAXPATHLEN
@@ -53,6 +54,7 @@ limitations under the License.
 #define ADJUST_DIRECTORY_ERR_CHMOD         16
 #define ADJUST_DIRECTORY_ERR_NOT_A_DIR     32
 #define ADJUST_DIRECTORY_ERR_MKDIR         64
+#define ADJUST_DIRECTORY_ERR_NOTALLOWED   128
 
 // Untar option
 #define UNTAR_ERR_NO_ERROR                  0
@@ -219,6 +221,7 @@ chmod_tar_extract_all(TAR *t, char *prefix)
    char buf[MAXPATHLEN];
    int i;
    mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
+   
    while ((i = th_read(t)) == 0) {
       filename = th_get_pathname(t);
 
@@ -232,6 +235,7 @@ chmod_tar_extract_all(TAR *t, char *prefix)
          } else {
             strncpy(buf, filename, sizeof(buf));
          }
+	 
          if (fileExists(buf)) {
             fprintf(stderr, "Already existing file in ISB file: %s\n", buf);
             return UNTAR_ERR_ARCHIVE_FILE_EXISTS;
@@ -333,7 +337,9 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
    int ret;
    struct stat stat_result;
    //int summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
+   
 
+   
    // testing that is a directory
    ret = stat(dir, &stat_result);
    if ((ret < 0) && (errno == ENOENT) && opt_create) {
@@ -477,6 +483,8 @@ int main(int argc, char *argv[])
    }
    summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
 
+
+
    if (untar) {
       // -x option is specified -> extracting ISB files...
       for (i = optind; i < argc; i++) {
@@ -521,6 +529,11 @@ int main(int argc, char *argv[])
       for (i = optind; i < argc; i++) {
          //summary_status |= check_dir(argv[i], opt_create, new_mode,
          // new_group, create_uid);
+	 char* ptr = strstr(argv[i], "/var/SandboxDir");
+   	 if(ptr == NULL || ptr != argv[i]) { /* substring doesn't exist or it is not at the beginning */
+     	   fprintf(stderr, "Operating on directory %s which is not contained in /var/SandboxDir is NOT ALLOWED\n", argv[i]);
+     	   continue;
+   	 }
          if ((summary_status = check_dir(argv[i], opt_create, new_mode,
                                          new_group, create_uid))) {
             exit(summary_status);

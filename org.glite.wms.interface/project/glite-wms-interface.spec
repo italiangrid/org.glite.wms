@@ -109,7 +109,7 @@ fi
 %{_libdir}/libglite_wms_wmproxy_*.so.0.0.0
 %{_libdir}/libglite_wms_wmproxy_*.so.0
 %{_libdir}/libglite_wms_wmproxy_*.so
-%attr(4755, root, root) /usr/libexec/glite_wms_wmproxy_dirmanager
+%attr(4750, root, glite) /usr/libexec/glite_wms_wmproxy_dirmanager
 
 %changelog
 * %{extcdate} WMS group <wms-support@lists.infn.it> - %{extversion}-%{extage}.%{extdist}
