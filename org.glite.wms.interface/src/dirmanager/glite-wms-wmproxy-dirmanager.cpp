@@ -16,6 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
+
 #define DEFAULT_ADJUST_DIRECTORY_GROUP "glite"
 #define DEFAULT_ADJUST_DIRECTORY_MODE  0770
 
@@ -29,19 +31,19 @@ limitations under the License.
 
 #include <stdio.h>
 #include <signal.h>
-
+#include <string>
+#include <iostream>
 #include <string.h> // strdup
 #include <stdlib.h> // exit
 #include <errno.h> // errno
 #include <grp.h> // getgrnam
 #include <unistd.h> // getopt
-
 #include <sys/types.h>  // mode_t
 #include <errno.h> // errno
 #include <unistd.h> // rmdir, chown
 #include <sys/stat.h> // stat
 #include <string.h> // strstr
-
+#include <pwd.h>
 #include <fcntl.h> // O_RDONLY
 #include <sys/param.h> // MAXPATHLEN
 
@@ -55,7 +57,14 @@ limitations under the License.
 #define ADJUST_DIRECTORY_ERR_NOT_A_DIR     32
 #define ADJUST_DIRECTORY_ERR_MKDIR         64
 #define ADJUST_DIRECTORY_ERR_NOTALLOWED   128
-
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 // Untar option
 #define UNTAR_ERR_NO_ERROR                  0
 #define UNTAR_ERR_SETUID_SETGID            80
@@ -77,6 +86,8 @@ extern int optind, opterr, optopt;
 #ifndef TRUE
 #define TRUE 1
 #endif
+
+using namespace std;
 
 typedef void handler_func(int);
 void install_signal(int signo, handler_func* func)
@@ -396,7 +407,7 @@ int main(int argc, char *argv[])
    int opt_create  = FALSE;
    int untar = FALSE;
    uid_t create_uid =0;
-   char *new_group_s = getenv("GLITE_USER")?getenv("GLITE_USER"):DEFAULT_ADJUST_DIRECTORY_GROUP;
+   char *new_group_s = (char*)(getenv("GLITE_USER")?getenv("GLITE_USER"):DEFAULT_ADJUST_DIRECTORY_GROUP);
    gid_t new_group;
    mode_t new_mode   = DEFAULT_ADJUST_DIRECTORY_MODE;
    int summary_status;
@@ -529,11 +540,79 @@ int main(int argc, char *argv[])
       for (i = optind; i < argc; i++) {
          //summary_status |= check_dir(argv[i], opt_create, new_mode,
          // new_group, create_uid);
-	 char* ptr = strstr(argv[i], "/var/SandboxDir");
-   	 if(ptr == NULL || ptr != argv[i]) { /* substring doesn't exist or it is not at the beginning */
-     	   fprintf(stderr, "Operating on directory %s which is not contained in /var/SandboxDir is NOT ALLOWED\n", argv[i]);
-     	   continue;
-   	 }
+
+	 if ( boost::filesystem::exists( argv[i] ) )
+	 {
+	   //
+	   // 1st: check that path is not outside /var/SandboxDir
+	   //
+	   char *destination = (char*)malloc(4096);
+           memset((void*)destination, 0, 4096);
+           realpath( argv[i], destination );
+	   string Dest(destination);
+	   free(destination);
+	   if(Dest.find("/var/SandboxDir") != 0) {
+	     cerr << "Operating on directory " << Dest << " which is not contained in /var/SandboxDir is NOT ALLOWED" << endl;
+             continue;
+           }    
+	   
+	   //
+	   // check that the path is not a symlink
+	   //
+	   struct stat buf;
+	   int res = lstat( argv[i], &buf );
+ 	   if( (buf.st_mode & S_IFLNK) != 0 ) {
+             fprintf(stderr, "Operating on entity which is a symbolic link or a file is NOT ALLOWED (%s)\n", argv[i]);
+             continue;
+           }
+	   //
+	   // Check that path IS a directory
+	   if ( !boost::filesystem::is_directory( boost::filesystem::path(argv[i], boost::filesystem::native) ) ) {
+	     cerr << "Operating on the entity "<< argv[i] << " which is not a directory is NOT ALLOWED" << endl;
+	     continue;
+	   }
+
+	 
+	   struct passwd pwd;
+           struct passwd *result;
+           char *buf2;
+           size_t bufsize;
+           int s;
+
+	   bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+           if (bufsize == -1)          /* Value was indeterminate */
+           bufsize = 16384;        /* Should be more than enough */
+ 	   buf2 = (char*)malloc(bufsize);
+           if (buf2 == NULL) {
+             perror("malloc");
+             exit(EXIT_FAILURE);
+           }
+
+           s = getpwnam_r("glite", &pwd, buf2, bufsize, &result);
+	 
+           if (result == NULL) {
+               if (s == 0)
+                   printf("Not found\n");
+               else {
+                   errno = s;
+                   perror("getpwnam_r");
+               }
+               exit(EXIT_FAILURE);
+           }
+	   free(buf2);
+	   if(buf.st_uid != pwd.pw_uid) {
+	     cerr << "Operating on the entity " << argv[i] << " which is not owned by glite user is NOT ALLOWED" << endl;
+     	     continue;
+	   }
+	 } else {
+	   // path does not exist, must check its string format with a regex
+	   string path = argv[i];
+	   if(path.find("..")!=string::npos) {
+	     cerr << "Relative components in the path " << path << " are NOT ALLOWED" << endl;
+	     continue;
+	   } 
+	 }
+
          if ((summary_status = check_dir(argv[i], opt_create, new_mode,
                                          new_group, create_uid))) {
             exit(summary_status);

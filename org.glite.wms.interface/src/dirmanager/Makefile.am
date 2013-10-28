@@ -17,16 +17,18 @@
 
 
 glite_wms_wmproxy_dirmanager_SOURCES = \
-	glite-wms-wmproxy-dirmanager.c
+	glite-wms-wmproxy-dirmanager.cpp
 
 libexec_PROGRAMS = glite_wms_wmproxy_dirmanager
 
 glite_wms_wmproxy_dirmanager_LDADD = \
 	$(LIBTAR_LIBS) \
+	$(BOOST_LIBS) \
 	$(ZLIB_LIBS)
 
 AM_CPPFLAGS = \
 	$(LIBTAR_CFLAGS) \
+	$(BOOST_CFLAGS) \
         $(ZLIB_CFLAGS) \
 	-DALLOW_COMMAND_LINE_OVERRIDE
 
