@@ -34,7 +34,6 @@ END LICENSE */
 #include "iceCommands/iceCommandReschedule.h"
 #include "iceCommands/iceCommandSubmit.h"
 #include "iceCommands/iceCommandCancel.h"
-//#include "iceUtils/Request_source_factory.h"
 #include "iceUtils/Request_source_jobdir.h"
 #include "iceUtils/Request.h"
 #include "iceUtils/RequestParser.h"
@@ -1004,6 +1003,8 @@ int IceCore::main_loop( void ) {
    * Enter the main loop: fetches requests, process them, insert iceCommand into threadPool's queue
    *
    */
+  
+  int count_old = 0;
   while( true ) {
     //
     // BEWARE!! the get_command_count() method locks the
@@ -1116,6 +1117,21 @@ int IceCore::main_loop( void ) {
 	      cmd = new glite::wms::ice::iceCommandReschedule( *it, theJob );
 	    }
 		
+		
+	    /**
+	      Before add the request, check that if destination CE is blacklisted
+	     */
+	    if(CEBlackList::instance()->is_blacklisted( theJob.cream_address( ) )) {
+	      CREAM_SAFE_LOG( m_log_dev->errorStream()
+			      << method_name
+			      << " - Destination CE [" <<  theJob.cream_address( ) << "] for GridJobID [" 
+			      << theJob.grid_jobid( ) << "] is BLACKLISTED. This job will be considered later."
+			    );
+	      delete( *it );
+	      continue;
+	    }
+	    
+		
 	    this->get_requests_pool()->add_request( cmd );
 
 	  } catch( std::exception& ex ) {
@@ -1132,7 +1148,19 @@ int IceCore::main_loop( void ) {
     }
 
     sleep(1);
-	
+    count_old++;
+    if(count_old>=120) {
+      string oldpath = IceConfManager::instance()->getConfiguration()->ice()->input( ) + "/old";
+      string newpath = IceConfManager::instance()->getConfiguration()->ice()->input( ) + "/new";
+      boost::filesystem::directory_iterator end ;
+      for( boost::filesystem::directory_iterator iter(oldpath) ; iter != end ; ++iter ) {
+        boost::filesystem::path origfile( iter->string(), boost::filesystem::native);
+        boost::filesystem::path newfile(  newpath + "/" + origfile.leaf( ) );
+        ::rename( origfile.string( ).c_str(), newfile.string( ).c_str() );
+      }
+      count_old = 0;
+    }
+
     /**
      *
      * Every 2 minutes ICE checks its mem usage
