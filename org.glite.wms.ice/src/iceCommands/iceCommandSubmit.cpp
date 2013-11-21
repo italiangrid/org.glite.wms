@@ -33,6 +33,7 @@ END LICENSE */
 #include "Request_source_purger.h"
 
 #include "iceDb/RemoveJobByGid.h"
+#include "iceDb/InsertStartedJobs.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/GetJobByGid.h"
@@ -136,7 +137,6 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request,
   } else {
     m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
   }
-
 }
 
 //
@@ -446,7 +446,11 @@ void iceCommandSubmit::try_to_submit( const bool only_start )
                     << " CREAM Returned CREAM-JOBID [" << completeid <<"] DB_ID ["
 		    << dbid << "]"
 		    );
-    
+    {	    
+      db::InsertStartedJobs inserter( time(0), __creamURL, _gid, jobId , "iceCommandSubmit::try_to_submit");
+      db::Transaction tnx( false, false );
+      tnx.execute( &inserter );
+    }
     
     m_theJob.set_status( glite::ce::cream_client_api::job_statuses::REGISTERED );
     m_theJob.set_cream_dbid( strtoull(dbid.c_str(), 0, 10) );

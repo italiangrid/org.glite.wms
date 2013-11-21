@@ -58,7 +58,8 @@ namespace {
       virtual ~CreateDb() { };
     
       
-        virtual void execute( sqlite3* db ) throw() {            
+        virtual void execute( sqlite3* db ) throw() {    
+	    //______________________________________________________________        
             try {
 	      string sqlcmd( "CREATE TABLE IF NOT EXISTS jobs ( " );
 	      sqlcmd += iceUtil::CreamJob::get_createdb_query();
@@ -76,6 +77,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS ce_dbid ( "	\
@@ -94,6 +96,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS event_id ( "	\
@@ -113,7 +116,7 @@ namespace {
 	      abort();
 	      
 	    }
-	    
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS proxy ( "	\
@@ -135,6 +138,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS delegation (" \
@@ -159,6 +163,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS lease ( "	\
@@ -179,6 +184,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS stats ( "	\
@@ -198,12 +204,14 @@ namespace {
 	      abort();
 	      
 	    }
-	    /*
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
-		"CREATE TABLE IF NOT EXISTS userdn_busy ( "	\
-		"userdn text primary key not null, "	\
-		"busy integer(1) not null"    \
+		"CREATE TABLE IF NOT EXISTS registered_jobs ( "	\
+		"timestamp integer(8) not null, "	\
+		"ceurl text not null, "    \
+		"grid_jobid text not null, "		\
+		"cream_jobid text not null "
 		")";
 	      do_query( db, sqlcmd );
 	      
@@ -211,13 +219,13 @@ namespace {
 	    
 	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 			      << "CreateDb::execute() - "
-			      << "Error creating database table userdn_busy: "
+			      << "Error creating database table registered_jobs: "
 			      << ex.what() << ". STOP!"
 			      );
 	      abort();
 	      
 	    }
-	    */
+	    //______________________________________________________________      
             try {
 	      string sqlcmd = 
 		string("CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (") + util::CreamJob::grid_jobid_field() + ")"; 
@@ -232,6 +240,7 @@ namespace {
 	      abort();
 	      
             }
+	    //______________________________________________________________      
 	    try { 
 	      string sqlcmd = 
 		string("CREATE INDEX IF NOT EXISTS dbid_index ON jobs (") + util::CreamJob::cream_dbid_field() + ")";
@@ -246,6 +255,7 @@ namespace {
 	      abort();
 	      
             }
+	    //______________________________________________________________      
             try { 
 	      string sqlcmd = 
 		string("CREATE INDEX IF NOT EXISTS cid_index ON jobs (") + util::CreamJob::cream_jobid_field() + ")";
@@ -260,6 +270,7 @@ namespace {
 	      abort();
 	      
             }
+	    //______________________________________________________________      
             try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS ccid_index ON jobs (") + util::CreamJob::complete_cream_jobid_field() + ")";
@@ -274,6 +285,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS lastseen ON jobs (") + util::CreamJob::last_seen_field() + ")";
@@ -288,6 +300,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS lastemptynotification ON jobs (") + util::CreamJob::last_empty_notification_time_field() + ")";
@@ -302,6 +315,7 @@ namespace {
 	      abort();
 	      
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS stat ON jobs (") + util::CreamJob::status_field() + ")";
@@ -316,6 +330,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS udn ON jobs (") + util::CreamJob::user_dn_field() + ")";
@@ -330,6 +345,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS curl ON jobs (") + util::CreamJob::cream_address_field() + ")";
@@ -344,7 +360,7 @@ namespace {
 	      abort();
 	    
             }
-	    
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS lastpollervisit ON jobs (") + util::CreamJob::last_poller_visited_field() + ")";
@@ -359,6 +375,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
               string sqlcmd =
                 string("CREATE INDEX IF NOT EXISTS killedbyice ON jobs (") + util::CreamJob::killed_byice_field() + ")";
@@ -373,6 +390,7 @@ namespace {
 	      abort();
 	    
             }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS userdn_myproxy_index ON proxy (userdn,myproxyurl)";
@@ -387,6 +405,7 @@ namespace {
 	      abort();
 	    
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS delegkey ON delegation (digest,creamurl,myproxyurl)";
@@ -401,6 +420,7 @@ namespace {
 	      abort();
 	    
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS leasekey ON lease (userdn,creamurl)";
@@ -414,7 +434,8 @@ namespace {
 			      );
 	      abort();
 	      
-	    }	    
+	    }
+	    //______________________________________________________________          
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS udnce ON event_id (userdn,ceurl)";
@@ -429,6 +450,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS ce ON ce_dbid (ceurl)";
@@ -443,6 +465,7 @@ namespace {
 	      abort();
 	      
 	    }
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"PRAGMA default_cache_size=200;";
@@ -457,7 +480,7 @@ namespace {
 	      abort();
 	      
 	    }
-	    
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"PRAGMA synchronous=OFF;";
@@ -472,7 +495,7 @@ namespace {
 	      abort();
 	      
 	    }
-	    
+	    //______________________________________________________________      
 	    try {
 	      string sqlcmd = 
 		"PRAGMA temp_store=2;";
