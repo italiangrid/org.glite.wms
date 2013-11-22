@@ -283,10 +283,11 @@ BUILD_TYPE=( autotools autotools autotools autotools autotools autotools autotoo
 PACKAGE_NAME=( glite-wms-configuration glite-wms-common glite-wms-purger glite-wms-core glite-wms-jobsubmission glite-wms-interface glite-wms-ice emi-wms-nagios emi-wms glite-wms-brokerinfo-access glite-wms-wmproxy-api-cpp glite-wms-wmproxy-api-python glite-wms-ui-api-python glite-wms-ui-commands )
 #VERSION=( 3.6.0 3.6.0 3.5.0 3.5.0 3.5.0 3.6.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 3.5.0 3.5.0 )
 #VERSION=( 3.6.0 3.6.0 3.5.0 3.5.0 3.5.0 3.6.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 )
-VERSION=( 3.6.1 3.6.1 3.5.0 3.5.1 3.5.1 3.6.1 3.5.1 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 )
+#VERSION=( 3.6.1 3.6.1 3.5.0 3.5.1 3.5.1 3.6.1 3.5.1 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 )
+VERSION=( 3.6.1 3.6.1 3.5.0 3.5.1 3.5.1 3.6.2 3.5.2 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.0 3.5.1 )
 #AGE=( 3 3 3 7 3 7 4 3 5 3 3 3 3 3 3 3 )
 #AGE=( 1 1 3 7 3 1 4 3 5 3 3 3 3 1 3 1 )
-AGE=( 1 1 3 1 1 1 1 3 5 3 3 3 3 1 )
+AGE=( 1 1 3 1 1 2 2 3 5 3 3 3 3 1 )
 START=$9
 END=${10}
 
