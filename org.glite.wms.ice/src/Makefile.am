@@ -19,7 +19,7 @@ bin_PROGRAMS =  putFL \
 		putFL_reschedule \
 		glite-wms-ice \
 		glite-wms-ice-safe \
-		queryDb queryStats \
+		queryDb queryStats queryRegisteredJobs \
 		glite-wms-ice-proxy-renew \
 		glite-wms-ice-rm \
 		glite-wms-ice-db-rm
@@ -32,6 +32,8 @@ glite_wms_ice_proxy_renew_SOURCES = glite-wms-ice-proxy-renew.cpp
 
 queryDb_SOURCES = queryDb.cpp
 
+queryRegisteredJobs_SOURCES = queryRegisteredJobs.cpp
+
 queryStats_SOURCES = queryStats.cpp
 
 putFL_SOURCES = putFL.cpp
@@ -43,6 +45,41 @@ putFL_reschedule_SOURCES = putFL_reschedule.cpp
 glite_wms_ice_SOURCES = glite-wms-ice.cpp
 
 glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
+
+queryRegisteredJobs_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
+		$(GRIDSITE_OPENSSL_LIBS) \
+		$(XML2_LIBS) \
+		$(GLITE_CREAM_UTIL_LIBS) \
+		$(GLITE_CREAM_SOAP_LIBS) \
+		$(GSOAP_PLUGIN_LIBS) \
+		$(GSOAP_LIBS) \
+		$(LOG4CPP_LIBS) \
+		../src/iceUtils/libglite_wms_iceUtils.la \
+		../src/iceThreads/libglite_wms_iceThreads.la \
+		../src/iceCommands/libglite_wms_iceCommands.la \
+		../src/ice/libglite_wms_ice.la \
+		../src/iceDb/libglite_wms_iceDb.la \
+		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+		$(CLASSAD_LIBS) \
+		$(ARES_LIBS) \
+		$(GLITE_JOBID_LIBS) \
+		$(GLITE_WMS_COMMON_CONF_LIBS) \
+		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+		$(GLITE_LB_CLIENT_LIBS) \
+		$(GLITE_LB_CLIENTPP_LIBS) \
+		$(GLITE_LB_COMMON_LIBS) \
+		$(RENEWAL_LIBS) \
+                $(GLITE_WMS_PURGER_LIBS) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+		$(BOOST_FS_LIBS) \
+		$(BOOST_THREAD_LIBS) \
+		$(BOOST_REGEX_LIBS) \
+		$(BOOST_PO_LIBS) \
+		-lboost_date_time \
+		-lboost_serialization \
+		$(VOMS_LIBS) \
+		iceDb/sqlite/libsqlite3.a
 
 queryDb_LDADD = $(EXPORT_DYNAMIC_LDFLAGS) \
 		$(GRIDSITE_OPENSSL_LIBS) \

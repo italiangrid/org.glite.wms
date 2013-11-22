@@ -37,7 +37,7 @@ namespace { // begin local namespace
       vector<boost::tuple<time_t, std::string, std::string, std::string> >* result = 
       	(vector<boost::tuple<time_t, std::string, std::string, std::string> >*)param;
 	
-      if ( argv && argv[0] ) {
+      if ( argv && argv[0] && argv[1] && argv[2] ) {
         result->push_back( boost::make_tuple( (time_t)atoi(argv[0]), argv[1], argv[2], argv[3] ) ) ;
       }
 	  
@@ -49,7 +49,7 @@ namespace { // begin local namespace
 
 void db::GetRegisteredStats::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd("SELECT timestamp,ceurl,grid_jobid,cream_jobid FROM stats WHERE timestamp >= ");
+  string sqlcmd("SELECT timestamp,ceurl,grid_jobid,cream_jobid FROM registered_jobs WHERE timestamp >= ");
   sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<std::string>( (unsigned long long int)m_datefrom ) );
   sqlcmd += " AND timestamp <= ";
   sqlcmd += util::IceUtils::withSQLDelimiters( boost::lexical_cast<std::string>( (unsigned long long int)m_dateto  ) );

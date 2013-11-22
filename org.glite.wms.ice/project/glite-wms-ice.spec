@@ -50,6 +50,7 @@ fi
 rm -f %{buildroot}%{_libdir}/*.la
 chrpath --delete %{buildroot}%{_libdir}/libglite_wms_*.so.0.0.0
 chrpath --delete %{buildroot}/usr/bin/queryStats
+chrpath --delete %{buildroot}/usr/bin/queryRegisteredJobs
 chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-safe
 chrpath --delete %{buildroot}/usr/bin/putFL
 chrpath --delete %{buildroot}/usr/bin/glite-wms-ice-db-rm
@@ -79,6 +80,7 @@ fi
 %defattr(-,root,root)
 /etc/rc.d/init.d/glite-wms-ice
 /usr/bin/queryDb
+/usr/bin/queryRegisteredJobs
 /usr/bin/glite-wms-ice-proxy-renew
 /usr/bin/glite-wms-ice-db-rm
 /usr/bin/glite-wms-ice-safe
