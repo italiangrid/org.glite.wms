@@ -453,6 +453,24 @@ std::string join( const std::vector<std::string>& array, const std::string& sep)
           logInfo->print(WMS_DEBUG,"Job's VirtualOrganisation: " , _vo_);
           logInfo->print(WMS_DEBUG,"Proxy's VirtualOrganisation: " , this->getVO());
 
+	  string _dn_("");
+	  if ( !classad_safe_ptr->EvaluateAttrString( "CertificateSubject", _dn_ ) ) {
+ 	    logInfo->print(WMS_ERROR, "CertificateSubject attribute NOT present in the Job's JDL ! Aborting...", "");
+            exit(1);
+	  }
+
+	  if(_dn_ != this->getDN() ) {
+	    m_nopgOpt = true;
+            string message = "Job's DN is different from that one contained in your proxy file.";
+            message += " GridFTP could be unable to retrieve the output file.";
+            message += " Do you want to continue (JobPurge will be disabled) ?";
+            if (!wmcUtils->answerYes ( message, false, true)){
+                cout << "bye" << endl ;
+              wmcUtils->ending(DEFAULT_ERR_CODE);
+            }
+
+	  }
+
 	  if(_vo_ != this->getVO() ) {
 	    m_nopgOpt = true;
 	    string message = "Job's VirtualOrganisation is different from that one contained in your proxy file.";

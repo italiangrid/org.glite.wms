@@ -274,6 +274,7 @@ public:
 	* @return the point to the virtualOrganisation string
         */
         std::string getVirtualOrganisation(void){return virtualOrganisation;}
+	std::string getDN(void){return dn;}
         /**
         * checks if a pathname is a valid file
         *@param pathname the pathname that has to be checked
@@ -451,6 +452,8 @@ public:
         */
         static std::string resolveAddress(std::string relpath) ;
 private:
+
+	std::string getDistinguishedName( );
 	/**
 	* Performs parsing on the FQAN fields an retrurns a vector which elements
 	* are the single fields
@@ -548,6 +551,7 @@ private:
 	std::string prefix;
 	// Virutal Organisation value
 	std::string virtualOrganisation;
+	std::string dn;
 
 
 }; // end class definition

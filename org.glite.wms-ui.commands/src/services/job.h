@@ -305,6 +305,10 @@ class Job{
 		  if(wmcUtils) return wmcUtils->getVirtualOrganisation( );
 		  return "";
 		}
+		std::string getDN( void ) {
+		  if(wmcUtils) return wmcUtils->getDN( );
+		  return "";
+		} 
 	private :
 		/*
 		* Version numbers of the server

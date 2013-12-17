@@ -296,7 +296,23 @@ const std::string getDefaultVoVoms(const char *pxfile){
 
 	return string (v.voname);
 }
+/*
+std::string getDistinguishedName() {
 
+	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
+        if (proxy){
+	  vomsdata *vo_data = new vomsdata() ;
+          load_voms(vo_data, proxy);
+          voms v;	
+	  if (!vo_data->DefaultData(v)){
+	    delete(vo_data);
+	    return "";
+	  }
+	  delete(vo_data);
+	  return string (v.user);
+	} else return "";
+}
+*/
 //                 VOMS METHODS (END)
 
 /*************************************
@@ -322,6 +338,7 @@ Utils::Utils(Options *wmcOpts){
 	wmcAd = new AdUtils (wmcOpts);
 	// checks and reads the configuration file
 	this->virtualOrganisation = this->checkConf();
+	this->dn = this->getDistinguishedName();
 	// debug information
 	debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
 	// log-file
@@ -1003,6 +1020,21 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 	return ad;
 }
 
+std::string Utils::getDistinguishedName() {
+
+        const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
+        if (proxy){
+          vomsdata *vo_data = new vomsdata() ;
+          load_voms(vo_data, proxy);
+          voms v;
+          if (!vo_data->DefaultData(v)){
+            delete(vo_data);
+            return "";
+          }
+          delete(vo_data);
+          return string (v.user);
+        } else return "";
+}
 
 /**********************************
 Virtual Organisation methods
