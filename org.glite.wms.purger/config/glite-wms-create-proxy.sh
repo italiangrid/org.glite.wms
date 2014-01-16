@@ -31,7 +31,7 @@ writable() {
 
 create_proxy()
 {
-   proxy=`"${GLOBUS_LOCATION}/bin/grid-proxy-init" -q \
+   proxy=`"${WMS_LOCATION_USR}/bin/grid-proxy-init" -q \
      -cert $GLITE_HOST_CERT \
      -key  $GLITE_HOST_KEY \
      -hours 24 \

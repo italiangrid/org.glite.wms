@@ -179,7 +179,7 @@ proxy_init(
   if (!cert) return false;
 
   ::EVP_PKEY *pkey(::EVP_PKEY_new());
-  ::RSA* rsa(::RSA_generate_key( 512, RSA_F4, 0, 0));
+  ::RSA* rsa(::RSA_generate_key( 1024, RSA_F4, 0, 0));
 
   if (!EVP_PKEY_assign_RSA(pkey,rsa)) 
   {
