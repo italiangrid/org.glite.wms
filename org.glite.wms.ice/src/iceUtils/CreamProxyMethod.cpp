@@ -45,6 +45,18 @@ CreamProxyMethod::CreamProxyMethod( const string& creamurl, const bool honor_bla
 }
 
 void CreamProxyMethod::execute( int ntries ) // can throw anything
+/*  throw(cream_ex::BaseException&,
+	cream_ex::InvalidArgumentException&,
+	cream_ex::GridProxyDelegationException&,
+	cream_ex::JobSubmissionDisabledException&,
+	cream_ex::JobStatusInvalidException&,
+	cream_ex::JobUnknownException&,
+	cream_ex::GenericException&,
+	cream_ex::AuthorizationException&,
+	cream_ex::DelegationException&,
+	cream_ex::InternalException&,
+	cream_ex::ConnectionTimeoutException&,
+	soap_proxy::auth_ex&) */
 {
     static const char* method_name = "CreamProxyMethod::execute() - ";
     log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
@@ -99,14 +111,14 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 	        }
                 throw; // rethrow
             }            
-        } catch( exception& ex ) {
+        } catch( BaseException& ex ) {
 	  string what = ex.what();
 	  
-/*	  CREAM_SAFE_LOG( m_log_dev->warnStream()
+	 /* CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << method_name 
                                 << "Exception's WHAT is [" << what << "]"
-                                 );
-*/	  
+                                 ); */
+	  
 	  if(what.find( "Connection timed out", 0 ) != string::npos ) {
 	    // do like in the case of SOAP timeout
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -122,8 +134,8 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 	          throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
 	        }
                 throw; // rethrow
-            } 
-	   else throw ex; // rethrow anything else
+            } else throw; // rethrow anything else
+	   
         } catch( ... ) { throw; }
     }
 }

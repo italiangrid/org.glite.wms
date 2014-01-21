@@ -944,7 +944,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     } else {
       throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
     }                        
-  } catch ( exception& ex ) {
+  } catch ( BaseException& ex ) {
     CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Cannot register GridJobID ["
 		    << _gid 
