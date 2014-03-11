@@ -540,8 +540,9 @@ int main(int argc, char *argv[])
       for (i = optind; i < argc; i++) {
          //summary_status |= check_dir(argv[i], opt_create, new_mode,
          // new_group, create_uid);
-
-	 if ( boost::filesystem::exists( argv[i] ) )
+	 boost::filesystem::path toCheck( argv[i], boost::filesystem::native );
+	 //if ( boost::filesystem::exists( argv[i] ) )
+	 if ( boost::filesystem::exists( toCheck ) )
 	 {
 	   //
 	   // 1st: check that path is not outside /var/SandboxDir
