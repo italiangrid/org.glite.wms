@@ -332,16 +332,16 @@ WMPAuthorizer::map_user_lcmaps()
             fqan_list, fqan_num, mapcounter, &plcmaps_account);
 
    if (retval) {
-      retval = lcmaps_return_account_without_gsi(const_cast<char*>(userdn_.c_str()),
+/*      retval = lcmaps_return_account_without_gsi(const_cast<char*>(userdn_.c_str()),
                fqan_list, fqan_num, mapcounter, &plcmaps_account);
-      if (retval) {
+      if (retval) {*/
          edglog(error) << "LCMAPS failed authorization: User "
                        << userdn_ << " is not authorized" << endl;
          throw wmputilities::AuthorizationException(__FILE__, __LINE__,
                "lcmaps_return_poolindex_without_gsi()",
                wmputilities::WMS_AUTHORIZATION_ERROR,
                "LCMAPS failed to map user credential");
-      }
+      //}
    }
 
    uid_ = plcmaps_account.uid;
