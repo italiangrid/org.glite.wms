@@ -170,7 +170,8 @@ sub read_conf{
 	$wms_inputtype= get_confitem('Workloadmanager.DispatcherType');
 	chomp($wms_inputtype);
 	if(!$wms_inputtype){
-		$wms_inputtype='filelist';
+#		$wms_inputtype='filelist';
+		$wms_inputtype='jobdir';
 	}
 #        $wms_input= `${glitewmsdir}/bin/glite-wms-get-configuration Workloadmanager.Input`;
 	$wms_input= get_confitem('Workloadmanager.Input');
@@ -180,7 +181,8 @@ sub read_conf{
 	$jc_inputtype= get_confitem('JobController.InputType');
         chomp($jc_inputtype);
         if(!$jc_inputtype){
-                $jc_inputtype='filelist';
+#                $jc_inputtype='filelist';
+		$jc_inputtype='jobdir';
         }
 #        $jc_input= `${glitewmsdir}/bin/glite-wms-get-configuration JobController.Input`;
 	$jc_input= get_confitem('JobController.Input');
@@ -190,7 +192,8 @@ sub read_conf{
 	$ice_inputtype= get_confitem('ICE.InputType');
         chomp($ice_inputtype);
         if(!$ice_inputtype){
-                $ice_inputtype='filelist';
+#                $ice_inputtype='filelist';
+		$ice_inputtype='jobdir';
         }
 #        $ice_input= `${glitewmsdir}/bin/glite-wms-get-configuration ICE.Input`;
 	$ice_input= get_confitem('ICE.Input');
