@@ -507,9 +507,14 @@ checkProxyExistence(const string& userproxypath, const string& jobid)
          throw wmputilities::JobOperationException(__FILE__, __LINE__,
                "checkProxyExistence()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
                "Unable to find a Proxy file in the job directory");
-      } else {
-         unlink(userproxypath.c_str());
-         wmputilities::fileCopy(userproxypathbak, userproxypath);
+      } else { // non esiste  userproxypath ma esiste userproxypathbak... ma bisognarebbe prima controllare la validità residua
+         
+// 	   edglog(debug) << "**************** ALVISE STEP0: authorizer::checkProxyExistence - Substituting [" 
+// 	   	 	 << userproxypath << "] with ["
+// 			 << userproxypathbak << "]..." << endl;
+           unlink(userproxypath.c_str());
+           wmputilities::fileCopy(userproxypathbak, userproxypath);
+	 
       }
    } else {
       char* c_x509_proxy = 0;
@@ -520,11 +525,21 @@ checkProxyExistence(const string& userproxypath, const string& jobid)
       if (err_code == 0) {
          free(c_x509_proxy);
          // If the proxy is still registered i can override the back up
+	 //edglog(debug) << "**************** ALVISE STEP1: authorizer::checkProxyExistence - Substituting [" 
+	 //  	 	 << userproxypath << "] with ["
+	 //		 << userproxypathbak << "]..." << endl;
          wmputilities::fileCopy(userproxypath, userproxypathbak);
       } else {
          // If the proxy is not registered i ovverride the user.proxy with its back up
-         unlink(userproxypath.c_str());
-         wmputilities::fileCopy(userproxypathbak, userproxypath);
+	 long timeleft_path    = getProxyTimeLeft(userproxypath);
+	 long timeleft_pathbak = getProxyTimeLeft(userproxypathbak);
+	 if(timeleft_pathbak > timeleft_path) {
+//   	   edglog(debug) << "**************** ALVISE STEP2: authorizer::checkProxyExistence - Substituting [" 
+// 	   	 	 << userproxypath << "] with ["
+// 			 << userproxypathbak << "]..." << endl;
+           unlink(userproxypath.c_str());
+           wmputilities::fileCopy(userproxypathbak, userproxypath);
+	 }
       }
 
    }

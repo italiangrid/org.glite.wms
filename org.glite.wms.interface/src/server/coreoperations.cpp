@@ -849,6 +849,38 @@ jobregister(
       dag.setLocalAccess(false);
       returnpair = regist(jobRegister_response, uid, delegation_id,
                           delegatedproxy, delegatedproxyfqan, jdl, &dag);
+			  
+      // QUI BISOGNA ANCHE REGISTRARE IL PROXY PER IL RENEWAL
+	   // Initializing LB logger
+      WMPEventLogger wmplogger(wmputilities::getEndpoint());
+      security::VOMSAuthN authn(delegatedproxy);
+      std::string voms_dn(authn.getDN());
+      //edglog(debug)<< "VOMS provided DN for LB registration: " << voms_dn << std::endl;
+      wmplogger.setUserProxy(delegatedproxy);		  
+      std::pair<std::string, int> lbaddress;
+      vector<std::pair<std::string, int> > lbaddresses(conf.getLBServerEndpoints());
+      bool ret = false;
+      boost::shared_ptr<JobId> jid;
+      JobAd *jad2 = new JobAd(*(ad.ad()));
+      do {
+        if (jad2->hasAttribute(JDL::LB_ADDRESS)) { // user provided LB
+           lbaddress = wmputilities::parseLBAddress(jad2->getString(JDL::LB_ADDRESS));
+        } else {
+           lbaddress = selectLBServer(lbaddresses);
+        }
+        edglog(debug)<<"LB Address: " << lbaddress.first << ", port: " << lbaddress.second << endl;
+
+        if (lbaddress.second == 0) {
+           jid.reset(new JobId(lbaddress.first));
+        } else {
+           jid.reset(new JobId(lbaddress.first, lbaddress.second));
+        }
+        ret = wmplogger.registerJob(jad2, jid.get(), wmputilities::getJobJDLToStartPath(*jid, true));
+        lbaddresses.erase(std::find(lbaddresses.begin(), lbaddresses.end(), lbaddress));
+      } while (!jad2->hasAttribute(JDL::LB_ADDRESS) && !ret && lbaddresses.size() > 0);   
+   
+      delete jad2;
+   
    } else {
       string invalidJobType = ad.hasAttribute(JDL::TYPE)  ?
                               ad.getString(JDL::TYPE) :
