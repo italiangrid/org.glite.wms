@@ -113,12 +113,6 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
             }            
         } catch( BaseException& ex ) {
 	  string what = ex.what();
-	  
-	 /* CREAM_SAFE_LOG( m_log_dev->warnStream()
-                                << method_name 
-                                << "Exception's WHAT is [" << what << "]"
-                                 ); */
-	  
 	  if(what.find( "Connection timed out", 0 ) != string::npos ) {
 	    // do like in the case of SOAP timeout
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -134,9 +128,27 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 	          throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
 	        }
                 throw; // rethrow
-            } else throw; // rethrow anything else
+            } else throw;
 	   
-        } catch( ... ) { throw; }
+        } catch( InternalException& ex ) {
+	  string what = ex.what();
+	  if( what.find( "No route to host", 0 ) != string::npos ||
+	      what.find( "Connection refused", 0 ) != string::npos ||
+	      what.find( "Connection reset by peer", 0 ) != string::npos ) {
+	        CREAM_SAFE_LOG( m_log_dev->errorStream()
+                            << method_name << "No route to host to CREAM: \""
+                            << ex.what()
+                            << ". Blacklisting endpoint [" 
+			    << m_service << "] and giving up."
+                           );
+                m_blacklist->blacklist_endpoint( m_service );
+		if (IceConfManager::instance()->getConfiguration()->ice()->fail_job_blacklisted_ce()) {
+	          // FAIL THE JOB!!
+	          throw BlackListFailJob_ex( string("The endpoint [") + m_service + "] is blacklisted and ICE if configured to abort the job");
+	        }
+                throw; // rethrow
+	  } else throw; 
+       }
     }
 }
 
