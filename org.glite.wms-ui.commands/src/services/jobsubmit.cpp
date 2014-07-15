@@ -60,6 +60,9 @@ limitations under the License.
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+       
 using namespace std ;
 using namespace glite::wms::client::utilities ;
 
@@ -68,7 +71,12 @@ using namespace glite::jdl;
 using namespace glite::wmsutils::exception;
 namespace fs = boost::filesystem;
 namespace api = glite::wms::wmproxyapi;
-
+mode_t getumask(void)
+           {
+               mode_t mask = umask( 0 );
+               umask(mask);
+               return mask;
+           }
 namespace glite {
 namespace wms{
 namespace client {
@@ -1838,61 +1846,64 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 				 std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred			 
 				 )
   {
+    mode_t orig_mode = getumask( );
+    ::umask( S_IWGRP | S_IWOTH );
+  
     vector<string> filesToTAR;
     string jobpath = "";
     string file = "";
     string path = "";
     vector <JobFileAd>::iterator it1 = fileads.begin( );
     vector <JobFileAd>::iterator const end1 = fileads.end( );
+    string s_dstPath;
     for ( ; it1 != end1; it1++ ) { 
       jobpath = this->getJobPath(it1->node);
-      system((string("mkdir -p ")+jobpath).c_str());
+      system((string("mkdir -p ")+string(TMP_DEFAULT_LOCATION) + "/jobSubmitTar/" + jobpath).c_str());
       filesToTAR.push_back( jobpath );
       
       vector <FileAd>::iterator it2 = (it1->files).begin( );
       vector <FileAd>::iterator const end2 = (it1->files).end( );
       for ( ; it2 != end2; it2++ ) {
  	file = it2->file;
-  	//path = jobpath + "/" + Utils::getFileName(it2->file);
+  	
+	logInfo->print(WMS_DEBUG, "tar - Copying local file: " + file,
+		       " into directory: " + jobpath, false);
 
-		logInfo->print(WMS_DEBUG, "tar - Copying local file: " + file,
-			       " into directory: " + jobpath, false);
+
 
 	string basenameFile = ::basename( file.c_str() );
-	//logInfo->print(WMS_FATAL, "basenameFile="+basenameFile, false);;
+	
 	boost::filesystem::path srcPath(file, boost::filesystem::native);
-	boost::filesystem::path dstPath(jobpath+"/"+basenameFile, boost::filesystem::native);
+	boost::filesystem::path dstPath(string(TMP_DEFAULT_LOCATION) + "/jobSubmitTar/"+jobpath+"/"+basenameFile, boost::filesystem::native);
+	//printf("\n*********** ALVISE: Copying [%s] to [%s]\n\n", srcPath.string().c_str(), dstPath.string().c_str());
 	boost::filesystem::copy_file( srcPath, dstPath );
-	//filesToTAR.push_back( file );
+	
       }
     }
     string tarfile = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (filename);
-    string command = string("tar cf ") + tarfile + " ";
+    
+    string command = string("tar cf ") + tarfile + " -C "+ TMP_DEFAULT_LOCATION + "/jobSubmitTar/ ";
     command += join(filesToTAR, " ");
+    //printf("\n*********** ALVISE: Executing [%s]\n", command.c_str() );
     system(command.c_str());
 
     boost::uintmax_t tarSize = boost::filesystem::file_size( tarfile );
 
-    //string maxISBSize = boost::lexical_cast<string>( api::getMaxInputSandboxSize(getContext( )) );
-
     if(tarSize > api::getMaxInputSandboxSize(getContext( )) ) {
-/*      logInfo->print(WMS_FATAL,
-		     "ISB tarball size for [" + tarfile + "] is " 
-		     + boost::lexical_cast<string>( tarSize ) 
-		     + " exceeds the MaxInputSandboxSize specified in the JDL ("
-		     + boost::lexical_cast<string>( maxISBSize )
-		     + ")", false); */
 	
        throw WmsClientException(__FILE__,__LINE__,
                                     "FileSize problem",  DEFAULT_ERR_CODE,
                                     "\n",
                                     "The tar archive size is greater than the maximum allowed by WMS (" 
 				    + boost::lexical_cast<string>(api::getMaxInputSandboxSize(getContext( )) ) + " bytes)" );	
-//      exit(1);
+
     }
 
     system((string("gzip -9 ")+tarfile).c_str());
-    system((string("\\rm -rf ")+join(filesToTAR, " ")).c_str());
+    //printf("\n*********** ALVISE: Erasing %s and %s\n", join(filesToTAR, " ").c_str(), jobpath.c_str());
+    system( (string("\\rm -rf ")+ TMP_DEFAULT_LOCATION + "/jobSubmitTar/").c_str() );
+    //system((string("\\rm -rf ")+join(filesToTAR, " ")).c_str());
+    //system("\\rm -rf SandboxDir");
 
     string gz = tarfile + ".gz";
 
@@ -1901,6 +1912,7 @@ std::string JobSubmit::getJobPath(const std::string& node) {
     logInfo->print(WMS_DEBUG,
 		   "ISB Zipped File: " + source.file, "DestURI: " + dest, false);
     to_btransferred.push_back(make_pair(source, dest) );
+    ::umask( orig_mode );
   }
   
 //   void JobSubmit::createZipFile (
