@@ -134,9 +134,10 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 	  string what = ex.what();
 	  if( what.find( "No route to host", 0 ) != string::npos ||
 	      what.find( "Connection refused", 0 ) != string::npos ||
-	      what.find( "Connection reset by peer", 0 ) != string::npos ) {
+	      what.find( "Connection reset by peer", 0 ) != string::npos ||
+	      what.find( "Network is unreachable", 0 ) != string::npos ) {
 	        CREAM_SAFE_LOG( m_log_dev->errorStream()
-                            << method_name << "No route to host to CREAM: \""
+                            << method_name << "No route to host/Connection refused/Connection reset by peer/Network is unreachable to CREAM: \""
                             << ex.what()
                             << ". Blacklisting endpoint [" 
 			    << m_service << "] and giving up."
