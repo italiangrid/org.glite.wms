@@ -80,7 +80,7 @@ if [ $PACKAGER = "rpm" ]; then
 
 #echo cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
 
-   cmake -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
+   cmake -DBoost_NO_BOOST_CMAKE=ON -DPREFIX:string=$LOCAL_STAGE_DIR/usr -DPVER:string=$VERSION -DCLI_VERSION=$VERSION .
    make VERBOSE=1
    if [ $? -ne 0 ]; then
       echo ERROR
