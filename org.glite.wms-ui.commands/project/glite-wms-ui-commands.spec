@@ -19,7 +19,10 @@ BuildRequires: globus-gsi-credential-devel, globus-gsi-openssl-error-devel, glob
 BuildRequires: globus-gsi-proxy-ssl-devel, globus-gsi-sysconfig-devel,globus-gssapi-error-devel
 BuildRequires: globus-gssapi-gsi-devel, globus-gss-assist-devel
 BuildRequires: globus-ftp-client-devel, globus-ftp-control-devel, libxml2-devel, emi-pkgconfig-compat
-Requires: glite-wms-ui-api-python, globus-gass-copy-progs
+Requires: glite-wms-ui-api-python, globus-gass-copy-progs, python-ctypes
+ %if "%{?dist}" == ".el5"
+Requires: python-ctypes
+%endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}-%{version}-%{release}.tar.gz
