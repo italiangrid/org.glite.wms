@@ -20,7 +20,7 @@ BuildRequires: globus-gsi-proxy-ssl-devel, globus-gsi-sysconfig-devel,globus-gss
 BuildRequires: globus-gssapi-gsi-devel, globus-gss-assist-devel
 BuildRequires: globus-ftp-client-devel, globus-ftp-control-devel, libxml2-devel, emi-pkgconfig-compat
 Requires: glite-wms-ui-api-python, globus-gass-copy-progs, python-ctypes
- %if "%{?dist}" == ".el5"
+%if "%{?dist}" == ".sl5"
 Requires: python-ctypes
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
